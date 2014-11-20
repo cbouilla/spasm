@@ -83,6 +83,10 @@ spasm *spasm_permute(const spasm * A, const int *pinv, const int *q, int values)
 /* spasm_GFp.c */
 spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 
+/* spasm_gaxpy.c */
+void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
+
+
 static inline int spasm_max(int a, int b) {
   return (a > b) ? a : b;
 }
