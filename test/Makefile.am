@@ -1,14 +1,14 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src
 LDADD = $(top_builddir)/src/libspasm.la
 
-TESTS = test_io.sh vec_perm test_perm.sh
+TESTS = test_io.sh vec_perm test_perm.sh GFp
 
 AM_TESTS_ENVIRONMENT = \
 	env AM_TAP_AWK='$(AWK)'
 LOG_DRIVER = $(SHELL) $(top_srcdir)/build-aux/tap-driver.sh
 EXTRA_DIST = $(TESTS) Expected
 
-check_PROGRAMS = io vec_perm mat_perm
+check_PROGRAMS = io vec_perm mat_perm GFp
 
 clean-local:
 	rm -rf Output/*
