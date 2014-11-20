@@ -86,6 +86,10 @@ spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
 
+/* spasm_triangular_dense.c */
+void spasm_lsolve(const spasm * L, spasm_GFp * x);
+void spasm_usolve (const spasm *U, spasm_GFp *x);
+
 
 static inline int spasm_max(int a, int b) {
   return (a > b) ? a : b;
