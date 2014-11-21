@@ -1,14 +1,14 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src
 LDADD = $(top_builddir)/src/libspasm.la
 
-TESTS = test_io.sh vec_perm test_perm.sh GFp test_gaxpy.sh test_triangular_solvers.sh
+TESTS = test_io.sh vec_perm test_perm.sh GFp test_gaxpy.sh test_triangular_solvers.sh test_reach.sh
 
 AM_TESTS_ENVIRONMENT = \
 	env AM_TAP_AWK='$(AWK)'
 LOG_DRIVER = $(SHELL) $(top_srcdir)/build-aux/tap-driver.sh
 EXTRA_DIST = $(TESTS) Expected
 
-check_PROGRAMS = io vec_perm mat_perm GFp gaxpy lsolve
+check_PROGRAMS = io vec_perm mat_perm GFp gaxpy lsolve reach spsolve
 
 clean-local:
 	rm -rf Output/*

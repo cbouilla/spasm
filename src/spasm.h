@@ -79,24 +79,23 @@ void cs_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 int *spasm_pinv(int const *p, int n);
 spasm *spasm_permute(const spasm * A, const int *pinv, const int *q, int values);
 
-
 /* spasm_GFp.c */
 spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 
 /* spasm_scatter.c */
 void spasm_scatter(const int *Ai, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime);
-//void spasm_scatter(const spasm * A, int j, spasm_GFp beta, spasm_GFp * x);
+
+/* spasm_reach.c */
+int spasm_dfs(int j, spasm * G, int top, int *xi, int *pstack, const int *pinv);
+int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv);
 
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
 
-/* spasm_triangular_dense.c */
-void spasm_lsolve(const spasm * L, spasm_GFp * x);
-void spasm_usolve (const spasm *U, spasm_GFp *x);
+/* spasm_triangular.c */
+void spasm_triangular_solve(const spasm * G, spasm_GFp * x, int lo);
+int spasm_sparse_triangular_solve(spasm * G, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv, int lo);
 
-/* spasm_reach.c */
-int cs_dfs (int j, spasm *G, int top, int *xi, int *pstack, const int *pinv);
-int cs_reach (spasm *G, const spasm *B, int k, int *xi, const int *pinv);
 
 
 static inline int spasm_max(int a, int b) {

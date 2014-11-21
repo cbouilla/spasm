@@ -133,7 +133,7 @@ int spasm_dfs(int j, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
      *
      * xi [n...2n-1] used as workspace
      */
-    int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv){
+    int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv) {
         int p, n, top, *Bp, *Bi, *Gp;
 
         /* check inputs */
