@@ -13,16 +13,27 @@
 
 typedef int spasm_GFp;
 
-typedef struct spasm_sparse {   /* matrix in compressed-column or triplet form */
-    int nzmax;                  /* maximum number of entries */
-    int m;                      /* number of rows */
-    int n;                      /* number of columns */
-    int *p;                     /* column pointers (size n+1) or col indices (size nzmax) */
-    int *i;                     /* row indices, size nzmax */
-    spasm_GFp *x;                     /* numerical values, size nzmax (optional) */
-    int nz;                     /* # of entries in triplet matrix, -1 for compressed-col */
+typedef struct {   /* matrix in compressed-column or triplet form */
+    int nzmax;     /* maximum number of entries */
+    int m;         /* number of rows */
+    int n;         /* number of columns */
+    int *p;        /* column pointers (size n+1) */
+    int *i;        /* row indices, size nzmax */
+    spasm_GFp *x;  /* numerical values, size nzmax (optional) */
     int prime;
 } spasm;
+
+typedef struct  {   /* matrix in compressed-column or triplet form */
+    int nzmax;      /* maximum number of entries */
+    int nz;         /* # entries */
+    int m;          /* number of rows */
+    int n;          /* number of columns */
+    int *i;         /* row indices, size nzmax */
+    int *j;         /* column indices (size nzmax) */
+    spasm_GFp *x;   /* numerical values, size nzmax (optional) */
+    int prime;
+} spasm_triplet;
+
 
 /* example (this is Matrix/t1)
 
@@ -34,7 +45,7 @@ A = [ 0.0  1.7  3.0  0.0 ]
 Triplet form (nz != -1) :
 
 i = {   2,   1,   3,   0,   1,   3,   3,   1,   0,   2 }
-p = {   2,   0,   3,   2,   1,   0,   1,   3,   0,   1 }
+j = {   2,   0,   3,   2,   1,   0,   1,   3,   0,   1 }
 x = { 3.0, 3.1, 1.0, 3.2, 2.9, 3.5, 0.4, 0.9, 4.5, 1.7 }
 
 the coefficients may appear in any order.
@@ -51,8 +62,6 @@ The numerical values are optional (useful for storing a sparse graph, or the pat
 */
 
 /* spasm_util.c */
-int spasm_is_csc(const spasm *A);
-int spasm_is_triplet(const spasm *A);
 int spasm_nnz(const spasm *A);
 
 void * spasm_malloc(size_t size);
