@@ -17,8 +17,8 @@ typedef struct {   /* matrix in compressed-column or triplet form */
     int nzmax;     /* maximum number of entries */
     int m;         /* number of rows */
     int n;         /* number of columns */
-    int *p;        /* column pointers (size n+1) */
-    int *i;        /* row indices, size nzmax */
+    int *p;        /* row pointers (size n+1) */
+    int *i;        /* column indices, size nzmax */
     spasm_GFp *x;  /* numerical values, size nzmax (optional) */
     int prime;
 } spasm;
