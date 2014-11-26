@@ -6,3 +6,4 @@ dense_solve
 gaxpy
 reach
 sparse_solve
+lu
