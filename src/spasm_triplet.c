@@ -3,37 +3,36 @@
 #include "spasm.h"
 
 /* add an entry to a triplet matrix; enlarge it if necessary */
-void spasm_add_entry(spasm *T, int i, int j, spasm_GFp x) {
-  assert(spasm_is_triplet(T));
+void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x) {
   assert((i >= 0) && (j >= 0));
 
   if (T->nz == T->nzmax) {
-    spasm_sprealloc(T, 2 * T->nzmax);
+    spasm_triplet_realloc(T, 2 * T->nzmax);
   }
 
   if (T->x != NULL) {
     T->x[T->nz] = x;
   }
   T->i[T->nz] = i;
-  T->p[T->nz++] = j;
+  T->j[T->nz] = j;
+  T->nz += 1;
   T->m = spasm_max(T->m, i + 1);
   T->n = spasm_max(T->n, j + 1);
 }
 
 /* C = compressed-column form of a triplet matrix T */
-spasm * spasm_compress(const spasm *T) {
+spasm * spasm_compress(const spasm_triplet *T) {
   int m, n, nz, sum, p, k, *Cp, *Ci, *w, *Ti, *Tj;
     spasm_GFp *Cx, *Tx;
     spasm *C;
-    assert(spasm_is_triplet(T));
 
     m = T->m;
     n = T->n;
     Ti = T->i;
-    Tj = T->p;
+    Tj = T->j;
     Tx = T->x;
     nz = T->nz;
-    C = spasm_spalloc(m, n, nz, T->prime, Tx != NULL, false);    /* allocate result */
+    C = spasm_csr_alloc(m, n, nz, T->prime, Tx != NULL);    /* allocate result */
     w = spasm_calloc(n, sizeof(int));                    /* get workspace */
     Cp = C->p;
     Ci = C->i;

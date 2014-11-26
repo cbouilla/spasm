@@ -68,17 +68,24 @@ void * spasm_malloc(size_t size);
 void * spasm_calloc(size_t count, size_t size);
 void * spasm_realloc(void *ptr, size_t size);
 
-spasm *spasm_spalloc(int m, int n, int nzmax, int prime, int values, int triplet);
-void spasm_sprealloc(spasm *A, int nzmax);
-void spasm_spfree(spasm *A);
+spasm *spasm_csr_alloc(int m, int n, int nzmax, int prime, int with_values);
+void spasm_csr_realloc(spasm *A, int nzmax);
+void spasm_csr_free(spasm *A);
+
+spasm_triplet *spasm_triplet_alloc(int m, int n, int nzmax, int prime, int with_values);
+void spasm_triplet_realloc(spasm_triplet *A, int nzmax);
+void spasm_triplet_free(spasm_triplet *A);
+
 
 /* spasm_triplet.c */
-void spasm_add_entry(spasm *T, int i, int j, spasm_GFp x);
-spasm * spasm_compress(const spasm *T);
+void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x);
+spasm * spasm_compress(const spasm_triplet *T);
 
 /* spasm_io.c */
-spasm * spasm_load_ctf(FILE *f, int prime);
-void spasm_save_ctf(FILE *f, const spasm *A);
+spasm_triplet * spasm_load_triplet(FILE *f, int prime);
+void spasm_save_triplet(FILE *f, const spasm_triplet *A);
+void spasm_save_csr(FILE *f, const spasm *A);
+
 
 /* spasm_permutation.c */
 #define SPASM_IDENTITY_PERMUTATION NULL
