@@ -24,21 +24,21 @@ spasm_triplet * spasm_load_triplet(FILE *f, int prime) {
 
 void spasm_save_csr(FILE *f, const spasm *A) {
   int i, n, p;
-  int *Ai, *Ap;
+  int *Aj, *Ap;
   spasm_GFp *Ax;
 
     assert(f != NULL);
     assert(A != NULL);
 
-    Ai = A->i;
+    Aj = A->j;
     Ap = A->p;
     Ax = A->x;
     n  = A->n;
 
-    /* compressed column form */
+    /* compressed row form */
     for(i = 0; i < n; i++) {
       for(p = Ap[i]; p < Ap[i + 1]; p++) {
-	fprintf(f, "%d %d %d\n", Ai[p], i, (Ax != NULL) ? Ax[p] : 1);
+	fprintf(f, "%d %d %d\n", i, Aj[p], (Ax != NULL) ? Ax[p] : 1);
       }
     }
 }

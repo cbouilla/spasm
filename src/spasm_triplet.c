@@ -11,18 +11,18 @@ void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x) {
   }
 
   if (T->x != NULL) {
-    T->x[T->nz] = x;
+    T->x[ T->nz ] = x;
   }
-  T->i[T->nz] = i;
-  T->j[T->nz] = j;
+  T->i[ T->nz ] = i;
+  T->j[ T->nz ] = j;
   T->nz += 1;
-  T->m = spasm_max(T->m, i + 1);
-  T->n = spasm_max(T->n, j + 1);
+  T->n = spasm_max(T->n, i + 1);
+  T->m = spasm_max(T->m, j + 1);
 }
 
-/* C = compressed-column form of a triplet matrix T */
+/* C = compressed-row form of a triplet matrix T */
 spasm * spasm_compress(const spasm_triplet *T) {
-  int m, n, nz, sum, p, k, *Cp, *Ci, *w, *Ti, *Tj;
+  int m, n, nz, sum, p, k, *Cp, *Cj, *w, *Ti, *Tj;
     spasm_GFp *Cx, *Tx;
     spasm *C;
 
@@ -32,17 +32,22 @@ spasm * spasm_compress(const spasm_triplet *T) {
     Tj = T->j;
     Tx = T->x;
     nz = T->nz;
-    C = spasm_csr_alloc(m, n, nz, T->prime, Tx != NULL);    /* allocate result */
-    w = spasm_calloc(n, sizeof(int));                    /* get workspace */
+
+    /* allocate result */
+    C = spasm_csr_alloc(m, n, nz, T->prime, Tx != NULL);
+
+    /* get workspace */
+    w = spasm_calloc(n, sizeof(int));
     Cp = C->p;
-    Ci = C->i;
+    Cj = C->j;
     Cx = C->x;
 
-    /* compute column counts */
+    /* compute row counts */
     for (k = 0; k < nz; k++) {
-        w[Tj[k]]++;
+	w[ Ti[k] ]++;
     }
-    /* compute column pointers (in both Cp and w) */
+
+    /* compute row pointers (in both Cp and w) */
     sum = 0;
     for(k = 0; k < n; k++) {
       Cp[k] = sum;
@@ -50,14 +55,16 @@ spasm * spasm_compress(const spasm_triplet *T) {
       w[k] = Cp[k];
     }
     Cp[n] = sum;
+
     /* dispatch entries */
     for (k = 0; k < nz; k++) {
-      p = w[Tj[k]]++;            /* A(i,j) is the p-th entry in C */
-      Ci[p] = Ti[k];
+      p = w[ Ti[k] ]++;            /* A(i,j) is the p-th entry in C */
+      Cj[p] = Tj[k];
       if (Cx != NULL) {
 	Cx[p] = Tx[k];
       }
     }
+
     /* success; free w and return C */
     free(w);
     return C;

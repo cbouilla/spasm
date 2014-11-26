@@ -4,7 +4,7 @@
 int spasm_nnz(const spasm *A) {
   assert (A != NULL);
 
-  return A->p[A->n];
+  return A->p[ A->n ];
 }
 
 void * spasm_malloc(size_t size) {
@@ -45,7 +45,7 @@ spasm *spasm_csr_alloc(int m, int n, int nzmax, int prime, int with_values) {
     A->nzmax = nzmax;
     A->prime = prime;
     A->p = spasm_malloc((n + 1) * sizeof(int));
-    A->i = spasm_malloc(nzmax * sizeof(int));
+    A->j = spasm_malloc(nzmax * sizeof(int));
     A->x = (with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL);
     return A;
 }
@@ -78,7 +78,7 @@ void spasm_csr_realloc(spasm *A, int nzmax) {
     if (nzmax < 0) {
       nzmax = spasm_nnz(A);
     }
-    A->i = spasm_realloc(A->i, nzmax * sizeof(int));
+    A->j = spasm_realloc(A->j, nzmax * sizeof(int));
     if (A->x != NULL) {
       A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
     }
@@ -108,7 +108,7 @@ void spasm_triplet_realloc(spasm_triplet *A, int nzmax) {
 void spasm_csr_free(spasm *A) {
   assert(A != NULL);
   free(A->p);
-  free(A->i);
+  free(A->j);
   free(A->x); // trick : free does nothing on NULL pointer
   free(A);
 }

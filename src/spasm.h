@@ -15,10 +15,10 @@ typedef int spasm_GFp;
 
 typedef struct {   /* matrix in compressed-column or triplet form */
     int nzmax;     /* maximum number of entries */
-    int m;         /* number of rows */
-    int n;         /* number of columns */
+    int n;         /* number of rows */
+    int m;         /* number of columns */
     int *p;        /* row pointers (size n+1) */
-    int *i;        /* column indices, size nzmax */
+    int *j;        /* column indices, size nzmax */
     spasm_GFp *x;  /* numerical values, size nzmax (optional) */
     int prime;
 } spasm;
@@ -26,8 +26,8 @@ typedef struct {   /* matrix in compressed-column or triplet form */
 typedef struct  {   /* matrix in compressed-column or triplet form */
     int nzmax;      /* maximum number of entries */
     int nz;         /* # entries */
-    int m;          /* number of rows */
-    int n;          /* number of columns */
+    int n;          /* number of rows */
+    int m;          /* number of columns */
     int *i;         /* row indices, size nzmax */
     int *j;         /* column indices (size nzmax) */
     spasm_GFp *x;   /* numerical values, size nzmax (optional) */
