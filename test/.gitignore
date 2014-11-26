@@ -2,7 +2,7 @@ io
 mat_perm
 vec_perm
 GFp
-lsolve
+dense_solve
 gaxpy
 reach
-spsolve
+sparse_solve

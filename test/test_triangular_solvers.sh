@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..4
+echo 1..3
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/l1
@@ -12,8 +12,4 @@ INPUT_MATRIX=$srcdir/Matrix/u1
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/l1
-./spsolve 3 < $INPUT_MATRIX
-
-#########################################
-INPUT_MATRIX=$srcdir/Matrix/u1
-./spsolve 4 < $INPUT_MATRIX
+./sparse_solve 3 < $INPUT_MATRIX

@@ -84,69 +84,68 @@ void spasm_dense_forwardsolve(const spasm * U, spasm_GFp * x) {
 
 /*************** Triangular solving with sparse RHS
  *
- * solve G.x=B[:,k], where G is either upper (lo=0) or lower (lo=1) triangular.
+ * solve x * U = B[k], where U is upper triangular.
  *
  * when this function returns, the solution scattered in x, and its pattern
- * is given in xi[top : n]. top is the return value.
+ * is given in xi[top : n].
+ *
+ * top is the return value.
  *
  */
-int spasm_sparse_triangular_solve(spasm * G, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv, int lo) {
-  int j, J, p, q, px, top, n, prime, *Gp, *Gj, *Bp, *Bj;
-    spasm_GFp *Gx, *Bx;
+int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
+  int i, I, p, px, top, n, prime, *Up, *Uj, *Bp, *Bj;
+    spasm_GFp *Ux, *Bx;
 
-    assert(G != NULL);
+    assert(U != NULL);
     assert(B != NULL);
     assert(xi != NULL);
     assert(x != NULL);
 
-    n = G->n;
-    Gp = G->p;
-    Gj = G->j;
-    Gx = G->x;
-    prime = G->prime;
+    n = U->n;
+    Up = U->p;
+    Uj = U->j;
+    Ux = U->x;
+    prime = U->prime;
 
     Bp = B->p;
     Bj = B->j;
     Bx = B->x;
 
-    /* xi[top : n] = Reach(B(:,k)) */
-    top = spasm_reach(G, B, k, xi, pinv);
+    /* xi[top : n] = Reach( U, B[k] ) */
+    top = spasm_reach(U, B, k, xi, pinv);
 
     /* clear x */
     for (p = top; p < n; p++) {
-      x[xi[p]] = 0;
+      x[ xi[p] ] = 0;
     }
 
-    /* scatter B into x */
+    /* scatter B[k] into x */
     for (p = Bp[k]; p < Bp[k + 1]; p++) {
         x[ Bj[p] ] = Bx[p];
     }
 
-    /* iterate over the (precomputed) pattern of x (=the solution) */
+    // question : est-ce que xi est dans le bon sens ?!?
+
+    /* iterate over the (precomputed) pattern of x (= the solution) */
     for (px = top; px < n; px++) {
-      /* x(j) is nonzero */
-      j = xi[px];
+      /* x[i] is nonzero */
+      i = xi[px];
 
-      /* j maps to col J of G */
-      J = (pinv != NULL) ? (pinv[j]) : j;
+      /* i maps to row I of U */
+      I = (pinv != NULL) ? (pinv[i]) : i;
 
-      if (J < 0) {
-	/* column J is empty */
+      if (I < 0) {
+	/* row I is empty */
             continue;
       }
 
-      /* get G[j,j] */
-      const spasm_GFp diagonal_entry = Gx[lo ? (Gp[J]) : (Gp[J + 1] - 1)];
-      x[j] = (x[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+      /* get U[i,i] */
+      const spasm_GFp diagonal_entry = Ux[ Up[I] ];
+      assert( diagonal_entry != 0 );
+      // axpy-in-place
+      x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
 
-      p = lo ? (Gp[J] + 1) : (Gp[J]);         /* lo: L(j,j) 1st entry */
-      q = lo ? (Gp[J + 1]) : (Gp[J + 1] - 1); /* up: U(j,j) last entry */
-
-      // this is a scatter
-      spasm_scatter(Gj, Gx, p, q, prime - x[j], x, prime);
-      //      for (; p < q; p++) {
-      //	x[Gj[p]] -= Gx[p] * x[j];   /* x(i) -= G(i,j) * x(j) */
-      //      }
+      spasm_scatter(Uj, Ux, Up[I] + 1, Up[I + 1], prime - x[i], x, prime);
     }
     return top;
 }

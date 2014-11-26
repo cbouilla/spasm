@@ -25,52 +25,63 @@ sage: for i in range(M.nrows()):
 
 */
 #include <stdio.h>
+#include <stdbool.h>
 #include <assert.h>
 #include "spasm.h"
 
 int main(int argc, char **argv) {
-  spasm *T, *G;
-  int fail, i, n, test;
+  spasm_triplet *T;
+  spasm *U, *B;
+  int fail, i, n, m, test, top, *xi;
   spasm_GFp *x, *y;
-  const char * const test_name[]  = {"dense RHS L-solver", "dense RHS U-solver"};
 
-  assert(argc > 1);
+  assert(argc == 2);
   test = atoi(argv[1]);
 
-  T = spasm_load_ctf(stdin, 257);
-  G = spasm_compress(T);
-  spasm_spfree(T);
+  // load matrix
+  T = spasm_load_triplet(stdin, 257);
+  U = spasm_compress(T);
+  spasm_triplet_free(T);
+  n = U->n;
+  m = U->m;
 
-  n = G->n;
-  assert(n < G->prime);
+  // load RHS
+  T = spasm_triplet_alloc(1, m, 10, 257, true);
+  spasm_add_entry(T, 0, 0, 1);
+  spasm_add_entry(T, 2, 0, 2);
+  spasm_add_entry(T, 4, 0, 3);
+  B = spasm_compress(T);
+  spasm_triplet_free(T);
+
+  xi = malloc(2*n * sizeof(int));
   x = malloc(n * sizeof(spasm_GFp));
   y = malloc(n * sizeof(spasm_GFp));
   for(i = 0; i < n; i++) {
-    x[i] = i + 1;
+    x[i] = 0;
     y[i] = 0;
   }
 
   switch(test) {
-  case 1: // testing dense L-solver
-    spasm_triangular_solve(G, x, 1);
-    break;
-  case 2: // testing dense U-solver
-    spasm_triangular_solve(G, x, 0);
+  case 3: // testing sparse U-solver
+    top = spasm_sparse_forwardsolve(U, B, 0, xi, x, SPASM_IDENTITY_PERMUTATION);
     break;
   }
-// the solution must be in x
 
-  spasm_gaxpy(G, x, y);
+  spasm_gaxpy(U, x, y);
+  spasm_scatter(B->j, B->x, B->p[0], B->p[1], B->prime - 1, y, B->prime);
+
   fail = 0;
   for(i = 0; i < n; i++) {
-    fail |= (y[i] != i + 1);
+    fail |= (y[i] != 0);
   }
 
   if (fail) {
-      printf("not ok %d - %s\n", test, test_name[test-1]);
+      printf("not ok 3 - sparse triangular U-solve\n");
   } else {
-      printf("ok %d - %s\n", test, test_name[test-1]);
+      printf("ok 3 - sparse triangular U-solve\n");
   }
 
+  spasm_csr_free(U);
+  spasm_csr_free(B);
   return 0;
 }
