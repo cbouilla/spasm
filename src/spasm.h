@@ -90,16 +90,18 @@ void spasm_save_csr(FILE *f, const spasm *A);
 /* spasm_permutation.c */
 #define SPASM_IDENTITY_PERMUTATION NULL
 
+/*
 void cs_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 void cs_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 int *spasm_pinv(int const *p, int n);
 spasm *spasm_permute(const spasm * A, const int *pinv, const int *q, int values);
+*/
 
 /* spasm_GFp.c */
 spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 
 /* spasm_scatter.c */
-void spasm_scatter(const int *Ai, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime);
+void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime);
 
 /* spasm_reach.c */
 int spasm_dfs(int j, spasm * G, int top, int *xi, int *pstack, const int *pinv);

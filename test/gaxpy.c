@@ -11,20 +11,21 @@ sage: for (i,j) in M.nonzero_positions():
 ....: out.close()
 sage: V = F^n
 sage: x = V([i + 1 for i in range(n)])
-sage: M*x
+sage: x*M
 */
 #include <stdio.h>
 #include <assert.h>
 #include "spasm.h"
 
-int main(int argc, char **argv) {
-  spasm *T, *C;
+int main() {
+  spasm_triplet *T;
+  spasm *C;
   spasm_GFp *x, *y;
   int i, n;
 
-  T = spasm_load_ctf(stdin, 257);
+  T = spasm_load_triplet(stdin, 257);
   C = spasm_compress(T);
-  spasm_spfree(T);
+  spasm_triplet_free(T);
 
   n = C->n;
   assert(n < C->prime);
@@ -39,5 +40,6 @@ int main(int argc, char **argv) {
     printf("%d\n", y[i]);
   }
 
+  spasm_csr_free(C);
   return 0;
 }
