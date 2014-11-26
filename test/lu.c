@@ -1,8 +1,8 @@
 /*
  * sage utility script to generate random sparse matrix
  *
-sage: F = GF(257)
-sage: n = 100
+sage: F = GF(7)
+sage: n = 4
 sage: out = open("mat.txt", "w")
 sage: M = random_matrix(F, n, n, density=0.25, sparse=True)
 sage: for (i,j) in M.nonzero_positions():
@@ -17,13 +17,19 @@ sage: x*M
 #include <assert.h>
 #include "spasm.h"
 
+/*
+[2 0 0 4]
+[2 0 6 0]
+[5 0 6 0]
+[0 6 0 0]
+*/
+
 int main() {
   spasm_triplet *T;
   spasm *C;
   spasm_lu *LU;
-  int i, n;
 
-  T = spasm_load_triplet(stdin, 257);
+  T = spasm_load_triplet(stdin, 7);
   C = spasm_compress(T);
   spasm_triplet_free(T);
 

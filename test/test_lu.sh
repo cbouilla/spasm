@@ -3,7 +3,7 @@
 echo 1..1
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/m1
+INPUT_MATRIX=$srcdir/Matrix/small
 OUT=$srcdir/Output/lu.1
 EXPECTED=$srcdir/Expected/lu.1
 

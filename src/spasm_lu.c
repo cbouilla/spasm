@@ -137,8 +137,8 @@ spasm_lu *spasm_LU(const spasm * A) {
     Up[n] = unz;
 
     /* remove extra space from L and U */
-    spasm_csr_realloc(L, 0);
-    spasm_csr_realloc(U, 0);
+    spasm_csr_realloc(L, -1);
+    spasm_csr_realloc(U, -1);
     free(x);
     free(xi);
 
