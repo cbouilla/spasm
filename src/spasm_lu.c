@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdbool.h>
 #include "spasm.h"
 
 /* compute a (P)L(QU) decomposition.
@@ -14,13 +15,14 @@ spasm_lu *spasm_LU(const spasm * A) {
     spasm_lu *N;
     spasm_GFp *Lx, *Ux, *x;
     int *Lp, *Lj, *Up, *Uj, *pinv, *xi;
-    int n, m, ipiv, i, j, top, p, lnz, unz;
+    int n, m, ipiv, i, j, top, p, lnz, unz, prime;
 
     /* check inputs */
     assert(A != NULL);
 
     n = A->n;
     m = A->m;
+    prime = A->prime;
 
     /* educated guess of the size of L,U */
     lnz = 4 * spasm_nnz(A) + n;
@@ -36,10 +38,10 @@ spasm_lu *spasm_LU(const spasm * A) {
     N = spasm_malloc( sizeof(spasm_lu) );
 
     /* allocate result L */
-    N->L = L = spasm_csr_alloc(n, n, lnz, 1, 0);
+    N->L = L = spasm_csr_alloc(n, n, lnz, prime, true);
 
     /* allocate result U */
-    N->U = U = spasm_csr_alloc(n, m, unz, 1, 0);
+    N->U = U = spasm_csr_alloc(n, m, unz, prime, true);
 
     /* allocate result pinv */
     N->pinv = pinv = spasm_malloc(m * sizeof(int));
