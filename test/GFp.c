@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include "spasm.h"
 
-int main(int argc, char **argv) {
+int main() {
   int prime, fail;
   spasm_GFp i, j;
 
   printf("1..1\n");
-  
+
   fail = 0;
   prime = 257;
   for(i = 1; i < prime; i++) {

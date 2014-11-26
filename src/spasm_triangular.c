@@ -5,57 +5,81 @@
  * Solving triangular systems, dense RHS
  */
 
-// TODO : merge usolve and lsolve
 
-/*
- * solve G.x=b where x and b are dense.  x=b on input, solution on output.
+/* dense backwards substitution solver. Solve x . L = b where x and b are dense.
  *
- * G is lower-triangular (lo == 1) or upper-triangular (lo == 0)
+ * x=b on input, solution on output.
  *
- * Assumption : the diagonal entry is always present, is always != 0.
+ * L is assumed to be lower-triangular, with non-zero diagonal.
  *
- * If G is lower-triangular, then it is the first one of each column.
- * More precisely, L[j,j] is Lx[ Lp[j] ]
- *
- * If G is upper-triangular, then it is the last one of each column.
- * More precisely, U[j,j] is Ux[ Up[j + 1] - 1 ]
+ * The diagonal entry is the **last** of each column.
+ * More precisely, L[j,j] is Lx[ Lp[j+1] - 1 ]
  */
-void spasm_triangular_solve(const spasm * G, spasm_GFp * x, int lo) {
-  int p, q, j, n, from, to, step, *Gp, *Gi, prime;
-    spasm_GFp *Gx;
+void spasm_dense_backsolve(const spasm * L, spasm_GFp * x) {
+  int i, n, *Lp, *Lj, prime;
+    spasm_GFp *Lx;
 
     /* check inputs */
     assert(x != NULL);
-    assert(spasm_is_csc(G));
+    assert(L != NULL);
 
-    n = G->n;
-    Gp = G->p;
-    Gi = G->i;
-    Gx = G->x;
-    prime = G->prime;
+    n = L->n;
+    Lp = L->p;
+    Lj = L->j;
+    Lx = L->x;
+    prime = L->prime;
 
-    from = lo ? 0 : n-1;
-    to   = lo ? n : -1;
-    step = lo ? 1 : -1;
+    for (i = n - 1; i >= 0; i--) {
 
-    for (j = from; j != to; j += step) {
       /* check diagonal entry */
-      if (lo) {
-	assert( Gi[ Gp[j] ] == j);
-      } else {
-	assert( Gi[ Gp[j + 1] - 1] == j );
-      }
-      const spasm_GFp diagonal_entry = lo ? Gx[ Gp[j] ] :  Gx[ Gp[j + 1] - 1 ];
+      const spasm_GFp diagonal_entry = Lx[ Lp[i + 1] - 1 ];
+      assert( diagonal_entry != 0 );
 
       // axpy - inplace
-      x[j] = (x[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+      x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
 
-      p = lo ? (Gp[j] + 1) : Gp[j];         /* lo: L(j,j) 1st entry */
-      q = lo ? (Gp[j + 1]) : Gp[j + 1] - 1; /* up: U(j,j) last entry */
-
-      spasm_scatter(Gi, Gx, p, q, prime - x[j], x, prime);
+      spasm_scatter(Lj, Lx, Lp[i], Lp[i + 1] - 1, prime - x[i], x, prime);
     }
 }
+
+/* dense forwards substitution solver. Solve x . U = b where x and b are dense.
+ *
+ * x=b on input, solution on output.
+ *
+ * U is upper-triangular
+ *
+ * Assumption : the diagonal entry is always present, is always != 0.
+ *
+ * The diagonal entry is the first one of each row.
+ * More precisely, U[i,i] is Ux[ Up[i] ]
+ *
+ */
+void spasm_dense_forwardsolve(const spasm * U, spasm_GFp * x) {
+  int i, n, *Up, *Uj, prime;
+    spasm_GFp *Ux;
+
+    /* check inputs */
+    assert(x != NULL);
+    assert(U != NULL);
+
+    n = U->n;
+    Up = U->p;
+    Uj = U->j;
+    Ux = U->x;
+    prime = U->prime;
+
+    for (i = 0; i < n; i++) {
+      /* check diagonal entry */
+      const spasm_GFp diagonal_entry = Ux[ Up[i] ];
+      assert( diagonal_entry != 0 );
+
+      // axpy - inplace
+      x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+
+      spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[i], x, prime);
+    }
+}
+
 
 
 /*************** Triangular solving with sparse RHS
@@ -67,22 +91,22 @@ void spasm_triangular_solve(const spasm * G, spasm_GFp * x, int lo) {
  *
  */
 int spasm_sparse_triangular_solve(spasm * G, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv, int lo) {
-  int j, J, p, q, px, top, n, prime, *Gp, *Gi, *Bp, *Bi;
+  int j, J, p, q, px, top, n, prime, *Gp, *Gj, *Bp, *Bj;
     spasm_GFp *Gx, *Bx;
 
-    assert(spasm_is_csc(G));
-    assert(spasm_is_csc(B));
+    assert(G != NULL);
+    assert(B != NULL);
     assert(xi != NULL);
     assert(x != NULL);
 
     n = G->n;
     Gp = G->p;
-    Gi = G->i;
+    Gj = G->j;
     Gx = G->x;
     prime = G->prime;
 
     Bp = B->p;
-    Bi = B->i;
+    Bj = B->j;
     Bx = B->x;
 
     /* xi[top : n] = Reach(B(:,k)) */
@@ -95,7 +119,7 @@ int spasm_sparse_triangular_solve(spasm * G, const spasm *B, int k, int *xi, spa
 
     /* scatter B into x */
     for (p = Bp[k]; p < Bp[k + 1]; p++) {
-        x[ Bi[p] ] = Bx[p];
+        x[ Bj[p] ] = Bx[p];
     }
 
     /* iterate over the (precomputed) pattern of x (=the solution) */
@@ -119,9 +143,9 @@ int spasm_sparse_triangular_solve(spasm * G, const spasm *B, int k, int *xi, spa
       q = lo ? (Gp[J + 1]) : (Gp[J + 1] - 1); /* up: U(j,j) last entry */
 
       // this is a scatter
-      spasm_scatter(Gi, Gx, p, q, prime - x[j], x, prime);
+      spasm_scatter(Gj, Gx, p, q, prime - x[j], x, prime);
       //      for (; p < q; p++) {
-      //	x[Gi[p]] -= Gx[p] * x[j];   /* x(i) -= G(i,j) * x(j) */
+      //	x[Gj[p]] -= Gx[p] * x[j];   /* x(i) -= G(i,j) * x(j) */
       //      }
     }
     return top;
