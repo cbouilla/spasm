@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..3
+echo 1..5
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/small
@@ -13,3 +13,11 @@ INPUT_MATRIX=$srcdir/Matrix/medium
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/singular
 ./lu 3 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/rectangular_h
+./lu 4 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/rectangular_l
+./lu 5 < $INPUT_MATRIX
