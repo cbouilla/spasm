@@ -61,11 +61,7 @@ int main(int argc, char **argv) {
     y[i] = 0;
   }
 
-  switch(test) {
-  case 3: // testing sparse U-solver
-    top = spasm_sparse_forwardsolve(U, B, 0, xi, x, SPASM_IDENTITY_PERMUTATION);
-    break;
-  }
+  top = spasm_sparse_forwardsolve(U, B, 0, xi, x, SPASM_IDENTITY_PERMUTATION);
 
   spasm_gaxpy(U, x, y);
   spasm_scatter(B->j, B->x, B->p[0], B->p[1], B->prime - 1, y, B->prime);
