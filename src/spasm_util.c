@@ -36,7 +36,7 @@ void * spasm_realloc(void *ptr, size_t size) {
 
 
 /* allocate a sparse matrix (compressed-row form) */
-spasm *spasm_csr_alloc(int m, int n, int nzmax, int prime, int with_values) {
+spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
   spasm *A;
 
     A = spasm_malloc(sizeof(spasm)); /* allocate the cs struct */
@@ -52,7 +52,7 @@ spasm *spasm_csr_alloc(int m, int n, int nzmax, int prime, int with_values) {
 
 
 /* allocate a sparse matrix (triplet form) */
-spasm_triplet *spasm_triplet_alloc(int m, int n, int nzmax, int prime, int with_values) {
+spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_values) {
   spasm_triplet *A;
 
     A = spasm_malloc(sizeof(spasm_triplet));

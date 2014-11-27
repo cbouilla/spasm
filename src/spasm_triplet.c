@@ -34,7 +34,7 @@ spasm * spasm_compress(const spasm_triplet *T) {
     nz = T->nz;
 
     /* allocate result */
-    C = spasm_csr_alloc(m, n, nz, T->prime, Tx != NULL);
+    C = spasm_csr_alloc(n, m, nz, T->prime, Tx != NULL);
 
     /* get workspace */
     w = spasm_calloc(n, sizeof(int));

@@ -55,10 +55,10 @@ spasm_lu *spasm_LU(const spasm * A) {
     unz = 4 * spasm_nnz(A) + n;
 
     /* get GFp workspace */
-    x = spasm_malloc(n * sizeof(spasm_GFp));
+    x = spasm_malloc(m * sizeof(spasm_GFp));
 
     /* get int workspace */
-    xi = spasm_malloc(2 * n * sizeof(int));
+    xi = spasm_malloc(2 * m * sizeof(int));
 
     /* allocate result */
     N = spasm_malloc(sizeof(spasm_lu));
@@ -76,7 +76,7 @@ spasm_lu *spasm_LU(const spasm * A) {
     Up = U->p;
 
     /* clear workspace */
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < m; i++) {
         x[i] = 0;
     }
 
