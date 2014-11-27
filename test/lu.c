@@ -2,7 +2,7 @@
  * sage utility script to generate random sparse matrix
  *
 sage: F = GF(7)
-sage: n = 10
+sage: n = 128
 sage: M = matrix(F, n, n, sparse=True)
 sage: while M.is_singular():
 sage:     M = random_matrix(F, n, n, density=0.33, sparse=True)
@@ -10,7 +10,7 @@ sage: out = open("mat.txt", "w")
 sage: for (i,j) in M.nonzero_positions():
 ....:     out.write("{0} {1} {2}\n".format(i, j, M[i,j]))
 ....:
-....: out.close()
+sage: out.close()
 */
 #include <stdio.h>
 #include <assert.h>
@@ -50,13 +50,13 @@ int main(int argc, char **argv) {
   for(i = 0; i < n; i++) {
     printf("checking i = %d\n", i);
 
-    for(i = 0; i < n; i++) {
-      x[i] = 0;
-      u[i] = 0;
+    for(j = 0; j < n; j++) {
+      x[j] = 0;
+      u[j] = 0;
     }
-    for(i = 0; i < m; i++) {
-      y[i] = 0;
-      v[i] = 0;
+    for(j = 0; j < m; j++) {
+      y[j] = 0;
+      v[j] = 0;
     }
     x[i] = 1;
 
