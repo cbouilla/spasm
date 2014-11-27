@@ -24,21 +24,64 @@ sage: x*M
 [0 6 0 0]
 */
 
-int main() {
+int main(int argc, char **argv) {
   spasm_triplet *T;
-  spasm *C;
+  spasm *A;
   spasm_lu *LU;
+  spasm_GFp *x, *y, *u, *v;
+  int n, m, test, i, j, fail;
+
+  assert(argc > 1);
+  test = atoi(argv[1]);
 
   T = spasm_load_triplet(stdin, 7);
-  C = spasm_compress(T);
+  A = spasm_compress(T);
   spasm_triplet_free(T);
 
-  LU = spasm_LU(C);
+  n = A->n;
+  m = A->m;
 
-  spasm_save_csr(stdout, LU->L);
-  fprintf(stdout, "--------------------------------------\n");
-  spasm_save_csr(stdout, LU->U);
+  x = malloc(n * sizeof(spasm_GFp));
+  y = malloc(m * sizeof(spasm_GFp));
+  u = malloc(n * sizeof(spasm_GFp));
+  v = malloc(m * sizeof(spasm_GFp));
 
-  spasm_csr_free(C);
+  LU = spasm_LU(A);
+
+  for(i = 0; i < n; i++) {
+    printf("checking i = %d\n", i);
+
+    for(i = 0; i < n; i++) {
+      x[i] = 0;
+      u[i] = 0;
+    }
+    for(i = 0; i < m; i++) {
+      y[i] = 0;
+      v[i] = 0;
+    }
+    x[i] = 1;
+
+    spasm_gaxpy(A, x, y); // y <- x*A
+    spasm_gaxpy(LU->L, x, u); // u <- x*L
+    spasm_gaxpy(LU->U, u, v); // v <- (x*L)*U
+
+    fail = 0;
+    for(j = 0; j < m; j++) {
+      if (y[j] != v[j]) {
+	printf("not ok %d - L*U == A\n", test);
+	exit(1);
+      }
+    }
+  }
+
+  printf("ok %d - L*U == A\n", test);
+
+  spasm_csr_free(A);
+  spasm_free_LU(LU);
+  free(x);
+  free(y);
+  free(u);
+  free(v);
+  
   return 0;
 }

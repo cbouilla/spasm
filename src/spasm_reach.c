@@ -18,7 +18,6 @@ static inline void spasm_mark(int *w, int j) {
     w[j] = spasm_flip(w[j]);
 }
 
-
 /*
  * depth-first-search of the graph of a matrix, starting at node j. All nodes
  * encountered during the graph traversal are marked, and added to xi.
@@ -157,7 +156,7 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
             top = n;
         /*
          * iterates over the k-th row of B.  For each column index j present
-         * in B[:,k], check if i is in the pattern (i.e. if it is marked). If
+         * in B[k], check if i is in the pattern (i.e. if it is marked). If
          * not, start a DFS from i to add all nodes reachable therefrom to
          * the pattern.
          */

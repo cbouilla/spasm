@@ -35,13 +35,6 @@ typedef struct  {   /* matrix in compressed-column or triplet form */
 } spasm_triplet;
 
 
-typedef struct  {   /* matrix in compressed-column or triplet form */
-  spasm *L;
-  spasm *U;
-  int   *pinv;
-} spasm_lu;
-
-
 /* example (this is Matrix/t1)
 
     [ 4.5  0.0  3.2  0.0 ]
@@ -123,7 +116,15 @@ void spasm_dense_forwardsolve(const spasm * G, spasm_GFp * x);
 int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
 
 /* spasm_lu.c */
+
+typedef struct  {
+  spasm *L;
+  spasm *U;
+  int   *pinv;
+} spasm_lu;
+
 spasm_lu *spasm_LU(const spasm * A);
+void spasm_free_LU(spasm_lu *X);
 
 
 static inline int spasm_max(int a, int b) {

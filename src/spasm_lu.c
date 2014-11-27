@@ -2,13 +2,37 @@
 #include <stdbool.h>
 #include "spasm.h"
 
-/* compute a (P)L(QU) decomposition.
- *
- * L is always square of size n * n
- * U has the same size as A
- *
- * pinv[j] = i if the pivot on column j is on row i. -1 if no pivot (yet) found on column j.
- *
+void print_vec_(int *Aj, spasm_GFp * Ax, int p, int q, int n) {
+    spasm_GFp x[n];
+    int i, k;
+
+    for (i = 0; i < n; i++) {
+        x[i] = 0;
+    }
+
+    for (k = p; k < q; k++) {
+        x[Aj[k]] = Ax[k];
+    }
+
+    printf("[ ");
+    for (i = 0; i < n; i++) {
+        printf("%d ", x[i]);
+    }
+    printf("]");
+}
+
+void print_vec(const spasm * A, int i) {
+    print_vec_(A->j, A->x, A->p[i], A->p[i + 1], A->m);
+}
+
+/*
+ * compute a (P)L(QU) decomposition.
+ * 
+ * L is always square of size n * n U has the same size as A
+ * 
+ * pinv[j] = i if the pivot on column j is on row i. -1 if no pivot (yet) found
+ * on column j.
+ * 
  */
 spasm_lu *spasm_LU(const spasm * A) {
     spasm *L, *U;
@@ -24,6 +48,8 @@ spasm_lu *spasm_LU(const spasm * A) {
     m = A->m;
     prime = A->prime;
 
+    printf("[DEBUG LU] input matrix is %d x %d modulo %d\n", n, m, prime);
+
     /* educated guess of the size of L,U */
     lnz = 4 * spasm_nnz(A) + n;
     unz = 4 * spasm_nnz(A) + n;
@@ -35,7 +61,7 @@ spasm_lu *spasm_LU(const spasm * A) {
     xi = spasm_malloc(2 * n * sizeof(int));
 
     /* allocate result */
-    N = spasm_malloc( sizeof(spasm_lu) );
+    N = spasm_malloc(sizeof(spasm_lu));
 
     /* allocate result L */
     N->L = L = spasm_csr_alloc(n, n, lnz, prime, true);
@@ -51,85 +77,142 @@ spasm_lu *spasm_LU(const spasm * A) {
 
     /* clear workspace */
     for (i = 0; i < n; i++) {
-	x[i] = 0;
+        x[i] = 0;
     }
 
     /* no rows pivotal yet */
     for (i = 0; i < m; i++) {
-	pinv[i] = -1;
+        pinv[i] = -1;
     }
 
-    /* no rows of L yet */
+    /* no rows of U yet */
     for (i = 0; i <= n; i++) {
-	Lp[i] = 0;
+        Up[i] = 0;
     }
     lnz = unz = 0;
 
     /* compute L[i] and U[i] */
     for (i = 0; i < n; i++) {
+        printf("[DEBUG LU] i = %d. A[i] = ", i);
+        print_vec(A, i);
+        printf("\n");
 
-      /* --- Triangular solve --------------------------------------------- */
-	Lp[i] = lnz;            /* L[i] starts here */
-	Up[i] = unz;            /* U[i] starts here */
+        /* --- Triangular solve --------------------------------------------- */
+        Lp[i] = lnz;            /* L[i] starts here */
+        Up[i] = unz;            /* U[i] starts here */
 
-	/* not enough room in L/U ? realloc twice the size */
-	if (lnz + n > L->nzmax) {
-	  spasm_csr_realloc(L, 2 * L->nzmax + n);
+        /* not enough room in L/U ? realloc twice the size */
+        if (lnz + n > L->nzmax) {
+            spasm_csr_realloc(L, 2 * L->nzmax + n);
+        }
+        if (unz + n > U->nzmax) {
+            spasm_csr_realloc(U, 2 * U->nzmax + n);
+        }
+        Lj = L->j;
+        Lx = L->x;
+        Uj = U->j;
+        Ux = U->x;
+        //permutation des lignes ?
+
+        /* Solve x * U = A[i] */
+	for (p = 0; p < i; p++) {
+            printf("U[%d] = ", p);
+            print_vec(U, p);
+            printf("\n");
+        }
+        top = spasm_sparse_forwardsolve(U, A, i, xi, x, pinv);
+
+	/* check resolution */
+	spasm_GFp y[n];
+	for(p = 0; p < n; p++) {
+	  y[p] = 0;
 	}
-	if (unz + n > U->nzmax) {
-	  spasm_csr_realloc(U, 2 * U->nzmax + n);
+	for(p = top; p < n; p++) {
+	  j = xi[p];
+	  if (pinv[j] == -1) {
+	    y[j] = (y[j] + x[j]) % A->prime;
+	  } else {
+	    spasm_scatter(Uj, Ux, Up[ pinv[j] ], Up[pinv[j] + 1], x[j], y, A->prime);
+	  }
 	}
-	Lj = L->j;
-	Lx = L->x;
-	Uj = U->j;
-	Ux = U->x;
-	// permutation des lignes ?
+	    
+        printf("[DEBUG LU] x = [");
+        for (int r = 0; r < n; r++) {
+            printf("%d ", x[r]);
+        }
+        printf("]\n");
+        printf("[DEBUG LU] y = [");
+        for (int r = 0; r < n; r++) {
+            printf("%d ", y[r]);
+        }
+        printf("]\n");
 
-	/* Solve x * U = A[i] */
-	top = spasm_sparse_forwardsolve(U, A, i, xi, x, pinv);
 
-	/* --- Find pivot and dispatch coeffs into L and U ------------------------ */
-	ipiv = -1; // index of best pivot so far.
+
+
+        /*
+         * --- Find pivot and dispatch coeffs into L and U
+         * ------------------------
+         */
+        ipiv = m + 1;
+        /* index of best pivot so far.*/
+	/* attention, il faut que le pivot soit le premier de la ligne... */
 
 	for (p = top; p < n; p++) {
-	  /* x[j] is (generically) nonzero */
-	  j = xi[p];
+            /* x[j] is (generically) nonzero */
+            j = xi[p];
 
-	  /* if x[j] == 0 (numerical cancelation), we just ignore it */
-	  if (x[j] == 0) {
-	    continue;
-	  }
+            /* if x[j] == 0 (numerical cancelation), we just ignore it */
+            if (x[j] == 0) {
+                continue;
+            }
 
-	    if (pinv[j] < 0) {
-	      /* column j is not yet pivotal ? */
-	      /* send coefficient into U[i,j] */
-	      Uj[unz] = j;
-	      Ux[unz] = x[j];
-	      unz++;
+            if (pinv[j] < 0) {
+                /* column j is not yet pivotal ? */
 
-	      /* have found the pivot on row i yet ? */
-	      if (ipiv == -1) {
-		ipiv = j;
-		pinv[j] = i;
-	      }
-	    } else {
-	      /* column j is pivotal */
-	      /* x[j] is the entry L[i, pinv[j] ] */
-		Lj[lnz] = pinv[j];
-		Lx[lnz] = x[j];
-		lnz++;
-	    }
+                /* have found the pivot on row i yet ? */
+                if (j < ipiv) {
+                    ipiv = j;
+                }
+            } else {
+                /* column j is pivotal */
+                /* x[j] is the entry L[i, pinv[j] ] */
+                Lj[lnz] = pinv[j];
+                Lx[lnz] = x[j];
+                lnz++;
+            }
+        }
 
-	    /* clean x for the next iteration */
-	    x[j] = 0;
-	}
+        /* pivot found */
+        if (ipiv != m + 1) {
 
-	/* set L[i, i] = 1 if a pivot has been found */
-	if (ipiv != -1 ) {
+	  /* L[i,i] <--- 1 */
 	  Lj[lnz] = i;
 	  Lx[lnz] = 1;
 	  lnz++;
+	  pinv[ ipiv ] = i;
+
+	  /* pivot must be the first entry in U[i] */
+	  Uj[unz] = ipiv;
+	  Ux[unz] = x[ ipiv ];
+	  unz++;
+        }
+
+	/* send remaining non-pivot coefficients into U */
+	for (p = top; p < n; p++) {
+	  j = xi[p];
+
+	  if (pinv[j] < 0) {
+	    Uj[unz] = j;
+	    Ux[unz] = x[j];
+	    unz++;
+	  }
+	  /* clean x for the next iteration */
+	  x[j] = 0;
 	}
+
+	printf("[DEBUG LU] pivot choisi colonne %d\n", ipiv);
+        printf("-----------------------------------------\n");
     }
 
     /* --- Finalize L and U ------------------------------------------------- */
@@ -143,4 +226,12 @@ spasm_lu *spasm_LU(const spasm * A) {
     free(xi);
 
     return N;
+}
+
+void spasm_free_LU(spasm_lu *X) {
+  assert( X != NULL );
+  spasm_csr_free(X->L);
+  spasm_csr_free(X->U);
+  free(X->pinv);
+  free(X);
 }
