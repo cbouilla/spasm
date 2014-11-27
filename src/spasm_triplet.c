@@ -11,7 +11,7 @@ void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x) {
   }
 
   if (T->x != NULL) {
-    T->x[ T->nz ] = x;
+    T->x[ T->nz ] = x % T->prime;
   }
   T->i[ T->nz ] = i;
   T->j[ T->nz ] = j;
