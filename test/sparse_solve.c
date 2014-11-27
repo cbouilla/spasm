@@ -76,9 +76,9 @@ int main(int argc, char **argv) {
   }
 
   if (fail) {
-      printf("not ok 3 - sparse triangular U-solve\n");
+    printf("not ok %d - sparse triangular U-solve\n", test);
   } else {
-      printf("ok 3 - sparse triangular U-solve\n");
+    printf("ok %d - sparse triangular U-solve\n", test);
   }
 
   spasm_csr_free(U);
