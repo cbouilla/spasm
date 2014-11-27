@@ -2,16 +2,15 @@
  * sage utility script to generate random sparse matrix
  *
 sage: F = GF(7)
-sage: n = 4
+sage: n = 10
+sage: M = matrix(F, n, n, sparse=True)
+sage: while M.is_singular():
+sage:     M = random_matrix(F, n, n, density=0.33, sparse=True)
 sage: out = open("mat.txt", "w")
-sage: M = random_matrix(F, n, n, density=0.25, sparse=True)
 sage: for (i,j) in M.nonzero_positions():
 ....:     out.write("{0} {1} {2}\n".format(i, j, M[i,j]))
 ....:
 ....: out.close()
-sage: V = F^n
-sage: x = V([i + 1 for i in range(n)])
-sage: x*M
 */
 #include <stdio.h>
 #include <assert.h>
