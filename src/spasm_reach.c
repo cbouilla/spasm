@@ -149,7 +149,7 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
             assert(B != NULL);
             assert(xi != NULL);
 
-            n = G->m;
+            m = G->m;
             Bp = B->p;
             Bj = B->j;
             Gp = G->p;
