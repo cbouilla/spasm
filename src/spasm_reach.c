@@ -33,13 +33,17 @@ static inline void spasm_mark(int *w, int j) {
  *
  * return value : top
  */
-int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) {
+
+/* TODO / PROBLEM : pour l'instant, il est impossible de "marquer" les lignes... qui n'existent pas (identité implicite). Il va falloir un autre tableau en plus pour les marques.
+ */
+int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv) {
     int j, p, p2, done, inew, head, *Gp, *Gj;
 
     /* check inputs */
     assert(G != NULL);
     assert(xi != NULL);
     assert(pstack != NULL);
+    assert(marks != NULL);
 
     Gp = G->p;
     Gj = G->j;
@@ -60,24 +64,21 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
          * neighbors are Gj[ Gp[jnew] : Gp[jnew + 1] ]
          * UNSEEN neighbors are Gj[ pstack[head] : Gp[jnew + 1] ] */
 
-        if (!spasm_is_marked(Gp, i)) {
+        if (!marks[i]) {
             /* mark node i as seen. This is done only once. */
-            spasm_mark(Gp, i);
+  	    marks[i] = 1;
             /*
              * Initialize pstack for this node: first unseen neighbor is...
              * the first neighbor
              */
-            pstack[head] = (inew < 0) ? 0 : spasm_unflip( Gp[inew] );
-	    /* Note: unflip does nothing if not flipped.
-	       So it can be used to simply get the "actual", unaltered value.*/
+            pstack[head] = (inew < 0) ? 0 : Gp[inew];
         }
 
 	/* node j done if no unvisited neighbors */
 	done = 1;
 
 	/* index of last neighbor */
-	p2 = (inew < 0) ? 0 : spasm_unflip( Gp[inew + 1] );
-	//Note:same unflip trick
+	p2 = (inew < 0) ? 0 : Gp[inew + 1];
 
 	/* examine all yet-unseen neighbors of i */
 	for (p = pstack[head]; p < p2; p++) {
@@ -86,7 +87,7 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
 	  j = Gj[p];
 
 	  /* if already visisted, skip */
-	  if (!spasm_is_marked(Gp, j)) {
+	  if (!marks[j]) {
 	    /*
 	     * interrupt the enumeration of neighbors of node inew,
 	     * and deal with j instead.
@@ -130,7 +131,7 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
      *
      * k : k-th column of B is used.
      *
-     * xi: size 2n. Used as workspace. Output in xi[top:n]
+     * xi: size 3m. Used as workspace. Output in xi[top:m]
      *
      * pinv: mapping of rows to columns of G.
      *
@@ -142,7 +143,7 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
      * xi [n...2n-1] used as workspace
      */
     int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv) {
-        int p, m, top, *Bp, *Bj, *Gp;
+      int p, m, top, *Bp, *Bj, *Gp, *pstack, *marks;
 
         /* check inputs */
             assert(G != NULL);
@@ -154,6 +155,13 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
             Bj = B->j;
             Gp = G->p;
             top = m;
+
+	    pstack = xi + m;
+	    marks = pstack + m;
+	    for (p = 0; p < m; p++) {
+	      marks[p] = 0;
+	    }
+
         /*
          * iterates over the k-th row of B.  For each column index j present
          * in B[k], check if i is in the pattern (i.e. if it is marked). If
@@ -161,13 +169,10 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
          * the pattern.
          */
         for (p = Bp[k]; p < Bp[k + 1]; p++) {
-            if (!spasm_is_marked(Gp, Bj[p])) {
-                top = spasm_dfs(Bj[p], G, top, xi, xi + m, pinv);
+            if (!marks[ Bj[p] ]) {
+	      top = spasm_dfs(Bj[p], G, top, xi, pstack, marks, pinv);
             }
         }
         /* restore G : unmark all marked nodes. */
-        for (p = top; p < m; p++) {
-            spasm_mark(Gp, xi[p]);
-        }
         return top;
     }

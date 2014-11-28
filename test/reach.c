@@ -5,7 +5,7 @@
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *U;
-  int i, n, m, root, *xi, *pstack, *pinv;
+  int i, n, m, root, *xi, *pstack, *marks, *pinv;
 
   assert(argc > 1);
   root = atoi(argv[1]);
@@ -18,8 +18,12 @@ int main(int argc, char **argv) {
   m = U->m;
   assert( n <= m );
 
-  pstack = malloc(n * sizeof(int));
-  xi = malloc(n * sizeof(int));
+  pstack = malloc(m * sizeof(int));
+  xi = malloc(m * sizeof(int));
+  marks = malloc(m * sizeof(int));
+  for(i = 0 ; i < m; i++) {
+    marks[i] = 0;
+  }
 
   pinv = NULL;
   if (n < m) { /* upper-trapezoidal */
@@ -32,8 +36,8 @@ int main(int argc, char **argv) {
     }
   }
 
-  i = spasm_dfs(root, U, n, xi, pstack, pinv);
-  for( ; i < n; i++) {
+  i = spasm_dfs(root, U, m, xi, pstack, marks, pinv);
+  for( ; i < m; i++) {
     printf("%d\n", xi[i]);
   }
 

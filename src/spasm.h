@@ -104,7 +104,8 @@ spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime);
 
 /* spasm_reach.c */
-int spasm_dfs(int j, spasm * G, int top, int *xi, int *pstack, const int *pinv);
+
+int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
 int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv);
 
 /* spasm_gaxpy.c */

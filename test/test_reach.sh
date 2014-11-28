@@ -29,10 +29,20 @@ fi
 INPUT_MATRIX=$srcdir/Matrix/upper_trapeze
 OUT=$srcdir/Output/reach.3
 EXPECTED=$srcdir/Expected/reach.3
-./reach 1 < $INPUT_MATRIX > $OUT
+./reach 5 < $INPUT_MATRIX > $OUT
 
 if diff -w $OUT $EXPECTED >/dev/null ; then
   echo 'ok 3 - DFS (m > n)'
 else
   echo 'not ok 3 - DFS (m > n)'
+fi
+
+OUT=$srcdir/Output/reach.4
+EXPECTED=$srcdir/Expected/reach.4
+./reach 24 < $INPUT_MATRIX > $OUT
+
+if diff -w $OUT $EXPECTED >/dev/null ; then
+  echo 'ok 4 - DFS (m > n)'
+else
+  echo 'not ok 4 - DFS (m > n)'
 fi
