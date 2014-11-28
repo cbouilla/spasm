@@ -142,18 +142,18 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
      * xi [n...2n-1] used as workspace
      */
     int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv) {
-        int p, n, top, *Bp, *Bj, *Gp;
+        int p, m, top, *Bp, *Bj, *Gp;
 
         /* check inputs */
             assert(G != NULL);
             assert(B != NULL);
             assert(xi != NULL);
 
-            n = G->n;
+            n = G->m;
             Bp = B->p;
             Bj = B->j;
             Gp = G->p;
-            top = n;
+            top = m;
         /*
          * iterates over the k-th row of B.  For each column index j present
          * in B[k], check if i is in the pattern (i.e. if it is marked). If
@@ -162,11 +162,11 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, const int *pinv) 
          */
         for (p = Bp[k]; p < Bp[k + 1]; p++) {
             if (!spasm_is_marked(Gp, Bj[p])) {
-                top = spasm_dfs(Bj[p], G, top, xi, xi + n, pinv);
+                top = spasm_dfs(Bj[p], G, top, xi, xi + m, pinv);
             }
         }
         /* restore G : unmark all marked nodes. */
-        for (p = top; p < n; p++) {
+        for (p = top; p < m; p++) {
             spasm_mark(Gp, xi[p]);
         }
         return top;

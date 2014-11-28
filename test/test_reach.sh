@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..2
+echo 1..3
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/g1
@@ -23,4 +23,16 @@ if diff -w $OUT $EXPECTED >/dev/null ; then
   echo 'ok 2 - DFS'
 else
   echo 'not ok 2 - DFS'
+fi
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/upper_trapeze
+OUT=$srcdir/Output/reach.3
+EXPECTED=$srcdir/Expected/reach.3
+./reach 1 < $INPUT_MATRIX > $OUT
+
+if diff -w $OUT $EXPECTED >/dev/null ; then
+  echo 'ok 3 - DFS (m > n)'
+else
+  echo 'not ok 3 - DFS (m > n)'
 fi
