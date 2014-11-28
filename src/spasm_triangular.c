@@ -84,16 +84,18 @@ void spasm_dense_forwardsolve(const spasm * U, spasm_GFp * x) {
 
 /*************** Triangular solving with sparse RHS
  *
- * solve x * U = B[k], where U is upper triangular.
+ * solve x * U = B[k], where U is (permuted) upper triangular.
+ *
+ * x has size m (number of columns of U, paradoxically).
  *
  * when this function returns, the solution scattered in x, and its pattern
- * is given in xi[top : n].
+ * is given in xi[top : m].
  *
  * top is the return value.
  *
  */
 int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
-  int i, I, p, px, top, n, prime, *Up, *Uj, *Bp, *Bj;
+  int i, I, p, px, top, n, m, prime, *Up, *Uj, *Bp, *Bj;
     spasm_GFp *Ux, *Bx;
 
     assert(U != NULL);
@@ -102,6 +104,7 @@ int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_G
     assert(x != NULL);
 
     n = U->n;
+    m = U->m;
     Up = U->p;
     Uj = U->j;
     Ux = U->x;
@@ -125,7 +128,7 @@ int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_G
     }
 
     printf("[DEBUG sp-U-solve] start with x = [ ");
-    for(px = 0; px < n; px++) {
+    for(px = 0; px < m; px++) {
       printf("%d ", x[px]);
     }
     printf("]\n");
@@ -133,7 +136,7 @@ int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_G
     // question : est-ce que xi est dans le bon sens ?!?
 
     /* iterate over the (precomputed) pattern of x (= the solution) */
-    for (px = top; px < n; px++) {
+    for (px = top; px < m; px++) {
       /* x[i] is nonzero */
       i = xi[px];
 
@@ -155,7 +158,7 @@ int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_G
       spasm_scatter(Uj, Ux, Up[I] + 1, Up[I + 1], prime - x[i], x, prime);
 
       printf("[DEBUG sp-U-solve] x = [ ");
-      for(int r = 0; r < n; r++) {
+      for(int r = 0; r < m; r++) {
 	printf("%d ", x[r]);
       }
       printf("]\n");

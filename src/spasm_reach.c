@@ -137,10 +137,10 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, int *marks, const
      *
      * return value : top
      *
-     * xi [top...n-1] = nodes reachable from graph of G*P'
+     * xi [top...m-1] = nodes reachable from graph of G*P'
      *  via nodes in B(:,k).
      *
-     * xi [n...2n-1] used as workspace
+     * xi [m...3n-1] used as workspace
      */
     int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv) {
       int p, m, top, *Bp, *Bj, *Gp, *pstack, *marks;
