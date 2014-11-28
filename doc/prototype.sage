@@ -52,7 +52,7 @@ for i in range(n):
         U[i - defficiency, ipiv] = x[ipiv]
         L[i, i - defficiency] = 1
 
-    # enregistrement des coeffs de U
+    # enregistrement des autres coeffs de U
     for j in range(m):
         if x[j] != 0:
             if qinv[j] == -1:
@@ -81,8 +81,8 @@ for i in range(m):
         Q[m-k,i] = 1
         k += 1
 
-LL = (P*L)[:,:n-defficiency]
-UU = (U*Q.T)[:n-defficiency]
+LL = (P*L)[:,:n-defficiency] # keep only the first (n-defficiency) columns
+UU = (U*Q.T)[:n-defficiency] # keep only the first (n-defficiency) rows
 
 assert P.T*LL*UU*Q == A
 
