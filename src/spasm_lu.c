@@ -27,12 +27,15 @@ void print_vec(const spasm * A, int i) {
 
 /*
  * compute a (P)L(QU) decomposition.
- * 
- * L is always square of size n * n U has the same size as A
- * 
+ *
+ * r = min(n, m) is an upper-bound on the rank of A
+ *
+ * L n * r
+ * U is r * m
+ *
  * pinv[j] = i if the pivot on column j is on row i. -1 if no pivot (yet) found
  * on column j.
- * 
+ *
  */
 spasm_lu *spasm_LU(const spasm * A) {
     spasm *L, *U;
@@ -50,6 +53,13 @@ spasm_lu *spasm_LU(const spasm * A) {
 
     printf("[DEBUG LU] input matrix is %d x %d modulo %d\n", n, m, prime);
 
+    for (p = 0; p < n; p++) {
+            printf("A[%d] = ", p);
+            print_vec(A, p);
+            printf("\n");
+        }
+
+
     /* educated guess of the size of L,U */
     lnz = 4 * spasm_nnz(A) + n;
     unz = 4 * spasm_nnz(A) + n;
@@ -58,7 +68,7 @@ spasm_lu *spasm_LU(const spasm * A) {
     x = spasm_malloc(m * sizeof(spasm_GFp));
 
     /* get int workspace */
-    xi = spasm_malloc(2 * m * sizeof(int));
+    xi = spasm_malloc(3 * m * sizeof(int));
 
     /* allocate result */
     N = spasm_malloc(sizeof(spasm_lu));
@@ -93,7 +103,8 @@ spasm_lu *spasm_LU(const spasm * A) {
 
     /* compute L[i] and U[i] */
     for (i = 0; i < n; i++) {
-        printf("[DEBUG LU] i = %d. A[i] = ", i);
+      printf("[DEBUG LU] i = %d\n", i);
+      printf("A[i] = ");
         print_vec(A, i);
         printf("\n");
 
@@ -114,20 +125,32 @@ spasm_lu *spasm_LU(const spasm * A) {
         Ux = U->x;
         //permutation des lignes ?
 
-        /* Solve x * U = A[i] */
 	for (p = 0; p < i; p++) {
             printf("U[%d] = ", p);
             print_vec(U, p);
             printf("\n");
         }
+	printf("-----------------\n");
+	for (p = 0; p < i; p++) {
+            printf("L[%d] = ", p);
+            print_vec(L, p);
+            printf("\n");
+        }
+
+        /* Solve x * U = A[i] */
+
+	// bien nécessaire ?
+	for(p = 0; p < m; p++) {
+	  x[p] = 0;
+	}
         top = spasm_sparse_forwardsolve(U, A, i, xi, x, pinv);
 
 	/* check resolution */
-	spasm_GFp y[n];
-	for(p = 0; p < n; p++) {
+	spasm_GFp y[m];
+	for(p = 0; p < m; p++) {
 	  y[p] = 0;
 	}
-	for(p = top; p < n; p++) {
+	for(p = top; p < m; p++) {
 	  j = xi[p];
 	  if (pinv[j] == -1) {
 	    y[j] = (y[j] + x[j]) % A->prime;
@@ -135,14 +158,14 @@ spasm_lu *spasm_LU(const spasm * A) {
 	    spasm_scatter(Uj, Ux, Up[ pinv[j] ], Up[pinv[j] + 1], x[j], y, A->prime);
 	  }
 	}
-	    
+
         printf("[DEBUG LU] x = [");
-        for (int r = 0; r < n; r++) {
+        for (int r = 0; r < m; r++) {
             printf("%d ", x[r]);
         }
         printf("]\n");
         printf("[DEBUG LU] y = [");
-        for (int r = 0; r < n; r++) {
+        for (int r = 0; r < m; r++) {
             printf("%d ", y[r]);
         }
         printf("]\n");
@@ -154,11 +177,11 @@ spasm_lu *spasm_LU(const spasm * A) {
          * --- Find pivot and dispatch coeffs into L and U
          * ------------------------
          */
-        ipiv = m + 1;
+        ipiv = -1;
         /* index of best pivot so far.*/
 	/* attention, il faut que le pivot soit le premier de la ligne... */
 
-	for (p = top; p < n; p++) {
+	for (p = top; p < m; p++) {
             /* x[j] is (generically) nonzero */
             j = xi[p];
 
@@ -171,7 +194,7 @@ spasm_lu *spasm_LU(const spasm * A) {
                 /* column j is not yet pivotal ? */
 
                 /* have found the pivot on row i yet ? */
-                if (j < ipiv) {
+                if (ipiv == -1 || j < ipiv) {
                     ipiv = j;
                 }
             } else {
@@ -184,7 +207,7 @@ spasm_lu *spasm_LU(const spasm * A) {
         }
 
         /* pivot found */
-        if (ipiv != m + 1) {
+        if (ipiv != -1) {
 
 	  /* L[i,i] <--- 1 */
 	  Lj[lnz] = i;
@@ -199,7 +222,7 @@ spasm_lu *spasm_LU(const spasm * A) {
         }
 
 	/* send remaining non-pivot coefficients into U */
-	for (p = top; p < n; p++) {
+	for (p = top; p < m; p++) {
 	  j = xi[p];
 
 	  if (pinv[j] < 0) {
@@ -212,7 +235,7 @@ spasm_lu *spasm_LU(const spasm * A) {
 	}
 
 	printf("[DEBUG LU] pivot choisi colonne %d\n", ipiv);
-        printf("-----------------------------------------\n");
+        printf("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*\n");
     }
 
     /* --- Finalize L and U ------------------------------------------------- */
