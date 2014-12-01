@@ -27,7 +27,7 @@ void * spasm_calloc(size_t count, size_t size) {
 
 void * spasm_realloc(void *ptr, size_t size) {
   void *x = realloc(ptr, size);
-  if (x == NULL) {
+  if (ptr != NULL && x == NULL) {
     perror("realloc failed");
     exit(1);
   }

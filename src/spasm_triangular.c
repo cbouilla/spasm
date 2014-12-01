@@ -127,13 +127,13 @@ int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_G
         x[ Bj[p] ] = Bx[p];
     }
 
-    printf("[DEBUG sp-U-solve] start with x = [ ");
+    /*    printf("[DEBUG sp-U-solve] start with x = [ ");
     for(px = 0; px < m; px++) {
       printf("%d ", x[px]);
     }
     printf("]\n");
+    */
 
-    // question : est-ce que xi est dans le bon sens ?!?
 
     /* iterate over the (precomputed) pattern of x (= the solution) */
     for (px = top; px < m; px++) {
@@ -142,7 +142,7 @@ int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_G
 
       /* i maps to row I of U */
       I = (pinv != NULL) ? (pinv[i]) : i;
-      printf("[DEBUG sp-U-solve] i = %d ----- I = %d\n", i, I);
+      //      printf("[DEBUG sp-U-solve] i = %d ----- I = %d\n", i, I);
 
       if (I < 0) {
 	/* row I is empty */
@@ -157,12 +157,12 @@ int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_G
 
       spasm_scatter(Uj, Ux, Up[I] + 1, Up[I + 1], prime - x[i], x, prime);
 
-      printf("[DEBUG sp-U-solve] x = [ ");
+      /*      printf("[DEBUG sp-U-solve] x = [ ");
       for(int r = 0; r < m; r++) {
 	printf("%d ", x[r]);
       }
       printf("]\n");
-
+      */
     }
     return top;
 }

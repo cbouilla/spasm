@@ -109,11 +109,11 @@ spasm_lu *spasm_LU(const spasm * A) {
 	Up[i - defficiency] = unz;            /* U[i] starts here */
 
         /* not enough room in L/U ? realloc twice the size */
-        if (lnz + n > L->nzmax) {
-            spasm_csr_realloc(L, 2 * L->nzmax + n);
+        if (lnz + m > L->nzmax) {
+            spasm_csr_realloc(L, 2 * L->nzmax + m);
         }
-        if (unz + n > U->nzmax) {
-            spasm_csr_realloc(U, 2 * U->nzmax + n);
+        if (unz + m > U->nzmax) {
+            spasm_csr_realloc(U, 2 * U->nzmax + m);
         }
         Lj = L->j;
         Lx = L->x;
