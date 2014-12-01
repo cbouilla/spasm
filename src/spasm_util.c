@@ -127,9 +127,10 @@ void spasm_csr_resize(spasm *A, int n, int m) {
 
   A->m = m;
   // in case of column shrink, check that no entries are left outside
-  Ap = spasm_realloc(A->p, (n+1) * sizeof(int));
+  A->p = spasm_realloc(A->p, (n+1) * sizeof(int));
 
   if (A->n < n) {
+    Ap = A->p;
     for(i = A->n; i < n + 1; i++) {
       Ap[i] = Ap[A->n];
     }
