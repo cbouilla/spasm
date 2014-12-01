@@ -42,23 +42,19 @@ spasm_lu *spasm_LU(const spasm * A) {
     spasm_lu *N;
     spasm_GFp *Lx, *Ux, *x;
     int *Lp, *Lj, *Up, *Uj, *pinv, *xi;
-    int n, m, ipiv, i, j, top, p, lnz, unz, prime;
+    int n, m, r, ipiv, i, j, top, p, lnz, unz, prime, defficiency;
 
     /* check inputs */
     assert(A != NULL);
 
     n = A->n;
     m = A->m;
+    r = spasm_min(n, m);
     prime = A->prime;
+    defficiency = 0;
 
     printf("[DEBUG LU] input matrix is %d x %d modulo %d\n", n, m, prime);
-
-    for (p = 0; p < n; p++) {
-            printf("A[%d] = ", p);
-            print_vec(A, p);
-            printf("\n");
-        }
-
+    printf("[DEBUG LU] L will be %d x %d and U will be %d x %d\n", n, r, r, m);
 
     /* educated guess of the size of L,U */
     lnz = 4 * spasm_nnz(A) + n;
@@ -74,10 +70,10 @@ spasm_lu *spasm_LU(const spasm * A) {
     N = spasm_malloc(sizeof(spasm_lu));
 
     /* allocate result L */
-    N->L = L = spasm_csr_alloc(n, n, lnz, prime, true);
+    N->L = L = spasm_csr_alloc(n, r, lnz, prime, true);
 
     /* allocate result U */
-    N->U = U = spasm_csr_alloc(n, m, unz, prime, true);
+    N->U = U = spasm_csr_alloc(r, m, unz, prime, true);
 
     /* allocate result pinv */
     N->pinv = pinv = spasm_malloc(m * sizeof(int));
@@ -96,21 +92,21 @@ spasm_lu *spasm_LU(const spasm * A) {
     }
 
     /* no rows of U yet */
-    for (i = 0; i <= n; i++) {
+    for (i = 0; i <= r; i++) {
         Up[i] = 0;
     }
     lnz = unz = 0;
 
     /* compute L[i] and U[i] */
     for (i = 0; i < n; i++) {
-      printf("[DEBUG LU] i = %d\n", i);
+      printf("[DEBUG LU] i = %d, rank defficiency = %d\n", i, defficiency);
       printf("A[i] = ");
         print_vec(A, i);
         printf("\n");
 
         /* --- Triangular solve --------------------------------------------- */
         Lp[i] = lnz;            /* L[i] starts here */
-        Up[i] = unz;            /* U[i] starts here */
+	Up[i - defficiency] = unz;            /* U[i] starts here */
 
         /* not enough room in L/U ? realloc twice the size */
         if (lnz + n > L->nzmax) {
@@ -125,7 +121,7 @@ spasm_lu *spasm_LU(const spasm * A) {
         Ux = U->x;
         //permutation des lignes ?
 
-	for (p = 0; p < i; p++) {
+	for (p = 0; p < i - defficiency; p++) {
             printf("U[%d] = ", p);
             print_vec(U, p);
             printf("\n");
@@ -139,7 +135,14 @@ spasm_lu *spasm_LU(const spasm * A) {
 
         /* Solve x * U = A[i] */
 
-	// bien nécessaire ?
+       	printf("[DEBUG LU] pinv = [");
+        for (int r = 0; r < m; r++) {
+	  printf("%d ", pinv[r]);
+	}
+	printf("]\n");
+
+
+	// bien nécessaire ? --> pour l'affichage seulement
 	for(p = 0; p < m; p++) {
 	  x[p] = 0;
 	}
@@ -155,20 +158,22 @@ spasm_lu *spasm_LU(const spasm * A) {
 	  if (pinv[j] == -1) {
 	    y[j] = (y[j] + x[j]) % A->prime;
 	  } else {
-	    spasm_scatter(Uj, Ux, Up[ pinv[j] ], Up[pinv[j] + 1], x[j], y, A->prime);
+	    spasm_scatter(Uj, Ux, Up[ pinv[j] ], Up[pinv[j] + 1], x[j], y, prime);
 	  }
 	}
+	spasm_scatter(A->j, A->x, A->p[i], A->p[i + 1], prime - 1, y, prime);
 
         printf("[DEBUG LU] x = [");
         for (int r = 0; r < m; r++) {
             printf("%d ", x[r]);
         }
         printf("]\n");
-        printf("[DEBUG LU] y = [");
+	//	printf("[DEBUG LU] y = [");
         for (int r = 0; r < m; r++) {
-            printf("%d ", y[r]);
+          //  printf("%d ", y[r]);
+	  assert( y[r] == 0 );
         }
-        printf("]\n");
+	//        printf("]\n");
 
 
 
@@ -210,37 +215,40 @@ spasm_lu *spasm_LU(const spasm * A) {
         if (ipiv != -1) {
 
 	  /* L[i,i] <--- 1 */
-	  Lj[lnz] = i;
+	  Lj[lnz] = i - defficiency;
 	  Lx[lnz] = 1;
 	  lnz++;
-	  pinv[ ipiv ] = i;
+	  pinv[ ipiv ] = i - defficiency;
 
 	  /* pivot must be the first entry in U[i] */
 	  Uj[unz] = ipiv;
 	  Ux[unz] = x[ ipiv ];
 	  unz++;
-        }
 
-	/* send remaining non-pivot coefficients into U */
-	for (p = top; p < m; p++) {
-	  j = xi[p];
+	  /* send remaining non-pivot coefficients into U */
+	  for (p = top; p < m; p++) {
+	    j = xi[p];
 
-	  if (pinv[j] < 0) {
-	    Uj[unz] = j;
-	    Ux[unz] = x[j];
-	    unz++;
+	    if (pinv[j] < 0) {
+	      Uj[unz] = j;
+	      Ux[unz] = x[j];
+	      unz++;
+	    }
+	    /* clean x for the next iteration -- inutile fait par sparse_solve */
+	    //	    x[j] = 0;
 	  }
-	  /* clean x for the next iteration */
-	  x[j] = 0;
+	} else {
+	  defficiency++;
 	}
-
 	printf("[DEBUG LU] pivot choisi colonne %d\n", ipiv);
         printf("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*\n");
     }
 
     /* --- Finalize L and U ------------------------------------------------- */
     Lp[n] = lnz;
-    Up[n] = unz;
+    Up[n - defficiency] = unz;
+
+    // TODO HERE : largeur de L : vrai rang, comme hauteur de U
 
     /* remove extra space from L and U */
     spasm_csr_realloc(L, -1);
