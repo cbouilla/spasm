@@ -120,3 +120,19 @@ void spasm_triplet_free(spasm_triplet *A) {
   free(A->x); // trick : free does nothing on NULL pointer
   free(A);
 }
+
+void spasm_csr_resize(spasm *A, int n, int m) {
+  int i, p, *Ap;
+  assert(A != NULL);
+
+  A->m = m;
+  // in case of column shrink, check that no entries are left outside
+  Ap = spasm_realloc(A->p, (n+1) * sizeof(int));
+
+  if (A->n < n) {
+    for(i = A->n; i < n + 1; i++) {
+      Ap[i] = Ap[A->n];
+    }
+  }
+  A->n = n;
+}

@@ -247,8 +247,8 @@ spasm_lu *spasm_LU(const spasm * A) {
     /* --- Finalize L and U ------------------------------------------------- */
     Lp[n] = lnz;
     Up[n - defficiency] = unz;
-
-    // TODO HERE : largeur de L : vrai rang, comme hauteur de U
+    spasm_csr_resize(U, n - defficiency, m);
+    spasm_csr_resize(L, n, n - defficiency);
 
     /* remove extra space from L and U */
     spasm_csr_realloc(L, -1);

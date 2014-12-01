@@ -76,6 +76,7 @@ spasm_triplet *spasm_triplet_alloc(int m, int n, int nzmax, int prime, int with_
 void spasm_triplet_realloc(spasm_triplet *A, int nzmax);
 void spasm_triplet_free(spasm_triplet *A);
 
+void spasm_csr_resize(spasm *A, int n, int m);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x);
