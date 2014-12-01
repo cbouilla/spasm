@@ -53,9 +53,10 @@ spasm_lu *spasm_LU(const spasm * A) {
     prime = A->prime;
     defficiency = 0;
 
-    printf("[DEBUG LU] input matrix is %d x %d modulo %d\n", n, m, prime);
+    /*    printf("[DEBUG LU] input matrix is %d x %d modulo %d\n", n, m, prime);
     printf("[DEBUG LU] L will be %d x %d and U will be %d x %d\n", n, r, r, m);
-
+    */
+    
     /* educated guess of the size of L,U */
     lnz = 4 * spasm_nnz(A) + n;
     unz = 4 * spasm_nnz(A) + n;
@@ -99,12 +100,13 @@ spasm_lu *spasm_LU(const spasm * A) {
 
     /* compute L[i] and U[i] */
     for (i = 0; i < n; i++) {
-      printf("[DEBUG LU] i = %d, rank defficiency = %d\n", i, defficiency);
+      /*      printf("[DEBUG LU] i = %d, rank defficiency = %d\n", i, defficiency);
       printf("A[i] = ");
         print_vec(A, i);
         printf("\n");
+      */
 
-        /* --- Triangular solve --------------------------------------------- */
+        /* --- Triangular solve: x * U = A[i] ---------------------------------------- */
         Lp[i] = lnz;            /* L[i] starts here */
 	Up[i - defficiency] = unz;            /* U[i] starts here */
 
@@ -119,9 +121,8 @@ spasm_lu *spasm_LU(const spasm * A) {
         Lx = L->x;
         Uj = U->j;
         Ux = U->x;
-        //permutation des lignes ?
 
-	for (p = 0; p < i - defficiency; p++) {
+	/*	for (p = 0; p < i - defficiency; p++) {
             printf("U[%d] = ", p);
             print_vec(U, p);
             printf("\n");
@@ -131,24 +132,24 @@ spasm_lu *spasm_LU(const spasm * A) {
             printf("L[%d] = ", p);
             print_vec(L, p);
             printf("\n");
-        }
+	    }*/
 
-        /* Solve x * U = A[i] */
+        /*  Solve  ------------- */
 
-       	printf("[DEBUG LU] pinv = [");
+       	/*printf("[DEBUG LU] pinv = [");
         for (int r = 0; r < m; r++) {
 	  printf("%d ", pinv[r]);
 	}
 	printf("]\n");
+	*/
 
-
-	// bien nécessaire ? --> pour l'affichage seulement
+	/* bien nécessaire ? --> pour l'affichage seulement
 	for(p = 0; p < m; p++) {
 	  x[p] = 0;
-	}
+	  }*/
         top = spasm_sparse_forwardsolve(U, A, i, xi, x, pinv);
 
-	/* check resolution */
+	/* check resolution
 	spasm_GFp y[m];
 	for(p = 0; p < m; p++) {
 	  y[p] = 0;
@@ -174,8 +175,7 @@ spasm_lu *spasm_LU(const spasm * A) {
 	  assert( y[r] == 0 );
         }
 	//        printf("]\n");
-
-
+	*/
 
 
         /*
@@ -184,7 +184,6 @@ spasm_lu *spasm_LU(const spasm * A) {
          */
         ipiv = -1;
         /* index of best pivot so far.*/
-	/* attention, il faut que le pivot soit le premier de la ligne... */
 
 	for (p = top; p < m; p++) {
             /* x[j] is (generically) nonzero */
@@ -240,8 +239,9 @@ spasm_lu *spasm_LU(const spasm * A) {
 	} else {
 	  defficiency++;
 	}
-	printf("[DEBUG LU] pivot choisi colonne %d\n", ipiv);
+	/*	printf("[DEBUG LU] pivot choisi colonne %d\n", ipiv);
         printf("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*\n");
+	*/
     }
 
     /* --- Finalize L and U ------------------------------------------------- */

@@ -122,7 +122,7 @@ void spasm_triplet_free(spasm_triplet *A) {
 }
 
 void spasm_csr_resize(spasm *A, int n, int m) {
-  int i, p, *Ap;
+  int i, *Ap;
   assert(A != NULL);
 
   A->m = m;

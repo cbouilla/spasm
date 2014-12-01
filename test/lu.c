@@ -60,6 +60,7 @@ int main(int argc, char **argv) {
     }
     x[i] = 1;
 
+    // ce test est-il correct ?
     spasm_gaxpy(A, x, y); // y <- x*A
     spasm_gaxpy(LU->L, x, u); // u <- x*L
     spasm_gaxpy(LU->U, u, v); // v <- (x*L)*U
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
     fail = 0;
     for(j = 0; j < m; j++) {
       if (y[j] != v[j]) {
-	printf("not ok %d - L*U == A\n", test);
+	printf("not ok %d - L*U == A (col %d)\n", test, j);
 	exit(1);
       }
     }
