@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..3
+echo 1..4
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/g1
