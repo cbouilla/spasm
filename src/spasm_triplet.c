@@ -4,14 +4,19 @@
 
 /* add an entry to a triplet matrix; enlarge it if necessary */
 void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x) {
+  int prime;
+
+  assert(T != NULL);
   assert((i >= 0) && (j >= 0));
+
+  prime = T->prime;
 
   if (T->nz == T->nzmax) {
     spasm_triplet_realloc(T, 2 * T->nzmax);
   }
 
   if (T->x != NULL) {
-    T->x[ T->nz ] = x % T->prime;
+    T->x[ T->nz ] = ((x % prime) + prime) % prime;
   }
   T->i[ T->nz ] = i;
   T->j[ T->nz ] = j;
