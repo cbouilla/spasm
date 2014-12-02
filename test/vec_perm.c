@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
   }
 
   // test 1 : apply permutation
-  cs_pvec(p, x, y, n);
+  spasm_pvec(p, x, y, n);
   int fail = 0;
   for(i = 0; i < n; i++) {
     fail |= (y[i] == i*i + 3*i - 7);
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 
   // test 2 : apply inverse permutation
   pinv = spasm_pinv(p, n);
-  cs_pvec(pinv, y, x, n);
+  spasm_pvec(pinv, y, x, n);
   for(i = 0; i < n; i++) {
     fail |= (x[i] != i*i + 3*i - 7);
   }
@@ -51,7 +51,4 @@ int main(int argc, char **argv) {
   } else {
     printf("ok 2 - inverse vector permutation\n");
   }
-
-  // todo : test matrix permutation
-
 }

@@ -15,7 +15,7 @@
  * The diagonal entry is the **last** of each column.
  * More precisely, L[j,j] is Lx[ Lp[j+1] - 1 ]
  */
-void spasm_dense_backsolve(const spasm * L, spasm_GFp * x) {
+void spasm_dense_back_solve(const spasm * L, spasm_GFp * x) {
   int i, n, *Lp, *Lj, prime;
     spasm_GFp *Lx;
 
@@ -53,9 +53,10 @@ void spasm_dense_backsolve(const spasm * L, spasm_GFp * x) {
  * The diagonal entry is the first one of each row.
  * More precisely, U[i,i] is Ux[ Up[i] ]
  *
+ * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
  */
-void spasm_dense_forwardsolve(const spasm * U, spasm_GFp * x) {
-  int i, n, *Up, *Uj, prime;
+int spasm_dense_forward_solve(const spasm * U, spasm_GFp * x, int* qinv) {
+  int i, j, n, *Up, *Uj, prime;
     spasm_GFp *Ux;
 
     /* check inputs */
@@ -69,15 +70,23 @@ void spasm_dense_forwardsolve(const spasm * U, spasm_GFp * x) {
     prime = U->prime;
 
     for (i = 0; i < n; i++) {
-      /* check diagonal entry */
-      const spasm_GFp diagonal_entry = Ux[ Up[i] ];
-      assert( diagonal_entry != 0 );
+      if (x[i] != 0) {
+	/* get pivot column */
+	j = (qinv != NULL) ? qinv[i] : i;
+	if (j < 0) {
+	  return SPASM_NO_SOLUTION;
+	}
 
-      // axpy - inplace
-      x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+	/* check diagonal entry */
+	const spasm_GFp diagonal_entry = Ux[ Up[i] ];
+	assert( diagonal_entry != 0 );
 
-      spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[i], x, prime);
+	// axpy - inplace
+	x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+	spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[i], x, prime);
+      }
     }
+    return SPASM_SUCCESS;
 }
 
 
@@ -94,7 +103,7 @@ void spasm_dense_forwardsolve(const spasm * U, spasm_GFp * x) {
  * top is the return value.
  *
  */
-int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
+int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
   int i, I, p, px, top, n, m, prime, *Up, *Uj, *Bp, *Bj;
     spasm_GFp *Ux, *Bx;
 

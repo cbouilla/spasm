@@ -61,6 +61,12 @@ In partiular, the actual number of nnz is p[n].
 The numerical values are optional (useful for storing a sparse graph, or the pattern of a matrix).
 */
 
+#define SPASM_IDENTITY_PERMUTATION NULL
+#define SPASM_WITH_NUMERICAL_VALUES 1
+#define SPASM_SUCCESS 0
+#define SPASM_NO_SOLUTION 1
+
+
 /* spasm_util.c */
 int spasm_nnz(const spasm *A);
 
@@ -89,14 +95,10 @@ void spasm_save_csr(FILE *f, const spasm *A);
 
 
 /* spasm_permutation.c */
-#define SPASM_IDENTITY_PERMUTATION NULL
-
-/*
-void cs_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
-void cs_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
+void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
+void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 int *spasm_pinv(int const *p, int n);
 spasm *spasm_permute(const spasm * A, const int *pinv, const int *q, int values);
-*/
 
 /* spasm_GFp.c */
 spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
@@ -113,18 +115,20 @@ int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv);
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
 
 /* spasm_triangular.c */
-void spasm_dense_backsolve(const spasm * G, spasm_GFp * x);
-void spasm_dense_forwardsolve(const spasm * G, spasm_GFp * x);
-int spasm_sparse_forwardsolve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
+void spasm_dense_back_solve(const spasm * G, spasm_GFp * x);
+int spasm_dense_forwar_dsolve(const spasm * U, spasm_GFp * x, int* qinv);
+int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
 
 /* spasm_lu.c */
 
 typedef struct  {
   spasm *L;
   spasm *U;
-  int   *pinv;
+  int   *qinv;
+  int   *p;
 } spasm_lu;
 
+spasm_lu *spasm_PLUQ(const spasm * A);
 spasm_lu *spasm_LU(const spasm * A);
 void spasm_free_LU(spasm_lu *X);
 

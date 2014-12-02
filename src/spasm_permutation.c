@@ -2,38 +2,42 @@
 #include "spasm.h"
 
 /*
- * Permutations matrices are represented by vectors. p[k] = i means that
- * P[k,i] = 1
+ * Permutations matrices are represented by vectors.
+ *
+ * p[k] = i means that P[k,i] = 1
  */
 
+
 /*
- * x <-- P.b, for dense vectors x and b; p=NULL denotes identity.
+ * x <-- P.b (or, equivalently, x <-- b.(P^{-1}), for dense vectors x and b;
+ * p=NULL denotes identity.
  *
  * This means that x[k] <--- b[ p[k] ]
  */
-void cs_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
+void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
     int k;
     assert(x != NULL);
     assert(b != NULL);
 
     for (k = 0; k < n; k++) {
-        x[k] = b[(p != NULL) ? p[k] : k];
+        x[k] = b[(p != SPASM_IDENTITY_PERMUTATION) ? p[k] : k];
     }
 }
 
-/* x <--- P^{-1}.b, for dense vectors x and b; p=NULL denotes identity.
+/* x <--- (P^{-1}).b (or x <--- b.P), for dense vectors x and b;
+ * p=NULL denotes identity.
  *
  * This means that x[ p[k] ] <--- b[ k ]
  *
  * The function is given p, not p^{-1}.
  */
-void cs_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
+void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
     int k;
     assert(x != NULL);
     assert(b != NULL);
 
     for (k = 0; k < n; k++) {
-        x[(p != NULL) ? p[k] : k] = b[k];
+        x[(p != SPASM_IDENTITY_PERMUTATION) ? p[k] : k] = b[k];
     }
 }
 
@@ -42,7 +46,7 @@ int *spasm_pinv(int const *p, int n) {
     int k, *pinv;
     /* p = NULL denotes identity */
     if (p == NULL) {
-        return (NULL);
+      return NULL;
     }
     /* allocate result */
     pinv = spasm_malloc(n * sizeof(int));
@@ -58,42 +62,42 @@ int *spasm_pinv(int const *p, int n) {
  * C = P.A.Q where p and q are permutations of 0..m-1 and 0..n-1
  * respectively.
  *
- * beware that p is described by its inverse permutation.
  */
-spasm *spasm_permute(const spasm * A, const int *pinv, const int *q, int values) {
-    int t, j, k, nz = 0, m, n, *Ap, *Ai, *Cp, *Ci;
+spasm *spasm_permute(const spasm * A, const int *p, const int *q, int values) {
+    int t, j, i, nz, m, n, *Ap, *Aj, *Cp, *Cj;
     spasm_GFp *Cx, *Ax;
     spasm *C;
 
     /* check inputs */
-    assert(spasm_is_csc(A));
+    assert(A != NULL);
 
-    m = A->m;
     n = A->n;
+    m = A->m;
     Ap = A->p;
-    Ai = A->i;
+    Aj = A->j;
     Ax = A->x;
 
     /* alloc result */
-    C = spasm_spalloc(m, n, Ap[n], A->prime, values && (Ax != NULL), 0);
+    C = spasm_csr_alloc(n, m, A->nzmax, A->prime, values && (Ax != NULL));
     Cp = C->p;
-    Ci = C->i;
+    Cj = C->j;
     Cx = C->x;
+    nz = 0;
 
-    for (k = 0; k < n; k++) {
-        /* column k of C is column q[k] of A (denoted by j) */
-        Cp[k] = nz;
-        j = (q != NULL) ? q[k] : k;
-        for (t = Ap[j]; t < Ap[j + 1]; t++) {
-            /* row i of A is row pinv[i] of C */
-            Ci[nz] = (pinv != NULL) ? pinv[Ai[t]] : Ai[t];
+    for (i = 0; i < n; i++) {
+        /* row i of C is row p[i] of A (denoted by j) */
+        Cp[i] = nz;
+        j = (p != NULL) ? p[i] : i;
+        for(t = Ap[j]; t < Ap[j + 1]; t++) {
+            /* col i of A is col pinv[i] of C */
+            Cj[nz] = (q != NULL) ? q[Aj[t]] : Aj[t];
             if (Cx != NULL) {
                 Cx[nz] = Ax[t];
             }
             nz++;
         }
     }
-    /* finalize the last column of C */
+    /* finalize the last row of C */
     Cp[n] = nz;
     return C;
 }

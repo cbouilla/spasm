@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  top = spasm_sparse_forwardsolve(U, B, 0, xi, x, pinv);
+  top = spasm_sparse_forward_solve(U, B, 0, xi, x, pinv);
 
   spasm_gaxpy(U, x, y);
   for(i = n; i < m; i++) {

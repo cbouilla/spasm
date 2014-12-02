@@ -2,15 +2,54 @@
 #include <stdbool.h>
 #include "spasm.h"
 
+spasm_lu * spasm_PLUQ(const spasm *A) {
+  int n, m, i, j, r, px, k;
+  int *Up, *Uj, *qinv;
+  spasm *U, *L, *LL;
+  spasm_lu *N;
+
+  N = spasm_LU(A);
+  L = N->L;
+  U = N->U;
+  r = U->n;
+  Up = U->p;
+  Uj = U->j;
+  qinv = N->qinv;
+  n = A->n;
+  m = A->m;
+
+  k = 1;
+  for(j = 0; j < m; j++) {
+    if (qinv[j] == -1) {
+      qinv[j] = m - k;
+      k++;
+    }
+  }
+
+  /* permutes the columns of U in place.
+     U becomes really upper-trapezoidal. */
+  for(i = 0; i < r; i++) {
+    for(px = Up[i]; px < Up[i + 1]; px++) {
+      Uj[px] = qinv[ Uj[px] ];
+    }
+  }
+
+  LL = spasm_permute(L, N->p, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
+  N->L = LL;
+  spasm_csr_free(L);
+
+  return N;
+}
+
 /*
- * compute a (P)L(QU) decomposition.
+ * compute a (somewhat) LU decomposition.
  *
  * r = min(n, m) is an upper-bound on the rank of A
  *
  * L n * r
  * U is r * m
  *
- * pinv[j] = i if the pivot on column j is on row i. -1 if no pivot (yet) found
+ * qinv[j] = i if the pivot on column j is on row i. -1 if no pivot (yet) found
  * on column j.
  *
  */
@@ -18,8 +57,8 @@ spasm_lu *spasm_LU(const spasm * A) {
     spasm *L, *U;
     spasm_lu *N;
     spasm_GFp *Lx, *Ux, *x;
-    int *Lp, *Lj, *Up, *Uj, *pinv, *xi;
-    int n, m, r, ipiv, i, j, top, p, lnz, unz, prime, defficiency;
+    int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xi;
+    int n, m, r, ipiv, i, j, top, px, lnz, unz, prime, defficiency;
 
     /* check inputs */
     assert(A != NULL);
@@ -49,8 +88,12 @@ spasm_lu *spasm_LU(const spasm * A) {
     /* allocate result U */
     N->U = U = spasm_csr_alloc(r, m, unz, prime, true);
 
-    /* allocate result pinv */
-    N->pinv = pinv = spasm_malloc(m * sizeof(int));
+    /* allocate result qinv */
+    N->qinv = qinv = spasm_malloc(m * sizeof(int));
+
+    /* allocate result qinv */
+    N->p = p = spasm_malloc(n * sizeof(int));
+
 
     Lp = L->p;
     Up = U->p;
@@ -62,7 +105,12 @@ spasm_lu *spasm_LU(const spasm * A) {
 
     /* no rows pivotal yet */
     for (i = 0; i < m; i++) {
-        pinv[i] = -1;
+        qinv[i] = -1;
+    }
+
+    /* no rows exchange yet */
+    for (i = 0; i <= n; i++) {
+        p[i] = i;
     }
 
     /* no rows of U yet */
@@ -74,7 +122,7 @@ spasm_lu *spasm_LU(const spasm * A) {
     /* compute L[i] and U[i] */
     for (i = 0; i < n; i++) {
         /* --- Triangular solve: x * U = A[i] ---------------------------------------- */
-        Lp[i] = lnz;            /* L[i] starts here */
+        Lp[i] = lnz;                          /* L[i] starts here */
 	Up[i - defficiency] = unz;            /* U[i] starts here */
 
         /* not enough room in L/U ? realloc twice the size */
@@ -89,22 +137,22 @@ spasm_lu *spasm_LU(const spasm * A) {
         Uj = U->j;
         Ux = U->x;
 
-        top = spasm_sparse_forwardsolve(U, A, i, xi, x, pinv);
+        top = spasm_sparse_forward_solve(U, A, i, xi, x, qinv);
 
         /* Find pivot and dispatch coeffs into L and U --------------- */
         ipiv = -1;
         /* index of best pivot so far.*/
 
-	for (p = top; p < m; p++) {
+	for (px = top; px < m; px++) {
             /* x[j] is (generically) nonzero */
-            j = xi[p];
+            j = xi[px];
 
             /* if x[j] == 0 (numerical cancelation), we just ignore it */
             if (x[j] == 0) {
                 continue;
             }
 
-            if (pinv[j] < 0) {
+            if (qinv[j] < 0) {
                 /* column j is not yet pivotal ? */
 
                 /* have found the pivot on row i yet ? */
@@ -113,8 +161,8 @@ spasm_lu *spasm_LU(const spasm * A) {
                 }
             } else {
                 /* column j is pivotal */
-                /* x[j] is the entry L[i, pinv[j] ] */
-                Lj[lnz] = pinv[j];
+                /* x[j] is the entry L[i, qinv[j] ] */
+                Lj[lnz] = qinv[j];
                 Lx[lnz] = x[j];
                 lnz++;
             }
@@ -123,11 +171,13 @@ spasm_lu *spasm_LU(const spasm * A) {
         /* pivot found */
         if (ipiv != -1) {
 
-	  /* L[i,i] <--- 1 */
+	  /* L[i,i] <--- 1. Last entry of the row ! */
 	  Lj[lnz] = i - defficiency;
 	  Lx[lnz] = 1;
 	  lnz++;
-	  pinv[ ipiv ] = i - defficiency;
+
+	  qinv[ ipiv ] = i - defficiency;
+	  p[i - defficiency] = i;
 
 	  /* pivot must be the first entry in U[i] */
 	  Uj[unz] = ipiv;
@@ -135,10 +185,10 @@ spasm_lu *spasm_LU(const spasm * A) {
 	  unz++;
 
 	  /* send remaining non-pivot coefficients into U */
-	  for (p = top; p < m; p++) {
-	    j = xi[p];
+	  for (px = top; px < m; px++) {
+	    j = xi[px];
 
-	    if (pinv[j] < 0) {
+	    if (qinv[j] < 0) {
 	      Uj[unz] = j;
 	      Ux[unz] = x[j];
 	      unz++;
@@ -146,6 +196,7 @@ spasm_lu *spasm_LU(const spasm * A) {
 	  }
 	} else {
 	  defficiency++;
+	  p[n - defficiency] = i;
 	}
     }
 
@@ -168,6 +219,7 @@ void spasm_free_LU(spasm_lu *X) {
   assert( X != NULL );
   spasm_csr_free(X->L);
   spasm_csr_free(X->U);
-  free(X->pinv);
+  free(X->qinv);
+  free(X->p);
   free(X);
 }

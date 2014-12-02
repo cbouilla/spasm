@@ -1,34 +1,13 @@
-/*
- * sage utility script to generate random sparse matrix
- *
-sage: F = GF(7)
-sage: n = 128
-sage: M = matrix(F, n, n, sparse=True)
-sage: while M.is_singular():
-sage:     M = random_matrix(F, n, n, density=0.33, sparse=True)
-sage: out = open("mat.txt", "w")
-sage: for (i,j) in M.nonzero_positions():
-....:     out.write("{0} {1} {2}\n".format(i, j, M[i,j]))
-....:
-sage: out.close()
-*/
 #include <stdio.h>
 #include <assert.h>
 #include "spasm.h"
-
-/*
-[2 0 0 4]
-[2 0 6 0]
-[5 0 6 0]
-[0 6 0 0]
-*/
 
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A;
   spasm_lu *LU;
   spasm_GFp *x, *y, *u, *v;
-  int n, m, test, i, j, fail;
+  int n, m, test, i, j;
 
   assert(argc > 1);
   test = atoi(argv[1]);
@@ -60,12 +39,10 @@ int main(int argc, char **argv) {
     }
     x[i] = 1;
 
-    // ce test est-il correct ?
-    spasm_gaxpy(A, x, y); // y <- x*A
+    spasm_gaxpy(A, x, y);     // y <- x*A
     spasm_gaxpy(LU->L, x, u); // u <- x*L
     spasm_gaxpy(LU->U, u, v); // v <- (x*L)*U
 
-    fail = 0;
     for(j = 0; j < m; j++) {
       if (y[j] != v[j]) {
 	printf("not ok %d - L*U == A (col %d)\n", test, j);
@@ -82,6 +59,5 @@ int main(int argc, char **argv) {
   free(y);
   free(u);
   free(v);
-  
   return 0;
 }

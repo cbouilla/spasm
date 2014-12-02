@@ -27,10 +27,10 @@ int main(int argc, char **argv) {
 
   switch(test) {
   case 1: // testing dense L-solver
-    spasm_dense_backsolve(G, x);
+    spasm_dense_back_solve(G, x);
     break;
   case 2: // testing dense U-solver
-    spasm_dense_forwardsolve(G, x);
+    spasm_dense_forward_solve(G, x, SPASM_IDENTITY_PERMUTATION);
     break;
   }
 // the solution must be in x
