@@ -68,6 +68,7 @@ The numerical values are optional (useful for storing a sparse graph, or the pat
 
 
 /* spasm_util.c */
+double spasm_wtime();
 int spasm_nnz(const spasm *A);
 
 void * spasm_malloc(size_t size);

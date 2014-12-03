@@ -1,5 +1,15 @@
+#include <sys/time.h>
 #include <assert.h>
 #include "spasm.h"
+
+
+double spasm_wtime() {
+  struct timeval ts;
+
+  gettimeofday(&ts, NULL);
+  return (double) ts.tv_sec + ts.tv_usec / 1E6;
+}
+
 
 int spasm_nnz(const spasm *A) {
   assert (A != NULL);
