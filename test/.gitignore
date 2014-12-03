@@ -2,8 +2,11 @@ io
 mat_perm
 vec_perm
 GFp
-dense_solve
+dense_usolve
+dense_lsolve
 gaxpy
 reach
 sparse_solve
 lu
+pluq
+

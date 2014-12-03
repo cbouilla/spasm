@@ -66,7 +66,7 @@ int spasm_is_lower_triangular(const spasm *A) {
  * More precisely, L[j,j] is Lx[ Lp[j+1] - 1 ]
  */
 void spasm_dense_back_solve(const spasm * L, spasm_GFp * x) {
-  int i, n, *Lp, *Lj, prime;
+  int i, n, m, *Lp, *Lj, prime;
     spasm_GFp *Lx;
 
     /* check inputs */
@@ -74,12 +74,13 @@ void spasm_dense_back_solve(const spasm * L, spasm_GFp * x) {
     assert(L != NULL);
 
     n = L->n;
+    m = L->m;
     Lp = L->p;
     Lj = L->j;
     Lx = L->x;
     prime = L->prime;
 
-    for (i = n - 1; i >= 0; i--) {
+    for (i = m - 1; i >= 0; i--) {
 
       /* check diagonal entry */
       const spasm_GFp diagonal_entry = Lx[ Lp[i + 1] - 1 ];
@@ -89,6 +90,10 @@ void spasm_dense_back_solve(const spasm * L, spasm_GFp * x) {
       x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
 
       spasm_scatter(Lj, Lx, Lp[i], Lp[i + 1] - 1, prime - x[i], x, prime);
+    }
+
+    for(i = m; i < n; i++) {
+      x[i] = 0;
     }
 }
 
