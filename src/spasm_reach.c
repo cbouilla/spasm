@@ -1,7 +1,7 @@
 #include <assert.h>
 #include "spasm.h"
 
-
+/*
 static inline int spasm_flip(int i) {
     return -i - 2;
 }
@@ -17,6 +17,7 @@ static inline int spasm_is_marked(const int *w, int j) {
 static inline void spasm_mark(int *w, int j) {
     w[j] = spasm_flip(w[j]);
 }
+*/
 
 /*
  * depth-first-search of the graph of a matrix, starting at node j. All nodes

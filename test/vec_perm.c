@@ -7,7 +7,7 @@ static inline void swap(int *a, int i, int j) {
     a[j] = x;
 }
 
-int main(int argc, char **argv) {
+int main() {
   int n = 50;
   int i;
 

@@ -115,8 +115,11 @@ int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv);
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
 
 /* spasm_triangular.c */
+int spasm_is_upper_triangular(const spasm *A);
+int spasm_is_lower_triangular(const spasm *A);
+
 void spasm_dense_back_solve(const spasm * G, spasm_GFp * x);
-int spasm_dense_forwar_dsolve(const spasm * U, spasm_GFp * x, int* qinv);
+int spasm_dense_forward_solve(const spasm * U, spasm_GFp * x, const int *q);
 int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
 
 /* spasm_lu.c */

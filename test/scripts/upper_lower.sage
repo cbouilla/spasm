@@ -16,6 +16,14 @@ for (i,j) in M.nonzero_positions():
      out.write("{0} {1} {2}\n".format(i, j, M[i,j]))
 out.close()
 
+# cas trapezoidal
+M = M[:,:25]
+out = open("Matrix/lower_trapeze", "w")
+for (i,j) in M.nonzero_positions():
+     out.write("{0} {1} {2}\n".format(i, j, M[i,j]))
+out.close()
+
+
 # upper-triangular
 M = random_matrix(F, n, n, density=0.25, sparse=True)
 for i in range(M.nrows()):
