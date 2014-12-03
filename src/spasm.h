@@ -123,7 +123,6 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * x, const int *q);
 int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
 
 /* spasm_lu.c */
-
 typedef struct  {
   spasm *L;
   spasm *U;
@@ -135,7 +134,11 @@ spasm_lu *spasm_PLUQ(const spasm * A);
 spasm_lu *spasm_LU(const spasm * A);
 void spasm_free_LU(spasm_lu *X);
 
+/* spasm_solutions.c */
+int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
 
+
+/* utilities */
 static inline int spasm_max(int a, int b) {
   return (a > b) ? a : b;
 }
