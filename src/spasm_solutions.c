@@ -11,7 +11,7 @@ int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
   spasm_GFp *y;
     spasm_lu *PLUQ;
     spasm *L, *U;
-    int i, n, m, r, ok ;
+    int n, m, r, ok ;
 
     /* check inputs */
     assert(A != NULL);

@@ -6,9 +6,8 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *U, *L;
   spasm_lu *PLUQ;
-  spasm_GFp *x, *y, *u, *v, *w, *z, *Lx;
+  spasm_GFp *x, *y, *u, *v, *w, *z;
   int n, m, r, test, i, j;
-  int *Up, *Uj, *Lp, *Lj;
 
   assert(argc > 1);
   test = atoi(argv[1]);
@@ -22,12 +21,7 @@ int main(int argc, char **argv) {
 
   PLUQ = spasm_PLUQ(A);
   U = PLUQ->U;
-  Up = U->p;
-  Uj = U->j;
   L = PLUQ->L;
-  Lp = L->p;
-  Lj = L->j;
-  Lx = L->x;
   r = U->n;
 
 

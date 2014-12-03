@@ -3,7 +3,7 @@
 #include "spasm.h"
 
 spasm_lu * spasm_PLUQ(const spasm *A) {
-  int n, m, i, j, r, px, k;
+  int m, i, j, r, px, k;
   int *Up, *Uj, *qinv;
   spasm *U, *L, *LL;
   spasm_lu *N;
@@ -15,7 +15,6 @@ spasm_lu * spasm_PLUQ(const spasm *A) {
   Up = U->p;
   Uj = U->j;
   qinv = N->qinv;
-  n = A->n;
   m = A->m;
 
   k = 1;
