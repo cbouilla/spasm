@@ -141,7 +141,6 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, cons
 
     for (i = 0; i < n; i++) {
       j = (q != SPASM_IDENTITY_PERMUTATION) ? q[i] : i;
-      printf("[DEBUG Usolve] i=%d --> j=%d\n", i, j);
       if (b[j] != 0) {
 	/* check diagonal entry */
 	const  spasm_GFp diagonal_entry = Ux[ Up[i] ];

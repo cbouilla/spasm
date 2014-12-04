@@ -17,20 +17,3 @@ void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_G
       x[j] = (x[j] + ((beta * Ax[p]) % prime)) % prime /* ultra-naive */;
     }
 }
-
-
-/* x = x + beta * A[j], where x is a dense vector and A[j] is sparse
- *
- * low-level operation for maximum flexibility;
- *
- * This is where all the heavy lifting should take place.
- */
-void spasm_permuted_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, const int *q, int prime) {
-  int j, p;
-
-    for (p = from; p < to; p++) {
-      j = q[ Aj[p] ];
-      // axpy-inplace
-      x[j] = (x[j] + ((beta * Ax[p]) % prime)) % prime /* ultra-naive */;
-    }
-}

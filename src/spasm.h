@@ -107,7 +107,6 @@ spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 
 /* spasm_scatter.c */
 void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime);
-void spasm_permuted_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, const int *q, int prime);
 
 /* spasm_reach.c */
 
