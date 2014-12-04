@@ -4,20 +4,20 @@ echo 1..5
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/small
-./solve 1 < $INPUT_MATRIX
+./pluq_solve 1 < $INPUT_MATRIX
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/medium
-./solve 2 < $INPUT_MATRIX
+./pluq_solve 2 < $INPUT_MATRIX
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/singular
-./solve 3 < $INPUT_MATRIX
+./pluq_solve 3 < $INPUT_MATRIX
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/upper_trapeze
-./solve 4 < $INPUT_MATRIX
+INPUT_MATRIX=$srcdir/Matrix/rectangular_h
+./pluq_solve 4 < $INPUT_MATRIX
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/lower_trapeze
-./solve 5 < $INPUT_MATRIX
+INPUT_MATRIX=$srcdir/Matrix/rectangular_l
+./pluq_solve 5 < $INPUT_MATRIX

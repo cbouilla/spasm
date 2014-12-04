@@ -22,17 +22,19 @@ int main(int argc, char **argv) {
   assert(spasm_is_lower_triangular(G));
 
   x = malloc(n * sizeof(spasm_GFp));
-  b = malloc(n * sizeof(spasm_GFp));
-  y = malloc(n * sizeof(spasm_GFp));
+  b = malloc(m * sizeof(spasm_GFp));
+  y = malloc(m * sizeof(spasm_GFp));
 
   for(i = 0; i < m; i++) {
-    x[i] = rand() % prime;
-    b[i] = x[i];
-    y[i] = 0;
+    b[i] = rand() % prime;
+    y[i] = b[i];
   }
 
-  spasm_dense_back_solve(G, x);
+  spasm_dense_back_solve(G, y, x, SPASM_IDENTITY_PERMUTATION);
 
+  for(i = 0; i < m; i++) {
+    y[i] = 0;
+  }
   spasm_gaxpy(G, x, y);
   for(i = 0; i < m; i++) {
     if (y[i] != b[i]) {

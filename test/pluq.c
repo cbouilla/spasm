@@ -60,9 +60,9 @@ int main(int argc, char **argv) {
     }
     x[i] = 1;
 
-    spasm_gaxpy(A, x, y); // y <- x*A
+    spasm_gaxpy(A, x, y);             // y <- x*A
 
-    spasm_pvec(PLUQ->p, x, u, n);    // u <--- x.P
+    spasm_pvec(PLUQ->p, x, u, n);     // u <--- x.P
     spasm_gaxpy(L, u, v);             // v <--- x.(P.L)
     spasm_gaxpy(U, v, w);             // w <--- x.(P.L.U)
     spasm_pvec(PLUQ->qinv, w, z, m);  // u <--- x.(P.L.U.Q)

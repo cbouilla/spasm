@@ -58,18 +58,21 @@ int spasm_is_lower_triangular(const spasm *A) {
 
 /* dense backwards substitution solver. Solve x . L = b where x and b are dense.
  *
- * x=b on input, solution on output.
  *
  * L is assumed to be lower-triangular, with non-zero diagonal.
  *
  * The diagonal entry is the **last** of each column.
  * More precisely, L[j,j] is Lx[ Lp[j+1] - 1 ]
+ *
+ * p[j] == i indicates if the "diagonal" entry on column j is on row i
+ *
  */
-void spasm_dense_back_solve(const spasm * L, spasm_GFp * x) {
-  int i, n, m, *Lp, *Lj, prime;
+void spasm_dense_back_solve(const spasm * L, spasm_GFp *b, spasm_GFp * x, const int *p) {
+  int i, j, n, m, *Lp, *Lj, prime;
     spasm_GFp *Lx;
 
     /* check inputs */
+    assert(b != NULL);
     assert(x != NULL);
     assert(L != NULL);
 
@@ -80,26 +83,27 @@ void spasm_dense_back_solve(const spasm * L, spasm_GFp * x) {
     Lx = L->x;
     prime = L->prime;
 
-    for (i = m - 1; i >= 0; i--) {
+    for(i = 0; i < n; i++) {
+      x[i] = 0;
+    }
 
-      /* check diagonal entry */
+    for (j = m - 1; j >= 0; j--) {
+      i = (p != SPASM_IDENTITY_PERMUTATION) ? p[j] : j;
+
+      /* pivot on the j-th column is on the i-th row */
       const spasm_GFp diagonal_entry = Lx[ Lp[i + 1] - 1 ];
       assert( diagonal_entry != 0 );
 
       // axpy - inplace
-      x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+      x[i] = (b[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
 
-      spasm_scatter(Lj, Lx, Lp[i], Lp[i + 1] - 1, prime - x[i], x, prime);
-    }
-
-    for(i = m; i < n; i++) {
-      x[i] = 0;
+      spasm_scatter(Lj, Lx, Lp[i], Lp[i + 1] - 1, prime - x[i], b, prime);
     }
 }
 
 /* dense forwards substitution solver. Solve x . U = b where x and b are dense.
  *
- * x=b on input, solution on output.
+ * b is undefined on output
  *
  * U is upper-triangular
  *
@@ -113,11 +117,12 @@ void spasm_dense_back_solve(const spasm * L, spasm_GFp * x) {
  *
  * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
  */
-int spasm_dense_forward_solve(const spasm * U, spasm_GFp * x, const int *q) {
+int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, const int *q) {
   int i, j, n, m, *Up, *Uj, prime;
-    spasm_GFp *Ux;
+  spasm_GFp *Ux;
 
     /* check inputs */
+    assert(b != NULL);
     assert(x != NULL);
     assert(U != NULL);
 
@@ -130,21 +135,27 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * x, const int *q) {
     Ux = U->x;
     prime = U->prime;
 
+    for(i = 0; i < n; i++) {
+      x[i] = 0;
+    }
+
     for (i = 0; i < n; i++) {
       j = (q != SPASM_IDENTITY_PERMUTATION) ? q[i] : i;
-      if (x[j] != 0) {
+      printf("[DEBUG Usolve] i=%d --> j=%d\n", i, j);
+      if (b[j] != 0) {
 	/* check diagonal entry */
-	const  spasm_GFp diagonal_entry = Ux[ Up[j] ];
+	const  spasm_GFp diagonal_entry = Ux[ Up[i] ];
 	assert( diagonal_entry != 0 );
 
 	// axpy - inplace
-	x[j] = (x[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-	spasm_scatter(Uj, Ux, Up[j] + 1, Up[j + 1], prime - x[j], x, prime);
+	x[i] = (b[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+	spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[i], b, prime);
+	b[j] = 0;
       }
     }
 
-    for(i = n; i < m; i++) {
-      if (x[i] != 0) {
+    for(i = 0; i < m; i++) {
+      if (b[i] != 0) {
 	return SPASM_NO_SOLUTION;
       }
     }

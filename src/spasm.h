@@ -62,6 +62,7 @@ The numerical values are optional (useful for storing a sparse graph, or the pat
 */
 
 #define SPASM_IDENTITY_PERMUTATION NULL
+#define SPASM_IGNORE NULL
 #define SPASM_WITH_NUMERICAL_VALUES 1
 #define SPASM_SUCCESS 0
 #define SPASM_NO_SOLUTION 1
@@ -106,6 +107,7 @@ spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 
 /* spasm_scatter.c */
 void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime);
+void spasm_permuted_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, const int *q, int prime);
 
 /* spasm_reach.c */
 
@@ -119,8 +121,8 @@ void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
 int spasm_is_upper_triangular(const spasm *A);
 int spasm_is_lower_triangular(const spasm *A);
 
-void spasm_dense_back_solve(const spasm * G, spasm_GFp * x);
-int spasm_dense_forward_solve(const spasm * U, spasm_GFp * x, const int *q);
+void spasm_dense_back_solve(const spasm * L, spasm_GFp *b, spasm_GFp * x, const int *p);
+int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, const int *q);
 int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
 
 /* spasm_lu.c */
@@ -137,6 +139,7 @@ void spasm_free_LU(spasm_lu *X);
 
 /* spasm_solutions.c */
 int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
+int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
 
 
 /* utilities */

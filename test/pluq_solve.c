@@ -4,8 +4,7 @@
 
 int main(int argc, char **argv) {
   spasm_triplet *T;
-  spasm *A, *U, *L;
-  spasm_lu *PLUQ;
+  spasm *A;
   spasm_GFp *x, *y, *b;
   int n, m, test, i, prime, result;
 
@@ -19,10 +18,6 @@ int main(int argc, char **argv) {
   n = A->n;
   m = A->m;
   prime = A->prime;
-
-  PLUQ = spasm_PLUQ(A);
-  U = PLUQ->U;
-  L = PLUQ->L;
 
   x = malloc(n * sizeof(spasm_GFp));
   y = malloc(m * sizeof(spasm_GFp));
@@ -56,7 +51,7 @@ int main(int argc, char **argv) {
   }
 
   /* test B ------------------------- with a bogus RHS ----------- */
-  if (U->n < U->m) {
+  if (n < m) {
     printf("# testing bogus solution\n");
     for(i = 0; i < m; i++) {
       b[i] = rand() % prime;
@@ -73,7 +68,6 @@ int main(int argc, char **argv) {
   printf("ok %d - PLUQ solver\n", test);
 
   spasm_csr_free(A);
-  spasm_free_LU(PLUQ);
   free(x);
   free(y);
   free(b);
