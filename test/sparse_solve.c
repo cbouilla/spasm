@@ -98,5 +98,8 @@ int main(int argc, char **argv) {
 
   spasm_csr_free(U);
   spasm_csr_free(B);
+  free(xi);
+  free(x);
+  free(y);
   return 0;
 }
