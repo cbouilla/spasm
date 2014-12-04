@@ -19,9 +19,9 @@ int main(int argc, char **argv) {
   m = A->m;
   prime = A->prime;
 
-  x = malloc(n * sizeof(spasm_GFp));
-  y = malloc(m * sizeof(spasm_GFp));
-  b = malloc(m * sizeof(spasm_GFp));
+  x = spasm_malloc(n * sizeof(spasm_GFp));
+  y = spasm_malloc(m * sizeof(spasm_GFp));
+  b = spasm_malloc(m * sizeof(spasm_GFp));
 
   /* test A ------------------------- with a sensible RHS ----------- */
   printf("# testing correct solution\n");
