@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
   result = spasm_LU_solve(A, b, x);
   if (result != SPASM_SUCCESS) {
     printf("not ok %d - LU solver [solution not found]\n", test);
-    exit(1);
+    exit(0);
   }
 
   for(i = 0; i < m; i++) {
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   for(i = 0; i < m; i++) {
     if (y[i] != b[i]) {
       printf("not ok %d - LU solver [incorrect solution found]\n", test);
-      exit(1);
+      exit(0);
     }
   }
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
     result = spasm_LU_solve(A, b, x);
     if (result == SPASM_SUCCESS) {
       printf("not ok %d - LU solver [bogus solution found]\n", test);
-      exit(1);
+      exit(0);
     }
 
   }

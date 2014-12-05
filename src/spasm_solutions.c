@@ -7,16 +7,18 @@
  * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
  */
 int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
-  spasm_GFp *u, *v, *w;
+  spasm_GFp *u, *v, *w, *s;
     spasm_lu *PLUQ;
     spasm *L, *U;
     int n, m, r, ok;
+    int *row_permutation;
 
     /* check inputs */
     assert(A != NULL);
     assert(b != NULL);
 
-    PLUQ = spasm_PLUQ(A);
+    row_permutation = spasm_row_sort(A);
+    PLUQ = spasm_PLUQ(A, row_permutation); // attention, on calcule une solution de row_permutation * A
     L = PLUQ->L;
     U = PLUQ->U;
 
@@ -28,8 +30,10 @@ int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
     u = spasm_malloc (m * sizeof(spasm_GFp));
     v = spasm_malloc (r * sizeof(spasm_GFp));
     w = spasm_malloc (n * sizeof(spasm_GFp));
+    s = spasm_malloc (n * sizeof(spasm_GFp));
 
     /* u*Q = b */
+    spasm_ipvec(PLUQ->qinv, b, u, m);
     spasm_ipvec(PLUQ->qinv, b, u, m);
 
     /* v.U*Q = b  (if possible) */
@@ -40,12 +44,13 @@ int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
       spasm_dense_back_solve(L, v, w, SPASM_IDENTITY_PERMUTATION);
 
       /* x.PLUQ = b */
-      spasm_ipvec(PLUQ->p, w, x, n);
+      spasm_ipvec(PLUQ->p, w, s, n);
     }
 
     free(u);
     free(v);
     free(w);
+    free(s);
     spasm_free_LU(PLUQ);
     return ok;
 }
@@ -57,17 +62,18 @@ int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
  * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
  */
 int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
-  spasm_GFp *y, *z;
+  spasm_GFp *y, *z, *w;
   spasm_lu *LU;
   spasm *L, *U;
   int n, m, r, i, ok ;
-  int *q;
+  int *q, *row_permutation;
 
     /* check inputs */
     assert(A != NULL);
     assert(b != NULL);
 
-    LU = spasm_LU(A);
+    row_permutation = spasm_row_sort(A);
+    LU = spasm_LU(A, row_permutation);
     L = LU->L;
     U = LU->U;
 
@@ -78,6 +84,7 @@ int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
     /* get workspace */
     y = spasm_malloc(m * sizeof(spasm_GFp));
     z = spasm_malloc(r * sizeof(spasm_GFp));
+    w = spasm_malloc(n * sizeof(spasm_GFp));
     q = spasm_malloc(m * sizeof(int));
 
     for(i = 0; i < m; i++) {
@@ -95,12 +102,14 @@ int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
     if (ok == SPASM_SUCCESS) {
 
       /* y.LU = b */
-      spasm_dense_back_solve(L, z, x, LU->p);
+      spasm_dense_back_solve(L, z, w, LU->p);
     }
 
     free(y);
     free(z);
+    free(w);
     free(q);
+    free(row_permutation);
     spasm_free_LU(LU);
     return ok;
 }

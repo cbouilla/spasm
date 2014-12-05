@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
   n = A->n;
   m = A->m;
 
-  PLUQ = spasm_PLUQ(A);
+  PLUQ = spasm_PLUQ(A, SPASM_IDENTITY_PERMUTATION);
   U = PLUQ->U;
   L = PLUQ->L;
   r = U->n;
@@ -36,14 +36,14 @@ int main(int argc, char **argv) {
     printf("# PLUQ ---> U is upper\n");
   } else {
     printf("not ok %d - PLUQ : U is not upper-triangular\n", test);
-    exit(1);
+    exit(0);
   }
 
   if (spasm_is_lower_triangular(L)) {
     printf("# PLUQ ---> L is upper\n");
   } else {
     printf("not ok %d - PLUQ : L is not lower-triangular\n", test);
-    exit(1);
+    exit(0);
   }
 
 
@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
     for(j = 0; j < m; j++) {
       if (y[j] != z[j]) {
 	printf("not ok %d - A == PLUQ (col %d)\n", test, j);
-	exit(1);
+	exit(0);
       }
     }
   }

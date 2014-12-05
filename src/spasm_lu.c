@@ -2,13 +2,13 @@
 #include <stdbool.h>
 #include "spasm.h"
 
-spasm_lu * spasm_PLUQ(const spasm *A) {
+spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation) {
   int m, i, j, r, px, k;
   int *Up, *Uj, *qinv;
   spasm *U, *L, *LL;
   spasm_lu *N;
 
-  N = spasm_LU(A);
+  N = spasm_LU(A, row_permutation);
   L = N->L;
   U = N->U;
   r = U->n;
@@ -52,12 +52,12 @@ spasm_lu * spasm_PLUQ(const spasm *A) {
  * on column j.
  *
  */
-spasm_lu *spasm_LU(const spasm * A) {
+spasm_lu *spasm_LU(const spasm * A, const int *row_permutation) {
     spasm *L, *U;
     spasm_lu *N;
     spasm_GFp *Lx, *Ux, *x;
-    int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xi;
-    int n, m, r, ipiv, i, j, top, px, lnz, unz, prime, defficiency;
+    int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xi, *col_weights;
+    int n, m, r, ipiv, i, inew, j, top, px, lnz, unz, prime, defficiency;
 
     /* check inputs */
     assert(A != NULL);
@@ -77,25 +77,19 @@ spasm_lu *spasm_LU(const spasm * A) {
 
     /* get int workspace */
     xi = spasm_malloc(3 * m * sizeof(int));
+    col_weights = spasm_malloc(m * sizeof(int));
 
     /* allocate result */
     N = spasm_malloc(sizeof(spasm_lu));
-
-    /* allocate result L */
     N->L = L = spasm_csr_alloc(n, r, lnz, prime, true);
-
-    /* allocate result U */
     N->U = U = spasm_csr_alloc(r, m, unz, prime, true);
-
-    /* allocate result qinv */
     N->qinv = qinv = spasm_malloc(m * sizeof(int));
-
-    /* allocate result qinv */
     N->p = p = spasm_malloc(n * sizeof(int));
-
 
     Lp = L->p;
     Up = U->p;
+
+    /* compute column weights (for pivot selection) */
 
     /* clear workspace */
     for (i = 0; i < m; i++) {
@@ -136,7 +130,8 @@ spasm_lu *spasm_LU(const spasm * A) {
         Uj = U->j;
         Ux = U->x;
 
-        top = spasm_sparse_forward_solve(U, A, i, xi, x, qinv);
+	inew = (row_permutation != NULL) ? row_permutation[i] : i;
+        top = spasm_sparse_forward_solve(U, A, inew, xi, x, qinv);
 
         /* Find pivot and dispatch coeffs into L and U --------------- */
         ipiv = -1;
@@ -176,7 +171,7 @@ spasm_lu *spasm_LU(const spasm * A) {
 	  lnz++;
 
 	  qinv[ ipiv ] = i - defficiency;
-	  p[i - defficiency] = i;
+	  p[i - defficiency] = inew;
 
 	  /* pivot must be the first entry in U[i] */
 	  Uj[unz] = ipiv;
@@ -195,7 +190,8 @@ spasm_lu *spasm_LU(const spasm * A) {
 	  }
 	} else {
 	  defficiency++;
-	  p[n - defficiency] = i;
+	  p[n - defficiency] = inew;
+	    //	  p[n - defficiency] = i;
 	}
     }
 

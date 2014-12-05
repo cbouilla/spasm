@@ -1,12 +1,6 @@
 #include <stdio.h>
 #include "spasm.h"
 
-static inline void swap(int *a, int i, int j) {
-  int x = a[i];
-    a[i] = a[j];
-    a[j] = x;
-}
-
 int main() {
   int n = 50;
   int i;
@@ -25,7 +19,7 @@ int main() {
 
   // generate random permutation
   for(i = n-1; i > 0; i--) {
-    swap(p, i, rand() % i);
+    spasm_swap(p, i, rand() % i);
   }
 
   // test 1 : apply permutation

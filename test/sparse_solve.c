@@ -47,8 +47,6 @@ int main(int argc, char **argv) {
 
   assert( n<= m); // upper-trapezoidal
 
-  printf("[DEBUG TEST] U is %d x %d\n", n, m);
-
   // load RHS
   T = spasm_triplet_alloc(1, m, 10, 257, true);
   spasm_add_entry(T, 0, 0, 1);

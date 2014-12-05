@@ -132,8 +132,8 @@ typedef struct  {
   int   *p;
 } spasm_lu;
 
-spasm_lu *spasm_PLUQ(const spasm * A);
-spasm_lu *spasm_LU(const spasm * A);
+spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation);
+spasm_lu *spasm_LU(const spasm * A, const int *row_permutation);
 void spasm_free_LU(spasm_lu *X);
 
 /* spasm_solutions.c */

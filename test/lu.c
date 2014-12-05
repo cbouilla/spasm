@@ -24,11 +24,9 @@ int main(int argc, char **argv) {
   u = malloc(n * sizeof(spasm_GFp));
   v = malloc(m * sizeof(spasm_GFp));
 
-  LU = spasm_LU(A);
+  LU = spasm_LU(A, SPASM_IDENTITY_PERMUTATION);
 
   for(i = 0; i < n; i++) {
-    printf("checking i = %d\n", i);
-
     for(j = 0; j < n; j++) {
       x[j] = 0;
       u[j] = 0;
@@ -46,7 +44,7 @@ int main(int argc, char **argv) {
     for(j = 0; j < m; j++) {
       if (y[j] != v[j]) {
 	printf("not ok %d - L*U == A (col %d)\n", test, j);
-	exit(1);
+	exit(0);
       }
     }
   }

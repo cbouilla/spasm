@@ -1,13 +1,11 @@
 #include "spasm.h"
 
-#define INSERT_SORT_THRESHOLD 42
+#define INSERT_SORT_THRESHOLD 42 // TODO : tune this value
 
 
 // sort up to index right, excluded
 static void insertion_sort(const spasm *A, int *p, const int left, const int right) {
   int i, j, u, v;
-
-  //  printf("InsertionSort(%d, %d);\n", left, right);
 
   //  if (left <= 0) {
     for(i = left + 1; i < right; i++) {
@@ -22,22 +20,11 @@ static void insertion_sort(const spasm *A, int *p, const int left, const int rig
     }
     /*
   } else {
-
-    // if ( left>0 ), then we know that on the left of the current
-    // subfile, there is an element smaller than all the elements of
-    // the subfile (because this element was a pivot). Therefore, we
-    // don't have to check explicitly that we attained the left
-    // boundary of the array...
-
-    for(i = left + 1; i <= right; i++) {
-	v = a[i];
-	j = i - 1;
-	while (a[j] > v) {
-	  a[j + 1] = a[j];
-	  j--;
-	}
-	a[j + 1] = v;
-      }
+    TODO, possible optimization : if ( left>0 ), then we know that
+    on the left of the current subfile, there is an element smaller
+    than all the elements of the subfile (because this element was a pivot).
+    Therefore, we don't have to check explicitly that we attained the left
+    boundary of the array...
     */
 }
 
@@ -94,8 +81,6 @@ static int pivoting(const spasm *A, int *p, const int initial_left, const int in
 
 static void spasm_quicksort(const spasm *A, int *p, const int left, const int right) {
   int pivotIndex, new_pivotIndex;
-
-  //  printf("QuickSort(%d, %d);\n", left, right);
 
   if (right-left > INSERT_SORT_THRESHOLD) {
 
