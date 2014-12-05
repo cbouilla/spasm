@@ -1,29 +1,3 @@
-/*
- * sage utility script to generate random sparse lower-triangular matrix
- *
-sage: F = GF(257)
-sage: n = 100
-sage: M = random_matrix(F, n, n, density=0.25, sparse=True)
-sage: for i in range(M.nrows()):
-....:     M[i,i] = 1
-....:     for j in range(i+1, M.ncols()):
-....:         M[i,j] = 0
-....:
-sage: out = open("mat.txt", "w")
-sage: for (i,j) in M.nonzero_positions():
-....:     out.write("{0} {1} {2}\n".format(i, j, M[i,j]))
-....:
-sage: out.close()
-
-
--- easily adapted to yield an upper-triangular sparse matrix --
-
-sage: for i in range(M.nrows()):
-....:     M[i,i] = 1
-....:     for j in range(i):
-....:         M[i,j] = 0
-
-*/
 #include <stdio.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -39,7 +13,7 @@ int main(int argc, char **argv) {
   test = atoi(argv[1]);
 
   // load matrix
-  T = spasm_load_triplet(stdin, 257);
+  T = spasm_load_triplet(stdin, 32003);
   U = spasm_compress(T);
   spasm_triplet_free(T);
   n = U->n;
@@ -48,7 +22,7 @@ int main(int argc, char **argv) {
   assert( n<= m); // upper-trapezoidal
 
   // load RHS
-  T = spasm_triplet_alloc(1, m, 10, 257, true);
+  T = spasm_triplet_alloc(1, m, 10, 32003, true);
   spasm_add_entry(T, 0, 0, 1);
   spasm_add_entry(T, 2, 0, 2);
   spasm_add_entry(T, 4, 0, 3);
