@@ -140,6 +140,9 @@ void spasm_free_LU(spasm_lu *X);
 int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
 int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
 
+/* spasm_sort.c */
+int * spasm_row_sort (const spasm *A);
+
 
 /* utilities */
 static inline int spasm_max(int a, int b) {
@@ -149,5 +152,18 @@ static inline int spasm_max(int a, int b) {
 static inline int spasm_min(int a, int b) {
   return (a < b) ? a : b;
 }
+
+static inline void spasm_swap(int *a, int i, int j) {
+  int x = a[i];
+    a[i] = a[j];
+    a[j] = x;
+}
+
+static inline int spasm_row_weight(const spasm *A, int i) {
+  int *Ap;
+  Ap = A->p;
+  return Ap[i + 1] - Ap[i];
+}
+
 
 #endif
