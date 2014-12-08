@@ -33,5 +33,5 @@ CFLAGS="$CFLAGS -Wall -Wextra -g -fPIC"
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)
 
-AC_CONFIG_FILES([Makefile src/Makefile test/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile test/Makefile bench/Makefile])
 AC_OUTPUT
