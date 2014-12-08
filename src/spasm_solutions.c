@@ -18,7 +18,7 @@ int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
     assert(b != NULL);
 
     row_permutation = spasm_row_sort(A);
-    PLUQ = spasm_PLUQ(A, row_permutation); // attention, on calcule une solution de row_permutation * A
+    PLUQ = spasm_PLUQ(A, row_permutation);
     L = PLUQ->L;
     U = PLUQ->U;
 
@@ -34,7 +34,6 @@ int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
 
     /* u*Q = b */
     spasm_ipvec(PLUQ->qinv, b, u, m);
-    spasm_ipvec(PLUQ->qinv, b, u, m);
 
     /* v.U*Q = b  (if possible) */
     ok = spasm_dense_forward_solve(U, u, v, SPASM_IDENTITY_PERMUTATION);
@@ -45,6 +44,7 @@ int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
 
       /* x.PLUQ = b */
       spasm_ipvec(PLUQ->p, w, s, n);
+      spasm_ipvec(row_permutation, s, x, n);
     }
 
     free(u);
@@ -103,6 +103,7 @@ int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
 
       /* y.LU = b */
       spasm_dense_back_solve(L, z, w, LU->p);
+      spasm_ipvec(row_permutation, w, x, n);
     }
 
     free(y);

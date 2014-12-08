@@ -2,12 +2,19 @@
 #include <stdbool.h>
 #include "spasm.h"
 
+/*
+ * /!\ the ``row_permutation'' argument is NOT embedded in P. This means that :
+ *  a) L is ***really*** lower-(triangular/trapezoidal)
+ *  b) PLUQ = row_permutation*A
+ */
 spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation) {
-  int m, i, j, r, px, k;
-  int *Up, *Uj, *qinv;
+  int n, m, i, j, r, px, k;
+  int *Up, *Uj, *qinv, *p;
   spasm *U, *L, *LL;
   spasm_lu *N;
 
+  m = A->m;
+  n = A->n;
   N = spasm_LU(A, row_permutation);
   L = N->L;
   U = N->U;
@@ -25,7 +32,7 @@ spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation) {
     }
   }
 
-  /* permutes the columns of U in place.
+  /* permute the columns of U in place.
      U becomes really upper-trapezoidal. */
   for(i = 0; i < r; i++) {
     for(px = Up[i]; px < Up[i + 1]; px++) {
@@ -33,6 +40,8 @@ spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation) {
     }
   }
 
+  /* permute the rows of L (not in place).
+     L becomes really lower-trapezoidal. */
   LL = spasm_permute(L, N->p, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
   N->L = LL;
   spasm_csr_free(L);
@@ -171,7 +180,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation) {
 	  lnz++;
 
 	  qinv[ ipiv ] = i - defficiency;
-	  p[i - defficiency] = inew;
+	  p[i - defficiency] = i;
 
 	  /* pivot must be the first entry in U[i] */
 	  Uj[unz] = ipiv;
@@ -190,8 +199,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation) {
 	  }
 	} else {
 	  defficiency++;
-	  p[n - defficiency] = inew;
-	    //	  p[n - defficiency] = i;
+	  p[n - defficiency] = i;
 	}
     }
 

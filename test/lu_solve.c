@@ -33,6 +33,9 @@ int main(int argc, char **argv) {
   }
   spasm_gaxpy(A, x, b);
 
+  for(i = 0; i < n; i++) {
+    x[i] = 0;
+  }
   result = spasm_LU_solve(A, b, x);
   if (result != SPASM_SUCCESS) {
     printf("not ok %d - LU solver [solution not found]\n", test);
