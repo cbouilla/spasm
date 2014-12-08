@@ -61,8 +61,11 @@ int main(int argc, char **argv) {
   T = spasm_load_sms(stdin, prime);
   printf("A : %d x %d with %d nnz (density = %.3f %%) -- loaded modulo %d\n", T->n, T->m, T->nz, 100.0 * T->nz / (1.0 * T->n * T->m), prime);
   if (allow_transpose && (T->n < T->m)) {
-    printf("[rank] transposing matrix\n");
+    printf("[rank] transposing matrix : ");
+    fflush(stdout);
+    start_time = spasm_wtime();
     spasm_triplet_transpose(T);
+    printf("%.1f s\n", spasm_wtime() - start_time);
   }
   A = spasm_compress(T);
   spasm_triplet_free(T);
@@ -74,10 +77,18 @@ int main(int argc, char **argv) {
     p = NULL;
     break;
   case 1:
+    printf("[rank] finding cheap pivots : ");
+    fflush(stdout);
+    start_time = spasm_wtime();
     p = spasm_cheap_pivots(A);
+    printf("%.1f s\n", spasm_wtime() - start_time);
     break;
   case 2:
+    printf("[rank] sorting rows : ");
+    fflush(stdout);
+    start_time = spasm_wtime();
     p = spasm_row_sort(A);
+    printf("%.1f s\n", spasm_wtime() - start_time);
     break;
   }
 
@@ -91,10 +102,10 @@ int main(int argc, char **argv) {
   m = A->m;
 
   printf("LU factorisation (+ sort took) %.2f s\n", end_time - start_time);
-  printf("U :  %d x %d with %d nnz (density = %.1f %%)\n", r, m, spasm_nnz(U), 100.0 * spasm_nnz(U) / (r*m - r*r/2));
+  printf("U :  %d x %d with %d nnz (density = %.1f %%)\n", r, m, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0*r*m - r*r/2.0));
   if (LU->L != NULL) {
     L = LU->L;
-    printf("L :  %d x %d with %d nnz (density =%.1f %%)\n", L->n, r, spasm_nnz(L), 100.0 * spasm_nnz(L) / (r*n - r*r/2));
+    printf("L :  %d x %d with %d nnz (density =%.1f %%)\n", L->n, r, spasm_nnz(L), 100.0 * spasm_nnz(L) / (1.0*r*n - r*r/2.0));
   }
 
 #ifdef SPASM_TIMING
