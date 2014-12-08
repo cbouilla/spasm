@@ -3,7 +3,7 @@
 echo 1..1
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/m1
+INPUT_MATRIX=$srcdir/Matrix/m1.sms
 OUT=$srcdir/Output/gaxpy.1
 EXPECTED=$srcdir/Expected/gaxpy.1
 ./gaxpy < $INPUT_MATRIX > $OUT

@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
   assert(argc > 1);
   root = atoi(argv[1]);
 
-  T = spasm_load_triplet(stdin, 257);
+  T = spasm_load_sms(stdin, 42013);
   U = spasm_compress(T);
   spasm_triplet_free(T);
 

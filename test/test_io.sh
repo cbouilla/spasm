@@ -2,7 +2,7 @@
 
 echo 1..2
 
-INPUT_MATRIX=$srcdir/Matrix/t1
+INPUT_MATRIX=$srcdir/Matrix/t1.sms
 
 # test 1 : reading/writing a matrix in triplet form
 OUT=$srcdir/Output/io.1

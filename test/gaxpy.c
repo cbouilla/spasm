@@ -8,7 +8,7 @@ int main() {
   spasm_GFp *x, *y;
   int i, n;
 
-  T = spasm_load_triplet(stdin, 257);
+  T = spasm_load_sms(stdin, 257);
   C = spasm_compress(T);
   spasm_triplet_free(T);
 

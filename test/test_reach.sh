@@ -3,7 +3,7 @@
 echo 1..4
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/g1
+INPUT_MATRIX=$srcdir/Matrix/g1.sms
 OUT=$srcdir/Output/reach.1
 EXPECTED=$srcdir/Expected/reach.1
 ./reach 0 < $INPUT_MATRIX > $OUT
@@ -26,7 +26,7 @@ else
 fi
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/upper_trapeze
+INPUT_MATRIX=$srcdir/Matrix/upper_trapeze.sms
 OUT=$srcdir/Output/reach.3
 EXPECTED=$srcdir/Expected/reach.3
 ./reach 5 < $INPUT_MATRIX > $OUT

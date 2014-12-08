@@ -91,8 +91,8 @@ void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x);
 spasm * spasm_compress(const spasm_triplet *T);
 
 /* spasm_io.c */
-spasm_triplet * spasm_load_triplet(FILE *f, int prime);
-void spasm_save_triplet(FILE *f, const spasm_triplet *A);
+spasm_triplet * spasm_load_sms(FILE *f, int prime);
+void spasm_save_sms(FILE *f, const spasm_triplet *A);
 void spasm_save_csr(FILE *f, const spasm *A);
 
 

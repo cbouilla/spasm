@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
   test = atoi(argv[1]);
 
   // load matrix
-  T = spasm_load_triplet(stdin, 32003);
+  T = spasm_load_sms(stdin, 32003);
   U = spasm_compress(T);
   spasm_triplet_free(T);
   n = U->n;

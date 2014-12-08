@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
   assert(argc == 2);
   test = atoi(argv[1]);
 
-  T = spasm_load_triplet(stdin, 257);
+  T = spasm_load_sms(stdin, 42013);
   C = spasm_compress(T);
   spasm_triplet_free(T);
   n = C->n;

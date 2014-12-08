@@ -3,25 +3,25 @@
 echo 1..6
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/l1
+INPUT_MATRIX=$srcdir/Matrix/l1.sms
 ./dense_lsolve 1 < $INPUT_MATRIX
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/lower_trapeze
+INPUT_MATRIX=$srcdir/Matrix/lower_trapeze.sms
 ./dense_lsolve 2 < $INPUT_MATRIX
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/u1
+INPUT_MATRIX=$srcdir/Matrix/u1.sms
 ./dense_usolve 3 < $INPUT_MATRIX
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/upper_trapeze
+INPUT_MATRIX=$srcdir/Matrix/upper_trapeze.sms
 ./dense_usolve 4 < $INPUT_MATRIX
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/u1
+INPUT_MATRIX=$srcdir/Matrix/u1.sms
 ./sparse_solve 5 < $INPUT_MATRIX
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/upper_trapeze
+INPUT_MATRIX=$srcdir/Matrix/upper_trapeze.sms
 ./sparse_solve 6 < $INPUT_MATRIX

@@ -10,10 +10,10 @@ int main(int argc, char **argv) {
   assert(argc > 1);
   test = atoi(argv[1]);
 
-  T = spasm_load_triplet(stdin, 257);
+  T = spasm_load_sms(stdin, 46337);
   switch(test) {
   case 1:
-    spasm_save_triplet(stdout, T);
+    spasm_save_sms(stdout, T);
     spasm_triplet_free(T);
     break;
 
