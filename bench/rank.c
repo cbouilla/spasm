@@ -15,6 +15,9 @@ int main() {
   int *p;
 
   T = spasm_load_sms(stdin, 42013);
+  if (T->n < T->m) {
+    spasm_triplet_transpose(T);
+  }
   A = spasm_compress(T);
   spasm_triplet_free(T);
 

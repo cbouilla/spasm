@@ -25,6 +25,27 @@ void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x) {
   T->m = spasm_max(T->m, j + 1);
 }
 
+void spasm_triplet_transpose(spasm_triplet *T) {
+  int i, j, k, nz, *Ti, *Tj;
+
+  assert(T != NULL);
+  nz = T->nz;
+  Ti = T->i;
+  Tj = T->j;
+
+  for(k = 0; k < nz; k++) {
+    i = Ti[k];
+    j = Tj[k];
+    Tj[k] = i;
+    Ti[k] = i;
+  }
+  i = T->m;
+  T->m = T->n;
+  T->n = i;
+}
+
+
+
 /* C = compressed-row form of a triplet matrix T */
 spasm * spasm_compress(const spasm_triplet *T) {
   int m, n, nz, sum, p, k, *Cp, *Cj, *w, *Ti, *Tj;

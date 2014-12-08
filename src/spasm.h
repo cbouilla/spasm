@@ -93,6 +93,7 @@ void spasm_csr_resize(spasm *A, int n, int m);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x);
+void spasm_triplet_transpose(spasm_triplet *T);
 spasm * spasm_compress(const spasm_triplet *T);
 
 /* spasm_io.c */
