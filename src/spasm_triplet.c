@@ -5,6 +5,7 @@
 /* add an entry to a triplet matrix; enlarge it if necessary */
 void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x) {
   int prime;
+  spasm_GFp x_p;
 
   assert(T != NULL);
   assert((i >= 0) && (j >= 0));
@@ -16,7 +17,11 @@ void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x) {
   }
 
   if (T->x != NULL) {
-    T->x[ T->nz ] = ((x % prime) + prime) % prime;
+    x_p = ((x % prime) + prime) % prime;
+    if (x_p == 0) {
+      return;
+    }
+    T->x[ T->nz ] = x_p;
   }
   T->i[ T->nz ] = i;
   T->j[ T->nz ] = j;
