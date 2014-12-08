@@ -141,9 +141,13 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     }
     old_unz = lnz = unz = 0;
 
-    /* compute L[i] and U[i] */
+    /* --- Main loop : compute L[i] and U[i] ------------------- */
     for (i = 0; i < n; i++) {
-
+      if (!keep_L && i - defficiency == r) {
+	printf("\n[LU] full rank reached ; early abort\n");
+	break;
+      }
+ 
         /* --- Triangular solve: x * U = A[i] ---------------------------------------- */
       if (keep_L) {
 	Lp[i] = lnz;                          /* L[i] starts here */
@@ -263,8 +267,8 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     printf("\n");
 
     /* remove extra space from L and U */
-    Up[n - defficiency] = unz;
-    spasm_csr_resize(U, n - defficiency, m);
+    Up[i - defficiency] = unz;
+    spasm_csr_resize(U, i - defficiency, m);
     spasm_csr_realloc(U, -1);
 
     if (keep_L) {
