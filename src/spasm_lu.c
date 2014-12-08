@@ -87,7 +87,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     r = spasm_min(n, m);
     prime = A->prime;
     defficiency = 0;
-    verbose_step = n / 1000;
+    verbose_step = spasm_max(1, n / 1000);
 
     /* educated guess of the size of L,U */
     lnz = 4 * spasm_nnz(A) + n;
