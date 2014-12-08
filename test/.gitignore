@@ -9,4 +9,9 @@ reach
 sparse_solve
 lu
 pluq
+permuted_lu
+permuted_pluq
+lu_solve
+pluq_solve
+sort
 

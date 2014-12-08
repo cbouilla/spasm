@@ -9,7 +9,7 @@
  */
 spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation) {
   int n, m, i, j, r, px, k;
-  int *Up, *Uj, *qinv, *p;
+  int *Up, *Uj, *qinv;
   spasm *U, *L, *LL;
   spasm_lu *N;
 
