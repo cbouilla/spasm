@@ -37,7 +37,7 @@ void spasm_triplet_transpose(spasm_triplet *T) {
     i = Ti[k];
     j = Tj[k];
     Tj[k] = i;
-    Ti[k] = i;
+    Ti[k] = j;
   }
   i = T->m;
   T->m = T->n;
