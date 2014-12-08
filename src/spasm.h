@@ -3,6 +3,10 @@
 #ifndef _SPASM_H
 #define _SPASM_H
 
+#define SPASM_TIMING
+//#define SPASM_SORT_ROWS
+//#define SPASM_COL_WEIGHT_PIVOT_SELECTION
+
 #include <stdlib.h>
 #include <limits.h>
 #include <math.h>
@@ -64,6 +68,7 @@ The numerical values are optional (useful for storing a sparse graph, or the pat
 #define SPASM_IDENTITY_PERMUTATION NULL
 #define SPASM_IGNORE NULL
 #define SPASM_WITH_NUMERICAL_VALUES 1
+#define SPASM_KEEP_L 1
 #define SPASM_SUCCESS 0
 #define SPASM_NO_SOLUTION 1
 
@@ -133,7 +138,7 @@ typedef struct  {
 } spasm_lu;
 
 spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation);
-spasm_lu *spasm_LU(const spasm * A, const int *row_permutation);
+spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L);
 void spasm_free_LU(spasm_lu *X);
 
 /* spasm_solutions.c */
@@ -164,6 +169,11 @@ static inline int spasm_row_weight(const spasm *A, int i) {
   Ap = A->p;
   return Ap[i + 1] - Ap[i];
 }
+
+
+#ifdef SPASM_TIMING
+#include "cycleclock.h"
+#endif
 
 
 #endif

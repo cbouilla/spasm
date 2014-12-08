@@ -1,6 +1,13 @@
 #include <assert.h>
 #include "spasm.h"
 
+#ifdef SPASM_TIMING
+#include "cycleclock.h"
+
+uint64_t reach = 0, scatter = 0;
+#endif
+
+
 int spasm_is_upper_triangular(const spasm *A) {
   int i, n, m, *Aj, *Ap;
   spasm_GFp *Ax;
@@ -176,16 +183,20 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, cons
  * top is the return value.
  *
  */
+
 int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
-  int i, I, p, px, top, n, m, prime, *Up, *Uj, *Bp, *Bj;
-    spasm_GFp *Ux, *Bx;
+  int i, I, p, px, top, m, prime, *Up, *Uj, *Bp, *Bj;
+  spasm_GFp *Ux, *Bx;
+
+#ifdef SPASM_TIMING
+    uint64_t start;
+#endif
 
     assert(U != NULL);
     assert(B != NULL);
     assert(xi != NULL);
     assert(x != NULL);
 
-    n = U->n;
     m = U->m;
     Up = U->p;
     Uj = U->j;
@@ -196,8 +207,16 @@ int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_
     Bj = B->j;
     Bx = B->x;
 
+#ifdef SPASM_TIMING
+    start = spasm_ticks();
+#endif
+
     /* xi[top : n] = Reach( U, B[k] ) */
     top = spasm_reach(U, B, k, xi, pinv);
+
+#ifdef SPASM_TIMING
+    reach += spasm_ticks() - start;
+#endif
 
     /* clear x */
     for (p = top; p < m; p++) {
@@ -210,6 +229,10 @@ int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_
     }
 
     /* iterate over the (precomputed) pattern of x (= the solution) */
+#ifdef SPASM_TIMING
+    start = spasm_ticks();
+#endif
+
     for (px = top; px < m; px++) {
       /* x[i] is nonzero */
       i = xi[px];
@@ -230,5 +253,10 @@ int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_
 
       spasm_scatter(Uj, Ux, Up[I] + 1, Up[I + 1], prime - x[i], x, prime);
     }
+
+#ifdef SPASM_TIMING
+    scatter += spasm_ticks() - start;
+#endif
+
     return top;
 }

@@ -2,13 +2,17 @@
 #include <stdbool.h>
 #include "spasm.h"
 
+#ifdef SPASM_TIMING
+uint64_t data_shuffling = 0;
+#endif
+
 /*
  * /!\ the ``row_permutation'' argument is NOT embedded in P. This means that :
  *  a) L is ***really*** lower-(triangular/trapezoidal)
  *  b) PLUQ = row_permutation*A
  */
 spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation) {
-  int n, m, i, j, r, px, k;
+  int m, i, j, r, px, k;
   int *Up, *Uj, *qinv;
   spasm *U, *L, *LL;
   spasm_lu *N;
@@ -68,6 +72,9 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation) {
     int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xi, *col_weights;
     int n, m, r, ipiv, i, inew, j, top, px, lnz, unz, prime, defficiency;
 
+#ifdef SPASM_TIMING
+    uint64_t start;
+#endif
     /* check inputs */
     assert(A != NULL);
 
@@ -123,6 +130,9 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation) {
 
     /* compute L[i] and U[i] */
     for (i = 0; i < n; i++) {
+      printf("\rLU : %d / %d [|L| = %d / |U| = %d]", i, n, lnz, unz);
+      fflush(stdout);
+
         /* --- Triangular solve: x * U = A[i] ---------------------------------------- */
         Lp[i] = lnz;                          /* L[i] starts here */
 	Up[i - defficiency] = unz;            /* U[i] starts here */
@@ -143,6 +153,10 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation) {
         top = spasm_sparse_forward_solve(U, A, inew, xi, x, qinv);
 
         /* Find pivot and dispatch coeffs into L and U --------------- */
+        /* --- Find pivot and dispatch coeffs into L and U -------------------------- */
+#ifdef SPASM_TIMING
+      start = spasm_ticks();
+#endif
         ipiv = -1;
         /* index of best pivot so far.*/
 
@@ -201,6 +215,9 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation) {
 	  defficiency++;
 	  p[n - defficiency] = i;
 	}
+#ifdef SPASM_TIMING
+      data_shuffling += spasm_ticks() - start;
+#endif
     }
 
     /* --- Finalize L and U ------------------------------------------------- */
