@@ -110,7 +110,7 @@ int * spasm_row_sort (const spasm *A) {
 }
 
 int * spasm_cheap_pivots(const spasm *A) {
-  int n, m, i, j, idx_j, k, l, px;
+  int n, m, i, j, idx_j, k, px;
   int *q, *p, *Ap, *Aj;
   spasm_GFp *Ax;
 
@@ -131,7 +131,7 @@ int * spasm_cheap_pivots(const spasm *A) {
     j = -1;
     /* find leftmost entry */
     for(px = Ap[i]; px < Ap[i + 1]; px++) {
-      if (j == -1 || Aj[px] > j) {
+      if (j == -1 || Aj[px] < j) {
 	j = Aj[px];
 	idx_j = px;
       }
@@ -151,24 +151,25 @@ int * spasm_cheap_pivots(const spasm *A) {
       q[j] = i;
     }
   }
-  /* --- count cheap pivots ------------ */
+
+  /* --- build corresponding row permutation ---------------------- */
+
+  /* put cheap pivot rows in increasing column order */
   k = 0;
   for(j = 0; j < m; j++) {
     if (q[j] != -1) {
+      //      printf("cheap pivot at (%d, %d)\n", q[j], j);
+      p[k] = q[j];
       k++;
     }
   }
 
   fprintf(stderr, "[LU] found %d cheap pivots\n", k);
 
-  /* --- build corresponding row permutation ---------------------- */
-  l = 0;
+  /* put other rows afterwards */
   for(i = 0; i < n; i++) {
     j = Aj[ Ap[i] ];
-    if (q[j] == i) {
-      p[l] = i;
-      l++;
-    } else {
+    if (q[j] != i) {
       p[k] = i;
       k++;
     }

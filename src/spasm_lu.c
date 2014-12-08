@@ -68,7 +68,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     spasm_lu *N;
     spasm_GFp *Lx, *Ux, *x;
     int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xi;
-    int n, m, r, ipiv, i, inew, j, top, px, lnz, unz, old_unz, prime, defficiency;
+    int n, m, r, ipiv, i, inew, j, top, px, lnz, unz, old_unz, prime, defficiency, verbose_step;
 
 #ifdef SPASM_TIMING
     uint64_t start;
@@ -87,6 +87,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     r = spasm_min(n, m);
     prime = A->prime;
     defficiency = 0;
+    verbose_step = n / 1000;
 
     /* educated guess of the size of L,U */
     lnz = 4 * spasm_nnz(A) + n;
@@ -206,7 +207,8 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
         /* pivot found */
         if (ipiv != -1) {
 	  old_unz = unz;
-	  
+	  //	  printf("\n pivot found on row %d of A at column %d\n", inew, ipiv);
+
 	  /* L[i,i] <--- 1. Last entry of the row ! */
 	  if (keep_L) {
 	    Lj[lnz] = i - defficiency;
@@ -237,6 +239,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 	  p[n - defficiency] = i;
 	}
 
+
 #ifdef SPASM_COL_WEIGHT_PIVOT_SELECTION
 	/* update remaining col weights */
 	for(px = Ap[inew]; px < Ap[inew + 1]; px++) {
@@ -249,8 +252,10 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
       data_shuffling += spasm_ticks() - start;
 #endif
 
-      printf("\rLU : %d / %d [|L| = %d / |U| = %d] -- current density= (%.3f vs %.3f)", i, n, lnz, unz, 1.0 * (m-top) / (m), 1.0 * (unz-old_unz) / m);
-      fflush(stdout);
+      if ((i % verbose_step) == 0) {
+	printf("\rLU : %d / %d [|L| = %d / |U| = %d] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, lnz, unz, 1.0 * (m-top) / (m), 1.0 * (unz-old_unz) / m, i - defficiency);
+	fflush(stdout);
+      }
 
     }
 
