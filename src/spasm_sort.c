@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "spasm.h"
 
 #define INSERT_SORT_THRESHOLD 42 // TODO : tune this value
@@ -105,5 +106,64 @@ int * spasm_row_sort (const spasm *A) {
     p[i] = i;
   }
   spasm_quicksort(A, p, 0, n);
+  return p;
+}
+
+int * spasm_cheap_pivots(const spasm *A) {
+  int n, m, i, j, k, l, px;
+  int *q, *p, *Ap, *Aj;
+
+  n = A->n;
+  m = A->m;
+  Ap = A->p;
+  Aj = A->j;
+
+  q = spasm_malloc(m * sizeof(int));
+  p = spasm_malloc(n * sizeof(int));
+
+  /* --- Cheap pivot selection ----------------------------------- */
+  for(j = 0; j < m; j++) {
+    q[j] = -1;
+  }
+  for(i = 0; i < n; i++) {
+    j = -1;
+    /* find leftmost entry */
+    for(px = Ap[i]; px < Ap[i + 1]; px++) {
+      if (j == -1 || Aj[px] > j) {
+	j = Aj[px];
+      }
+    }
+
+    if (j == -1) {
+      continue; // empty row
+    }
+    if (q[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, q[j])) {
+      q[j] = i;
+    }
+  }
+  /* --- count cheap pivots ------------ */
+  k = 0;
+  for(j = 0; j < m; j++) {
+    if (q[j] != -1) {
+      k++;
+    }
+  }
+
+  fprintf(stderr, "[LU] found %d cheap pivots\n", k);
+
+  /* --- build corresponding row permutation ---------------------- */
+  l = 0;
+  for(i = 0; i < n; i++) {
+    j = Aj[ Ap[i] ];
+    if (q[j] == i) {
+      p[l] = i;
+      l++;
+    } else {
+      p[k] = i;
+      k++;
+    }
+  }
+
+  free(q);
   return p;
 }
