@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
   v = malloc(m * sizeof(spasm_GFp));
 
   row_permutation = spasm_row_sort(A);
-  LU = spasm_LU(A, row_permutation);
+  LU = spasm_LU(A, row_permutation, SPASM_KEEP_L);
 
   for(i = 0; i < n; i++) {
     for(j = 0; j < n; j++) {

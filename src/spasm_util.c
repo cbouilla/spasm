@@ -118,7 +118,9 @@ void spasm_triplet_realloc(spasm_triplet *A, int nzmax) {
 
 /* free a sparse matrix */
 void spasm_csr_free(spasm *A) {
-  assert(A != NULL);
+  if (A == NULL) {
+    return;
+  }
   free(A->p);
   free(A->j);
   free(A->x); // trick : free does nothing on NULL pointer

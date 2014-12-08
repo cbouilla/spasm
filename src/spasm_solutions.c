@@ -73,7 +73,7 @@ int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
     assert(b != NULL);
 
     row_permutation = spasm_row_sort(A);
-    LU = spasm_LU(A, row_permutation);
+    LU = spasm_LU(A, row_permutation, SPASM_KEEP_L);
     L = LU->L;
     U = LU->U;
 
