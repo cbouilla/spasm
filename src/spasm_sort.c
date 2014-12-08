@@ -110,13 +110,15 @@ int * spasm_row_sort (const spasm *A) {
 }
 
 int * spasm_cheap_pivots(const spasm *A) {
-  int n, m, i, j, k, l, px;
+  int n, m, i, j, idx_j, k, l, px;
   int *q, *p, *Ap, *Aj;
+  spasm_GFp *Ax;
 
   n = A->n;
   m = A->m;
   Ap = A->p;
   Aj = A->j;
+  Ax = A->x;
 
   q = spasm_malloc(m * sizeof(int));
   p = spasm_malloc(n * sizeof(int));
@@ -131,12 +133,20 @@ int * spasm_cheap_pivots(const spasm *A) {
     for(px = Ap[i]; px < Ap[i + 1]; px++) {
       if (j == -1 || Aj[px] > j) {
 	j = Aj[px];
+	idx_j = px;
       }
     }
 
+    /* Skip empty rows */
     if (j == -1) {
-      continue; // empty row
+      continue;
     }
+
+    /* make sure leftmost entry is the first of the row */
+    spasm_swap(Aj, Ap[i], idx_j);
+    spasm_swap(Ax, Ap[i], idx_j);
+
+    /* check if it is a sparser pivot */
     if (q[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, q[j])) {
       q[j] = i;
     }
