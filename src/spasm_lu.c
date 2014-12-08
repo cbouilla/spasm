@@ -68,7 +68,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     spasm_lu *N;
     spasm_GFp *Lx, *Ux, *x;
     int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xi;
-    int n, m, r, ipiv, i, inew, j, top, px, lnz, unz, prime, defficiency;
+    int n, m, r, ipiv, i, inew, j, top, px, lnz, unz, old_unz, prime, defficiency;
 
 #ifdef SPASM_TIMING
     uint64_t start;
@@ -138,12 +138,10 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     for (i = 0; i <= r; i++) {
         Up[i] = 0;
     }
-    lnz = unz = 0;
+    old_unz = lnz = unz = 0;
 
     /* compute L[i] and U[i] */
     for (i = 0; i < n; i++) {
-      printf("\rLU : %d / %d [|L| = %d / |U| = %d]", i, n, lnz, unz);
-      fflush(stdout);
 
         /* --- Triangular solve: x * U = A[i] ---------------------------------------- */
       if (keep_L) {
@@ -207,7 +205,8 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 
         /* pivot found */
         if (ipiv != -1) {
-
+	  old_unz = unz;
+	  
 	  /* L[i,i] <--- 1. Last entry of the row ! */
 	  if (keep_L) {
 	    Lj[lnz] = i - defficiency;
@@ -249,6 +248,9 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 #ifdef SPASM_TIMING
       data_shuffling += spasm_ticks() - start;
 #endif
+
+      printf("\rLU : %d / %d [|L| = %d / |U| = %d] -- current density= (%.3f vs %.3f)", i, n, lnz, unz, 1.0 * (m-top) / (m), 1.0 * (unz-old_unz) / m);
+      fflush(stdout);
 
     }
 
