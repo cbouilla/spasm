@@ -1,7 +1,7 @@
 #include <assert.h>
 #include "spasm.h"
 
-spasm *spasm_transpose(const spasm *C) {
+spasm *spasm_transpose(const spasm *C, int keep_values) {
   int i, j, m, n, sum, px, py, *Cp, *Cj, *w, *Tp, *Tj;
   spasm_GFp *Cx, *Tx;
   spasm *T;
@@ -13,7 +13,7 @@ spasm *spasm_transpose(const spasm *C) {
   Cx = C->x;
 
   /* allocate result */
-  T = spasm_csr_alloc(m, n, spasm_nnz(C), C->prime, Cx != NULL);
+  T = spasm_csr_alloc(m, n, spasm_nnz(C), C->prime, keep_values && (Cx != NULL));
   Tp = T->p;
   Tj = T->j;
   Tx = T->x;

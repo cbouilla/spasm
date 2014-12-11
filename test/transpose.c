@@ -19,8 +19,8 @@ int main(int argc, char **argv) {
   n = A->n;
   m = A->m;
 
-  B = spasm_transpose(A);
-  C = spasm_transpose(B);
+  B = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
+  C = spasm_transpose(B, SPASM_WITH_NUMERICAL_VALUES);
 
   // check that A == C
   x = spasm_malloc(n * sizeof(spasm_GFp));

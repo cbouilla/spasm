@@ -102,7 +102,7 @@ void spasm_save_sms(FILE *f, const spasm_triplet *A);
 void spasm_save_csr(FILE *f, const spasm *A);
 
 /* spasm_transpose.c */
-spasm *spasm_transpose(const spasm *C);
+spasm *spasm_transpose(const spasm *C, int keep_values);
 
 /* spasm_permutation.c */
 void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
