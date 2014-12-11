@@ -71,6 +71,10 @@ int main(int argc, char **argv) {
   spasm_triplet_free(T);
 
   start_time = spasm_wtime();
+  printf("structural rank : %d", spasm_structural_rank(A));
+  printf(" [%.1f s]\n", spasm_wtime() - start_time);
+
+  start_time = spasm_wtime();
 
   switch(sort_strategy) {
   case 0:

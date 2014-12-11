@@ -152,6 +152,9 @@ int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
 int * spasm_row_sort (const spasm *A);
 int * spasm_cheap_pivots(const spasm *A);
 
+/* spasm_matching.c */
+int spasm_structural_rank(const spasm *A);
+
 
 /* utilities */
 static inline int spasm_max(int a, int b) {
