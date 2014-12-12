@@ -1,10 +1,8 @@
 /* indent -nfbs -i4 -nip -npsl -di0 -nut .... */
-
 #ifndef _SPASM_H
 #define _SPASM_H
 
 #define SPASM_TIMING
-//#define SPASM_SORT_ROWS
 //#define SPASM_COL_WEIGHT_PIVOT_SELECTION
 
 #include <stdlib.h>
@@ -60,7 +58,7 @@ p = {   0,             3,             6,        8,      10 }
 i = {   0,   1,   3,   1,   2,   3,   0,   2,   1,   3 }
 x = { 4.5, 3.1, 3.5, 2.9, 1.7, 0.4, 3.2, 3.0, 0.9, 1.0 }
 
-In partiular, the actual number of nnz is p[n].
+In particular, the actual number of nnz is p[n].
 
 The numerical values are optional (useful for storing a sparse graph, or the pattern of a matrix).
 */
@@ -98,7 +96,7 @@ spasm * spasm_compress(const spasm_triplet *T);
 
 /* spasm_io.c */
 spasm_triplet * spasm_load_sms(FILE *f, int prime);
-void spasm_save_sms(FILE *f, const spasm_triplet *A);
+void spasm_save_triplet(FILE *f, const spasm_triplet *A);
 void spasm_save_csr(FILE *f, const spasm *A);
 
 /* spasm_transpose.c */

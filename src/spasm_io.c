@@ -1,27 +1,6 @@
 #include <assert.h>
 #include "spasm.h"
 
-/* reads a sparse matrix from file f in "coordinate text file".
- * (cf. http://math.nist.gov/MatrixMarket/formats.html)
- *
- * return a triplet form matrix.
- *
-spasm_triplet * spasm_load_triplet(FILE *f, int prime) {
-    int i, j;
-    spasm_GFp x ;
-    spasm_triplet *T ;
-    assert(f != NULL);
-
-    T = spasm_triplet_alloc (0, 0, 1, prime, 1);
-
-    while (fscanf (f, "%d %d %d\n", &i, &j, &x) == 3) {
-      spasm_add_entry(T, i, j, x);
-    }
-
-    return T;
-}
-*/
-
 spasm_triplet * spasm_load_sms(FILE *f, int prime) {
     int i, j ;   /* use double for integers to avoid int conflicts */
     spasm_GFp x ;
@@ -56,7 +35,7 @@ spasm_triplet * spasm_load_sms(FILE *f, int prime) {
 
 
 void spasm_save_csr(FILE *f, const spasm *A) {
-  int i, n, p;
+  int i, n, m, p;
   int *Aj, *Ap;
   spasm_GFp *Ax;
 
@@ -67,16 +46,19 @@ void spasm_save_csr(FILE *f, const spasm *A) {
     Ap = A->p;
     Ax = A->x;
     n  = A->n;
+    m  = A->m;
 
-    /* compressed row form */
+    fprintf(f, "%d %d M\n", n, m);
     for(i = 0; i < n; i++) {
       for(p = Ap[i]; p < Ap[i + 1]; p++) {
-	fprintf(f, "%d %d %d\n", i, Aj[p], (Ax != NULL) ? Ax[p] : 1);
+	fprintf(f, "%d %d %d\n", i + 1, Aj[p] + 1, (Ax != NULL) ? Ax[p] : 1);
       }
     }
+
+    fprintf(f, "0 0 0\n");
 }
 
-void spasm_save_sms(FILE *f, const spasm_triplet *A) {
+void spasm_save_triplet(FILE *f, const spasm_triplet *A) {
   int i, nz, n, m;
   int *Ai, *Aj;
   spasm_GFp *Ax;

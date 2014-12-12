@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
   T = spasm_load_sms(stdin, 46337);
   switch(test) {
   case 1:
-    spasm_save_sms(stdout, T);
+    spasm_save_triplet(stdout, T);
     spasm_triplet_free(T);
     break;
 
