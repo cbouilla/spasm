@@ -108,7 +108,7 @@ void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 int *spasm_pinv(int const *p, int n);
 spasm *spasm_permute(const spasm * A, const int *pinv, const int *q, int values);
 int * spasm_random_permutation(int n);
-
+ 
 /* spasm_GFp.c */
 spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 
@@ -152,7 +152,24 @@ int * spasm_row_sort (const spasm *A);
 int * spasm_cheap_pivots(const spasm *A);
 
 /* spasm_matching.c */
+int spasm_maximum_matching(const spasm *A, int *imatch, int *jmatch);
 int spasm_structural_rank(const spasm *A);
+
+/* spasm_dm.c */
+typedef struct {
+    int *p ;        /* size m, row permutation */
+    int *q ;        /* size n, column permutation */
+    int *r ;        /* size nb+1, block k is rows r[k] to r[k+1]-1 in A(p,q) */
+    int *s ;        /* size nb+1, block k is cols s[k] to s[k+1]-1 in A(p,q) */
+    int nb ;        /* # of blocks in fine dmperm decomposition */
+    int rr [5] ;    /* coarse row decomposition */
+    int cc [5] ;    /* coarse column decomposition */
+} spasm_dm;
+
+spasm_dm *spasm_dm_alloc(int n, int m);
+spasm_dm * spasm_dulmage_mendelson(const spasm *A);
+void spasm_dm_free(spasm_dm *D);
+
 
 
 /* utilities */
