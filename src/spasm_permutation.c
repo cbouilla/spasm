@@ -59,7 +59,7 @@ int *spasm_pinv(int const *p, int n) {
 
 
 /*
- * C = P.A.Q where p and q are permutations of 0..m-1 and 0..n-1
+ * C = P.A.Q where P and Q are permutations of 0..n-1 and 0..m-1
  * respectively.
  *
  */
@@ -90,7 +90,7 @@ spasm *spasm_permute(const spasm * A, const int *p, const int *q, int values) {
         j = (p != NULL) ? p[i] : i;
         for(t = Ap[j]; t < Ap[j + 1]; t++) {
             /* col i of A is col pinv[i] of C */
-            Cj[nz] = (q != NULL) ? q[Aj[t]] : Aj[t];
+            Cj[nz] = (q != NULL) ? q[ Aj[t] ] : Aj[t];
             if (Cx != NULL) {
                 Cx[nz] = Ax[t];
             }
@@ -100,4 +100,18 @@ spasm *spasm_permute(const spasm * A, const int *p, const int *q, int values) {
     /* finalize the last row of C */
     Cp[n] = nz;
     return C;
+}
+
+int * spasm_random_permutation(int n) {
+  int i, *p;
+
+  p = spasm_malloc(n * sizeof(int));
+  for(i = 0; i < n; i++) {
+    p[i] = i;
+  }
+  for(i = n-1; i > 0; i--) {
+    spasm_swap(p, i, rand() % i);
+  }
+
+  return p;
 }

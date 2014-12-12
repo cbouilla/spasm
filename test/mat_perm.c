@@ -3,12 +3,6 @@
 #include <stdbool.h>
 #include "spasm.h"
 
-static inline void swap(int *a, int i, int j) {
-  int x = a[i];
-    a[i] = a[j];
-    a[j] = x;
-}
-
 int main(int argc, char **argv) {
   int n, m, i, j, test;
   spasm_triplet *T;
@@ -26,27 +20,9 @@ int main(int argc, char **argv) {
   n = A->n;
   m = A->m;
 
-  // generate random row permutation
-  p = spasm_malloc(n * sizeof(int));
-  for(i = 0; i < n; i++) {
-    p[i] = i;
-  }
-  for(i = n-1; i > 0; i--) {
-    swap(p, i, rand() % i);
-  }
-
-  // generate random column permutation
-  q = spasm_malloc(m * sizeof(int));
-  for(i = 0; i < m; i++) {
-    q[i] = i;
-  }
-  for(i = m-1; i > 0; i--) {
-    swap(q, i, rand() % i);
-  }
-
-  for(i = 0; i < m; i++) {
-    printf("q[%d] = %d\n", i, q[i]);
-  }
+  // generate random row & col permutation
+  p = spasm_random_permutation(n);
+  q = spasm_random_permutation(m);
 
   B = spasm_permute(A, p, q, true);
 
@@ -75,7 +51,7 @@ int main(int argc, char **argv) {
     for(j = 0; j < m; j++) {
       if (y[j] != w[j]) {
 	printf("not ok %d - P*A*Q \n", test);
-	exit(1);
+	exit(0);
       }
     }
   }
