@@ -110,8 +110,8 @@ int spasm_maximum_matching(const spasm *A, int *imatch, int *jmatch) {
     jmatch[i] = -1;
   }
 
-  /* --- greedily finds a "cheap" matching -------------------- */
   k = 0;
+  /* --- greedily finds a "cheap" matching -------------------- */
   for(i = 0; i < n; i++) {
     for (p = Ap[i]; p < Ap[i + 1]; p++) {
       j = Aj[p];
@@ -135,6 +135,7 @@ int spasm_maximum_matching(const spasm *A, int *imatch, int *jmatch) {
     }
   }
 
+  free(w);
   return k;
 }
 
