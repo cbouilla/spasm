@@ -151,7 +151,7 @@ static void spasm_matched(int n, const int *wj, const int *imatch, int *p, int *
 /* Given A, compute coarse and then fine dmperm */
 spasm_dm * spasm_dulmage_mendelson(const spasm *A) {
   int m, n, i, j, k;
-  int *jmatch, *imatch, *wi, *wj, *p, *q, *cc, *rr;
+  int *jmatch, *imatch, *wi, *wj, *p, *q, *cc, *rr, *queue;
 
     spasm_dm *D;
     spasm *A_t;
@@ -166,6 +166,7 @@ spasm_dm * spasm_dulmage_mendelson(const spasm *A) {
     imatch = spasm_malloc(m * sizeof(int));
     wi = spasm_malloc(n * sizeof(int));
     wj = spasm_malloc(m * sizeof(int));
+    queue = spasm_malloc(spasm_max(n, m) * sizeof(int));
 
     D = spasm_dm_alloc(n, m);
     p = D->p;
@@ -189,10 +190,11 @@ spasm_dm * spasm_dulmage_mendelson(const spasm *A) {
     A_t = spasm_transpose(A, 0);
 
     /* find R3, C3 from R0 */
-    spasm_bfs(A,    wi, wj, q, imatch, jmatch, 3);
+    spasm_bfs(A,    wi, wj, queue, imatch, jmatch, 3);
 
     /* find R1, C1 from C0 */
-    spasm_bfs(A_t,  wj, wi, p, jmatch, imatch, 1);
+    spasm_bfs(A_t,  wj, wi, queue, jmatch, imatch, 1);
+
     spasm_unmatched(m, wj, q, cc, 0) ;                      /* unmatched set C0 */
     spasm_matched  (m, wj, imatch, p, q, cc, rr, 1, 1) ;    /* set R1 and C1 */
     spasm_matched  (m, wj, imatch, p, q, cc, rr, 2, -1) ;   /* set R2 and C2 */
@@ -202,6 +204,9 @@ spasm_dm * spasm_dulmage_mendelson(const spasm *A) {
     /* cleanup */
     free(imatch);
     free(jmatch);
+    free(queue);
+    free(wi);
+    free(wj);
     spasm_csr_free(A_t);
 
     return D;
