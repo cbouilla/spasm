@@ -150,7 +150,7 @@ static void spasm_matched(int n, const int *wj, const int *imatch, int *p, int *
 
 /* Given A, compute coarse and then fine dmperm */
 spasm_dm * spasm_dulmage_mendelson(const spasm *A) {
-  int m, n, i, j, k;
+  int m, n, i, j;
   int *jmatch, *imatch, *wi, *wj, *p, *q, *cc, *rr, *queue;
 
     spasm_dm *D;
@@ -174,8 +174,14 @@ spasm_dm * spasm_dulmage_mendelson(const spasm *A) {
     cc = D->cc;
     rr = D->rr;
 
+    A_t = spasm_transpose(A, 0);
+
     /* --- Maximum matching ------------------------------------------------- */
-    spasm_maximum_matching(A, imatch, jmatch);
+    if (n < m) {
+      spasm_maximum_matching(A, imatch, jmatch);
+    } else {
+      spasm_maximum_matching(A_t, jmatch, imatch);
+    }
 
     /* --- Coarse decomposition --------------------------------------------- */
 
@@ -187,7 +193,6 @@ spasm_dm * spasm_dulmage_mendelson(const spasm *A) {
       wi[i] = -1;
     }
 
-    A_t = spasm_transpose(A, 0);
 
     /* find R3, C3 from R0 */
     spasm_bfs(A,    wi, wj, queue, imatch, jmatch, 3);

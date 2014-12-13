@@ -80,9 +80,12 @@ static int spasm_augmenting_path(const spasm *A, int k, int *row_stack, int *col
 }
 
 
-/* returns the size of the matching */
+/* returns the size of the matching.
+
+   If the matrix is rectangular, it is a big advantage to transpose it so that n << m
+ */
 int spasm_maximum_matching(const spasm *A, int *imatch, int *jmatch) {
-  int n, m, r, i, j, k, p;
+  int n, m, r, i, j, k;
   int *Ap, *Aj, *w, *row_stack, *col_stack, *marks, *pointer_stack, *cheap;
 
   n = A->n;
@@ -111,20 +114,6 @@ int spasm_maximum_matching(const spasm *A, int *imatch, int *jmatch) {
   }
 
   k = 0;
-  /* --- greedily finds a "cheap" matching -------------------- */
-  for(i = 0; i < n; i++) {
-    for (p = Ap[i]; p < Ap[i + 1]; p++) {
-      j = Aj[p];
-      if (imatch[j] == -1) {
-	imatch[j] = i;
-	jmatch[i] = j;
-	k++;
-	break;
-      }
-    }
-    cheap[i] = p;
-    }
-
   /* --- finds a maximal matching ----------------------------- */
   for(i = 0; i < n; i++) {
     if (k == r) {
