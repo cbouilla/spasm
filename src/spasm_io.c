@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "spasm.h"
 
+// set prime = -1 to avoid loading values
 spasm_triplet * spasm_load_sms(FILE *f, int prime) {
     int i, j ;   /* use double for integers to avoid int conflicts */
     spasm_GFp x ;
@@ -8,18 +9,18 @@ spasm_triplet * spasm_load_sms(FILE *f, int prime) {
     char type;
     assert(f != NULL);
 
-    if (fscanf (f, "%d %d %c\n", &i, &j, &type) != 3) {
+    if (fscanf(f, "%d %d %c\n", &i, &j, &type) != 3) {
       fprintf(stderr, "[spasm_load_sms] bad SMS file (header)\n");
       exit(0);
     }
 
-    if (type != 'M') {
+    if (prime != -1 && type != 'M') {
       fprintf(stderr, "[spasm_load_sms] only ``Modular'' type supported\n");
       exit(0);
     }
 
     /* allocate result */
-    T = spasm_triplet_alloc (i, j, 1, prime, 1);
+    T = spasm_triplet_alloc (i, j, 1, prime, prime != -1);
 
     while (fscanf (f, "%d %d %d\n", &i, &j, &x) == 3) {
       if (i == 0 && j == 0 && x == 0) {
