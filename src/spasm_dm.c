@@ -98,7 +98,7 @@ static void spasm_bfs (const spasm *A, int *wi, int *wj, int *queue, const int *
 	/* traverse alternating path to i2 */
 	i2 = imatch[j];
 
-	/* skip j2 if it is marked */
+	/* skip i2 if it is marked */
 	if (wi[i2] >= 0) {
 	  continue;
 	}
