@@ -26,7 +26,9 @@ int main(int argc, char **argv) {
   B = spasm_permute(A, p, q, 1);
   free(p);
   free(q);
+  spasm_csr_free(A);
 
+  // compute DM decomposition of permuted M.
   DM = spasm_dulmage_mendelson(B);
   rr = DM->rr;
   cc = DM->cc;
@@ -36,6 +38,7 @@ int main(int argc, char **argv) {
   /* --- check that p and q are actually permutations ---------------- */
   x = spasm_malloc(n * sizeof(int));
   y = spasm_malloc(m * sizeof(int));
+
   for(i = 0; i < n; i++) {
     x[i] = 0;
   }
@@ -61,6 +64,9 @@ int main(int argc, char **argv) {
       exit(0);
     }
   }
+
+  free(x);
+  free(y);
 
   /* --- verbosity ---------------- */
   for(j = 1; j < 4; j++) {
@@ -90,6 +96,9 @@ int main(int argc, char **argv) {
   Cp = C->p;
   Cj = C->j;
 
+  free(qinv);
+  spasm_csr_free(B);
+
   for(i = rr[1]; i < rr[2]; i++) {
     for(px = Cp[i]; px < Cp[i + 1]; px++) {
       j = Cj[px];
@@ -112,7 +121,7 @@ int main(int argc, char **argv) {
 
   printf("ok %d - DM(A)\n", test);
 
-  spasm_csr_free(A);
+  spasm_csr_free(C);
   spasm_dm_free(DM);
   return 0;
 }
