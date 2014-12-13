@@ -63,7 +63,9 @@ int main(int argc, char **argv) {
   }
 
   /* --- verbosity ---------------- */
-  for(j = 1; j < 4; j++) {
+  printf("# sizes : %d x %d | %d x %d | %d x %d\n", rr[1], cc[2], rr[2] - rr[1], cc[3] - cc[2], rr[4] - rr[2], cc[4] - cc[3]);
+
+  /*  for(j = 1; j < 4; j++) {
     printf("# R_%d : ", j);
     for(i = rr[j - 1]; i < rr[j]; i++) {
       printf("%d ", p[i] + 1);
@@ -82,7 +84,7 @@ int main(int argc, char **argv) {
       printf("%d ", q[i] + 1);
     }
     printf("\n");
-  }
+    }*/
 
   /* --- check that coarse decomposition is really block-upper-triangular ---------------- */
   qinv = spasm_pinv(q, m);
