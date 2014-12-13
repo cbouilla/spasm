@@ -2,24 +2,6 @@
 #include "spasm.h"
 
 /*
-static inline int spasm_flip(int i) {
-    return -i - 2;
-}
-
-static inline int spasm_unflip(int i) {
-    return (i < 0) ? spasm_flip(i) : i;
-}
-
-static inline int spasm_is_marked(const int *w, int j) {
-    return (w[j] < 0);
-}
-
-static inline void spasm_mark(int *w, int j) {
-    w[j] = spasm_flip(w[j]);
-}
-*/
-
-/*
  * depth-first-search of the graph of a matrix, starting at node j. All nodes
  * encountered during the graph traversal are marked, and added to xi.
  *
@@ -95,13 +77,13 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, int *marks, const
 	     */
 
 	    /* Save number of examined neighbors of inew */
-	    pstack[head] = p;
+	    pstack[head] = p + 1;
 
 	    /*
 	     * push node j onto the recursion stack. This will start
 	     * a DFS from j
 	     */
-	    ++head;
+	    head++;
 	    xi[head] = j;
 	    /* node i is not done, and exit the loop */
 	    done = 0;
