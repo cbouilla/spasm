@@ -6,7 +6,7 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *B, *C;
   spasm_dm *DM;
-  int n, m, test, i, j, px;
+  int n, m, test, i, j, px, k, nb;
   int *rr, *cc, *p, *q, *x, *y, *Cp, *Cj, *qinv;
 
   assert(argc > 1);
@@ -18,23 +18,21 @@ int main(int argc, char **argv) {
 
   n = A->n;
   m = A->m;
+  assert(n == m);
 
   // generate random row & col permutation
   p = spasm_random_permutation(n);
   q = spasm_random_permutation(m);
 
-  B = spasm_permute(A, p, q, SPASM_WITH_NUMERICAL_VALUES);
+  B = A;//spasm_permute(A, p, q, SPASM_WITH_NUMERICAL_VALUES);
   free(p);
   free(q);
-  spasm_csr_free(A);
+  //  spasm_csr_free(A);
 
   // compute DM decomposition of permuted M.
-  DM = spasm_dulmage_mendelson(B);
-  rr = DM->rr;
-  cc = DM->cc;
-  p = DM->p;
-  q = DM->q;
-
+  nb = spasm_strongly_connected_components(B);
+  printf("#SCC = %d\n", nb);
+  exit(0);
   /* --- check that p and q are actually permutations ---------------- */
   x = spasm_malloc(n * sizeof(int));
   y = spasm_malloc(m * sizeof(int));

@@ -65,6 +65,7 @@ The numerical values are optional (useful for storing a sparse graph, or the pat
 
 #define SPASM_IDENTITY_PERMUTATION NULL
 #define SPASM_IGNORE NULL
+#define SPASM_IGNORE_VALUES 0
 #define SPASM_WITH_NUMERICAL_VALUES 1
 #define SPASM_KEEP_L 1
 #define SPASM_SUCCESS 0
@@ -121,8 +122,8 @@ void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_G
 
 /* spasm_reach.c */
 
-int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
-int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv);
+int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
+int spasm_reach(const spasm * G, const spasm * B, int k, int *xi, const int *pinv);
 
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
@@ -174,6 +175,11 @@ spasm_dm *spasm_dm_alloc(int n, int m);
 spasm_dm * spasm_dulmage_mendelson(const spasm *A);
 void spasm_dm_free(spasm_dm *D);
 
+/* spasm_cc.c */
+int spasm_connected_components(const spasm *A, int *rmark, int *cmark);
+
+/* spasm_scc.c */
+int spasm_strongly_connected_components(const spasm *A);
 
 
 /* utilities */

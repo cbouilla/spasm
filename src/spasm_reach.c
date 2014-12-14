@@ -5,22 +5,24 @@
  * depth-first-search of the graph of a matrix, starting at node j. All nodes
  * encountered during the graph traversal are marked, and added to xi.
  *
+ * The matrix need not be square. If n < m, then pinv must be non-NULL,
+ *   and pinv[i] = -1 means that row[i] implicitly is an identity row.
+ *
  * i : root of the search
  *
  * G : the graph to search
  *
- * xi : size n. Used both as workspace and to return the result.
- * At the end, the list of traversed nodes is in xi[top:n]
+ * xi : size m. Used both as workspace and to return the result.
+ * At the end, the list of traversed nodes is in xi[top:m]
  *
  * pstack : size-n workspace. Used to count the neighbors already traversed.
  *
+ * marks : size-m
+ *
  * return value : top
  */
-
-/* TODO / PROBLEM : pour l'instant, il est impossible de "marquer" les lignes... qui n'existent pas (identité implicite). Il va falloir un autre tableau en plus pour les marques.
- */
-int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv) {
-    int j, p, p2, done, inew, head, *Gp, *Gj;
+int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv) {
+    int j, p, p2, inew, head, *Gp, *Gj;
 
     /* check inputs */
     assert(G != NULL);
@@ -31,7 +33,7 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, int *marks, const
     Gp = G->p;
     Gj = G->j;
     /*
-     * initialize the recursion stack (nodes waiting to be traversed). The
+     * initialize the recursion stack (rows waiting to be traversed). The
      * stack is held at the begining of xi, and has head elements.
      */
     head = 0;
@@ -39,64 +41,56 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, int *marks, const
 
     /* stack empty ? */
     while (head >= 0) {
-        /* get j from the top of the recursion stack */
+        /* get i from the top of the recursion stack */
         i = xi[head];
         inew = (pinv != NULL) ? pinv[i] : i;
 
-        /* has the new node been seen before ?
-         * neighbors are Gj[ Gp[jnew] : Gp[jnew + 1] ]
-         * UNSEEN neighbors are Gj[ pstack[head] : Gp[jnew + 1] ] */
+        /* has row i been seen before ?
+         * adjacent columns are Gj[     Gp[jnew] : Gp[jnew + 1] ]
+         * UNSEEN columns are   Gj[ pstack[head] : Gp[jnew + 1] ] */
 
         if (!marks[i]) {
             /* mark node i as seen. This is done only once. */
   	    marks[i] = 1;
             /*
-             * Initialize pstack for this node: first unseen neighbor is...
-             * the first neighbor
+             * Initialize pstack for this node: first unseen column is...
+             * the first entry on the row
              */
             pstack[head] = (inew < 0) ? 0 : Gp[inew];
         }
 
-	/* node j done if no unvisited neighbors */
-	done = 1;
-
-	/* index of last neighbor */
+	/* index of last entry */
 	p2 = (inew < 0) ? 0 : Gp[inew + 1];
 
-	/* examine all yet-unseen neighbors of i */
+	/* examine all yet-unseen entries of row i */
 	for (p = pstack[head]; p < p2; p++) {
 
-	  /* consider next neighbor node, namely j */
+	  /* consider next adjacent column, namely j */
 	  j = Gj[p];
 
 	  /* if already visisted, skip */
-	  if (!marks[j]) {
-	    /*
-	     * interrupt the enumeration of neighbors of node inew,
-	     * and deal with j instead.
-	     */
-
-	    /* Save number of examined neighbors of inew */
-	    pstack[head] = p + 1;
-
-	    /*
-	     * push node j onto the recursion stack. This will start
-	     * a DFS from j
-	     */
-	    head++;
-	    xi[head] = j;
-	    /* node i is not done, and exit the loop */
-	    done = 0;
-	    break;
+	  if (marks[j]) {
+	    continue;
 	  }
+
+	  /* interrupt the enumeration of neighbors of node inew,
+	     and deal with j instead. Save index of examined neighbors of inew */
+	  pstack[head] = p + 1;
+
+	  /* push node j onto the recursion stack. This will start a DFS from j */
+
+	  head++;
+	  xi[head] = j;
+	  /* node i is not done, and exit the loop */
+	  break;
 	}
 
 	/* depth-first search at node i done ? */
-	if (done) {
+	if (p == p2) {
 	  /* pop i from the recursion stack */
 	  head--;
 	  /* and push i in the output stack */
-	  --top;
+	  top--;
 	  xi[top] = i;
 	}
     }
@@ -125,7 +119,7 @@ int spasm_dfs(int i, spasm * G, int top, int *xi, int *pstack, int *marks, const
      *
      * xi [m...3n-1] used as workspace
      */
-    int spasm_reach(spasm * G, const spasm * B, int k, int *xi, const int *pinv) {
+    int spasm_reach(const spasm * G, const spasm * B, int k, int *xi, const int *pinv) {
       int p, m, top, *Bp, *Bj, *Gp, *pstack, *marks;
 
         /* check inputs */
