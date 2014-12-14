@@ -14,7 +14,7 @@ spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int 
 
   Bn = spasm_max(0, r_1 - r_0);
   Bm = spasm_max(0, c_1 - c_0);
-  Bnz = spasm_max(0, Ap[r_1 + 1] - Ap[r_0]);
+  Bnz = spasm_max(0, Ap[r_1] - Ap[r_0]);
   B = spasm_csr_alloc(Bn, Bm, Bnz, A->prime, (A->x != NULL) &&with_values);
   Bp = B->p;
   Bj = B->j;
@@ -27,7 +27,9 @@ spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int 
       j = Aj[px];
       if (c_0 <= j && j < c_1) {
 	Bj[k] = j - c_0;
-	Bx[k] = Ax[px];
+	if (Bx != NULL) {
+	  Bx[k] = Ax[px];
+	}
 	k++;
       }
     }
