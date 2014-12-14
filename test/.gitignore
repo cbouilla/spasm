@@ -16,3 +16,4 @@ pluq_solve
 sort
 transpose
 dm
+submatrix

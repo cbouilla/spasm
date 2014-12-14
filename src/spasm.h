@@ -102,6 +102,10 @@ void spasm_save_csr(FILE *f, const spasm *A);
 /* spasm_transpose.c */
 spasm *spasm_transpose(const spasm *C, int keep_values);
 
+/* spasm_submatrix.c */
+spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int with_values);
+
+
 /* spasm_permutation.c */
 void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
