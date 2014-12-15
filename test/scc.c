@@ -5,9 +5,8 @@
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *B, *C;
-  spasm_dm *DM;
   int n, m, test, i, j, px, k, nb;
-  int *rr, *cc, *p, *q, *x, *y, *Cp, *Cj, *qinv;
+  int *r, *p, *q, *x, *pinv, *Cp, *Cj;
 
   assert(argc > 1);
   test = atoi(argv[1]);
@@ -22,99 +21,81 @@ int main(int argc, char **argv) {
 
   // generate random row & col permutation
   p = spasm_random_permutation(n);
-  q = spasm_random_permutation(m);
+  pinv = spasm_pinv(p, n);
+  B = spasm_permute(A, p, pinv, SPASM_WITH_NUMERICAL_VALUES);
 
-  B = A;//spasm_permute(A, p, q, SPASM_WITH_NUMERICAL_VALUES);
-  free(p);
-  free(q);
-  //  spasm_csr_free(A);
+  free(pinv);
+  spasm_csr_free(A);
 
   // compute DM decomposition of permuted M.
-  nb = spasm_strongly_connected_components(B);
-  printf("#SCC = %d\n", nb);
-  exit(0);
-  /* --- check that p and q are actually permutations ---------------- */
+  r = spasm_malloc((n + 1) * sizeof(int));
+
+  nb = spasm_strongly_connected_components(B, p, r);
+
+  /* verbosity 
+  printf("p = ");
+  for(k = 0; k < n; k++) {
+    printf("%d ", p[k] + 1);
+  }
+  printf("\n -----------------------\n");
+  printf("r = ");
+  for(k = 0; k < nb + 1; k++) {
+    printf("%d ", r[k]);
+  }
+  printf("\n ");
+  */
+
+  /* --- check that p is actually a permutation ---------------- */
   x = spasm_malloc(n * sizeof(int));
-  y = spasm_malloc(m * sizeof(int));
 
   for(i = 0; i < n; i++) {
     x[i] = 0;
   }
   for(i = 0; i < n; i++) {
-    x[ p[i] ]++;
-  }
-  for(i = 0; i < n; i++) {
-    if (x[i] != 1) {
-      printf("not ok %d - DM(A) - p is not bijective\n", test);
+    if (p[i] < 0 || p[i] >= n) {
+      printf("not ok %d - SCC - p is out of range, p[%d] = %d\n", test, i, p[i]);
       exit(0);
     }
+    x[ p[i] ]++;
   }
 
-  for(i = 0; i < m; i++) {
-    y[i] = 0;
-  }
-  for(i = 0; i < m; i++) {
-    y[ q[i] ]++;
-  }
-  for(i = 0; i < m; i++) {
-    if (y[i] != 1) {
-      printf("not ok %d - DM(A) - q is not bijective\n", test);
+  for(i = 0; i < n; i++) {
+    if (x[i] != 1) {
+      printf("not ok %d - SCC - p is not bijective\n", test);
       exit(0);
     }
   }
 
   free(x);
-  free(y);
 
   /* --- verbosity ---------------- */
-  printf("# sizes : %d x %d | %d x %d | %d x %d\n", rr[1], cc[2], rr[2] - rr[1], cc[3] - cc[2], rr[4] - rr[2], cc[4] - cc[3]);
+  printf("#SCC = %d\n", nb);
 
-  /*  for(j = 1; j < 4; j++) {
-    printf("# R_%d : ", j);
-    for(i = rr[j - 1]; i < rr[j]; i++) {
-      printf("%d ", p[i] + 1);
+  for(k = 0; k < nb; k++) {
+    printf("# SCC_%d : ", k);
+    for(i = r[k]; i < r[k + 1]; i++) {
+      printf("%d ", p[i]);
     }
     printf("\n");
   }
-  printf("# R_0 : ");
-  for(i = rr[3]; i < rr[4]; i++) {
-    printf("%d ", p[i] + 1);
-  }
-  printf("\n");
 
-  for(j = 0; j < 4; j++) {
-    printf("# C_%d : ", j);
-    for(i = cc[j]; i < cc[j + 1]; i++) {
-      printf("%d ", q[i] + 1);
-    }
-    printf("\n");
-    }*/
-
-  /* --- check that coarse decomposition is really block-upper-triangular ---------------- */
-  qinv = spasm_pinv(q, m);
-  C = spasm_permute(B, p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+  /* --- check that decomposition is really block-upper-triangular ---------------- */
+  pinv = spasm_pinv(p, n);
+  C = spasm_permute(B, p, pinv, SPASM_IGNORE_VALUES);
   Cp = C->p;
   Cj = C->j;
 
-  free(qinv);
+  free(pinv);
   spasm_csr_free(B);
 
-  for(i = rr[1]; i < rr[2]; i++) {
-    for(px = Cp[i]; px < Cp[i + 1]; px++) {
-      j = Cj[px];
-      if (j < cc[2]) {
-	printf("not ok %d - DM(A) - row %d (in R_2) has entries in C_0 or C_1\n", test, i);
-	exit(0);
-      }
-    }
-  }
-
-  for(i = rr[2]; i < rr[4]; i++) {
-    for(px = Cp[i]; px < Cp[i + 1]; px++) {
-      j = Cj[px];
-      if (j < cc[3]) {
-	printf("not ok %d - DM(A) - row %d (in R_3 or R_0) has entries in C_0, C_1 or C_2\n", test, i);
-	exit(0);
+  for(k = 0; k < nb; k++) {
+    for(i = r[k]; i < r[k + 1]; i++) {
+      for(px = Cp[i]; px < Cp[i + 1]; px++) {
+	j = Cj[px];
+	if (j < r[k]) {
+	  printf("not ok %d - SCC - row %d (in C_%d) has entries on column %d\n", test, i, k, j);
+	  exit(0);
+	}
       }
     }
   }
@@ -122,6 +103,5 @@ int main(int argc, char **argv) {
   printf("ok %d - DM(A)\n", test);
 
   spasm_csr_free(C);
-  spasm_dm_free(DM);
   return 0;
 }

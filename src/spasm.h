@@ -179,7 +179,7 @@ void spasm_dm_free(spasm_dm *D);
 int spasm_connected_components(const spasm *A, int *rmark, int *cmark);
 
 /* spasm_scc.c */
-int spasm_strongly_connected_components(const spasm *A);
+int spasm_strongly_connected_components(const spasm *A, int *p, int *r);
 
 
 /* utilities */
