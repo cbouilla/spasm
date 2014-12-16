@@ -35,26 +35,6 @@ int main(int argc, char **argv) {
   cc = P->cc;
   nb = P->nr;
 
-  /* verbosity */
-  printf("p = ");
-  for(i = 0; i < n; i++) {
-    printf("%d ", p[i] + 1);
-  }
-  printf("\n rr = ");
-  for(i = 0; i < nb + 1; i++) {
-    printf("%d ", rr[i]);
-  }
-  printf("\n-----------------------\n");
-  printf("q = ");
-  for(j = 0; j < m; j++) {
-    printf("%d ", q[j] + 1);
-  }
-  printf("\ncc = ");
-  for(i = 0; i < nb + 1; i++) {
-    printf("%d ", cc[i]);
-  }
-  printf("\n");
-
   /* --- check that p and q are actually permutations ---------------- */
   x = spasm_malloc(n * sizeof(int));
   y = spasm_malloc(m * sizeof(int));

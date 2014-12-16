@@ -4,8 +4,8 @@
 /* returns the number of non-trivial (size > 0) connected component of A, seen as an
    undirected bipartite graph. */
 spasm_partition * spasm_connected_components(const spasm *A) {
-  int n, m, i, j, root, n_cc, rhead, rtail, chead, ctail, px;
-  int *Ap, *Aj, *A_tp, *A_tj, *rmark, *cmark, *p, *q, *rr, *cc;
+  int n, m, i, j, k, root, n_cc, rhead, rtail, chead, ctail, px;
+  int *Ap, *Aj, *A_tp, *A_tj, *rmark, *cmark, *p, *q, *rr, *cc, *rcopy, *ccopy;
   spasm *A_t;
   spasm_partition *P;
 
@@ -44,13 +44,12 @@ spasm_partition * spasm_connected_components(const spasm *A) {
     }
 
     /* previous block stops here */
-    rr[n_cc] = chead;
     rr[n_cc] = rhead;
     cc[n_cc] = chead;
 
     /* start BFS from row root */
     p[rtail] = root;
-    rmark[root] = root;
+    rmark[root] = n_cc;
     rtail++;
 
     /* while row queue is not empty */
@@ -64,7 +63,7 @@ spasm_partition * spasm_connected_components(const spasm *A) {
 	  continue;
 	}
 
-	cmark[j] = root;
+	cmark[j] = n_cc;
 	q[ctail] = j;
 	ctail++;
       }
@@ -77,11 +76,10 @@ spasm_partition * spasm_connected_components(const spasm *A) {
 	for (px = A_tp[j]; px < A_tp[j + 1]; px++) {
 	  i = A_tj[px];
 	  if (rmark[i] != -1) {
-	    assert(rmark[i] == root);
 	    continue;
 	  }
 
-	  rmark[i] = root;
+	  rmark[i] = n_cc;
 	  p[rtail] = i;
 	  rtail++;
 	}
@@ -96,6 +94,30 @@ spasm_partition * spasm_connected_components(const spasm *A) {
   P->nr = n_cc;
   P->nc = n_cc;
 
+  /* rows and column are in a somewhat random order in p and q.
+     put them in the natural order inside each block */
+  rcopy = spasm_malloc((n_cc + 1) * sizeof(int));
+  ccopy = spasm_malloc((n_cc + 1) * sizeof(int));
+
+  for(i = 0; i <= n_cc; i++) {
+    rcopy[i] = rr[i];
+    ccopy[i] = cc[i];
+  }
+
+  for(i = 0; i < n; i++) {
+    k = rmark[i];
+    p[ rcopy[k] ] = i;
+    rcopy[k]++;
+  }
+
+  for(j = 0; j < m; j++) {
+    k = cmark[j];
+    q[ ccopy[k] ] = j;
+    ccopy[k]++;
+  }
+
+  free(rcopy);
+  free(ccopy);
   free(rmark);
   free(cmark);
   spasm_csr_free(A_t);
