@@ -64,6 +64,7 @@ spasm_partition * spasm_strongly_connected_components(const spasm *A) {
   }
   n_scc = n - n_scc;
   P->nr = n_scc;
+  P->nc = 0;
 
   /* at this point, blocks are in reverse order in both r and p */
 
