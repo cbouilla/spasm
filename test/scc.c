@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  printf("ok %d - DM(A)\n", test);
+  printf("ok %d - SCC\n", test);
 
   spasm_csr_free(C);
   return 0;

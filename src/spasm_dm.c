@@ -139,7 +139,7 @@ spasm_partition * spasm_dulmage_mendelson(const spasm *A) {
     wj = spasm_malloc(m * sizeof(int));
     queue = spasm_malloc(spasm_max(n, m) * sizeof(int));
 
-    P = spasm_partition_alloc(n, m, 5, 5);
+    P = spasm_partition_alloc(n, m, 4, 4);
     p = P->p;
     q = P->q;
     cc = P->cc;
