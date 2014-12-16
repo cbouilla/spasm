@@ -20,8 +20,8 @@ int main(int argc, char **argv) {
   m = A->m;
 
   // generate random row & col permutation
-  p = NULL; //spasm_random_permutation(n);
-  q = NULL; //spasm_random_permutation(m);
+  p = spasm_random_permutation(n);
+  q = spasm_random_permutation(m);
   B = spasm_permute(A, p, q, SPASM_IGNORE_VALUES);
 
   free(p);
@@ -94,11 +94,11 @@ int main(int argc, char **argv) {
   for(k = 0; k < nb; k++) {
     printf("# CC_%d : ", k);
     for(i = rr[k]; i < rr[k + 1]; i++) {
-      printf("%d ", p[i]);
+      printf("%d ", p[i] + 1);
     }
     printf(" / ");
     for(j = cc[k]; j < cc[k + 1]; j++) {
-      printf("%d ", q[j]);
+      printf("%d ", q[j] + 1);
     }
     printf("\n");
   }
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
       for(px = Cp[i]; px < Cp[i + 1]; px++) {
 	j = Cj[px];
 	if (j < cc[k] || cc[k + 1] < j) {
-	  printf("not ok %d - CC - row %d (in C_%d) has entries on column %d\n", test, i, k, j);
+	  printf("not ok %d - CC - row %d (in C_%d) has entries on column %d\n", test, i + 1, k, j + 1);
 	  exit(0);
 	}
       }

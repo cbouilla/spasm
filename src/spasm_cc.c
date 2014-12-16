@@ -45,6 +45,7 @@ spasm_partition * spasm_connected_components(const spasm *A) {
 
     /* previous block stops here */
     rr[n_cc] = chead;
+    rr[n_cc] = rhead;
     cc[n_cc] = chead;
 
     /* start BFS from row root */
