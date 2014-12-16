@@ -36,18 +36,21 @@ spasm_partition * spasm_connected_components(const spasm *A) {
   chead = 0;
   ctail = 0;
   n_cc = 0;
+
   for(root = 0; root < n; root++) {
+
     if (rmark[root] != -1) {
-      assert(rmark[root] < root);
       continue;
     }
 
-    /* start BFS */
-    p[rhead] = root;
-    rtail++;
-    rmark[root] = root;
-    rr[n_cc] = rhead;
+    /* previous block stops here */
+    rr[n_cc] = chead;
     cc[n_cc] = chead;
+
+    /* start BFS from row root */
+    p[rtail] = root;
+    rmark[root] = root;
+    rtail++;
 
     /* while row queue is not empty */
     while (rhead < rtail) {
@@ -84,13 +87,13 @@ spasm_partition * spasm_connected_components(const spasm *A) {
       }
     }
 
-    n_cc ++;
+    n_cc++;
   }
 
   rr[n_cc] = n;
-  cc[n_cc] = n;
+  cc[n_cc] = m;
   P->nr = n_cc;
-  P->nc = 0;
+  P->nc = n_cc;
 
   free(rmark);
   free(cmark);
