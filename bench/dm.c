@@ -26,9 +26,6 @@ int main() {
   rr = DM->rr;
   cc = DM->cc;
 
-  printf("rr = %d %d %d %d %d\n", rr[0], rr[1], rr[2], rr[3], rr[4]);
-  printf("cc = %d %d %d %d %d\n", cc[0], cc[1], cc[2], cc[3], cc[4]);
-
   h = (cc[2] != 0);
   s = (rr[2] != rr[1]);
   v = (rr[4] != rr[2]);
@@ -69,8 +66,7 @@ int main() {
     printf("S (%d x %d -- %d nnz)\n", S->n, S->m, spasm_nnz(S));
     assert(S->n == S->m);
 
-    P = spasm_strongly_connected_components(H);
-    printf("got back\n");
+    P = spasm_strongly_connected_components(S);
     Prr = P->rr;
     k = P->nr;
     largest = -1;
@@ -79,7 +75,7 @@ int main() {
       largest = spasm_max(largest, Prr[i + 1] - Prr[i]);
       ns += (Prr[i + 1] - Prr[i] > 1);
     }
-    if (k > 0) {
+    if (k > 1) {
       printf("S (%d x %d) : %d strongly connected components, %d non-singleton, largest = %.1f %%\n", S->n, S->m, k, ns, 100.0 * largest / S->n);
     }
     spasm_csr_free(S);
