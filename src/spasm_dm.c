@@ -146,7 +146,10 @@ spasm_partition * spasm_dulmage_mendelson(const spasm *A) {
     rr = P->rr;
     P->nr = 4;
     P->nc = 4;
-
+    for(i = 0; i <= 4; i++) {
+      rr[i] = 0;
+      cc[i] = 0;
+    }
     A_t = spasm_transpose(A, 0);
 
     /* --- Maximum matching ------------------------------------------------- */

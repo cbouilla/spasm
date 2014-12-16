@@ -89,15 +89,29 @@ spasm_partition * spasm_connected_components(const spasm *A) {
     n_cc++;
   }
 
-  rr[n_cc] = n;
-  cc[n_cc] = m;
+  assert(rhead == n);
+  rr[n_cc] = rhead;
+  cc[n_cc] = chead; // not necessarily m (cf. below)
+
+  if (chead < m) {
+    /* Not all columns have been reached and thus appear in q.  This
+       happens if a column does not contain any entry). We create an
+       extra block for those. */
+    n_cc++;
+    rr[n_cc] = n;
+    cc[n_cc] = m;
+  }
+
   P->nr = n_cc;
   P->nc = n_cc;
 
-  /* rows and column are in a somewhat random order in p and q.
-     put them in the natural order inside each block */
-  rcopy = spasm_malloc((n_cc + 1) * sizeof(int));
-  ccopy = spasm_malloc((n_cc + 1) * sizeof(int));
+  /* rows and column are in a somewhat random order in p and q.  put
+     them in the natural order inside each block.  Be careful
+     though.
+  */
+
+  rcopy = spasm_malloc((n_cc + 2) * sizeof(int));
+  ccopy = spasm_malloc((n_cc + 2) * sizeof(int));
 
   for(i = 0; i <= n_cc; i++) {
     rcopy[i] = rr[i];
@@ -112,6 +126,9 @@ spasm_partition * spasm_connected_components(const spasm *A) {
 
   for(j = 0; j < m; j++) {
     k = cmark[j];
+    if (k < 0) {
+      k = n_cc;
+    }
     q[ ccopy[k] ] = j;
     ccopy[k]++;
   }

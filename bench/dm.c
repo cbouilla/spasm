@@ -7,7 +7,7 @@ int main() {
   spasm *A, *B, *H, *S, *V;
   spasm_partition *DM, *P;
   int n, m, h, s, v, k, largest, ns, i;
-  int *rr, *cc, *p, *q, *qinv;
+  int *rr, *Prr, *cc, *p, *q, *qinv;
 
 
   T = spasm_load_sms(stdin, -1);
@@ -38,8 +38,6 @@ int main() {
   spasm_csr_free(A);
   free(qinv);
 
-  printf("hello !\n");
-  
   if (h) {
     H = spasm_submatrix(B, rr[0], rr[1], cc[0], cc[2], SPASM_IGNORE_VALUES);
     P = spasm_connected_components(H);
@@ -51,13 +49,13 @@ int main() {
 
     H = spasm_submatrix(B, rr[0], rr[1], cc[1], cc[2], SPASM_IGNORE_VALUES);
     P = spasm_strongly_connected_components(H);
-    rr = P->rr;
+    Prr = P->rr;
     k = P->nr;
     largest = -1;
     ns = 0;
     for(i = 0; i < k; i++) {
-      largest = spasm_max(largest, rr[i + 1] - rr[i]);
-      ns += (rr[i + 1] - rr[i] > 1);
+      largest = spasm_max(largest, Prr[i + 1] - Prr[i]);
+      ns += (Prr[i + 1] - Prr[i] > 1);
     }
     if (k > 1) {
       printf("H' (%d x %d): %d strongly connected components, %d non-singleton, largest = %.1f %%\n", H->n, H->m, k, ns, 100.0 * largest / H->n);
@@ -72,15 +70,16 @@ int main() {
     assert(S->n == S->m);
 
     P = spasm_strongly_connected_components(H);
-    rr = P->rr;
+    printf("got back\n");
+    Prr = P->rr;
     k = P->nr;
     largest = -1;
     ns = 0;
     for(i = 0; i < k; i++) {
-      largest = spasm_max(largest, rr[i + 1] - rr[i]);
-      ns += (rr[i + 1] - rr[i] > 1);
+      largest = spasm_max(largest, Prr[i + 1] - Prr[i]);
+      ns += (Prr[i + 1] - Prr[i] > 1);
     }
-    if (k > 1) {
+    if (k > 0) {
       printf("S (%d x %d) : %d strongly connected components, %d non-singleton, largest = %.1f %%\n", S->n, S->m, k, ns, 100.0 * largest / S->n);
     }
     spasm_csr_free(S);
@@ -98,13 +97,13 @@ int main() {
 
     V = spasm_submatrix(B, rr[2], rr[3], cc[3], cc[4], SPASM_IGNORE_VALUES);
     P = spasm_strongly_connected_components(V);
-    rr = P->rr;
+    Prr = P->rr;
     k = P->nr;
     largest = -1;
     ns = 0;
     for(i = 0; i < k; i++) {
-      largest = spasm_max(largest, rr[i + 1] - rr[i]);
-      ns += (rr[i + 1] - rr[i] > 1);
+      largest = spasm_max(largest, Prr[i + 1] - Prr[i]);
+      ns += (Prr[i + 1] - Prr[i] > 1);
     }
     if (k > 1) {
       printf("V' (%d x %d) : %d strongly connected components, %d non-singleton, largest = %.1f %%\n", V->n, V->m, k, ns, 100.0 * largest / V->n);
