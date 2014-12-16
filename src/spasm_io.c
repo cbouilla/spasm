@@ -81,3 +81,190 @@ void spasm_save_triplet(FILE *f, const spasm_triplet *A) {
 
     fprintf(f, "0 0 0\n");
 }
+
+/* Saves a PBM (bitmap) file with one pixel per entry of A */
+void spasm_save_pbm(FILE *f, const spasm *A) {
+  int i, j, n, m, p;
+  int *Aj, *Ap, *x;
+
+  assert(f != NULL);
+  assert(A != NULL);
+
+  Aj = A->j;
+  Ap = A->p;
+  n  = A->n;
+  m  = A->m;
+  x = spasm_malloc(m * sizeof(int));
+  for(j = 0; j < m; j++) {
+    x[j] = 0;
+  }
+
+  fprintf(f, "P1\n");
+  fprintf(f, "%d %d\n", n, m);
+  for(i = 0; i < n; i++) {
+
+    // scatters row i to x
+    for(p = Ap[i]; p < Ap[i + 1]; p++) {
+      x[ Aj[p] ] = 1;
+    }
+
+    // print row i
+    for(j = 0; j < m; j++) {
+      fprintf(f, "%d ", x[j]);
+    }
+
+    // reset x
+    for(p = Ap[i]; p < Ap[i + 1]; p++) {
+      x[ Aj[p] ] = 0;
+    }
+  }
+
+  free(x);
+}
+
+/* Saves a PBM (graymap) of specified dimensions of A */
+void spasm_save_pgm(FILE *f, int x, int y, const spasm *A) {
+  int i, j, k, n, m, t, p;
+  int *Aj, *Ap, *w;
+  double max;
+
+  assert(f != NULL);
+  assert(A != NULL);
+
+  Aj = A->j;
+  Ap = A->p;
+  n  = A->n;
+  m  = A->m;
+  x = spasm_min(x, m);
+  y = spasm_min(y, n);
+
+  w = spasm_malloc(x * sizeof(int));
+  for(j = 0; j < x; j++) {
+    w[j] = 0;
+  }
+
+  fprintf(f, "P2\n");
+  fprintf(f, "%d %d\n", x, y);
+  fprintf(f, "255\n");
+
+  max = (1.0 * m / x) * (1.0 * n / y);
+  t = 0;
+  i = 0;
+  while(i < n) {
+    for(k = 0; k < spasm_max(1, n / y) && i < n; k++) {
+
+      // scatters row i to x
+      for(p = Ap[i]; p < Ap[i + 1]; p++) {
+	w[ (Aj[p] * x) / m ]++;
+      }
+      i++;
+    }
+
+    // print row
+    for(j = 0; j < x; j++) {
+      double intensity = 1.0 - w[j] / max;
+      assert( 0 <= intensity && intensity <= 1.0 );
+      fprintf(f, "%.0f ", 255.0 * intensity);
+      t++;
+      if ((t & 31) == 0) {
+	fprintf(f, "\n");
+      }
+    }
+
+    // reset x
+    for(j = 0; j < x; j++) {
+      w[j] = 0;
+    }
+  }
+
+  free(w);
+}
+
+/* Saves a PPM (color pixmap) of specified dimensions of A, with an optional DM decomposition */
+void spasm_save_ppm(FILE *f, int x, int y, const spasm *A, const spasm_partition *P) {
+  int i, j, jj, n, m, t, p, u, v;
+  int *Aj, *Ap, *w, *rr, *cc;
+  double max, r, g, b, k;
+
+  int colors[16] = { 0xFF0000, 0xFF6633, 0xCC0000, 0x990000,
+		     0xFFFFFF, 0xFFFFFF, 0xFFCC00, 0xCC9900,
+		     0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0x99FF99,
+		     0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0x33CC33 };
+
+  assert(f != NULL);
+  assert(A != NULL);
+
+  Aj = A->j;
+  Ap = A->p;
+  n  = A->n;
+  m  = A->m;
+
+  x = spasm_min(x, m);
+  y = spasm_min(y, n);
+
+  w = spasm_malloc(x * sizeof(int));
+  for(j = 0; j < x; j++) {
+    w[j] = 0;
+  }
+
+  if (P != NULL) {
+    rr = (int *) P->rr;
+    cc = (int *) P->cc;
+  }
+
+  fprintf(f, "P3\n");
+  fprintf(f, "%d %d\n", x, y);
+  fprintf(f, "255\n");
+
+  max = (1.0 * m / x) * (1.0 * n / y);
+  t = 0;
+  i = 0;
+  while(i < n) {
+    for(k = 0; k < spasm_max(1, n / y) && i < n; k++) {
+
+      // scatters row i to x
+      for(p = Ap[i]; p < Ap[i + 1]; p++) {
+	w[ (Aj[p] * x) / m ]++;
+      }
+      i++;
+    }
+
+    // print row
+    for(j = 0; j < x; j++) {
+
+      jj = j * m / x;
+      for(t = 0; t < 4; t++) {
+	if (P != NULL && (i > rr[t])) {
+	  u = t;
+	}
+	if (P != NULL && (jj >= cc[t])) {
+	  v = t;
+	}
+      }
+
+      r = (colors[4 * u + v] >> 16) & 0xff;
+      g = (colors[4 * u + v] >> 8)  & 0xff;
+      b =  colors[4 * u + v]        & 0xff;
+
+      k = 1.0 - w[j] / max;
+      if (k < 0.0 | k > 1.0 ) {
+	printf("ça craint : %f (%d vs %f)\n", k, w[j], max);
+	exit(1);
+      }
+
+      fprintf(f, "%.0f %.0f %.0f ", r * k, g * k, b * k);
+      t++;
+      if ((t & 7) == 0) {
+	fprintf(f, "\n");
+      }
+    }
+
+    // reset x
+    for(j = 0; j < x; j++) {
+      w[j] = 0;
+    }
+  }
+
+  fprintf(f, "\n");
+  free(w);
+}
