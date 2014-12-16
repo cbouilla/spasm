@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include "spasm.h"
 
@@ -6,7 +7,7 @@ int main() {
   spasm *A, *B, *H, *S, *V;
   spasm_partition *DM, *P;
   int n, m, h, s, v, k, largest, ns, i;
-  int *rr, *cc, *p, *q, *qinv, *rmark, *cmark, *r;
+  int *rr, *cc, *p, *q, *qinv;
 
 
   T = spasm_load_sms(stdin, -1);
@@ -16,6 +17,8 @@ int main() {
   n = A->n;
   m = A->m;
 
+  printf("A : %d x %d with %d nnz\n", n, m, spasm_nnz(A));
+
   // compute DM decomposition of A.
   DM = spasm_dulmage_mendelson(A);
   p = DM->p;
@@ -23,21 +26,20 @@ int main() {
   rr = DM->rr;
   cc = DM->cc;
 
-  // --- verbosity ----------------
-  k = 0;
+  printf("rr = %d %d %d %d %d\n", rr[0], rr[1], rr[2], rr[3], rr[4]);
+  printf("cc = %d %d %d %d %d\n", cc[0], cc[1], cc[2], cc[3], cc[4]);
+
   h = (cc[2] != 0);
   s = (rr[2] != rr[1]);
   v = (rr[4] != rr[2]);
 
   qinv = spasm_pinv(q, m);
-  B = spasm_permute(A, p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+  B = spasm_permute(A, p, qinv, SPASM_IGNORE_VALUES);
   spasm_csr_free(A);
   free(qinv);
 
-  rmark = spasm_malloc(n * sizeof(int));
-  cmark = spasm_malloc(m * sizeof(int));
-  r = spasm_malloc((n+1) * sizeof(int));
-
+  printf("hello !\n");
+  
   if (h) {
     H = spasm_submatrix(B, rr[0], rr[1], cc[0], cc[2], SPASM_IGNORE_VALUES);
     P = spasm_connected_components(H);
@@ -50,6 +52,7 @@ int main() {
     H = spasm_submatrix(B, rr[0], rr[1], cc[1], cc[2], SPASM_IGNORE_VALUES);
     P = spasm_strongly_connected_components(H);
     rr = P->rr;
+    k = P->nr;
     largest = -1;
     ns = 0;
     for(i = 0; i < k; i++) {
@@ -65,9 +68,12 @@ int main() {
 
   if (s) {
     S = spasm_submatrix(B, rr[1], rr[2], cc[2], cc[3], SPASM_IGNORE_VALUES);
+    printf("S (%d x %d -- %d nnz)\n", S->n, S->m, spasm_nnz(S));
+    assert(S->n == S->m);
 
     P = spasm_strongly_connected_components(H);
     rr = P->rr;
+    k = P->nr;
     largest = -1;
     ns = 0;
     for(i = 0; i < k; i++) {
@@ -93,6 +99,7 @@ int main() {
     V = spasm_submatrix(B, rr[2], rr[3], cc[3], cc[4], SPASM_IGNORE_VALUES);
     P = spasm_strongly_connected_components(V);
     rr = P->rr;
+    k = P->nr;
     largest = -1;
     ns = 0;
     for(i = 0; i < k; i++) {
@@ -106,8 +113,6 @@ int main() {
     spasm_partition_free(P);
   }
 
-  free(rmark);
-  free(cmark);
   spasm_partition_free(DM);
   spasm_csr_free(B);
   return 0;

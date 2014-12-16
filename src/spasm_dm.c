@@ -144,6 +144,8 @@ spasm_partition * spasm_dulmage_mendelson(const spasm *A) {
     q = P->q;
     cc = P->cc;
     rr = P->rr;
+    P->nr = 4;
+    P->nc = 4;
 
     A_t = spasm_transpose(A, 0);
 
@@ -154,7 +156,7 @@ spasm_partition * spasm_dulmage_mendelson(const spasm *A) {
       spasm_maximum_matching(A_t, jmatch, imatch);
     }
 
-    /* --- Coarse decomposition --------------------------------------------- */
+    /* --- Reachability --------------------------------------------- */
 
     /* unmark everything for bfs */
     for (j = 0 ; j < m ; j++) {
@@ -163,7 +165,6 @@ spasm_partition * spasm_dulmage_mendelson(const spasm *A) {
     for (i = 0 ; i < n ; i++) {
       wi[i] = -1;
     }
-
 
     /* find R3, C3 from R0 */
     spasm_bfs(A,    wi, wj, queue, imatch, jmatch, 3);
