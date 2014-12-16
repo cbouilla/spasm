@@ -4,19 +4,23 @@
 /* returns the number of non-trivial strongly connected component of A
    (which must be square), seen as an directed graph. */
 // r must have size n+1
-int spasm_strongly_connected_components(const spasm *A, int *p, int *r) {
+spasm_partition * spasm_strongly_connected_components(const spasm *A) {
   int n, m, i, k, n_scc, top;
-  int *pstack, *mark, *xi, *rcopy;
+  int *pstack, *mark, *xi, *rcopy, *p, *rr;
   spasm *A_t;
+  spasm_partition *P;
 
   n = A->n;
   m = A->m;
   assert(n == m);
 
+  P = spasm_partition_alloc(n, n, n, n);
+  p = P->p;
+  rr = P->rr;
+
   pstack = spasm_malloc(n * sizeof(int));
   mark = spasm_malloc(n * sizeof(int));
   xi = spasm_malloc(n * sizeof(int));
-
   /* possible optimization : recycle pstack and xi/mark for this */
   rcopy = spasm_malloc((n+1) * sizeof(int));
 
@@ -32,7 +36,6 @@ int spasm_strongly_connected_components(const spasm *A, int *p, int *r) {
     }
     top = spasm_dfs(i, A, top, xi, pstack, mark, SPASM_IDENTITY_PERMUTATION);
   }
-  assert(top == 0);
 
   // second pass : in the order given by xi, in A_t
   for (i = 0 ; i < n ; i++) {
@@ -49,35 +52,36 @@ int spasm_strongly_connected_components(const spasm *A, int *p, int *r) {
     if (mark[i]) {
       continue;
     }
-    r[n_scc] = top;
+    rr[n_scc] = top;
     n_scc--;
     top = spasm_dfs(i, A_t, top, p, pstack, mark, SPASM_IDENTITY_PERMUTATION);
   }
-  assert(top == 0);
 
-  r[n_scc] = 0;
+  /* the blocks are now in rr[n_scc:n]. Move them to rr[0:n_scc] */
+  rr[n_scc] = 0;
   for(k = n_scc; k <= n; k++) {
-    r[k - n_scc] = r[k];
+    rr[k - n_scc] = rr[k];
   }
   n_scc = n - n_scc;
+  P->nr = n_scc;
 
   /* at this point, blocks are in reverse order in both r and p */
 
   /* mark rows with (reverse) block numbers */
   for(k = 0; k < n_scc; k++) {
-    for(i = r[k]; i < r[k + 1]; i++) {
+    for(i = rr[k]; i < rr[k + 1]; i++) {
       mark[ p[i] ] = n_scc - k - 1;
     }
   }
 
   /* rcopy[k] indicates the next entry in block k in p */
   for(k = 0; k <= n_scc; k++) {
-    rcopy[k] = n - r[n_scc - k];
+    rcopy[k] = n - rr[n_scc - k];
   }
 
   /* rcopy[k] indicates the next entry in block k in p */
   for(k = 0; k <= n_scc; k++) {
-    r[k] = rcopy[k];
+    rr[k] = rcopy[k];
   }
 
   for(i = 0; i < n; i++) {
@@ -91,5 +95,7 @@ int spasm_strongly_connected_components(const spasm *A, int *p, int *r) {
   free(mark);
   free(rcopy);
   spasm_csr_free(A_t);
-  return n_scc;
+
+  spasm_partition_tighten(P);
+  return P;
 }

@@ -1,35 +1,6 @@
 #include <assert.h>
 #include "spasm.h"
 
-/* allocate a cs_dmperm or cs_scc result */
-spasm_dm *spasm_dm_alloc(int n, int m) {
-  int i;
-    spasm_dm *D;
-
-    D = spasm_malloc(sizeof(spasm_dm));
-    D->p = spasm_malloc (n     * sizeof(int)) ;
-    D->r = spasm_malloc ((n+6) * sizeof(int)) ;
-    D->q = spasm_malloc (m     * sizeof(int)) ;
-    D->s = spasm_malloc ((m+6) * sizeof(int)) ;
-    D->nb = 0;
-    for(i = 0; i < 5; i++) {
-      D->rr[i] = 0;
-      D->cc[i] = 0;
-    }
-    return D;
-}
-
-void spasm_dm_free(spasm_dm *D) {
-  if (D == NULL) {
-    return;
-  }
-  free(D->p);
-  free(D->q);
-  free(D->r);
-  free(D->s);
-  free(D);
-}
-
 
 /* R0 : unmatched rows
    C0 : unmatched columns
@@ -149,11 +120,11 @@ static void spasm_matched(int n, const int *wj, const int *imatch, int *p, int *
 
 
 /* Given A, compute coarse and then fine dmperm */
-spasm_dm * spasm_dulmage_mendelson(const spasm *A) {
+spasm_partition * spasm_dulmage_mendelson(const spasm *A) {
   int m, n, i, j;
   int *jmatch, *imatch, *wi, *wj, *p, *q, *cc, *rr, *queue;
 
-    spasm_dm *D;
+    spasm_partition *P;
     spasm *A_t;
 
     /* check inputs */
@@ -168,11 +139,11 @@ spasm_dm * spasm_dulmage_mendelson(const spasm *A) {
     wj = spasm_malloc(m * sizeof(int));
     queue = spasm_malloc(spasm_max(n, m) * sizeof(int));
 
-    D = spasm_dm_alloc(n, m);
-    p = D->p;
-    q = D->q;
-    cc = D->cc;
-    rr = D->rr;
+    P = spasm_partition_alloc(n, m, 5, 5);
+    p = P->p;
+    q = P->q;
+    cc = P->cc;
+    rr = P->rr;
 
     A_t = spasm_transpose(A, 0);
 
@@ -214,5 +185,5 @@ spasm_dm * spasm_dulmage_mendelson(const spasm *A) {
     free(wj);
     spasm_csr_free(A_t);
 
-    return D;
+    return P;
 }

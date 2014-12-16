@@ -151,3 +151,35 @@ void spasm_csr_resize(spasm *A, int n, int m) {
   }
   A->n = n;
 }
+
+
+spasm_partition *spasm_partition_alloc(int n, int m, int nr, int nc) {
+  spasm_partition *P;
+
+    P = spasm_malloc(sizeof(spasm_partition));
+    P->p = spasm_malloc(n  * sizeof(int));
+    P->q = spasm_malloc(m  * sizeof(int));
+    P->rr = spasm_malloc((nr+1) * sizeof(int));
+    P->cc = spasm_malloc((nc+1) * sizeof(int));
+    P->nr = 0;
+    P->nr = 0;
+    return P;
+}
+
+void spasm_partition_tighten(spasm_partition *P) {
+  assert(P != NULL);
+  P->rr = spasm_realloc(P->rr, (P->nr + 1) * sizeof(int));
+  P->cc = spasm_realloc(P->cc, (P->nc + 1) * sizeof(int));
+}
+
+
+void spasm_partition_free(spasm_partition *P) {
+  if (P == NULL) {
+    return;
+  }
+  free(P->p);
+  free(P->q);
+  free(P->rr);
+  free(P->cc);
+  free(P);
+}

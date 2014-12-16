@@ -5,7 +5,7 @@
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *B, *C;
-  spasm_dm *DM;
+  spasm_partition *DM;
   int n, m, test, i, j, px;
   int *rr, *cc, *p, *q, *x, *y, *Cp, *Cj, *qinv;
 
@@ -124,6 +124,6 @@ int main(int argc, char **argv) {
   printf("ok %d - DM(A)\n", test);
 
   spasm_csr_free(C);
-  spasm_dm_free(DM);
+  spasm_partition_free(DM);
   return 0;
 }

@@ -6,7 +6,8 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *B, *C;
   int n, m, test, i, j, px, k, nb;
-  int *r, *p, *q, *x, *pinv, *Cp, *Cj;
+  int *rr, *p, *x, *pinv, *Cp, *Cj;
+  spasm_partition *P;
 
   assert(argc > 1);
   test = atoi(argv[1]);
@@ -27,12 +28,12 @@ int main(int argc, char **argv) {
   free(pinv);
   spasm_csr_free(A);
 
-  // compute DM decomposition of permuted M.
-  r = spasm_malloc((n + 1) * sizeof(int));
+  P = spasm_strongly_connected_components(B);
+  p = P->p;
+  rr = P->rr;
+  nb = P->nr;
 
-  nb = spasm_strongly_connected_components(B, p, r);
-
-  /* verbosity 
+  /* verbosity
   printf("p = ");
   for(k = 0; k < n; k++) {
     printf("%d ", p[k] + 1);
@@ -73,7 +74,7 @@ int main(int argc, char **argv) {
 
   for(k = 0; k < nb; k++) {
     printf("# SCC_%d : ", k);
-    for(i = r[k]; i < r[k + 1]; i++) {
+    for(i = rr[k]; i < rr[k + 1]; i++) {
       printf("%d ", p[i]);
     }
     printf("\n");
@@ -89,10 +90,10 @@ int main(int argc, char **argv) {
   spasm_csr_free(B);
 
   for(k = 0; k < nb; k++) {
-    for(i = r[k]; i < r[k + 1]; i++) {
+    for(i = rr[k]; i < rr[k + 1]; i++) {
       for(px = Cp[i]; px < Cp[i + 1]; px++) {
 	j = Cj[px];
-	if (j < r[k]) {
+	if (j < rr[k]) {
 	  printf("not ok %d - SCC - row %d (in C_%d) has entries on column %d\n", test, i, k, j);
 	  exit(0);
 	}
