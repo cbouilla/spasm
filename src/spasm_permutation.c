@@ -115,3 +115,15 @@ int * spasm_random_permutation(int n) {
 
   return p;
 }
+
+/* in-place permute x[a:b] using p. Destroys p */
+void spasm_range_pvec(int *x, int a, int b, int *p) {
+  int i;
+
+  for(i = 0; i < b - a; i++) {
+    p[i] = x[ a + p[i] ];
+  }
+  for(i = 0; i < b - a; i++) {
+    x[a + i] = p[i];
+  }
+}

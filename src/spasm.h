@@ -139,6 +139,7 @@ void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 int *spasm_pinv(int const *p, int n);
 spasm *spasm_permute(const spasm * A, const int *pinv, const int *q, int values);
 int * spasm_random_permutation(int n);
+void spasm_range_pvec(int *x, int a, int b, int *p);
 
 /* spasm_GFp.c */
 spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);

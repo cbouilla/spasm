@@ -159,14 +159,20 @@ int * spasm_permute_column_matching(int m, const int *imatch, const int *pinv, c
 }
 
 
-/* returns (a copy of) match[a:b] */
-int * spasm_submatching(const int *match, int a, int b) {
+/* returns (a copy of) the matching match restricted to the submatrix M[a:b, c:d] */
+int * spasm_submatching(const int *match, int a, int b, int c, int d) {
   int *pmatch;
   int i;
 
   pmatch = spasm_malloc((b - a) * sizeof(int));
   for(i = a; i < b; i++) {
-    pmatch[i - a] = match[i];
+    if (match[i] == -1) {
+      pmatch[i - a] = -1;
+    } else {
+      pmatch[i - a] = match[i] - c;
+      assert(pmatch[i - a] >= 0);
+      assert(pmatch[i - a] < d);
+    }
   }
   return pmatch;
 }
