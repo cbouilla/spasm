@@ -183,3 +183,11 @@ void spasm_partition_free(spasm_partition *P) {
   free(P->cc);
   free(P);
 }
+
+void spasm_zero_vector(int n, int *x) {
+  int i;
+
+  for(i = 0; i < n; i++) {
+    x[i] = 0;
+  }
+}

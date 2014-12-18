@@ -128,6 +128,49 @@ int spasm_maximum_matching(const spasm *A, int *imatch, int *jmatch) {
   return k;
 }
 
+/* given a row-matching of A, returns a row_matching of P*A*Q --- the result of spasm_permute(A, p, q). */
+int * spasm_permute_row_matching(int n, const int *jmatch, const int *p, const int *qinv) {
+  int *jjmatch;
+  int i;
+
+  jjmatch = spasm_malloc(n * sizeof(int));
+  for(i = 0; i < n; i++) {
+    if (jmatch[ p[i] ] == -1 ) {
+      jjmatch[i] = -1;
+    } else {
+      jjmatch[i] = qinv[ jmatch[ p[i] ] ];
+    }
+  }
+  return jjmatch;
+}
+
+int * spasm_permute_column_matching(int m, const int *imatch, const int *pinv, const int *q) {
+  int *iimatch;
+  int j;
+
+  iimatch = spasm_malloc(m * sizeof(int));
+  for(j = 0; j < m; j++) {
+    if (imatch[ q[j] ] == -1 ) {
+      iimatch[j] = -1;
+    } else {
+      iimatch[j] = pinv[ imatch[ q[j] ] ];
+    }
+  }
+  return iimatch;
+}
+
+
+/* returns (a copy of) match[a:b] */
+int * spasm_submatching(const int *match, int a, int b) {
+  int *pmatch;
+  int i;
+
+  pmatch = spasm_malloc((b - a) * sizeof(int));
+  for(i = a; i < b; i++) {
+    pmatch[i - a] = match[i];
+  }
+  return pmatch;
+}
 
 int spasm_structural_rank(const spasm *A) {
   int n, m;
