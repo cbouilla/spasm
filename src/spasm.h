@@ -187,7 +187,7 @@ int spasm_structural_rank(const spasm *A);
 spasm_partition * spasm_dulmage_mendelson(const spasm *A);
 
 /* spasm_cc.c */
-spasm_partition * spasm_connected_components(const spasm *A);
+spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA_t, const int *jmatch, const int *imatch);
 
 /* spasm_scc.c */
 spasm_partition * spasm_strongly_connected_components(const spasm *A);

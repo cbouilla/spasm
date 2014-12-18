@@ -2,16 +2,36 @@
 #include "spasm.h"
 
 /* returns the number of non-trivial (size > 0) connected component of A, seen as an
-   undirected bipartite graph. */
-spasm_partition * spasm_connected_components(const spasm *A) {
+   undirected bipartite graph.
+
+   if jmatch == NULL, columns are sorted in natural order.
+
+   if jmatch != NULL, all rows must be matched. matched columns come
+   first (in the order given by the matching), unmatched columns come
+   next (in natural order).
+
+   if imatch == NULL, rows are sorted in natural order.
+
+   if imatch != NULL, all columns must be matched. matched rows come
+   first (in the order given by the matching), unmatched rows come
+   next (in natural order).
+
+   both jmatch != NULL and imatch != NULL makes no sense.
+
+   If the transpose of A is not given, it will be computed.
+*/
+spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA_t, const int *jmatch, const int *imatch) {
   int n, m, i, j, k, root, n_cc, rhead, rtail, chead, ctail, px;
   int *Ap, *Aj, *A_tp, *A_tj, *rmark, *cmark, *p, *q, *rr, *cc, *rcopy, *ccopy;
   spasm *A_t;
   spasm_partition *P;
 
+  assert(A != NULL);
+  assert(jmatch == NULL || imatch == NULL);
+
   n = A->n;
   m = A->m;
-  A_t = spasm_transpose(A, 0);
+  A_t = (givenA_t != NULL) ? (spasm *) givenA_t : spasm_transpose(A, SPASM_IGNORE_VALUES);
   Ap = A->p;
   Aj = A->j;
   A_tp = A_t->p;
@@ -26,7 +46,7 @@ spasm_partition * spasm_connected_components(const spasm *A) {
     cmark[j] = -1;
   }
 
-  P = spasm_partition_alloc(n, m, n, m);
+  P = spasm_partition_alloc(n, m, n + 1, m);
   p = P->p;
   q = P->q;
   rr = P->rr;
@@ -97,22 +117,27 @@ spasm_partition * spasm_connected_components(const spasm *A) {
     /* Not all columns have been reached and thus appear in q.  This
        happens if a column does not contain any entry). We create an
        extra block for those. */
-    n_cc++;
     rr[n_cc] = n;
     cc[n_cc] = m;
+
+    for(j = 0; j < m; j++) {
+      if (cmark[j] < 0) {
+	cmark[j] = n_cc - 1;
+      }
+    }
+    n_cc++;
   }
 
   P->nr = n_cc;
   P->nc = n_cc;
 
   /* rows and column are in a somewhat random order in p and q.  put
-     them in the natural order inside each block.  Be careful
-     though.
-  */
+     them in the natural order inside each block. */
 
-  rcopy = spasm_malloc((n_cc + 2) * sizeof(int));
-  ccopy = spasm_malloc((n_cc + 2) * sizeof(int));
+  rcopy = spasm_malloc((n_cc + 1) * sizeof(int));
+  ccopy = spasm_malloc((n_cc + 1) * sizeof(int));
 
+  /* rcopy[k] (resp. ccopy[k]) indicates the next row (resp. column) of block k should land in p (resp. q) */
   for(i = 0; i <= n_cc; i++) {
     rcopy[i] = rr[i];
     ccopy[i] = cc[i];
@@ -122,12 +147,21 @@ spasm_partition * spasm_connected_components(const spasm *A) {
     k = rmark[i];
     p[ rcopy[k] ] = i;
     rcopy[k]++;
+
+    /* is there a column matched to this row ? */
+    if (jmatch != NULL) {
+      j = jmatch[i];
+      assert(cmark[j] == k);
+      cmark[j] = -1; // skip this column next time
+      q[ ccopy[k] ] = j;
+      ccopy[k]++;
+    }
   }
 
   for(j = 0; j < m; j++) {
     k = cmark[j];
     if (k < 0) {
-      k = n_cc;
+      continue;
     }
     q[ ccopy[k] ] = j;
     ccopy[k]++;
@@ -137,8 +171,9 @@ spasm_partition * spasm_connected_components(const spasm *A) {
   free(ccopy);
   free(rmark);
   free(cmark);
-  spasm_csr_free(A_t);
-
+  if (givenA_t == NULL) {
+    spasm_csr_free(A_t);
+  }
   spasm_partition_tighten(P);
   return P;
 }

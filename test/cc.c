@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
   free(q);
   spasm_csr_free(A);
 
-  P = spasm_connected_components(B);
+  P = spasm_connected_components(B, NULL, NULL, NULL);
   p = P->p;
   q = P->q;
   rr = P->rr;
