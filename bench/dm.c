@@ -4,10 +4,12 @@
 
 int main() {
   spasm_triplet *T;
-  spasm *A, *B, *H, *S, *V, *A_t;
+  spasm *A, *B, *H, *S, *V, *A_t, *HH;
   spasm_partition *DM, *P;
   int n, m, h, s, v, k, largest, ns, i, j;
-  int *rr, *Prr, *cc, *Pcc, *p, *pinv, *q, *qinv, *Hp, *Hq, *Vp, *Vq, *Sp, *Sq, *imatch, *jmatch, *Bjmatch, *Himatch, *Hjmatch;
+  int *rr, *Prr, *cc, *Pcc;
+  int *p, *pinv, *q, *qinv, *Hp, *Hq, *Hqinv, *Vp, *Vq, *Sp, *Sq;
+  int *imatch, *jmatch, *Bjmatch, *Bimatch, *Himatch, *Hjmatch, *HHjmatch, *Cjmatch;
   double start;
 
   T = spasm_load_sms(stdin, -1);
@@ -52,10 +54,8 @@ int main() {
    qinv = spasm_pinv(q, m);
    B = spasm_permute(A, p, qinv, SPASM_IGNORE_VALUES);
    Bjmatch = spasm_permute_row_matching(n, jmatch, p, qinv);
+   Bimatch = spasm_permute_column_matching(m, imatch, pinv, q);
 
-   // TODO : compute permuted matching
-  //  spasm_csr_free(A);
-  //  free(qinv);
 
   /* ------------------- H --------------------- */
   if (h) {
@@ -74,13 +74,20 @@ int main() {
     if (P->nr > 1) {
       printf("   *) %d connected components\n", P->nr);
 
-      // permuter H
-      // calculer le matching sur H, permuté correctement
+      Hqinv = spasm_pinv(Hp, n);
+      HH = spasm_permute(H, Hp, Hqinv, SPASM_IGNORE_VALUES);
+      HHjmatch = spasm_permute_row_matching(n, Hjmatch, Hp, Hqinv);
 
-      for(i = 0; i < P->nr; i++) {
-	printf("      --> %d x %d\n", Prr[i + 1] - Prr[i], Pcc[i + 1] - Pcc[i]);
+      for(k = 0; k < P->nr; k++) {
+	printf("      --> %d x %d\n", Prr[k + 1] - Prr[k], Pcc[k + 1] - Pcc[k]);
 	// extraire la CC (utile ?)
 	// extraire la partie correspondante du matching
+	Cjmatch = spasm_submatching(HHjmatch, Prr[k], Prr[k + 1]);
+	printf("      --> column matched : ");
+	for(i = Prr[k]; i < Prr[k + 1]; i++) {
+	  printf("%d ", Cjmatch[ i - Prr[k] ]);
+	}
+	printf("\n");
 	// extraire la partie "matched"
 	// calculer ses SCC
 	// mettre à jour les permutations de H
