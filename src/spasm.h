@@ -111,7 +111,7 @@ spasm_partition * spasm_partition_alloc(int n, int m, int nr, int nc);
 void spasm_partition_free(spasm_partition *P);
 void spasm_partition_tighten(spasm_partition *P);
 
-void spasm_zero_vector(int n, int *x);
+void spasm_init_vector(int *x, int n, spasm_GFp alpha);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x);
@@ -179,7 +179,7 @@ int * spasm_cheap_pivots(const spasm *A);
 int spasm_maximum_matching(const spasm *A, int *jmatch, int *imatch);
 int * spasm_permute_row_matching(int n, const int *jmatch, const int *p, const int *qinv);
 int * spasm_permute_column_matching(int m, const int *imatch, const int *pinv, const int *q);
-int * spasm_submatching(const int *match, int a, int b);
+int * spasm_submatching(const int *match, int a, int b, int c, int d);
 int spasm_structural_rank(const spasm *A);
 
 /* spasm_dm.c */

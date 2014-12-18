@@ -39,9 +39,7 @@ int main(int argc, char **argv) {
   x = spasm_malloc(n * sizeof(int));
   y = spasm_malloc(m * sizeof(int));
 
-  for(i = 0; i < n; i++) {
-    x[i] = 0;
-  }
+  spasm_init_vector(x, n, 0);
   for(i = 0; i < n; i++) {
     x[ p[i] ]++;
   }
@@ -52,9 +50,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  for(j = 0; j < m; j++) {
-    y[j] = 0;
-  }
+  spasm_init_vector(y, m, 0);
   for(j = 0; j < m; j++) {
     y[ q[j] ]++;
   }

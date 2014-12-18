@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
   x = spasm_malloc(n * sizeof(int));
   y = spasm_malloc(m * sizeof(int));
 
-  spasm_zero_vector(n, x);
+  spasm_init_vector(x, n, 0);
   for(i = 0; i < n; i++) {
     x[ p[i] ]++;
   }
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  spasm_zero_vector(m, y);
+  spasm_init_vector(y, m, 0);
   for(i = 0; i < m; i++) {
     y[ q[i] ]++;
   }
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
   Cimatch = spasm_permute_column_matching(m, imatch, pinv, q);
 
   // check that it is still bijective
-  spasm_zero_vector(m, y);
+  spasm_init_vector(y, m, 0);
   for(i = 0; i < n; i++) {
     if (Cjmatch[i] != -1) {
       y[ Cjmatch[i] ]++;
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  spasm_zero_vector(n, x);
+  spasm_init_vector(x, n, 0);
   for(j = 0; j < m; j++) {
     if (Cimatch[j] != -1) {
       x[ Cimatch[j] ]++;
@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
   }
 
   // check that matching restricted to H is row-perfect.
-  Hjmatch = spasm_submatching(Cjmatch, rr[0], rr[1]);
+  Hjmatch = spasm_submatching(Cjmatch, rr[0], rr[1], cc[0], cc[2]);
   for(i = rr[0]; i < rr[1]; i++) {
     if (Hjmatch[ i - rr[0] ] == -1) {
       printf("not ok %d - DM - permuted row matching no longer row-perfect on H\n", test);
@@ -188,8 +188,8 @@ int main(int argc, char **argv) {
 
 
   // check that matching restricted to S is perfect (both row-perfect and column-perfect).
-  Sjmatch = spasm_submatching(Cjmatch, rr[1], rr[2]);
-  Simatch = spasm_submatching(Cimatch, cc[2], cc[3]);
+  Sjmatch = spasm_submatching(Cjmatch, rr[1], rr[2], cc[2], cc[3]);
+  Simatch = spasm_submatching(Cimatch, cc[2], cc[3], rr[1], rr[2]);
   for(i = rr[1]; i < rr[2]; i++) {
     if (Sjmatch[ i - rr[1] ] == -1) {
       printf("not ok %d - DM - permuted row matching no longer row-perfect on S\n", test);
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
   free(Simatch);
 
   // check that matching restricted to V is column-perfect.
-  Vimatch = spasm_submatching(Cimatch, cc[3], cc[4]);
+  Vimatch = spasm_submatching(Cimatch, cc[3], cc[4], rr[2], rr[4]);
   for(j = cc[3]; j < cc[4]; j++) {
     if (Vimatch[ j - cc[3] ] == -1) {
       printf("not ok %d - DM - permuted column matching no longer column-perfect on V\n", test);
