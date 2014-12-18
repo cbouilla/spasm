@@ -84,7 +84,7 @@ static int spasm_augmenting_path(const spasm *A, int k, int *row_stack, int *col
 
    If the matrix is rectangular, it is a big advantage to transpose it so that n << m
  */
-int spasm_maximum_matching(const spasm *A, int *imatch, int *jmatch) {
+int spasm_maximum_matching(const spasm *A, int *jmatch, int *imatch) {
   int n, m, r, i, j, k;
   int *Ap, *Aj, *w, *row_stack, *col_stack, *marks, *pointer_stack, *cheap;
 
@@ -182,5 +182,5 @@ int spasm_structural_rank(const spasm *A) {
   imatch = spasm_malloc(m * sizeof(int));
   jmatch = spasm_malloc(n * sizeof(int));
 
-  return spasm_maximum_matching(A, imatch, jmatch);
+  return spasm_maximum_matching(A, jmatch, imatch);
 }

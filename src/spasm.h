@@ -177,7 +177,6 @@ int * spasm_row_sort (const spasm *A);
 int * spasm_cheap_pivots(const spasm *A);
 
 /* spasm_matching.c */
-int spasm_maximum_matching(const spasm *A, int *imatch, int *jmatch);
 int spasm_maximum_matching(const spasm *A, int *jmatch, int *imatch);
 int * spasm_permute_row_matching(int n, const int *jmatch, const int *p, const int *qinv);
 int * spasm_permute_column_matching(int m, const int *imatch, const int *pinv, const int *q);
