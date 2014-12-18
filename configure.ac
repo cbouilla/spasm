@@ -28,7 +28,7 @@ AC_HEADER_STDBOOL
 # Checks for typedefs, structures, and compiler characteristics.
 AC_FUNC_MALLOC
 
-CFLAGS="$CFLAGS -Werror -Wall -Wextra -g -fPIC"
+CFLAGS="$CFLAGS -Werror -Wall -Wextra -g -fPIC -Wno-unused-variable -Wno-unused-parameter -Wno-unused-but-set-variable"
 
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)

@@ -25,8 +25,8 @@ void process_square_part(const spasm *B, int rx, int ry, int cx, int cy, int *p,
 }
 
 void process_rectangular_part(const spasm *B, int ra, int rb, int ca, int cb, int *p, int *q, int *jmatch) {
-  spasm *M, *MM, *C;
-  int n, m, CC_k, SCC_k, i, j, k, l, rx, ry, cx, cy, C_n, C_m;
+  spasm *M, *MM;
+  int n, m, CC_k, i, k, rx, ry, cx, cy, C_n, C_m;
   int *M_jmatch, *MM_jmatch;
   int  *CC_qinv;
   spasm_partition *CC;
@@ -96,10 +96,10 @@ void process_rectangular_part(const spasm *B, int ra, int rb, int ca, int cb, in
 
 int main() {
   spasm_triplet *T;
-  spasm *A, *B, *S, *A_t;
-  spasm_partition *DM, *P;
-  int n, m, h, s, v, k, largest, ns, i, j;
-  int *rr, *Prr, *cc;
+  spasm *A, *B, *A_t;
+  spasm_partition *DM;
+  int n, m, h, s, v;
+  int *rr, *cc;
   int *p, *pinv, *q, *qinv;
   int *imatch, *jmatch, *Bjmatch, *Bimatch;
   double start;
@@ -138,6 +138,8 @@ int main() {
    rr = DM->rr;
    cc = DM->cc;
 
+   spasm_csr_free(A_t);
+
    h = (cc[2] != 0);
    s = (rr[2] != rr[1]);
    v = (rr[4] != rr[2]);
@@ -147,7 +149,8 @@ int main() {
    B = spasm_permute(A, p, qinv, SPASM_IGNORE_VALUES);
    Bjmatch = spasm_permute_row_matching(n, jmatch, p, qinv);
    Bimatch = spasm_permute_column_matching(m, imatch, pinv, q);
-
+   free(pinv);
+   free(qinv);
 
   /* ------------------- H --------------------- */
   if (h) {
@@ -170,7 +173,6 @@ int main() {
 
   qinv = spasm_pinv(q, m);
   B = spasm_permute(A, p, qinv, SPASM_IGNORE_VALUES);
-  spasm_csr_free(A);
   free(qinv);
 
   // todo : recalculer le matching permuté (pour l'affichage en couleur, le matching suffit)
@@ -178,7 +180,10 @@ int main() {
   spasm_save_ppm(f, m, n, B, DM);
   fclose(f);
 
+  free(imatch);
+  free(jmatch);
   spasm_partition_free(DM);
   spasm_csr_free(B);
+  spasm_csr_free(A);
   return 0;
 }
