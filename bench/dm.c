@@ -74,9 +74,9 @@ int main() {
     if (P->nr > 1) {
       printf("   *) %d connected components\n", P->nr);
 
-      Hqinv = spasm_pinv(Hp, n);
+      Hqinv = spasm_pinv(Hq, H->m);
       HH = spasm_permute(H, Hp, Hqinv, SPASM_IGNORE_VALUES);
-      HHjmatch = spasm_permute_row_matching(n, Hjmatch, Hp, Hqinv);
+      HHjmatch = spasm_permute_row_matching(H->n, Hjmatch, Hp, Hqinv);
 
       for(k = 0; k < P->nr; k++) {
 	printf("      --> %d x %d\n", Prr[k + 1] - Prr[k], Pcc[k + 1] - Pcc[k]);
