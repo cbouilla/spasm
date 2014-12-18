@@ -163,7 +163,6 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, cons
 int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
 
 /* spasm_lu.c */
-
 spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation);
 spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L);
 void spasm_free_LU(spasm_lu *X);
@@ -184,7 +183,7 @@ int * spasm_submatching(const int *match, int a, int b);
 int spasm_structural_rank(const spasm *A);
 
 /* spasm_dm.c */
-spasm_partition * spasm_dulmage_mendelson(const spasm *A);
+spasm_partition * spasm_dulmage_mendelson(const spasm *A, const spasm *A_t, const int *jmatch, const int *imatch);
 
 /* spasm_cc.c */
 spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA_t, const int *jmatch, const int *imatch);

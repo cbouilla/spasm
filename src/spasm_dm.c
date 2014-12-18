@@ -119,13 +119,11 @@ static void spasm_matched(int n, const int *wj, const int *imatch, int *p, int *
 }
 
 
-/* Given A, compute coarse and then fine dmperm */
-spasm_partition * spasm_dulmage_mendelson(const spasm *A) {
+/* Given A and a maximum matching, compute coarse dm decomposition */
+spasm_partition * spasm_dulmage_mendelson(const spasm *A, const spasm *A_t, const int *jmatch, const int *imatch) {
   int m, n, i, j;
-  int *jmatch, *imatch, *wi, *wj, *p, *q, *cc, *rr, *queue;
-
-    spasm_partition *P;
-    spasm *A_t;
+  int *wi, *wj, *p, *q, *cc, *rr, *queue;
+  spasm_partition *P;
 
     /* check inputs */
     assert(A != NULL);
@@ -133,8 +131,6 @@ spasm_partition * spasm_dulmage_mendelson(const spasm *A) {
     m = A->m;
 
     /* allocate result */
-    jmatch = spasm_malloc(n * sizeof(int));
-    imatch = spasm_malloc(m * sizeof(int));
     wi = spasm_malloc(n * sizeof(int));
     wj = spasm_malloc(m * sizeof(int));
     queue = spasm_malloc(spasm_max(n, m) * sizeof(int));
@@ -149,14 +145,6 @@ spasm_partition * spasm_dulmage_mendelson(const spasm *A) {
     for(i = 0; i <= 4; i++) {
       rr[i] = 0;
       cc[i] = 0;
-    }
-    A_t = spasm_transpose(A, 0);
-
-    /* --- Maximum matching ------------------------------------------------- */
-    if (n < m) {
-      spasm_maximum_matching(A, imatch, jmatch);
-    } else {
-      spasm_maximum_matching(A_t, jmatch, imatch);
     }
 
     /* --- Reachability --------------------------------------------- */
@@ -182,12 +170,9 @@ spasm_partition * spasm_dulmage_mendelson(const spasm *A) {
     spasm_unmatched(n, wi, p, rr, 3) ;                      /* unmatched set R0 */
 
     /* cleanup */
-    free(imatch);
-    free(jmatch);
     free(queue);
     free(wi);
     free(wj);
-    spasm_csr_free(A_t);
 
     return P;
 }

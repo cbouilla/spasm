@@ -3,15 +3,13 @@
 
 int main(int argc, char **argv) {
   spasm_triplet *T;
-  spasm *A, *B;
+  spasm *A, *A_t, *B;
   spasm_partition *DM;
-  int x, y, n, m, *p, *q, *qinv;
+  int x, y, n, m, *p, *q, *qinv, *imatch, *jmatch;
 
   T = spasm_load_sms(stdin, -1);
-  B = spasm_compress(T);
+  A = spasm_compress(T);
   spasm_triplet_free(T);
-  A = spasm_transpose(B, SPASM_IGNORE_VALUES);
-  spasm_csr_free(B);
 
   n = A->n;
   m = A->m;
@@ -25,8 +23,20 @@ int main(int argc, char **argv) {
     y = atoi(argv[2]);
   }
 
-  // compute DM decomposition of A.
-  DM = spasm_dulmage_mendelson(A);
+  A_t = spasm_transpose(A, SPASM_IGNORE_VALUES);
+  jmatch = spasm_malloc(n * sizeof(int));
+  imatch = spasm_malloc(m * sizeof(int));
+
+   /* --- Maximum matching ------------------------------------------------- */
+   if (n < m) {
+     spasm_maximum_matching(A, jmatch, imatch);
+   } else {
+     spasm_maximum_matching(A_t, imatch, jmatch);
+   }
+
+  // compute DM decomposition of permuted M.
+   DM = spasm_dulmage_mendelson(A, A_t, jmatch, imatch);
+
   p = DM->p;
   q = DM->q;
 
