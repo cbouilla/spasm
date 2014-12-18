@@ -60,6 +60,10 @@ void process_rectangular_part(const spasm *B, int ra, int rb, int ca, int cb, in
     C_n = CC->rr[i + 1] - CC->rr[i];
     C_m = CC->cc[i + 1] - CC->cc[i];
 
+    if (C_n == 0 || C_m == 0) {
+      continue;
+    }
+
     /* extract the (square) perfectly-matched part */
     k = spasm_min(C_n, C_m);
     cx = CC->cc[i];
