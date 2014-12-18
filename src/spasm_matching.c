@@ -86,13 +86,12 @@ static int spasm_augmenting_path(const spasm *A, int k, int *row_stack, int *col
  */
 int spasm_maximum_matching(const spasm *A, int *jmatch, int *imatch) {
   int n, m, r, i, j, k;
-  int *Ap, *Aj, *w, *row_stack, *col_stack, *marks, *pointer_stack, *cheap;
+  int *Ap, *w, *row_stack, *col_stack, *marks, *pointer_stack, *cheap;
 
   n = A->n;
   m = A->m;
   r = spasm_min(n, m);
   Ap = A->p;
-  Aj = A->j;
 
   // cette procédure nécessite peut-être que n >= m (?)
   for(j = 0; j < m; j++) {

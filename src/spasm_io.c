@@ -231,7 +231,8 @@ void spasm_save_ppm(FILE *f, int x, int y, const spasm *A, const spasm_partition
 
     // print row
     for(j = 0; j < x; j++) {
-
+      u = 0;
+      v = 0;
       jj = j * m / x;
       for(t = 0; t < 4; t++) {
 	if (P != NULL && (i > rr[t])) {
@@ -247,7 +248,7 @@ void spasm_save_ppm(FILE *f, int x, int y, const spasm *A, const spasm_partition
       b =  colors[4 * u + v]        & 0xff;
 
       k = 1.0 - w[j] / max;
-      if (k < 0.0 | k > 1.0 ) {
+      if (k < 0.0 || k > 1.0 ) {
 	printf("ça craint : %f (%d vs %f)\n", k, w[j], max);
 	exit(1);
       }
