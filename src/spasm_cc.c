@@ -139,21 +139,34 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
     ccopy[i] = cc[i];
   }
 
+  /* first pass, only unmatched rows (if jmatch != NULL, of course) */
   for(i = 0; i < n; i++) {
+    if (jmatch != NULL && jmatch[i] != -1) {
+      continue;
+    }
     k = rmark[i];
     p[ rcopy[k] ] = i;
     rcopy[k]++;
+  }
 
-    /* is there a column matched to this row ? */
-    if (jmatch != NULL) {
+  /* second pass, only matched rows */
+  if (jmatch != NULL) {
+    for(i = 0; i < n; i++) {
+      if (jmatch[i] == -1) {
+	continue;
+      }
+      k = rmark[i];
+      p[ rcopy[k] ] = i;
+      rcopy[k]++;
+
       j = jmatch[i];
-      assert(cmark[j] == k);
-      cmark[j] = -1; // skip this column next time
+      cmark[j] = -1; // do not add this column a second time later on
       q[ ccopy[k] ] = j;
       ccopy[k]++;
     }
   }
 
+  /* now add remaining column in natural order */
   for(j = 0; j < m; j++) {
     k = cmark[j];
     if (k < 0) {
@@ -163,6 +176,7 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
     ccopy[k]++;
   }
 
+  /* cleanup */
   free(rcopy);
   free(ccopy);
   free(rmark);
