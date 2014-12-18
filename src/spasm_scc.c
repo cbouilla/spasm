@@ -6,7 +6,7 @@
 // r must have size n+1
 spasm_partition * spasm_strongly_connected_components(const spasm *A) {
   int n, m, i, k, n_scc, top;
-  int *pstack, *mark, *xi, *rcopy, *p, *rr;
+  int *pstack, *mark, *xi, *rcopy, *p, *q, *rr, *cc;
   spasm *A_t;
   spasm_partition *P;
 
@@ -15,8 +15,11 @@ spasm_partition * spasm_strongly_connected_components(const spasm *A) {
   assert(n == m);
 
   P = spasm_partition_alloc(n, n, n, n);
+  /* p and q are identical, but we fill them both anyway */
   p = P->p;
+  q = P->q;
   rr = P->rr;
+  cc = P->cc;
 
   pstack = spasm_malloc(n * sizeof(int));
   mark = spasm_malloc(n * sizeof(int));
@@ -61,10 +64,11 @@ spasm_partition * spasm_strongly_connected_components(const spasm *A) {
   rr[n_scc] = 0;
   for(k = n_scc; k <= n; k++) {
     rr[k - n_scc] = rr[k];
+    cc[k - n_scc] = rr[k];
   }
   n_scc = n - n_scc;
   P->nr = n_scc;
-  P->nc = 0;
+  P->nc = n_scc;
 
   /* at this point, blocks are in reverse order in both r and p */
 
@@ -83,11 +87,13 @@ spasm_partition * spasm_strongly_connected_components(const spasm *A) {
   /* rcopy[k] indicates the next entry in block k in p */
   for(k = 0; k <= n_scc; k++) {
     rr[k] = rcopy[k];
+    cc[k] = rcopy[k];
   }
 
   for(i = 0; i < n; i++) {
     k = mark[i]; // the block id
     p[ rcopy[k] ] = i;
+    q[ rcopy[k] ] = i;
     rcopy[k]++;
   }
 
