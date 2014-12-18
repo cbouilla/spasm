@@ -4,9 +4,9 @@
 
 int main() {
   spasm_triplet *T;
-  spasm *A, *B, *H, *S, *V, *A_t, *HH;
+  spasm *A, *B, *H, *S, *V, *A_t, *HH, *C;
   spasm_partition *DM, *P;
-  int n, m, h, s, v, k, largest, ns, i, j;
+  int n, m, h, s, v, k, largest, ns, i, j, l;
   int *rr, *Prr, *cc, *Pcc;
   int *p, *pinv, *q, *qinv, *Hp, *Hq, *Hqinv, *Vp, *Vq, *Sp, *Sq;
   int *imatch, *jmatch, *Bjmatch, *Bimatch, *Himatch, *Hjmatch, *HHjmatch, *Cjmatch;
@@ -74,40 +74,31 @@ int main() {
     if (P->nr > 1) {
       printf("   *) %d connected components\n", P->nr);
 
-      Hqinv = spasm_pinv(Hp, n);
+      Hqinv = spasm_pinv(Hp, H->n);
       HH = spasm_permute(H, Hp, Hqinv, SPASM_IGNORE_VALUES);
-      HHjmatch = spasm_permute_row_matching(n, Hjmatch, Hp, Hqinv);
+      HHjmatch = spasm_permute_row_matching(H->n, Hjmatch, Hp, Hqinv);
 
       for(k = 0; k < P->nr; k++) {
 	printf("      --> %d x %d\n", Prr[k + 1] - Prr[k], Pcc[k + 1] - Pcc[k]);
-	// extraire la CC (utile ?)
-	// extraire la partie correspondante du matching
+
 	Cjmatch = spasm_submatching(HHjmatch, Prr[k], Prr[k + 1]);
 	printf("      --> column matched : ");
 	for(i = Prr[k]; i < Prr[k + 1]; i++) {
 	  printf("%d ", Cjmatch[ i - Prr[k] ]);
 	}
 	printf("\n");
-	// extraire la partie "matched"
+	// size of the (square) column-matched part
+	l = Prr[k + 1] - Prr[k];
+	C = spasm_submatrix(HH, Prr[k], Prr[k+1], Pcc[k], Pcc[k] + l, SPASM_IGNORE_VALUES);
+	printf("      --> size of perfectly matched part : %d x %d with %d NNZ\n", l, l, spasm_nnz(C));
 	// calculer ses SCC
 	// mettre à jour les permutations de H
+	spasm_csr_free(C);
       }
-    }
-    spasm_csr_free(H);
-    spasm_partition_free(P);
 
-    H = spasm_submatrix(B, rr[0], rr[1], cc[1], cc[2], SPASM_IGNORE_VALUES);
-    P = spasm_strongly_connected_components(H);
-    Prr = P->rr;
-    k = P->nr;
-    largest = -1;
-    ns = 0;
-    for(i = 0; i < k; i++) {
-      largest = spasm_max(largest, Prr[i + 1] - Prr[i]);
-      ns += (Prr[i + 1] - Prr[i] > 1);
-    }
-    if (k > 1) {
-      printf("   *) H' (%d x %d): %d strongly connected components, %d non-singleton, largest = %.1f %%\n", H->n, H->m, k, ns, 100.0 * largest / H->n);
+      free(Hqinv);
+      free(HHjmatch);
+      spasm_csr_free(HH);
     }
     spasm_csr_free(H);
     spasm_partition_free(P);
@@ -129,6 +120,8 @@ int main() {
       for(j = 0; j < H->m; j++) {
 	q[j] = Hq[j];
       }
+      
+      free(Hjmatch);
   }
 
   /* --------------- S ----------------------- */
