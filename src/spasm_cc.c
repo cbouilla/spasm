@@ -113,8 +113,6 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
     /* Not all columns have been reached and thus appear in q.  This
        happens if a column does not contain any entry). We create an
        extra block for those. */
-    rr[n_cc] = n;
-    cc[n_cc] = m;
 
     for(j = 0; j < m; j++) {
       if (cmark[j] < 0) {
@@ -122,6 +120,9 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
       }
     }
     n_cc++;
+
+    rr[n_cc] = n;
+    cc[n_cc] = m;
   }
 
   P->nr = n_cc;
