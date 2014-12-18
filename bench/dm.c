@@ -59,13 +59,16 @@ void process_rectangular_part(const spasm *B, int ra, int rb, int ca, int cb, in
 
     C_n = CC->rr[i + 1] - CC->rr[i];
     C_m = CC->cc[i + 1] - CC->cc[i];
-    assert(C_n != C_m);
 
     /* extract the (square) perfectly-matched part */
     k = spasm_min(C_n, C_m);
     cx = CC->cc[i];
     ry = CC->rr[i + 1];
-    if (C_n < C_m) {
+    if (C_n == C_m) {
+      /* horizontal case: matched columns are on the left */
+      rx = CC->rr[i];
+      cy = CC->cc[i + 1];
+    } else if (C_n < C_m) {
       /* horizontal case: matched columns are on the left */
       rx = CC->rr[i];
       cy = CC->cc[i] + k;
@@ -161,8 +164,8 @@ int main() {
 
   /* --------------- S ----------------------- */
   if (s) {
-    printf("*) S (%d x %d) : \n",  rr[2] - rr[1], cc[3] - cc[2]);
-    process_square_part(B, rr[1], rr[2], cc[2], cc[3], p, q, Bjmatch);
+    //    printf("*) S (%d x %d) : \n",  rr[2] - rr[1], cc[3] - cc[2]);
+    process_rectangular_part(B, rr[1], rr[2], cc[2], cc[3], p, q, Bjmatch);
   }
 
   /* ------------------- V --------------------- */
