@@ -196,7 +196,7 @@ int main() {
       }
       /* in place permute p to reflect block decomposition */
       spasm_range_pvec(p, rr[2], rr[4], Vp);
-      spasm_range_pvec(q, cc[3], rr[4], Vq);
+      spasm_range_pvec(q, cc[3], cc[4], Vq);
     }
     spasm_csr_free(V);
     spasm_partition_free(P);
