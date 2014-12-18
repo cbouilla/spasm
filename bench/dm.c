@@ -149,6 +149,8 @@ int main() {
    B = spasm_permute(A, p, qinv, SPASM_IGNORE_VALUES);
    Bjmatch = spasm_permute_row_matching(n, jmatch, p, qinv);
    Bimatch = spasm_permute_column_matching(m, imatch, pinv, q);
+   free(imatch);
+   free(jmatch);
    free(pinv);
    free(qinv);
 
@@ -180,8 +182,8 @@ int main() {
   spasm_save_ppm(f, m, n, B, DM);
   fclose(f);
 
-  free(imatch);
-  free(jmatch);
+  free(Bimatch);
+  free(Bjmatch);
   spasm_partition_free(DM);
   spasm_csr_free(B);
   spasm_csr_free(A);
