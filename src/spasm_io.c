@@ -100,7 +100,7 @@ void spasm_save_pbm(FILE *f, const spasm *A) {
   }
 
   fprintf(f, "P1\n");
-  fprintf(f, "%d %d\n", n, m);
+  fprintf(f, "%d %d\n", m, n);
   for(i = 0; i < n; i++) {
 
     // scatters row i to x
