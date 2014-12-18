@@ -2,12 +2,34 @@
 #include <stdio.h>
 #include "spasm.h"
 
+void process_square_part(const spasm *B, int rx, int ry, int cx, int cy, int *p, int *q, int *jmatch) {
+  spasm *C;
+  spasm_partition *SCC;
+  int i, k, l;
+
+  C = spasm_submatrix(B, rx, ry, cx, cy, SPASM_IGNORE_VALUES);
+  SCC = spasm_strongly_connected_components(C);
+  k = SCC->nr;
+
+    for(i = 0; i < k; i++) {
+      l = SCC->rr[i + 1] - SCC->rr[i];
+      printf("          --> SCC of size %d x %d\n", l, l);
+    }
+
+    /* update permutations of B */
+    spasm_range_pvec(p, rx, ry, SCC->p);
+    spasm_range_pvec(q, cx, cy, SCC->q);
+
+    spasm_partition_free(SCC);
+    spasm_csr_free(C);
+}
+
 void process_rectangular_part(const spasm *B, int ra, int rb, int ca, int cb, int *p, int *q, int *jmatch) {
   spasm *M, *MM, *C;
   int n, m, CC_k, SCC_k, i, j, k, l, rx, ry, cx, cy, C_n, C_m;
-  int *M_jmatch, *MM_jmatch, *C_jmatch;
+  int *M_jmatch, *MM_jmatch;
   int  *CC_qinv;
-  spasm_partition *CC, *SCC;
+  spasm_partition *CC;
 
   M = spasm_submatrix(B, ra, rb, ca, cb, SPASM_IGNORE_VALUES);
   M_jmatch = spasm_submatching(jmatch, ra, rb, ca, cb);
@@ -15,7 +37,7 @@ void process_rectangular_part(const spasm *B, int ra, int rb, int ca, int cb, in
   n = M->n;
   m = M->m;
 
-  printf("*) H (%d x %d -- %d nnz) : \n",  n, m, spasm_nnz(M));
+  printf("*) M (%d x %d -- %d nnz) : \n",  n, m, spasm_nnz(M));
 
   /* --- connected components of M */
   CC = spasm_connected_components(M, NULL, M_jmatch, NULL);
@@ -33,8 +55,7 @@ void process_rectangular_part(const spasm *B, int ra, int rb, int ca, int cb, in
 
   for(i = 0; i < CC_k; i++) {
 
-    /* process C_i, the i-th connected component of M */
-    C_jmatch = spasm_submatching(MM_jmatch, CC->rr[i], CC->rr[i + 1], CC->cc[i], CC->cc[i + 1]);
+    /* process i-th connected component of M */
 
     C_n = CC->rr[i + 1] - CC->rr[i];
     C_m = CC->cc[i + 1] - CC->cc[i];
@@ -53,23 +74,9 @@ void process_rectangular_part(const spasm *B, int ra, int rb, int ca, int cb, in
       rx = CC->rr[i + 1] - k;
       cy = CC->cc[i + 1];
     }
-    C = spasm_submatrix(MM, rx, ry, cx, cy, SPASM_IGNORE_VALUES);
 
-    SCC = spasm_strongly_connected_components(C);
-    SCC_k = SCC->nr;
-    printf("      --> %d x %d with %d SCC\n", C_n, C_m,  SCC_k);
-
-    for(j = 0; j < SCC_k; j++) {
-      l = SCC->rr[j + 1] - SCC->rr[j];
-      printf("          --> %d x %d\n", l, l);
-    }
-
-    /* update permutations of M */
-    spasm_range_pvec(CC->p, rx, ry, SCC->p);
-    spasm_range_pvec(CC->q, cx, cy, SCC->q);
-
-    spasm_partition_free(SCC);
-    spasm_csr_free(C);
+    printf("      --> %d x %d\n", C_n, C_m);
+    process_square_part(MM, rx, ry, cx, cy, CC->p, CC->q, M_jmatch);
   }
 
   free(MM_jmatch);
@@ -89,12 +96,12 @@ void process_rectangular_part(const spasm *B, int ra, int rb, int ca, int cb, in
 
 int main() {
   spasm_triplet *T;
-  spasm *A, *B, *S, *V, *A_t;
+  spasm *A, *B, *S, *A_t;
   spasm_partition *DM, *P;
   int n, m, h, s, v, k, largest, ns, i, j;
-  int *rr, *Prr, *cc, *Pcc;
-  int *p, *pinv, *q, *qinv, *Vp, *Vq;
-  int *imatch, *jmatch, *Bjmatch, *Bimatch,  *Vjmatch;
+  int *rr, *Prr, *cc;
+  int *p, *pinv, *q, *qinv;
+  int *imatch, *jmatch, *Bjmatch, *Bimatch;
   double start;
 
   T = spasm_load_sms(stdin, -1);
@@ -149,57 +156,13 @@ int main() {
 
   /* --------------- S ----------------------- */
   if (s) {
-    S = spasm_submatrix(B, rr[1], rr[2], cc[2], cc[3], SPASM_IGNORE_VALUES);
-    printf("*) S (%d x %d --- %d nnz)\n", S->n, S->m, spasm_nnz(S));
-
-    P = spasm_strongly_connected_components(S);
-    Prr = P->rr;
-    k = P->nr;
-    largest = -1;
-    ns = 0;
-    for(i = 0; i < k; i++) {
-      largest = spasm_max(largest, Prr[i + 1] - Prr[i]);
-      ns += (Prr[i + 1] - Prr[i] > 1);
-    }
-    if (k > 1) {
-      printf("   * %d strongly connected components, %d non-singleton, largest = %.1f %%\n", k, ns, 100.0 * largest / S->n);
-      for(j = 0; j < k; j++) {
-	printf("     --> %d x %d\n", Prr[j + 1] - Prr[j], Prr[j + 1] - Prr[j]);
-      }
-
-      spasm_range_pvec(p, rr[1], rr[2], P->p);
-      spasm_range_pvec(q, cc[2], cc[3], P->q);
-    }
-
-    spasm_partition_free(P);
-    spasm_csr_free(S);
+    printf("*) S (%d x %d) : \n",  rr[2] - rr[1], cc[3] - cc[2]);
+    process_square_part(B, rr[1], rr[2], cc[2], cc[3], p, q, Bjmatch);
   }
 
   /* ------------------- V --------------------- */
   if (v) {
-    V = spasm_submatrix(B, rr[2], rr[4], cc[3], cc[4], SPASM_IGNORE_VALUES);
-    printf("*) V (%d x %d -- %d nnz) : \n",  V->n, V->m, spasm_nnz(V));
-
-    /* --- translate the maximum matching to a column-perfect matching of V */
-    Vjmatch = spasm_submatching(Bjmatch, rr[2], rr[4], cc[3], cc[4]);
-
-    P = spasm_connected_components(V, NULL, Vjmatch, NULL);
-    Vp = P->p;
-    Vq = P->q;
-    Prr = P->rr;
-    Pcc = P->cc;
-
-    if (P->nr > 1) {
-      printf("   *) %d connected components : \n", P->nr);
-      for(i = 0; i < P->nr; i++) {
-	printf("      --> %d x %d\n", Prr[i + 1] - Prr[i], Pcc[i + 1] - Pcc[i]);
-      }
-      /* in place permute p to reflect block decomposition */
-      spasm_range_pvec(p, rr[2], rr[4], Vp);
-      spasm_range_pvec(q, cc[3], cc[4], Vq);
-    }
-    spasm_csr_free(V);
-    spasm_partition_free(P);
+    process_rectangular_part(B, rr[2], rr[4], cc[3], cc[4], p, q, Bjmatch);
   }
 
   /* save result */
