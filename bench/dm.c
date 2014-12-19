@@ -2,6 +2,13 @@
 #include <stdio.h>
 #include "spasm.h"
 
+/* bad models :
+332
+175
+205
+457
+*/
+
 spasm_partition *process_square_part(const spasm * B, int rx, int ry, int cx, int cy, int *p, int *q) {
     spasm *C;
     spasm_partition *SCC;
@@ -13,7 +20,6 @@ spasm_partition *process_square_part(const spasm * B, int rx, int ry, int cx, in
 
     for (i = 0; i < k; i++) {
         l = SCC->rr[i + 1] - SCC->rr[i];
-        printf("          --> SCC of size %d x %d\n", l, l);
     }
 
     /* update permutations of B */
@@ -39,13 +45,9 @@ spasm_cc *process_rectangular_part(const spasm * B, int ra, int rb, int ca, int 
     n = M->n;
     m = M->m;
 
-    printf("*) M (%d x %d -- %d nnz) : \n", n, m, spasm_nnz(M));
-
     /* --- connected components of M */
     CC = spasm_connected_components(M, NULL, M_jmatch, NULL);
     CC_k = CC->nr;
-
-    printf("   *) %d connected components\n", CC_k);
 
     /* permute M to expose the connected components */
     CC_qinv = spasm_pinv(CC->q, m);
@@ -84,7 +86,6 @@ spasm_cc *process_rectangular_part(const spasm * B, int ra, int rb, int ca, int 
             cy = CC->cc[i + 1];
         }
 
-        printf("      --> %d x %d\n", C_n, C_m);
         result->SCC[i] = process_square_part(MM, rx, ry, cx, cy, CC->p, CC->q);
     }
 
@@ -135,9 +136,7 @@ spasm_dm *full_DM(const spasm * A) {
     spasm_csr_free(A_t);
     free(imatch);
 
-    printf("got coarse\n");
-
-    result = spasm_malloc(sizeof(spasm_dm *));
+    result = spasm_malloc(sizeof(spasm_dm));
     result->DM = DM;
     result->H = NULL;
     result->S = NULL;
@@ -146,17 +145,10 @@ spasm_dm *full_DM(const spasm * A) {
     qinv = spasm_pinv(q, m);
     B = spasm_permute(A, p, qinv, SPASM_IGNORE_VALUES);
 
-    printf("got B\n");
-
     /* optimization : this could be done in-place */
     Bjmatch = spasm_permute_row_matching(n, jmatch, p, qinv);
-    printf("got Bjmatch\n");
-
     free(qinv);
-    printf("freed qinv\n");
-
     free(jmatch);
-    printf("freed jmatch\n");
 
     /* ------------------- H --------------------- */
     if (cc[2] != cc[0]) {
@@ -178,11 +170,28 @@ spasm_dm *full_DM(const spasm * A) {
 }
 
 
+void show(spasm_cc *Y) {
+  int i, j;
+
+  for(i = 0; i < Y->CC->nr; i++) {
+    int C_n = Y->CC->rr[i + 1] - Y->CC->rr[i];
+    int C_m = Y->CC->cc[i + 1] - Y->CC->cc[i];
+    printf("   *) Connected component (%d x %d)\n", C_n, C_m);
+    if (Y->SCC[i] != NULL) {
+      for(j = 0; j < Y->SCC[i]->nr; j++) {
+	int SCC_n = Y->SCC[i]->rr[j + 1] - Y->SCC[i]->rr[j];
+	int SCC_m = Y->SCC[i]->cc[j + 1] - Y->SCC[i]->cc[j];
+	printf("       *) SCC (%d x %d)\n", SCC_n, SCC_m);
+      }
+    }
+  }
+}
+
 int main() {
     spasm_triplet *T;
     spasm *A, *B;
     spasm_dm *x;
-    int n, m, *qinv;
+    int n, m, i, j, *qinv;
 
     T = spasm_load_sms(stdin, -1);
     A = spasm_compress(T);
@@ -195,15 +204,40 @@ int main() {
 
     x = full_DM(A);
 
+    if (x->H != NULL) {
+      int h_n = x->DM->rr[1] - x->DM->rr[0];
+      int h_m = x->DM->cc[2] - x->DM->cc[0];
+      printf("*) H (%d x %d) : \n", h_n, h_m);
+      show(x->H);
+    }
+    if (x->S != NULL) {
+      int s_n = x->DM->rr[2] - x->DM->rr[1];
+      int s_m = x->DM->cc[3] - x->DM->cc[2];
+      printf("*) S (%d x %d) : \n", s_n, s_m);
+      show(x->S);
+    }
+
+    if (x->V != NULL) {
+      int v_n = x->DM->rr[4] - x->DM->rr[2];
+      int v_m = x->DM->cc[4] - x->DM->cc[3];
+      printf("*) V (%d x %d) : \n", v_n, v_m);
+      show(x->V);
+    }
+
+
     qinv = spasm_pinv(x->DM->q, m);
     B = spasm_permute(A, x->DM->p, qinv, SPASM_IGNORE_VALUES);
     free(qinv);
+
+    FILE *f = fopen("permuted.sms", "w");
+    spasm_save_csr(f, B);
+    fclose(f);
 
     /*
      * todo:recalculer le matching permut Ã ©(pour l 'affichage en couleur,
      * le matching suffit)
      */
-    FILE *f = fopen("plop.ppm", "w");
+    f = fopen("plop.ppm", "w");
     spasm_save_ppm(f, m, n, B, x->DM);
     fclose(f);
 
