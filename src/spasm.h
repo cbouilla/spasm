@@ -43,7 +43,6 @@ typedef struct  {
   int   *p;
 } spasm_lu;
 
-/* spasm_dm.c */
 typedef struct {
   int *p;    /* size m, row permutation */
   int *q;    /* size n, column permutation */
@@ -52,6 +51,17 @@ typedef struct {
   int *rr;   /* row decomposition (i-th block between rr[i] and rr[i+1]) */
   int *cc;   /* column decomposition */
 } spasm_partition;
+
+typedef struct {
+  spasm_partition *CC;
+  spasm_partition **SCC;
+} spasm_cc;
+
+
+typedef struct {
+  spasm_partition *DM;
+  spasm_cc *H, *S, *V;
+} spasm_dm;
 
 
 /* example (this is Matrix/t1)
@@ -221,3 +231,4 @@ static inline int spasm_row_weight(const spasm *A, int i) {
 
 
 #endif
+
