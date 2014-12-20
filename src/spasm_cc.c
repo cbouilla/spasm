@@ -42,7 +42,7 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
   spasm_init_vector(rmark, n, -1);
   spasm_init_vector(cmark, m, -1);
 
-  P = spasm_partition_alloc(n, m, n + 1, m);
+  P = spasm_partition_alloc(n, m, n + 1, n + 1);
   p = P->p;
   q = P->q;
   rr = P->rr;
@@ -56,6 +56,11 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
   for(root = 0; root < n; root++) {
 
     if (rmark[root] != -1) {
+      continue;
+    }
+
+    // skip row if it is empty
+    if (Ap[root] == Ap[root + 1]) {
       continue;
     }
 
@@ -105,25 +110,10 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
     n_cc++;
   }
 
-  assert(rhead == n);
-  rr[n_cc] = rhead;
+  rr[n_cc] = rhead; // not necessarily n
   cc[n_cc] = chead; // not necessarily m (cf. below)
 
-  if (chead < m) {
-    /* Not all columns have been reached and thus appear in q.  This
-       happens if a column does not contain any entry). We create an
-       extra block for those. */
-
-    for(j = 0; j < m; j++) {
-      if (cmark[j] < 0) {
-	cmark[j] = n_cc - 1;
-      }
-    }
-    n_cc++;
-
-    rr[n_cc] = n;
-    cc[n_cc] = m;
-  }
+  /* WARNING : DO **NOT** CREATE EMPTY CC */
 
   P->nr = n_cc;
   P->nc = n_cc;
@@ -140,12 +130,12 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
     ccopy[i] = cc[i];
   }
 
-  /* first pass, only unmatched rows (if jmatch != NULL, of course) */
+  /* first pass, only unmatched (non-empty) rows (if jmatch != NULL, of course) */
   for(i = 0; i < n; i++) {
-    if (jmatch != NULL && jmatch[i] != -1) {
+    k = rmark[i];
+    if (k == -1 || (jmatch != NULL && jmatch[i] != -1)) {
       continue;
     }
-    k = rmark[i];
     p[ rcopy[k] ] = i;
     rcopy[k]++;
   }
@@ -161,13 +151,23 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
       rcopy[k]++;
 
       j = jmatch[i];
-      cmark[j] = -1; // do not add this column a second time later on
+      cmark[j] = -2; // do not add this column a second time later on
       q[ ccopy[k] ] = j;
       ccopy[k]++;
     }
   }
 
-  /* now add remaining column in natural order */
+  /* add empty rows in natural order */
+  for(i = 0; i < n; i++) {
+    k = rmark[i];
+    if (k != -1) {
+      continue;
+    }
+    p[ rcopy[n_cc] ] = i;
+    rcopy[n_cc]++;
+  }
+
+  /* add remaining non-empty column in natural order */
   for(j = 0; j < m; j++) {
     k = cmark[j];
     if (k < 0) {
@@ -176,6 +176,17 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
     q[ ccopy[k] ] = j;
     ccopy[k]++;
   }
+
+  /* add remaining empty column in natural order */
+  for(j = 0; j < m; j++) {
+    k = cmark[j];
+    if (k != -1) {
+      continue;
+    }
+    q[ ccopy[n_cc] ] = j;
+    ccopy[n_cc]++;
+  }
+
 
   /* cleanup */
   free(rcopy);
