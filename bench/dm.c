@@ -48,6 +48,10 @@ static spasm_cc *process_rectangular_part(const spasm * B, int ra, int rb, int c
     n = M->n;
     m = M->m;
 
+    if (n == 0 || m == 0) {
+      return NULL;
+    }
+
     /* --- connected components of M */
     CC = spasm_connected_components(M, NULL, M_jmatch, NULL);
     CC_k = CC->nr;
