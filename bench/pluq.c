@@ -76,9 +76,10 @@ int main(int argc, char **argv) {
 
   start_time = spasm_wtime();
 
+  p = NULL;
+
   switch(sort_strategy) {
   case 0:
-    p = NULL;
     break;
   case 1:
     printf("[rank] finding cheap pivots : ");
