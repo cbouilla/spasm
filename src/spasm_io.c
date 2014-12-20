@@ -180,92 +180,124 @@ void spasm_save_pgm(FILE *f, int x, int y, const spasm *A) {
   free(w);
 }
 
-/* Saves a PPM (color pixmap) of specified dimensions of A, with an optional DM decomposition */
-void spasm_save_ppm(FILE *f, int x, int y, const spasm *A, const spasm_partition *P) {
-  int i, j, jj, n, m, t, p, u, v;
-  int *Aj, *Ap, *w, *rr, *cc;
-  double max, r, g, b, k;
+static void render_block(FILE *f, int m, int *Ap, int *Aj, spasm_partition *CC, spasm_partition **SCC, int *rr, int *cc,
+			 int ri, int rj, int ci, int cj, int *colors, int *pixel) {
+  int u, i, j, k, l, t, p, CC_n, CC_m;
 
-  int colors[16] = { 0xFF0000, 0xFF6633, 0xCC0000, 0x990000,
-		     0xFFFFFF, 0xFFFFFF, 0xFFCC00, 0xCC9900,
-		     0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0x99FF99,
-		     0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0x33CC33 };
+  t = 0;
+  k = 0; // in which CC are we ?
+  l = 0; // in which SCC are we ?
+
+  for(i = rr[ri]; i < rr[rj]; i++) {
+
+    spasm_init_vector(pixel, m, 0xFFFFFF); // white
+
+    // jump CC / SCC
+    while(i >= CC->rr[k+1]) {
+      k++;
+      l = 0;
+    }
+    while(i >= SCC[k]->rr[l + 1]) {
+      l++;
+    }
+
+    // are we in a matched row ?
+    CC_n = CC->rr[k + 1] - CC->rr[k];
+    CC_m = CC->cc[k + 1] - CC->cc[k];
+
+    if (i < CC->rr[k + 1] - CC_m) {
+      // unmatched BG
+      for(j = CC->cc[k]; j <  CC->cc[k + 1]; j++) {
+	pixel[j] = colors[0];
+      }
+    } else {
+      /* diagonal block of the SCC */
+      for(j = SCC[k]->cc[l]; j < SCC[k]->cc[l + 1]; j++) {
+	pixel[j] = colors[1];
+      }
+
+      /* stuff on the right of the diagonal block, inside the CC */
+      for(j = SCC[k]->cc[l + 1]; j < CC->cc[k + 1]; j++) {
+	pixel[j] = colors[2];
+      }
+
+      for(u = cj; u < 5; u++) {
+	// put the rest of the matrix
+	for(j = cc[u]; j < cc[u + 1]; j++) {
+	  pixel[j] = colors[3 + u - cj];
+	}
+      }
+    }
+
+    // scatters row i to black pixels
+    for(p = Ap[i]; p < Ap[i + 1]; p++) {
+      pixel[ Aj[p] ] = 0;
+    }
+
+    // dump the "pixel" array
+    for(j = 0; j < m; j++) {
+      fprintf(f, "%d %d %d ", (pixel[j] >> 16) & 0xFF, (pixel[j] >> 8) & 0xFF, pixel[j] & 0xFF);
+      t++;
+      if ((t & 7) == 0) {
+	fprintf(f, "\n");
+      }
+    }
+  }
+  fprintf(f, "\n");
+}
+
+/* Saves a PPM (color pixmap) of specified dimensions of A, with an optional DM decomposition */
+void spasm_save_ppm(FILE *f, const spasm *A, const spasm_dm *X) {
+  int i, j, k, l, jj, n, m, t, p, u, v, CC_n, CC_m;
+  int *Aj, *Ap, *rr, *cc, *pixel;
+  double max, r, g, b;
+  spasm_cc *H, *S, *V;
+  spasm_partition *CC;
+  spasm_partition **SCC;
+
+  int colors[13] = { 0,        0xFF0000, 0xFF6633, 0xCC0000, 0x990000,
+		     0xFFFF66, 0xFFCC00, 0xCC9900,
+		     0x669933, 0x99FF99, 0x33CC00};
 
   assert(f != NULL);
   assert(A != NULL);
+  assert(X != NULL);
 
   Aj = A->j;
   Ap = A->p;
   n  = A->n;
   m  = A->m;
 
-  x = spasm_min(x, m);
-  y = spasm_min(y, n);
+  pixel = spasm_malloc(m * sizeof(int));
 
-  w = spasm_malloc(x * sizeof(int));
-  for(j = 0; j < x; j++) {
-    w[j] = 0;
-  }
-
-  if (P != NULL) {
-    rr = (int *) P->rr;
-    cc = (int *) P->cc;
-  }
+  rr = X->DM->rr;
+  cc = X->DM->cc;
 
   fprintf(f, "P3\n");
-  fprintf(f, "%d %d\n", x, y);
+  fprintf(f, "%d %d\n", m, n);
   fprintf(f, "255\n");
 
-  max = (1.0 * m / x) * (1.0 * n / y);
+  H = X->H;
+  S = X->S;
+  V = X->V;
+
   t = 0;
-  i = 0;
-  while(i < n) {
-    for(k = 0; k < spasm_max(1, n / y) && i < n; k++) {
 
-      // scatters row i to x
-      for(p = Ap[i]; p < Ap[i + 1]; p++) {
-	w[ (Aj[p] * x) / m ]++;
-      }
-      i++;
-    }
-
-    // print row
-    for(j = 0; j < x; j++) {
-      u = 0;
-      v = 0;
-      jj = j * m / x;
-      for(t = 0; t < 4; t++) {
-	if (P != NULL && (i > rr[t])) {
-	  u = t;
-	}
-	if (P != NULL && (jj >= cc[t])) {
-	  v = t;
-	}
-      }
-
-      r = (colors[4 * u + v] >> 16) & 0xff;
-      g = (colors[4 * u + v] >> 8)  & 0xff;
-      b =  colors[4 * u + v]        & 0xff;
-
-      k = 1.0 - w[j] / max;
-      if (k < 0.0 || k > 1.0 ) {
-	printf("ça craint : %f (%d vs %f)\n", k, w[j], max);
-	exit(1);
-      }
-
-      fprintf(f, "%.0f %.0f %.0f ", r * k, g * k, b * k);
-      t++;
-      if ((t & 7) == 0) {
-	fprintf(f, "\n");
-      }
-    }
-
-    // reset x
-    for(j = 0; j < x; j++) {
-      w[j] = 0;
-    }
+  /* --- H ---- */
+  if (H != NULL) {
+    render_block(f, m, Ap, Aj, H->CC, H->SCC, rr, cc, 0, 1, 0, 2, colors, pixel);
   }
 
+  /* --- S ---- */
+  if (S != NULL) {
+    render_block(f, m, Ap, Aj, S->CC, S->SCC, rr, cc, 1, 2, 2, 3, colors + 4, pixel);
+  }
+
+  /* --- V ---- */
+  if (V != NULL) {
+      render_block(f, m, Ap, Aj, V->CC, V->SCC, rr, cc, 2, 4, 3, 4, colors + 8, pixel);
+}
+
   fprintf(f, "\n");
-  free(w);
+  free(pixel);
 }

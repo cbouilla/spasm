@@ -9,28 +9,31 @@
 457
 */
 
-spasm_partition *process_square_part(const spasm * B, int rx, int ry, int cx, int cy, int *p, int *q) {
+static spasm_partition *process_square_part(const spasm * B, int rx, int ry, int cx, int cy, int *p, int *q, int ra, int ca) {
     spasm *C;
     spasm_partition *SCC;
-    int i, k, l;
+    int i, k;
 
+    assert( ry - rx == cy - cx );
     C = spasm_submatrix(B, rx, ry, cx, cy, SPASM_IGNORE_VALUES);
     SCC = spasm_strongly_connected_components(C);
+    spasm_csr_free(C);
     k = SCC->nr;
-
-    for (i = 0; i < k; i++) {
-        l = SCC->rr[i + 1] - SCC->rr[i];
-    }
 
     /* update permutations of B */
     spasm_range_pvec(p, rx, ry, SCC->p);
     spasm_range_pvec(q, cx, cy, SCC->q);
 
-    spasm_csr_free(C);
+    /* shift SCC */
+    for (i = 0; i <= k; i++) {
+      SCC->rr[i] += rx + ra;
+      SCC->cc[i] += cx + ca;
+    }
+
     return SCC;
 }
 
-spasm_cc *process_rectangular_part(const spasm * B, int ra, int rb, int ca, int cb, int *p, int *q, const int *jmatch) {
+static spasm_cc *process_rectangular_part(const spasm * B, int ra, int rb, int ca, int cb, int *p, int *q, const int *jmatch) {
     spasm *M, *MM;
     int n, m, CC_k, i, k, rx, ry, cx, cy, C_n, C_m;
     int *M_jmatch, *MM_jmatch;
@@ -86,12 +89,18 @@ spasm_cc *process_rectangular_part(const spasm * B, int ra, int rb, int ca, int 
             cy = CC->cc[i + 1];
         }
 
-        result->SCC[i] = process_square_part(MM, rx, ry, cx, cy, CC->p, CC->q);
+        result->SCC[i] = process_square_part(MM, rx, ry, cx, cy, CC->p, CC->q, ra, ca);
     }
 
     /* update permutations of B */
     spasm_range_pvec(p, ra, rb, CC->p);
     spasm_range_pvec(q, ca, cb, CC->q);
+
+    /* translate CC */
+    for (i = 0; i <= CC_k; i++) {
+      CC->rr[i] += ra;
+      CC->cc[i] += ca;
+    }
 
     /* cleanup */
     free(M_jmatch);
@@ -176,12 +185,14 @@ void show(spasm_cc *Y) {
   for(i = 0; i < Y->CC->nr; i++) {
     int C_n = Y->CC->rr[i + 1] - Y->CC->rr[i];
     int C_m = Y->CC->cc[i + 1] - Y->CC->cc[i];
-    printf("   *) Connected component (%d x %d)\n", C_n, C_m);
+    printf("   *) Connected component (%d x %d) --- (%d, %d) to (%d, %d)\n", C_n, C_m,
+	   Y->CC->rr[i], Y->CC->cc[i], Y->CC->rr[i + 1], Y->CC->cc[i + 1]);
     if (Y->SCC[i] != NULL) {
       for(j = 0; j < Y->SCC[i]->nr; j++) {
 	int SCC_n = Y->SCC[i]->rr[j + 1] - Y->SCC[i]->rr[j];
 	int SCC_m = Y->SCC[i]->cc[j + 1] - Y->SCC[i]->cc[j];
-	printf("       *) SCC (%d x %d)\n", SCC_n, SCC_m);
+	printf("       *) SCC (%d x %d) --- (%d, %d) to (%d, %d)\n", SCC_n, SCC_m,
+	       Y->SCC[i]->rr[j], Y->SCC[i]->cc[j], Y->SCC[i]->rr[j + 1], Y->SCC[i]->cc[j + 1]);
       }
     }
   }
@@ -238,7 +249,7 @@ int main() {
      * le matching suffit)
      */
     f = fopen("plop.ppm", "w");
-    spasm_save_ppm(f, m, n, B, x->DM);
+    spasm_save_ppm(f, B, x);
     fclose(f);
 
     spasm_csr_free(B);

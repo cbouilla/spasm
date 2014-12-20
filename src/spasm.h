@@ -134,7 +134,7 @@ void spasm_save_triplet(FILE *f, const spasm_triplet *A);
 void spasm_save_csr(FILE *f, const spasm *A);
 void spasm_save_pbm(FILE *f, const spasm *A);
 void spasm_save_pgm(FILE *f, int x, int y, const spasm *A);
-void spasm_save_ppm(FILE *f, int x, int y, const spasm *A, const spasm_partition *P);
+void spasm_save_ppm(FILE *f, const spasm *A, const spasm_dm *X);
 
 /* spasm_transpose.c */
 spasm *spasm_transpose(const spasm *C, int keep_values);
