@@ -221,7 +221,7 @@ static void render_block(FILE *f, int m, int *Ap, int *Aj, spasm_partition *CC, 
 	pixel[j] = colors[2];
       }
 
-      for(u = cj; u < 5; u++) {
+      for(u = cj; u < 4; u++) {
 	// put the rest of the matrix
 	for(j = cc[u]; j < cc[u + 1]; j++) {
 	  pixel[j] = colors[3 + u - cj];
