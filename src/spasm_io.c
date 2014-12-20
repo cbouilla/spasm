@@ -182,22 +182,23 @@ void spasm_save_pgm(FILE *f, int x, int y, const spasm *A) {
 
 static void render_block(FILE *f, int m, int *Ap, int *Aj, spasm_partition *CC, spasm_partition **SCC, int *rr, int *cc,
 			 int ri, int rj, int ci, int cj, int *colors, int *pixel) {
-  int u, i, j, k, l, t, p, CC_n, CC_m;
+  int u, i, j, k, l, t, p, CC_n, CC_m, last_CC_row;
 
   t = 0;
   k = 0; // in which CC are we ?
   l = 0; // in which SCC are we ?
+  last_CC_row = CC->rr[ CC->nr ];
 
   for(i = rr[ri]; i < rr[rj]; i++) {
 
     spasm_init_vector(pixel, m, 0xFFFFFF); // white
 
     // jump CC / SCC
-    while(i >= CC->rr[k+1]) {
+    while(i < last_CC_row && i >= CC->rr[k+1]) {
       k++;
       l = 0;
     }
-    while(i >= SCC[k]->rr[l + 1]) {
+    while(i < last_CC_row && i >= SCC[k]->rr[l + 1]) {
       l++;
     }
 
@@ -296,7 +297,21 @@ void spasm_save_ppm(FILE *f, const spasm *A, const spasm_dm *X) {
   /* --- V ---- */
   if (V != NULL) {
       render_block(f, m, Ap, Aj, V->CC, V->SCC, rr, cc, 2, 4, 3, 4, colors + 8, pixel);
-}
+  } else {
+    /* if V is empty, we need to print the empty rows */
+    t = 0;
+    for(i = rr[2]; i < rr[4]; i++) {
+      for(j = 0; j < m; j++) {
+	fprintf(f, "255 255 255 ");
+	t++;
+	if ((t & 7) == 0) {
+	  fprintf(f, "\n");
+	}
+      }
+    }
+    fprintf(f, "\n");
+  }
+
 
   fprintf(f, "\n");
   free(pixel);

@@ -248,10 +248,6 @@ int main() {
     spasm_save_csr(f, B);
     fclose(f);
 
-    /*
-     * todo:recalculer le matching permut Ã ©(pour l 'affichage en couleur,
-     * le matching suffit)
-     */
     f = fopen("plop.ppm", "w");
     spasm_save_ppm(f, B, x);
     fclose(f);
