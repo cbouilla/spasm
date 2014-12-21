@@ -6,28 +6,21 @@
 
    if jmatch == NULL, columns are sorted in natural order.
 
-   if jmatch != NULL, all rows must be matched. matched columns come
+   if jmatch != NULL, unmatched rows come first. Matched columns come
    first (in the order given by the matching), unmatched columns come
    next (in natural order).
 
-   if imatch == NULL, rows are sorted in natural order.
-
-   if imatch != NULL, all columns must be matched. matched rows come
-   first (in the order given by the matching), unmatched rows come
-   next (in natural order).
-
-   both jmatch != NULL and imatch != NULL makes no sense.
+   Empty rows / columns are last (in natural order)
 
    If the transpose of A is not given, it will be computed.
 */
-spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA_t, const int *jmatch, const int *imatch) {
+spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA_t, const int *jmatch) {
   int n, m, i, j, k, root, n_cc, rhead, rtail, chead, ctail, px;
   int *Ap, *Aj, *A_tp, *A_tj, *rmark, *cmark, *p, *q, *rr, *cc, *rcopy, *ccopy;
   spasm *A_t;
   spasm_partition *P;
 
   assert(A != NULL);
-  assert(jmatch == NULL || imatch == NULL);
 
   n = A->n;
   m = A->m;

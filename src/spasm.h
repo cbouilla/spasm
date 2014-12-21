@@ -158,7 +158,6 @@ spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime);
 
 /* spasm_reach.c */
-
 int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
 int spasm_reach(const spasm * G, const spasm * B, int k, int *xi, const int *pinv);
 
@@ -194,10 +193,10 @@ int * spasm_submatching(const int *match, int a, int b, int c, int d);
 int spasm_structural_rank(const spasm *A);
 
 /* spasm_dm.c */
-spasm_partition * spasm_dulmage_mendelson(const spasm *A, const spasm *A_t, const int *jmatch, const int *imatch);
+spasm_dm * spasm_dulmage_mendelsohn(const spasm *A);
 
 /* spasm_cc.c */
-spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA_t, const int *jmatch, const int *imatch);
+spasm_partition * spasm_connected_components(const spasm *A, const spasm *A_t, const int *jmatch);
 
 /* spasm_scc.c */
 spasm_partition * spasm_strongly_connected_components(const spasm *A);
