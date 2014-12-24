@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     break;
   }
 
-  PLUQ = spasm_PLUQ(A, p);
+  PLUQ = spasm_PLUQ(A, p, keep_L);
   end_time = spasm_wtime();
   printf("\n");
 
@@ -121,10 +121,6 @@ int main(int argc, char **argv) {
 #endif
   printf("----------------------------------------\n");
   printf("rank of A = %d\n", U->n);
-
-
-  /* permute the columns of U in place.
-     U becomes really upper-trapezoidal. */
 
   FILE *f = fopen("U.sms", "w");
   spasm_save_csr(f, U);

@@ -11,14 +11,14 @@ uint64_t data_shuffling = 0;
  *  a) L is ***really*** lower-(triangular/trapezoidal)
  *  b) PLUQ = row_permutation*A
  */
-spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation) {
+spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation, int keep_L) {
   int m, i, j, r, px, k;
   int *Up, *Uj, *qinv;
   spasm *U, *L, *LL;
   spasm_lu *N;
 
   m = A->m;
-  N = spasm_LU(A, row_permutation, 1);
+  N = spasm_LU(A, row_permutation, keep_L);
   L = N->L;
   U = N->U;
   r = U->n;
@@ -42,12 +42,14 @@ spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation) {
     }
   }
 
-  /* permute the rows of L (not in place).
-     L becomes really lower-trapezoidal. */
-  LL = spasm_permute(L, N->p, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
-  N->L = LL;
-  spasm_csr_free(L);
-
+  if (keep_L) {
+    /* permute the rows of L (not in place).
+       L becomes really lower-trapezoidal. */
+    LL = spasm_permute(L, N->p, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
+    N->L = LL;
+    spasm_csr_free(L);
+  }
+  
   return N;
 }
 

@@ -17,8 +17,8 @@ int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
     assert(A != NULL);
     assert(b != NULL);
 
-    row_permutation = spasm_row_sort(A);
-    PLUQ = spasm_PLUQ(A, row_permutation);
+    row_permutation = spasm_cheap_pivots(A);
+    PLUQ = spasm_PLUQ(A, row_permutation, SPASM_KEEP_L);
     L = PLUQ->L;
     U = PLUQ->U;
 

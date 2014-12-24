@@ -6,7 +6,7 @@ dense_usolve
 dense_lsolve
 gaxpy
 reach
-sparse_solve
+sparse_[lu]solve
 lu
 pluq
 permuted_lu
@@ -19,3 +19,4 @@ dm
 submatrix
 scc
 cc
+Output/*

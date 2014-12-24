@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
   n = A->n;
   m = A->m;
 
-  PLUQ = spasm_PLUQ(A, SPASM_IDENTITY_PERMUTATION);
+  PLUQ = spasm_PLUQ(A, SPASM_IDENTITY_PERMUTATION, SPASM_KEEP_L);
   U = PLUQ->U;
   L = PLUQ->L;
   r = U->n;

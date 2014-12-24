@@ -175,7 +175,7 @@ int spasm_sparse_backward_solve(const spasm * L, const spasm *B, int k, int *xi,
 int spasm_sparse_forward_solve(const spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
 
 /* spasm_lu.c */
-spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation);
+spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L);
 spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L);
 void spasm_free_LU(spasm_lu *X);
 

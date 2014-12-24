@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
   m = A->m;
 
   row_permutation = spasm_row_sort(A);
-  PLUQ = spasm_PLUQ(A, row_permutation);
+  PLUQ = spasm_PLUQ(A, row_permutation, SPASM_KEEP_L);
   U = PLUQ->U;
   L = PLUQ->L;
   r = U->n;
