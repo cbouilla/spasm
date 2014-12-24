@@ -121,7 +121,8 @@ spasm_partition * spasm_partition_alloc(int n, int m, int nr, int nc);
 void spasm_partition_free(spasm_partition *P);
 void spasm_partition_tighten(spasm_partition *P);
 
-void spasm_init_vector(int *x, int n, spasm_GFp alpha);
+void spasm_vector_zero(spasm_GFp *x, int n);
+void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x);

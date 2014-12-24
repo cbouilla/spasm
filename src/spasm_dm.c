@@ -205,7 +205,7 @@ static spasm_partition *process_square_part(const spasm * B, int rx, int ry, int
 static spasm_cc *process_rectangular_part(const spasm * B, int ra, int rb, int ca, int cb, int *p, int *q, const int *jmatch) {
     spasm *M, *MM;
     int n, m, CC_k, i, k, rx, ry, cx, cy, C_n, C_m;
-    int *M_jmatch, *MM_jmatch;
+    int *M_jmatch;
     int *CC_qinv;
     spasm_partition *CC;
     spasm_cc *result;

@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *U, *L;
   spasm_lu *PLUQ;
-  int r, n, m, *p, ch, prime, allow_transpose, sort_strategy, keep_L, i, px, *qinv, *Up, *Uj;
+  int r, n, m, *p, ch, prime, allow_transpose, sort_strategy, keep_L;
   double start_time, end_time;
 
   prime = 42013;

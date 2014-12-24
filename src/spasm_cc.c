@@ -32,8 +32,8 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
 
   rmark = spasm_malloc(n * sizeof(int));
   cmark = spasm_malloc(m * sizeof(int));
-  spasm_init_vector(rmark, n, -1);
-  spasm_init_vector(cmark, m, -1);
+  spasm_vector_set(rmark, 0, n, -1);
+  spasm_vector_set(cmark, 0, m, -1);
 
   P = spasm_partition_alloc(n, m, n + 1, n + 1);
   p = P->p;

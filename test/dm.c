@@ -4,12 +4,11 @@
 
 int main(int argc, char **argv) {
   spasm_triplet *T;
-  spasm *A, *B, *C, *B_t;
+  spasm *A, *B, *C;
   spasm_dm *X;
   spasm_partition *DM;
   int n, m, test, i, j, px;
-  int *rr, *cc, *p, *q, *x, *y, *Cp, *Cj, *pinv, *qinv, *imatch, *jmatch,
-    *Cjmatch, *Cimatch, *Hjmatch, *Sjmatch, *Simatch, *Vimatch;
+  int *rr, *cc, *p, *q, *x, *y, *Cp, *Cj, *pinv, *qinv;
 
   assert(argc > 1);
   test = atoi(argv[1]);
@@ -30,17 +29,6 @@ int main(int argc, char **argv) {
   free(q);
   spasm_csr_free(A);
 
-  B_t = spasm_transpose(B, SPASM_IGNORE_VALUES);
-  jmatch = spasm_malloc(n * sizeof(int));
-  imatch = spasm_malloc(m * sizeof(int));
-
-   /* --- Maximum matching ------------------------------------------------- */
-   if (n < m) {
-     spasm_maximum_matching(B, jmatch, imatch);
-   } else {
-     spasm_maximum_matching(B_t, imatch, jmatch);
-   }
-
   // compute DM decomposition of permuted M.
    X = spasm_dulmage_mendelsohn(B);
    DM = X->DM;
@@ -53,7 +41,7 @@ int main(int argc, char **argv) {
   x = spasm_malloc(n * sizeof(int));
   y = spasm_malloc(m * sizeof(int));
 
-  spasm_init_vector(x, n, 0);
+  spasm_vector_zero(x, n);
   for(i = 0; i < n; i++) {
     x[ p[i] ]++;
   }
@@ -64,7 +52,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  spasm_init_vector(y, m, 0);
+  spasm_vector_zero(y, m);
   for(i = 0; i < m; i++) {
     y[ q[i] ]++;
   }
@@ -127,102 +115,10 @@ int main(int argc, char **argv) {
     }
   }
 
-  /* --- permute the matching and check the result ------------------------- */
-  Cjmatch = spasm_permute_row_matching(n, jmatch, p, qinv);
-  Cimatch = spasm_permute_column_matching(m, imatch, pinv, q);
-
-  // check that it is still bijective
-  spasm_init_vector(y, m, 0);
-  for(i = 0; i < n; i++) {
-    if (Cjmatch[i] != -1) {
-      y[ Cjmatch[i] ]++;
-    }
-  }
-  for(j = 0; j < m; j++) {
-    if (y[j] > 1) {
-      printf("not ok %d - DM - permuted row matching no longer bijective\n", test);
-      exit(0);
-    }
-  }
-
-  spasm_init_vector(x, n, 0);
-  for(j = 0; j < m; j++) {
-    if (Cimatch[j] != -1) {
-      x[ Cimatch[j] ]++;
-    }
-  }
-  for(i = 0; i < n; i++) {
-    if (x[i] > 1) {
-      printf("not ok %d - DM - permuted column matching no longer bijective\n", test);
-      exit(0);
-    }
-  }
-
-  // check that the matching is correct (i.e. the right entries exist in the matrix)
-  for(i = 0; i < n; i++) {
-    // skip unmatched rows
-    if (Cjmatch[i] == -1) {
-      continue;
-    }
-
-    j = 0;
-    for(px = Cp[i]; px < Cp[i + 1]; px++) {
-      if (Cj[px] == Cjmatch[i]) {
-	j = 1;
-	break;
-      }
-    }
-    if (j == 0) {
-      printf("not ok %d - DM - permuted matching does not follow C\n", test);
-      exit(0);
-    }
-  }
-
-  // check that matching restricted to H is row-perfect.
-  Hjmatch = spasm_submatching(Cjmatch, rr[0], rr[1], cc[0], cc[2]);
-  for(i = rr[0]; i < rr[1]; i++) {
-    if (Hjmatch[ i - rr[0] ] == -1) {
-      printf("not ok %d - DM - permuted row matching no longer row-perfect on H\n", test);
-      exit(0);
-    }
-  }
-  free(Hjmatch);
-
-
-  // check that matching restricted to S is perfect (both row-perfect and column-perfect).
-  Sjmatch = spasm_submatching(Cjmatch, rr[1], rr[2], cc[2], cc[3]);
-  Simatch = spasm_submatching(Cimatch, cc[2], cc[3], rr[1], rr[2]);
-  for(i = rr[1]; i < rr[2]; i++) {
-    if (Sjmatch[ i - rr[1] ] == -1) {
-      printf("not ok %d - DM - permuted row matching no longer row-perfect on S\n", test);
-      exit(0);
-    }
-  }
-
-  for(j = cc[2]; j < cc[3]; j++) {
-    if (Simatch[ j - cc[2] ] == -1) {
-      printf("not ok %d - DM - permuted column matching no longer column-perfect on S\n", test);
-      exit(0);
-    }
-  }
-  free(Sjmatch);
-  free(Simatch);
-
-  // check that matching restricted to V is column-perfect.
-  Vimatch = spasm_submatching(Cimatch, cc[3], cc[4], rr[2], rr[4]);
-  for(j = cc[3]; j < cc[4]; j++) {
-    if (Vimatch[ j - cc[3] ] == -1) {
-      printf("not ok %d - DM - permuted column matching no longer column-perfect on V\n", test);
-      exit(0);
-    }
-  }
-  free(Vimatch);
 
 
   printf("ok %d - DM(A)\n", test);
 
-  free(Cjmatch);
-  free(Cimatch);
   free(x);
   free(y);
   free(qinv);

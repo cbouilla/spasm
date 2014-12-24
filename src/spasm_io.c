@@ -187,11 +187,12 @@ static void render_block(FILE *f, int m, int *Ap, int *Aj, spasm_partition *CC, 
   t = 0;
   k = 0; // in which CC are we ?
   l = 0; // in which SCC are we ?
+  assert(ci < cj);
   last_CC_row = CC->rr[ CC->nr ];
 
   for(i = rr[ri]; i < rr[rj]; i++) {
 
-    spasm_init_vector(pixel, m, 0xFFFFFF); // white
+    spasm_vector_set(pixel, 0, m, 0xFFFFFF); // white
 
     // jump CC / SCC
     while(i < last_CC_row && i >= CC->rr[k+1]) {
@@ -249,12 +250,9 @@ static void render_block(FILE *f, int m, int *Ap, int *Aj, spasm_partition *CC, 
 
 /* Saves a PPM (color pixmap) of specified dimensions of A, with an optional DM decomposition */
 void spasm_save_ppm(FILE *f, const spasm *A, const spasm_dm *X) {
-  int i, j, k, l, jj, n, m, t, p, u, v, CC_n, CC_m;
+  int i, j, n, m, t;
   int *Aj, *Ap, *rr, *cc, *pixel;
-  double max, r, g, b;
   spasm_cc *H, *S, *V;
-  spasm_partition *CC;
-  spasm_partition **SCC;
 
   int colors[13] = { 0,        0xFF0000, 0xFF6633, 0xCC0000, 0x990000,
 		     0xFFFF66, 0xFFCC00, 0xCC9900,

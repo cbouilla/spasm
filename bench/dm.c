@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     spasm_triplet *T;
     spasm *A, *B;
     spasm_dm *x;
-    int n, m, i, j, *qinv, verbose, ch;
+    int n, m, i, *qinv, verbose, ch;
     char *pm_file, *img_file;
     FILE *f;
     
