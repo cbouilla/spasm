@@ -183,8 +183,7 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, cons
  * top is the return value.
  *
  */
-
-int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
+int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
   int i, I, p, px, top, m, prime, *Up, *Uj, *Bp, *Bj;
   spasm_GFp *Ux, *Bx;
 
@@ -252,6 +251,96 @@ int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_
       x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
 
       spasm_scatter(Uj, Ux, Up[I] + 1, Up[I + 1], prime - x[i], x, prime);
+    }
+
+#ifdef SPASM_TIMING
+    scatter += spasm_ticks() - start;
+#endif
+
+    return top;
+}
+
+
+/*************** Triangular solving with sparse RHS
+ *
+ * solve x * L = B[k], where L is (permuted) lower triangular.
+ *
+ * x has size m (number of columns of L).
+ *
+ * when this function returns, the solution scattered in x, and its pattern
+ * is given in xi[top : n].
+ *
+ * top is the return value.
+ *
+ */
+int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
+  int i, I, p, px, top, m, prime, *Lp, *Lj, *Bp, *Bj;
+  spasm_GFp *Lx, *Bx;
+
+#ifdef SPASM_TIMING
+    uint64_t start;
+#endif
+
+    assert(L != NULL);
+    assert(B != NULL);
+    assert(xi != NULL);
+    assert(x != NULL);
+
+    m = L->m;
+    Lp = L->p;
+    Lj = L->j;
+    Lx = L->x;
+    prime = L->prime;
+
+    Bp = B->p;
+    Bj = B->j;
+    Bx = B->x;
+
+#ifdef SPASM_TIMING
+    start = spasm_ticks();
+#endif
+
+    /* xi[top : m] = Reach( L, B[k] ) */
+    top = spasm_reach(L, B, k, xi, pinv);
+
+#ifdef SPASM_TIMING
+    reach += spasm_ticks() - start;
+#endif
+
+    /* clear x */
+    for (p = top; p < m; p++) {
+      x[ xi[p] ] = 0;
+    }
+
+    /* scatter B[k] into x */
+    for (p = Bp[k]; p < Bp[k + 1]; p++) {
+        x[ Bj[p] ] = Bx[p];
+    }
+
+    /* iterate over the (precomputed) pattern of x (= the solution) */
+#ifdef SPASM_TIMING
+    start = spasm_ticks();
+#endif
+
+    for (px = top; px < m; px++) {
+      /* x[i] is nonzero */
+      i = xi[px];
+
+      /* i maps to row I of L */
+      I = (pinv != NULL) ? (pinv[i]) : i;
+
+      if (I < 0) {
+	/* row I is empty */
+            continue;
+      }
+
+      /* get L[i,i] */
+      const spasm_GFp diagonal_entry = Lx[ Lp[I + 1] - 1];
+      assert( diagonal_entry != 0 );
+      // axpy-in-place
+      x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+
+      spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1] - 1, prime - x[i], x, prime);
     }
 
 #ifdef SPASM_TIMING

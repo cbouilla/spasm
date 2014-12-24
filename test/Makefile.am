@@ -7,9 +7,9 @@ TESTS = test_io.sh GFp vec_perm test_perm.sh test_gaxpy.sh test_reach.sh \
 	test_submatrix.sh test_cc.sh test_scc.sh
 
 check_PROGRAMS = io GFp gaxpy reach dense_usolve dense_lsolve \
-	         sparse_solve lu permuted_lu vec_perm mat_perm \
+	         sparse_usolve sparse_lsolve lu permuted_lu  \
 	         pluq permuted_pluq lu_solve pluq_solve sort \
-                 transpose dm submatrix cc scc
+                 vec_perm mat_perm transpose dm submatrix cc scc
 
 AM_TESTS_ENVIRONMENT = \
 	env AM_TAP_AWK='$(AWK)'

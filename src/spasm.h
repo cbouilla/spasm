@@ -171,7 +171,8 @@ int spasm_is_lower_triangular(const spasm *A);
 
 void spasm_dense_back_solve(const spasm * L, spasm_GFp *b, spasm_GFp * x, const int *p);
 int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, const int *q);
-int spasm_sparse_forward_solve(spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
+int spasm_sparse_backward_solve(const spasm * L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
+int spasm_sparse_forward_solve(const spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
 
 /* spasm_lu.c */
 spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation);

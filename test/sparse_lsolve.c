@@ -5,8 +5,8 @@
 
 int main(int argc, char **argv) {
   spasm_triplet *T;
-  spasm *U, *B;
-  int i, n, m, test, top, *xi, *pinv;
+  spasm *L, *B;
+  int i, n, m, test, top, *xi;
   spasm_GFp *x, *y;
 
   assert(argc == 2);
@@ -14,57 +14,43 @@ int main(int argc, char **argv) {
 
   // load matrix
   T = spasm_load_sms(stdin, 32003);
-  U = spasm_compress(T);
+  L = spasm_compress(T);
   spasm_triplet_free(T);
-  n = U->n;
-  m = U->m;
+  n = L->n;
+  m = L->m;
 
-  assert( n<= m); // upper-trapezoidal
+  assert( n >= m ); // lower-trapezoidal
 
   // load RHS
   T = spasm_triplet_alloc(1, m, 10, 32003, true);
   spasm_add_entry(T, 0, 0, 1);
   spasm_add_entry(T, 2, 0, 2);
   spasm_add_entry(T, 4, 0, 3);
-  spasm_add_entry(T, (n+m)/2, 0, 3);
+  spasm_add_entry(T, 3*m / 4, 0, 3);
   B = spasm_compress(T);
   spasm_triplet_free(T);
 
   xi = malloc(3*m * sizeof(int));
-  x = malloc(m * sizeof(spasm_GFp));
+  x = malloc(n * sizeof(spasm_GFp));
   y = malloc(m * sizeof(spasm_GFp));
-  spasm_vector_zero(x, m);
+  spasm_vector_zero(x, n);
   spasm_vector_zero(y, m);
 
-  pinv = NULL;
-  if (n < m) { /* upper-trapezoidal */
-    pinv = malloc(m * sizeof(int));
-    for(i = 0; i < n; i++) {
-      pinv[i] = i;
-    }
-    for(i = n; i < m; i++) {
-      pinv[i] = -1;
-    }
-  }
+  top = spasm_sparse_backward_solve(L, B, 0, xi, x, SPASM_IDENTITY_PERMUTATION);
 
-  top = spasm_sparse_forward_solve(U, B, 0, xi, x, pinv);
-
-  spasm_gaxpy(U, x, y);
-  for(i = n; i < m; i++) {
-    y[i] = (y[i] + x[i]) % B->prime;
-  }
+  spasm_gaxpy(L, x, y);
   spasm_scatter(B->j, B->x, B->p[0], B->p[1], B->prime - 1, y, B->prime);
 
   for(i = 0; i < m; i++) {
     if (y[i] != 0) {
-      printf("not ok %d - sparse triangular U-solve\n", test);
+      printf("not ok %d - sparse triangular L-solve\n", test);
       exit(0);
     }
   }
 
-  printf("ok %d - sparse triangular U-solve\n", test);
+  printf("ok %d - sparse triangular L-solve\n", test);
 
-  spasm_csr_free(U);
+  spasm_csr_free(L);
   spasm_csr_free(B);
   free(xi);
   free(x);
