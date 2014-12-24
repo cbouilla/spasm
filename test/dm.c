@@ -5,6 +5,7 @@
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *B, *C, *B_t;
+  spasm_dm *X;
   spasm_partition *DM;
   int n, m, test, i, j, px;
   int *rr, *cc, *p, *q, *x, *y, *Cp, *Cj, *pinv, *qinv, *imatch, *jmatch,
@@ -41,7 +42,8 @@ int main(int argc, char **argv) {
    }
 
   // compute DM decomposition of permuted M.
-   DM = spasm_dulmage_mendelson(B, B_t, jmatch, imatch);
+   X = spasm_dulmage_mendelsohn(B);
+   DM = X->DM;
    rr = DM->rr;
    cc = DM->cc;
    p = DM->p;
