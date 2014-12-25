@@ -22,7 +22,35 @@ int main(int argc, char **argv) {
   B = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
   C = spasm_transpose(B, SPASM_WITH_NUMERICAL_VALUES);
 
-  // check that A == C
+  if (spasm_is_lower_triangular(A)) {
+    printf("# A is lower-triangular.\n");
+    printf("Check that A.T is upper-triangular\n");
+    if (!spasm_is_upper_triangular(B)) {
+      printf("not ok %d - A.T not upper-triangular \n", test);
+      exit(0);
+    }
+    printf("Check that A.T.T is lower-triangular\n");
+    if (!spasm_is_lower_triangular(C)) {
+      printf("not ok %d - A.T.T not lower-triangular \n", test);
+      exit(0);
+    }
+  }
+
+  if (spasm_is_upper_triangular(A)) {
+    printf("# A is upper-triangular.\n");
+    printf("Check that A.T is lower-triangular\n");
+    if (!spasm_is_lower_triangular(B)) {
+      printf("not ok %d - A.T not lower-triangular \n", test);
+      exit(0);
+    }
+    printf("Check that A.T.T is upper-triangular\n");
+    if (!spasm_is_upper_triangular(C)) {
+      printf("not ok %d - A.T.T not upper-triangular \n", test);
+      exit(0);
+    }
+  }
+
+  printf("# check that A.T.T == A\n");
   x = spasm_malloc(n * sizeof(spasm_GFp));
   y = spasm_malloc(m * sizeof(spasm_GFp));
   z = spasm_malloc(m * sizeof(spasm_GFp));
@@ -47,7 +75,7 @@ int main(int argc, char **argv) {
       }
     }
   }
-  printf("ok %d - (A.T).T == A \n", test);
+  printf("ok %d - transpose \n", test);
 
   free(x);
   free(y);
