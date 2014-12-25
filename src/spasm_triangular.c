@@ -9,7 +9,7 @@ uint64_t reach = 0, scatter = 0;
 
 
 int spasm_is_upper_triangular(const spasm *A) {
-  int i, n, m, *Aj, *Ap;
+  int i, p, n, m, *Aj, *Ap;
   spasm_GFp *Ax;
 
   n = A->n;
@@ -22,11 +22,19 @@ int spasm_is_upper_triangular(const spasm *A) {
   Aj = A->j;
   Ax = A->x;
   for(i = 0; i < n; i++) {
+    /* check diagonal */
     if ( Aj[ Ap[i] ] != i ) {
       return 0;
     }
     if ( Ax[ Ap[i] ] == 0 ) {
       return 0;
+    }
+
+    /* check other entries */
+    for (p = Ap[i] + 1; p < Ap[i + 1]; p++) {
+      if ( Aj[p] < i ) {
+	return 0;
+      }
     }
   }
   return 1;
@@ -34,7 +42,7 @@ int spasm_is_upper_triangular(const spasm *A) {
 
 
 int spasm_is_lower_triangular(const spasm *A) {
-  int i, n, m, *Aj, *Ap;
+  int i, n, m, p, *Aj, *Ap;
   spasm_GFp *Ax;
 
   n = A->n;
@@ -47,11 +55,20 @@ int spasm_is_lower_triangular(const spasm *A) {
   Aj = A->j;
   Ax = A->x;
   for(i = 0; i < m; i++) {
+
+    /* check diagonal */
     if (Aj[ Ap[i + 1] - 1 ] != i ) {
       return 0;
     }
-    if ( Ax[ Ap[i + 1] - 1 ] != 1 ) {
+    if ( Ax[ Ap[i + 1] - 1 ] == 0 ) {
       return 0;
+    }
+
+    /* check other entries */
+    for (p = Ap[i]; p < Ap[i + 1] - 1; p++) {
+      if ( Aj[p] > i ) {
+	return 0;
+      }
     }
   }
   return 1;
@@ -313,7 +330,7 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
     }
 
     /* scatter B[k] into x */
-    for (p = Bp[k]; p < Bp[k + 1]; p++) {
+   for (p = Bp[k]; p < Bp[k + 1]; p++) {
         x[ Bj[p] ] = Bx[p];
     }
 
