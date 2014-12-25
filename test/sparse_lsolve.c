@@ -24,9 +24,8 @@ int main(int argc, char **argv) {
   // load RHS
   T = spasm_triplet_alloc(1, m, 10, 32003, true);
   spasm_add_entry(T, 0, 0, 1);
-  spasm_add_entry(T, 2, 0, 2);
-  spasm_add_entry(T, 4, 0, 3);
-  spasm_add_entry(T, 3*m / 4, 0, 3);
+  spasm_add_entry(T, 0, m / 2, 2);
+  spasm_add_entry(T, 0, m - 1, 3);
   B = spasm_compress(T);
   spasm_triplet_free(T);
 
