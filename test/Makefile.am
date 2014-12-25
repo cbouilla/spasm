@@ -4,12 +4,13 @@ LDADD = $(top_builddir)/src/libspasm.la
 TESTS = test_io.sh GFp vec_perm test_perm.sh test_gaxpy.sh test_reach.sh \
 	test_triangular_solvers.sh test_lu.sh test_pluq.sh test_lu_solve.sh \
 	test_pluq_solve.sh test_sort.sh test_transpose.sh test_dm.sh \
-	test_submatrix.sh test_cc.sh test_scc.sh
+	test_submatrix.sh test_cc.sh test_scc.sh test_kernel.sh
 
 check_PROGRAMS = io GFp gaxpy reach dense_usolve dense_lsolve \
 	         sparse_usolve sparse_lsolve lu permuted_lu  \
 	         pluq permuted_pluq lu_solve pluq_solve sort \
-                 vec_perm mat_perm transpose dm submatrix cc scc
+                 vec_perm mat_perm transpose dm submatrix cc scc \
+		 sparse_utsolve kernel
 
 AM_TESTS_ENVIRONMENT = \
 	env AM_TAP_AWK='$(AWK)'

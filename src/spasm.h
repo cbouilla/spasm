@@ -95,6 +95,7 @@ The numerical values are optional (useful for storing a sparse graph, or the pat
 #define SPASM_IGNORE_VALUES 0
 #define SPASM_WITH_NUMERICAL_VALUES 1
 #define SPASM_KEEP_L 1
+#define SPASM_DISCARD_L 0
 #define SPASM_SUCCESS 0
 #define SPASM_NO_SOLUTION 1
 
@@ -202,6 +203,9 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *A_t, c
 
 /* spasm_scc.c */
 spasm_partition * spasm_strongly_connected_components(const spasm *A);
+
+/* spasm_kernel.c */
+spasm * spasm_kernel(const spasm *A);
 
 
 /* utilities */
