@@ -30,6 +30,8 @@ int main(int argc, char **argv) {
   spasm_triplet_free(T);
 
   xi = malloc(3*m * sizeof(int));
+  spasm_vector_zero(xi, 3*m);
+
   x = malloc(m * sizeof(spasm_GFp));
   y = malloc(m * sizeof(spasm_GFp));
   spasm_vector_zero(x, m);

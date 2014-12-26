@@ -134,9 +134,6 @@ int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks,
 
 	    pstack = xi + m;
 	    marks = pstack + m;
-	    for (p = 0; p < m; p++) {
-	      marks[p] = 0;
-	    }
 
         /*
          * iterates over the k-th row of B.  For each column index j present
@@ -149,6 +146,11 @@ int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks,
 	      top = spasm_dfs(Bj[p], G, top, xi, pstack, marks, pinv);
             }
         }
-        /* restore G : unmark all marked nodes. */
+
+    /* unmark all marked nodes. */
+    for (p = top; p < m; p++) {
+      marks[ xi[p] ] = 0;
+    }
+
         return top;
     }

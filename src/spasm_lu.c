@@ -100,6 +100,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 
     /* get int workspace */
     xi = spasm_malloc(3 * m * sizeof(int));
+    spasm_vector_zero(xi, 3*m);
 
     /* allocate result */
     N = spasm_malloc(sizeof(spasm_lu));
@@ -146,7 +147,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     /* --- Main loop : compute L[i] and U[i] ------------------- */
     for (i = 0; i < n; i++) {
       if (!keep_L && i - defficiency == r) {
-	printf("\n[LU] full rank reached ; early abort\n");
+	fprintf(stderr, "\n[LU] full rank reached ; early abort\n");
 	break;
       }
  
@@ -170,6 +171,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 
 	inew = (row_permutation != NULL) ? row_permutation[i] : i;
         top = spasm_sparse_forward_solve(U, A, inew, xi, x, qinv);
+
 
         /* --- Find pivot and dispatch coeffs into L and U -------------------------- */
 #ifdef SPASM_TIMING
@@ -259,14 +261,14 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 #endif
 
       if ((i % verbose_step) == 0) {
-	printf("\rLU : %d / %d [|L| = %d / |U| = %d] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, lnz, unz, 1.0 * (m-top) / (m), 1.0 * (unz-old_unz) / m, i - defficiency);
-	fflush(stdout);
+	fprintf(stderr, "\rLU : %d / %d [|L| = %d / |U| = %d] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, lnz, unz, 1.0 * (m-top) / (m), 1.0 * (unz-old_unz) / m, i - defficiency);
+	fflush(stderr);
       }
 
     }
 
     /* --- Finalize L and U ------------------------------------------------- */
-    printf("\n");
+    fprintf(stderr, "\n");
 
     /* remove extra space from L and U */
     Up[i - defficiency] = unz;

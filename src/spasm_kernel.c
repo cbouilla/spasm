@@ -31,6 +31,7 @@ spasm * spasm_kernel(const spasm *A) {
     /* allocate result and workspace */
     K = spasm_csr_alloc(m - r, m, L->nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
     xi = malloc(3*r * sizeof(int));
+    spasm_vector_zero(xi, 3*r);
     x = malloc(m * sizeof(spasm_GFp));
     //    y = malloc(r * sizeof(spasm_GFp));
 
