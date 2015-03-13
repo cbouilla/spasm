@@ -9,3 +9,8 @@ pluq
 *.ppm
 *.pgm
 *.pbm
+*.sms
+metis
+kernel
+transpose
+permute
