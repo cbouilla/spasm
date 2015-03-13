@@ -85,6 +85,29 @@ void spasm_save_triplet(FILE *f, const spasm_triplet *A) {
     fprintf(f, "0 0 0\n");
 }
 
+void spasm_save_permutation(FILE *f, const int *p, int n) {
+  int i;
+
+  for(i = 0; i < n; i++) {
+    fprintf(f, "%d\n", (p != NULL) ? p[i] : i);
+  }
+}
+
+int * spasm_load_permutation(FILE *f, int n) {
+  int i, j, *p;
+
+  p = spasm_malloc(n * sizeof(int));
+  for(i = 0; i < n; i++) {
+    if (fscanf(f, "%d\n", &j) != 1) {
+      fprintf(stderr, "[spasm_load_permutation] bad row %d\n", i);
+      exit(1);
+    }
+    p[i] = j;
+  }
+  return p;
+}
+
+
 /* Saves a PBM (bitmap) file with one pixel per entry of A */
 void spasm_save_pbm(FILE *f, const spasm *A) {
   int i, j, n, m, p;

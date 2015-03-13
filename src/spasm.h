@@ -137,6 +137,8 @@ void spasm_save_csr(FILE *f, const spasm *A);
 void spasm_save_pbm(FILE *f, const spasm *A);
 void spasm_save_pgm(FILE *f, int x, int y, const spasm *A);
 void spasm_save_ppm(FILE *f, const spasm *A, const spasm_dm *X);
+void spasm_save_permutation(FILE *f, const int *p, int n);
+int * spasm_load_permutation(FILE *f, int n);
 
 /* spasm_transpose.c */
 spasm *spasm_transpose(const spasm *C, int keep_values);
