@@ -205,7 +205,7 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *A_t, c
 spasm_partition * spasm_strongly_connected_components(const spasm *A);
 
 /* spasm_kernel.c */
-spasm * spasm_kernel(const spasm *A);
+spasm * spasm_kernel(const spasm *A, const int * column_permutation);
 
 
 /* utilities */

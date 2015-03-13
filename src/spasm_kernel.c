@@ -3,21 +3,15 @@
 
 /* Returns a basis of the (left) kernel of A
  */
-spasm * spasm_kernel(const spasm *A) {
+spasm * spasm_kernel(const spasm *A_t, const int *column_permutation) {
     spasm_lu *PLUQ;
-    spasm *A_t, *L, *K;
-    int i, j, m, r, top, prime, nz;
-    int *row_permutation, *xi, *Kp, *Kj, *Kx, *q;
+    spasm *L, *K;
+    int i, j, p, m, r, top, prime, nz;
+    int *xi, *Kp, *Kj, *Kx, *q;
     spasm_GFp *x; //, *y;
 
     /* check inputs */
-    assert(A != NULL);
-    A_t = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
-
-    row_permutation = spasm_cheap_pivots(A_t);
-    PLUQ = spasm_PLUQ(A_t, row_permutation, SPASM_DISCARD_L);
-    spasm_csr_free(A_t);
-    free(row_permutation);
+    PLUQ = spasm_PLUQ(A_t, column_permutation, SPASM_DISCARD_L);
 
     L = spasm_transpose(PLUQ->U, SPASM_WITH_NUMERICAL_VALUES);
 
@@ -62,12 +56,15 @@ spasm * spasm_kernel(const spasm *A) {
       /* finalize previous row of K */
       Kp[i - r] = nz;
 
-      for(j = top; j < r; j++) {
-	Kj[nz] = q[ xi[j] ];
-	Kx[nz] = x[ xi[j] ];
-	nz++;
+      for(p = top; p < r; p++) {
+	j = xi[p];
+	if (x[j] != 0) {
+	  Kj[nz] = q[j];
+	  Kx[nz] = x[j];
+	  nz++;
+	}
       }
-      Kj[nz] = q[ i ];
+      Kj[nz] = q[i];
       Kx[nz] = prime - 1;
       nz++;
     }

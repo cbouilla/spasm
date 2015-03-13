@@ -4,9 +4,9 @@
 
 int main(int argc, char **argv) {
   spasm_triplet *T;
-  spasm *A, *K;
+  spasm *A, *A_t, *K;
   spasm_GFp *x, *y, *Kx;
-  int i, j, n, m, k, test, p;
+  int i, j, n, m, k, test, p, nonzero;
   int *Kp, *Kj;
 
   assert(argc > 1);
@@ -19,7 +19,9 @@ int main(int argc, char **argv) {
   n = A->n;
   m = A->m;
 
-  K = spasm_kernel(A);
+  A_t = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
+  K = spasm_kernel(A_t, SPASM_IDENTITY_PERMUTATION);
+  spasm_csr_free(A_t);
   k = K->n;
   Kp = K->p;
   Kj = K->j;
@@ -36,9 +38,22 @@ int main(int argc, char **argv) {
     spasm_vector_zero(x, n);
     spasm_vector_zero(y, m);
 
+    /* check that vector is not zero */
+    if (spasm_row_weight(K, i) == 0) {
+      printf("not ok %d - empty vector in kernel\n", test);
+      exit(0);
+    }
+
     /* scatter K[i] into x */
+    nonzero = 0;
     for(p = Kp[i]; p < Kp[i + 1]; p++) {
       x[ Kj[p] ] = Kx[p];
+      nonzero += (Kx[p] != 0);
+    }
+
+    if (nonzero == 0) {
+      printf("not ok %d - zero vector in kernel\n", test);
+      exit(0);
     }
 
     /* y <-- x.A */
