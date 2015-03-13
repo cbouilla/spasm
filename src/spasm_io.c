@@ -36,9 +36,9 @@ spasm_triplet * spasm_load_sms(FILE *f, int prime) {
 
 
 void spasm_save_csr(FILE *f, const spasm *A) {
-  int i, n, m, p;
+  int i, n, m, p, prime;
   int *Aj, *Ap;
-  spasm_GFp *Ax;
+  spasm_GFp *Ax, x;
 
     assert(f != NULL);
     assert(A != NULL);
@@ -48,11 +48,14 @@ void spasm_save_csr(FILE *f, const spasm *A) {
     Ax = A->x;
     n  = A->n;
     m  = A->m;
+    prime = A->prime;
 
     fprintf(f, "%d %d M\n", n, m);
     for(i = 0; i < n; i++) {
       for(p = Ap[i]; p < Ap[i + 1]; p++) {
-	fprintf(f, "%d %d %d\n", i + 1, Aj[p] + 1, (Ax != NULL) ? Ax[p] : 1);
+	x = (Ax != NULL) ? Ax[p] : 1;
+	x = (x > prime / 2) ? x - prime : x;
+	fprintf(f, "%d %d %d\n", i + 1, Aj[p] + 1, x);
       }
     }
 
