@@ -53,7 +53,7 @@ static int spasm_augmenting_path(const spasm *A, int k, int *row_stack, int *col
 	    continue;
 	  }
 
-	  /* found an explored neighbor imatch[j]: pause dfs of node i */
+	  /* found an unexplored neighbor imatch[j]: pause dfs of node i */
 	  pointer_stack[head] = p + 1;
 	  col_stack[head] = j;
 

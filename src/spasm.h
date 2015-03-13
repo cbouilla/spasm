@@ -103,25 +103,19 @@ The numerical values are optional (useful for storing a sparse graph, or the pat
 /* spasm_util.c */
 double spasm_wtime();
 int spasm_nnz(const spasm *A);
-
 void * spasm_malloc(size_t size);
 void * spasm_calloc(size_t count, size_t size);
 void * spasm_realloc(void *ptr, size_t size);
-
 spasm * spasm_csr_alloc(int m, int n, int nzmax, int prime, int with_values);
 void spasm_csr_realloc(spasm *A, int nzmax);
 void spasm_csr_free(spasm *A);
-
 spasm_triplet *spasm_triplet_alloc(int m, int n, int nzmax, int prime, int with_values);
 void spasm_triplet_realloc(spasm_triplet *A, int nzmax);
 void spasm_triplet_free(spasm_triplet *A);
-
 void spasm_csr_resize(spasm *A, int n, int m);
-
 spasm_partition * spasm_partition_alloc(int n, int m, int nr, int nc);
 void spasm_partition_free(spasm_partition *P);
 void spasm_partition_tighten(spasm_partition *P);
-
 void spasm_vector_zero(spasm_GFp *x, int n);
 void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha);
 

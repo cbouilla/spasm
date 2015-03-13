@@ -1,7 +1,9 @@
 #include <assert.h>
 #include "spasm.h"
 
-
+/**
+ * returns A[r_0:r_1, c_0:c_1]
+ */
 spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int with_values) {
   spasm *B;
   int Bn, Bm, Bnz, i, j, px, k;
@@ -15,7 +17,7 @@ spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int 
   Bn = spasm_max(0, r_1 - r_0);
   Bm = spasm_max(0, c_1 - c_0);
   Bnz = spasm_max(0, Ap[r_1] - Ap[r_0]);
-  B = spasm_csr_alloc(Bn, Bm, Bnz, A->prime, (A->x != NULL) &&with_values);
+  B = spasm_csr_alloc(Bn, Bm, Bnz, A->prime, (A->x != NULL) && with_values);
   Bp = B->p;
   Bj = B->j;
   Bx = B->x;

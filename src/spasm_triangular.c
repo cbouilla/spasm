@@ -82,10 +82,11 @@ int spasm_is_lower_triangular(const spasm *A) {
 
 /* dense backwards substitution solver. Solve x . L = b where x and b are dense.
  *
+ * b is undefined on output
  *
  * L is assumed to be lower-triangular, with non-zero diagonal.
  *
- * The diagonal entry is the **last** of each column.
+ * The diagonal entry is the **last** of each row.
  * More precisely, L[j,j] is Lx[ Lp[j+1] - 1 ]
  *
  * p[j] == i indicates if the "diagonal" entry on column j is on row i
@@ -194,7 +195,7 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, cons
  *
  * x has size m (number of columns of U, paradoxically).
  *
- * when this function returns, the solution scattered in x, and its pattern
+ * when this function returns, the solution is scattered in x, and its pattern
  * is given in xi[top : m].
  *
  * top is the return value.
@@ -316,7 +317,6 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
 #ifdef SPASM_TIMING
     start = spasm_ticks();
 #endif
-
     /* xi[top : m] = Reach( L, B[k] ) */
     top = spasm_reach(L, B, k, xi, pinv);
 
