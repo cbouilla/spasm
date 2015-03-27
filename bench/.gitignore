@@ -15,3 +15,5 @@ metis
 kernel
 transpose
 permute
+linbox_rank_gauss
+linbox_rank_wm

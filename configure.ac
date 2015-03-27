@@ -15,6 +15,7 @@ AC_LANG([C])
 
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_CC_C99
 AC_PROG_MAKE_SET
 AC_PROG_AWK     # for TAP
@@ -32,6 +33,7 @@ AC_FUNC_MALLOC
 
 DEFAULT_CHECKING_PATH="/usr /usr/local "
 SPASM_CHECK_METIS
+SPASM_CHECK_LINBOX
 
 CFLAGS="$CFLAGS -Wall -Wextra -g -fPIC"
 
