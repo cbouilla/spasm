@@ -9,6 +9,8 @@ AM_INIT_AUTOMAKE([1.8 gnu no-dependencies foreign -Wall])
 #AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
+AC_LANG([C])
+
 # user-definable options
 
 # Checks for programs.
@@ -28,7 +30,10 @@ AC_HEADER_STDBOOL
 # Checks for typedefs, structures, and compiler characteristics.
 AC_FUNC_MALLOC
 
-CFLAGS="$CFLAGS -Werror -Wall -Wextra -g -fPIC -Wno-unused-variable -Wno-unused-parameter -Wno-unused-but-set-variable"
+DEFAULT_CHECKING_PATH="/usr /usr/local "
+SPASM_CHECK_METIS
+
+CFLAGS="$CFLAGS -Wall -Wextra -g -fPIC"
 
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)

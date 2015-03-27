@@ -2,9 +2,14 @@ AUTOMAKE_OPTIONS = gnu
 AM_CPPFLAGS = -I$(top_builddir)/src
 LDADD = $(top_builddir)/src/libspasm.la
 
-bin_PROGRAMS = rank dm pbm pgm pluq kernel transpose permute metis blocks
-metis_LDFLAGS = -L/usr/local/lib -lmetis $(top_builddir)/src/libspasm.la
-metis_CFLAGS = -I/usr/local/include
+bin_PROGRAMS = rank dm pbm pgm pluq kernel transpose permute blocks
+
+if SPASM_HAVE_METIS
+bin_PROGRAMS += metis
+metis_SOURCES = metis.c
+metis_LDFLAGS = $(METIS_LIBS)
+metis_CFLAGS = $(METIS_CFLAGS)
+endif
 
 %.pbm : %.sms pbm
 	./pbm < $< > $@
