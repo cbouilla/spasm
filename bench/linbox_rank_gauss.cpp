@@ -1,5 +1,6 @@
 #include "linbox/algorithms/gauss.h"
 #include "linbox/solutions/rank.h"
+#include "linbox/util/timer.h"
 
 #include <givaro/modular.h>
 #include <iostream>
@@ -28,10 +29,17 @@ int main (int argc, char **argv)
     unsigned long rank;
 
     Method::Elimination ME;
+    Timer chrono;
+    chrono.clear();
+    chrono.start();
+
     LinBox::rank(rank, A, ME);
+
+    chrono.stop();
 
     /* Output */
     std::cout << "====== RESULT =====" << std::endl << std::endl;
+    std::cout << "Time: " << chrono << std::endl;
     std::cout << "Rank: " << rank << std::endl;
     return 0;
 }

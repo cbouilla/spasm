@@ -7,27 +7,39 @@
 #ifdef SPASM_TIMING
 extern int64 reach, scatter, data_shuffling;
 #endif
+#include <signal.h>
+#include <setjmp.h>
+
+
+jmp_buf Env;
+
+void alarm_handler(int dummy) {
+  longjmp(Env, 1);
+}
+
 
 
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *U, *L;
   spasm_lu *LU;
-  int r, n, m, *p, ch, prime, allow_transpose, sort_strategy, keep_L;
+  int r, n, m, *p, ch, prime, allow_transpose, sort_strategy, keep_L, timer;
   double start_time, end_time;
 
   prime = 42013;
   sort_strategy = 1; // cheap pivots by default
   allow_transpose = 1;
   keep_L = 0;
+  timer = -1;
 
   /* options descriptor */
-  struct option longopts[6] = {
+  struct option longopts[7] = {
     { "sort-rows",    no_argument,       NULL,          's' },
-    { "keep-rows", no_argument,       NULL,             'k' },
+    { "keep-rows",    no_argument,       NULL,          'k' },
     { "no-transpose", no_argument,       NULL,          'a' },
     { "modulus",      required_argument, NULL,          'p' },
     { "keep-L" ,      no_argument,       NULL,          'l' },
+    { "max-time",     required_argument, NULL,          't' },
     { NULL,           0,                 NULL,           0  }
   };
 
@@ -39,8 +51,6 @@ int main(int argc, char **argv) {
     case 'k':
       sort_strategy = 0;
       break;
-    case 't':
-      break;
     case 'a':
       allow_transpose = 0;
       break;
@@ -49,6 +59,9 @@ int main(int argc, char **argv) {
       break;
     case 'l':
       keep_L = 1;
+      break;
+    case 't':
+      timer = atoi(optarg);
       break;
     default:
       printf("Unknown option\n");
@@ -71,10 +84,6 @@ int main(int argc, char **argv) {
   spasm_triplet_free(T);
 
   start_time = spasm_wtime();
-  printf("structural rank : %d", spasm_structural_rank(A));
-  printf(" [%.1f s]\n", spasm_wtime() - start_time);
-
-  start_time = spasm_wtime();
 
   switch(sort_strategy) {
   case 0:
@@ -94,6 +103,16 @@ int main(int argc, char **argv) {
     p = spasm_row_sort(A);
     printf("%.1f s\n", spasm_wtime() - start_time);
     break;
+  }
+
+  if (timer > 0) {
+    signal(SIGALRM, alarm_handler);
+    alarm(timer);
+
+    if (setjmp(Env) != 0) {
+      fprintf(stderr, "\nTimeout after %d seconds\n", timer);
+      exit(1);
+    }
   }
 
   LU = spasm_LU(A, p, keep_L);

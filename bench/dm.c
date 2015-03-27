@@ -3,29 +3,53 @@
 #include <getopt.h>
 #include "spasm.h"
 
-/* bad models :
-332
-175
-205
-457
-*/
+int nontrivial_diag_size = 0;
+int nontrivial_diag_rank = 0;
+int trivial_diag_rank = 0;
 
 
+int subrank(const spasm *M, int a, int b, int c, int d) {
+  spasm *C;
+  int *p;
+  spasm_lu *LU;
+  int r;
 
-void show(spasm_cc *Y) {
-  int i, j;
+  C = spasm_submatrix(M, a, c, b, d, SPASM_WITH_NUMERICAL_VALUES);
+  //  printf("M : %d, C : %d nnz, dim %d x %d\n", spasm_nnz(M), spasm_nnz(C), C->n, C->m);
+  p = spasm_cheap_pivots(C);
+  LU = spasm_LU(C, p, SPASM_DISCARD_L);
+  free(p);
+  r = LU->U->n;
+  spasm_free_LU(LU);
+  spasm_csr_free(C);
+  return r;
+}
+
+void show(const spasm *M, spasm_cc *Y) {
+  int i, j, a,b,c,d,e,f,g,h, r;
 
   for(i = 0; i < Y->CC->nr; i++) {
-    int C_n = Y->CC->rr[i + 1] - Y->CC->rr[i];
-    int C_m = Y->CC->cc[i + 1] - Y->CC->cc[i];
-    printf("   *) Connected component (%d x %d) --- (%d, %d) to (%d, %d)\n", C_n, C_m,
-	   Y->CC->rr[i], Y->CC->cc[i], Y->CC->rr[i + 1], Y->CC->cc[i + 1]);
+    a = Y->CC->rr[i];
+    b = Y->CC->cc[i];
+    c = Y->CC->rr[i + 1];
+    d = Y->CC->cc[i + 1];
+
+    //    printf("   *) Connected component (%d x %d) --- (%d, %d) to (%d, %d)\n", c-a, d-b, a,b,c,d);
     if (Y->SCC[i] != NULL) {
       for(j = 0; j < Y->SCC[i]->nr; j++) {
-	int SCC_n = Y->SCC[i]->rr[j + 1] - Y->SCC[i]->rr[j];
-	int SCC_m = Y->SCC[i]->cc[j + 1] - Y->SCC[i]->cc[j];
-	printf("       *) SCC (%d x %d) --- (%d, %d) to (%d, %d)\n", SCC_n, SCC_m,
-	       Y->SCC[i]->rr[j], Y->SCC[i]->cc[j], Y->SCC[i]->rr[j + 1], Y->SCC[i]->cc[j + 1]);
+	e = Y->SCC[i]->rr[j];
+	f = Y->SCC[i]->cc[j];
+	g = Y->SCC[i]->rr[j + 1];
+	h = Y->SCC[i]->cc[j + 1];
+	r = subrank(M, e, f, g, h);
+	if (g-e > 1) {
+	  nontrivial_diag_size += g-e;
+	  nontrivial_diag_rank += r;
+	}
+	if  (g-e > 1) {
+	  trivial_diag_rank += 1;
+	}
+	//	printf("       *) SCC (%d x %d, deffect %d) --- (%d, %d) to (%d, %d)\n", g-e, h-f, spasm_min(g-e, h-f)-r, e, f, g, h);
       }
     }
   }
@@ -50,10 +74,10 @@ int main(int argc, char **argv) {
     spasm_triplet *T;
     spasm *A, *B;
     spasm_dm *x;
-    int n, m, i, *qinv, verbose, ch;
+    int n, m, i, *qinv, verbose, ch, *rr, *cc;
     char *pm_file, *img_file;
     FILE *f;
-    
+
   /* options descriptor */
   struct option longopts[6] = {
     { "permuted",      required_argument, NULL,    'p' },
@@ -67,7 +91,7 @@ int main(int argc, char **argv) {
   img_file = NULL;
   verbose = 0;
   B = NULL;
-  
+
   while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
     switch (ch) {
     case 'p':
@@ -90,7 +114,7 @@ int main(int argc, char **argv) {
   argc -= optind;
   argv += optind;
 
-  T = spasm_load_sms(stdin, -1);
+  T = spasm_load_sms(stdin, 42013);
   A = spasm_compress(T);
   spasm_triplet_free(T);
 
@@ -98,6 +122,12 @@ int main(int argc, char **argv) {
     m = A->m;
 
     x = spasm_dulmage_mendelsohn(A);
+    rr = x->DM->rr;
+    cc = x->DM->cc;
+
+    qinv = spasm_pinv(x->DM->q, m);
+    B = spasm_permute(A, x->DM->p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+    free(qinv);
 
     /* terse output with just the size of the largest diagonal block */
     if (verbose == 1) {
@@ -115,31 +145,27 @@ int main(int argc, char **argv) {
     }
 
     if (verbose == 2) {
+      printf("structural rank = %d\n", rr[2] + cc[4] - cc[3]);
       if (x->H != NULL) {
-	int h_n = x->DM->rr[1] - x->DM->rr[0];
-	int h_m = x->DM->cc[2] - x->DM->cc[0];
+	int h_n = rr[1] - rr[0];
+	int h_m = cc[2] - cc[0];
 	printf("*) H (%d x %d) : \n", h_n, h_m);
-	show(x->H);
+	show(B, x->H);
       }
       if (x->S != NULL) {
-	int s_n = x->DM->rr[2] - x->DM->rr[1];
-	int s_m = x->DM->cc[3] - x->DM->cc[2];
+	int s_n = rr[2] - rr[1];
+	int s_m = cc[3] - cc[2];
 	printf("*) S (%d x %d) : \n", s_n, s_m);
-	show(x->S);
+	show(B, x->S);
       }
       if (x->V != NULL) {
-	int v_n = x->DM->rr[4] - x->DM->rr[2];
-	int v_m = x->DM->cc[4] - x->DM->cc[3];
+	int v_n = rr[4] - rr[2];
+	int v_m = cc[4] - cc[3];
 	printf("*) V (%d x %d) : \n", v_n, v_m);
-	show(x->V);
+	show(B, x->V);
       }
     }
 
-    if (img_file != NULL || pm_file != NULL) {
-      qinv = spasm_pinv(x->DM->q, m);
-      B = spasm_permute(A, x->DM->p, qinv, SPASM_IGNORE_VALUES);
-      free(qinv);
-    }
 
     if (pm_file != NULL) {
       f = fopen(pm_file, "w");
@@ -155,5 +181,9 @@ int main(int argc, char **argv) {
 
     spasm_csr_free(B);
     spasm_csr_free(A);
+
+    printf("non trivial diagonal blocks size : %d\n", nontrivial_diag_size);
+    printf("non trivial diagonal blocks rank : %d\n", nontrivial_diag_rank);
+    printf("trivial diagonal blocks : %d\n", trivial_diag_rank);
     return 0;
 }
