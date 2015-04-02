@@ -11,7 +11,7 @@
 
 
 /*
- * type de données qui décrit un bloc carré.
+ * type de données qui décrit un bloc rectangulaire.
  */
 typedef struct {
   int i0; //  Le bloc est M[i0:i1, j0:j1], c'est-à-dire
@@ -53,33 +53,48 @@ int submatrix_rank(const spasm *M, int a, int b, int c, int d) {
 /*
  * Renvoie "start" + (le nombre de blocs décrits par les composantes connexes dans "Y").
  *
- * Si blocks != NULL, stocke les blocs dans "blocks" à partir de l'indice start.
+ * Si blocks != NULL, stocke les blocs dans "blocks" à partir de l'indice *start (la valeur est modifiée)
+ *
+ * La position du coin inférieur droit du dernier bloc rencontrée doit être passée dans *last_i et *last_j. Ces valeurs sont modifiées.
  *
  */
-int count_blocks(const spasm *M, spasm_cc *Y, block_t *blocks, int start) {
+void count_blocks(const spasm *M, spasm_cc *Y, block_t *blocks, int *start, int *last_i, int *last_j) {
   int i, j, a,b,c,d, r;
 
   for(i = 0; i < Y->CC->nr; i++) {
     if (Y->SCC[i] != NULL) {
       for(j = 0; j < Y->SCC[i]->nr; j++) {
-	if (blocks != NULL) {
 	  a = Y->SCC[i]->rr[j];
 	  b = Y->SCC[i]->cc[j];
 	  c = Y->SCC[i]->rr[j + 1];
 	  d = Y->SCC[i]->cc[j + 1];
-	  r = submatrix_rank(M, a, b, c, d);
 
-	  blocks[start].i0 = a;
-	  blocks[start].j0 = b;
-	  blocks[start].i1 = c;
-	  blocks[start].j1 = d;
-	  blocks[start].r  = r;
-	}
-	start++;
+	  if ((*last_i != a) || (*last_j != b)) {
+	    // "hole" between last seen block and this one
+	    if (blocks != NULL) {
+	      blocks[*start].i0 = *last_i;
+	      blocks[*start].j0 = *last_j;
+	      blocks[*start].i1 = a;
+	      blocks[*start].j1 = b;
+	      blocks[*start].r  = 0;
+	    }
+	    (*start)++;
+	  }
+
+	  if (blocks != NULL) {
+	    r = submatrix_rank(M, a, b, c, d);
+	    blocks[*start].i0 = a;
+	    blocks[*start].j0 = b;
+	    blocks[*start].i1 = c;
+	    blocks[*start].j1 = d;
+	    blocks[*start].r  = r;
+	  }
+	  (*start)++;
+	  (*last_i) = c;
+	  (*last_j) = d;
       }
     }
   }
-  return start;
 }
 
 /*
@@ -94,18 +109,20 @@ int count_blocks(const spasm *M, spasm_cc *Y, block_t *blocks, int start) {
  * liste de blocs, qui est modifiée.
  */
 int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks) {
-  int k;
+  int k, last_i, last_j;
 
   // étape 1 : détermine le nombre de blocs
   k = 0;
+  last_i = 0;
+  last_j = 0;
   if (DM->H != NULL) {
-    k = count_blocks(M, DM->H, NULL, k);
+    count_blocks(M, DM->H, NULL, &k, &last_i, &last_j);
   }
   if (DM->S != NULL) {
-    k = count_blocks(M, DM->S, NULL, k);
+    count_blocks(M, DM->S, NULL, &k, &last_i, &last_j);
   }
   if (DM->V != NULL) {
-    k = count_blocks(M, DM->V, NULL, k);
+    count_blocks(M, DM->V, NULL, &k, &last_i, &last_j);
   }
 
   // étape 2 : allouer la liste des blocs
@@ -113,14 +130,16 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks) {
 
   // étape 3 : remplir la liste des blocs
   k = 0;
+  last_i = 0;
+  last_j = 0;
   if (DM->H != NULL) {
-    k = count_blocks(M, DM->H, *blocks, k);
+    count_blocks(M, DM->H, *blocks, &k, &last_i, &last_j);
   }
   if (DM->S != NULL) {
-    k = count_blocks(M, DM->S, *blocks, k);
+    count_blocks(M, DM->S, *blocks, &k, &last_i, &last_j);
   }
   if (DM->V != NULL) {
-    k = count_blocks(M, DM->V, *blocks, k);
+    count_blocks(M, DM->V, *blocks, &k, &last_i, &last_j);
   }
   return k;
 }
