@@ -23,6 +23,25 @@ typedef struct {
 
 
 /*
+ * type de données qui décrit un intervalle.
+ */
+typedef struct {
+  int a; // décrit l'intervalle 
+  int b; // [a; b[
+} interval_t;
+
+
+/*
+ * type de données qui pointe vers un intervalle de ligne 
+ * et un intervalle de colonne
+ */
+typedef struct {
+  int i; // Pointe sur le i-ième intervalle de ligne
+  int j; // et le j-ième intervalle de colonne.
+} index_t;
+
+
+/*
  * Renvoie le rang de M[a:c, b:d].
  */
 int submatrix_rank(const spasm *M, int a, int b, int c, int d) {
@@ -126,12 +145,129 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks) {
 }
 
 
+/*
+ * Etant donnée le rang des blocks diagonaux, Bi, d'une matrice M, triangulaire par
+ * blocs, détermine la liste des intervalles définis par [Bi.i0 + Bi.r ; Bi.i1[
+ * d'une part (intervalles de lignes), et [Bi.j0 +Bi.r ; Bi.j1[ d'autre part
+ * (intervalles de colonnes). 
+ */
+void intervals_fill(interval_t *R, interval_t *C, block_t *blocks, int n_blocks ) {
+  int i;
+  for (i=0; i<n_blocks; i++) {
+
+    // Intervalles des lignes :
+    R[i].a = blocks[i].i0 + blocks[i].r;
+    R[i].b = blocks[i].i1;
+
+    // Intervalles des colonnes :
+    C[i].a = blocks[i].j0 +blocks[i].r;
+    C[i].b = blocks[i].j1;
+  }
+
+}
+
+
+void intervals_list(interval_t **R, interval_t **C, block_t *blocks, int n_blocks) {
+  *R = spasm_malloc(sizeof(interval_t) * n_blocks);
+  *C = spasm_malloc(sizeof(interval_t) * n_blocks);
+
+  intervals_fill(*R, *C, blocks, n_blocks);
+}
+
+
+/*
+ * Etant donnée les listes des intervalles "intéressants" de lignes et de colonnes, 
+ * détermine le nombre de blocs à traîter sur la première diagonale supérieure de
+ * M et remplit ces blocs.
+ */
+
+int count_other_blocks(const spasm *M, const interval_t *R, const interval_t *C, block_t *other_b, index_t *where, int n_blocks) {
+  int k, i, j, nbl;
+  nbl=0;
+  for (k=n_blocks-1; k>0; k--) {
+    if (C[k].a < C[k].b) {
+      i = k-1;
+      while ((R[i].a == R[i].b )&& (i>=0)) {
+	i--;
+      }
+      if (i==-1) {
+	return nbl;
+      }
+      j=i+1;
+      while (C[j].a == C[j].b) {
+	j++;
+      }
+      //remplissage des blocks.
+      other_b[nbl].i0 = R[i].a;
+      other_b[nbl].i1 = R[i].b;
+      other_b[nbl].j0 = C[j].a;
+      other_b[nbl].j1 = C[j].b;
+      other_b[nbl].r = submatrix_rank(M, R[i].a, C[j].a, R[i].b, C[j].b);
+
+      //Positions des blocks sur la diagonale.
+      where[nbl].i = i;
+      where[nbl].j = j;
+
+      nbl++;
+    }
+  }
+  return nbl;
+}
+
+int other_blocks_list(const spasm *M, const interval_t *R, const interval_t *C, block_t **other_b, index_t **where, int n_blocks) {
+  int nbl, mem;
+  mem = n_blocks-1;
+
+  //allouer la mémoire des blocks grace au pointeurs temporaires;
+  *other_b = spasm_calloc(mem, sizeof(block_t));
+  *where = spasm_calloc(mem, sizeof(index_t));
+
+  //remplir les blocks
+  nbl = count_other_blocks(M, R, C, *other_b, *where, n_blocks);
+
+
+
+  return nbl;
+}
+
+
+/*
+ * Etant donnés les blocks d'une diagonale supérieure de M, détermine les intervalles intéressants
+ * de la diagonale supérieure suivante.
+ */
+void change_intervals(interval_t *R, interval_t *C, const block_t *other_b, const index_t *where, int nbl) {
+  int k;
+  for (k=0; k<nbl; k++) {
+    R[where[k].i].a = R[where[k].i].a + other_b[k].r;
+    C[where[k].j].a = C[where[k].j].a + other_b[k].r;
+  }
+}
+
+
+/*
+ * Détermine la liste des blocks sur la k-ième diagonale supérieure de M
+ */
+int blocks_list_on_diag_k(const spasm *M, interval_t *R, interval_t *C, block_t *other_b, index_t *where, int n_blocks, int k) {
+  int i, nbl;
+  nbl = n_blocks;
+  for (i=1; i<=k; i++) {
+    nbl = other_blocks_list(M, R, C, &other_b, &where, nbl);
+    change_intervals(R, C, other_b, where, nbl);
+    free(other_b);
+    free(where);
+  }
+  return nbl;
+}
+
+
 int main() {
     spasm_triplet *T;
     spasm *A, *B;
     spasm_dm *x;
-    int n_blocks, i, *qinv;
-    block_t *blocks;
+    int n_blocks, i, *qinv, nbl, nbl1;
+    block_t *blocks, *other_b;
+    interval_t *R, *C;
+    index_t *where;
 
     // charge la matrice depuis l'entrée standard
     T = spasm_load_sms(stdin, 42013);
@@ -149,9 +285,20 @@ int main() {
     // calcule la liste des blocs
     n_blocks = block_list(B, x, &blocks);
 
+    // Donne liste des intervalles de lignes et de colonnes.
+    intervals_list(&R, &C, blocks, n_blocks);
+
+    // Compte le nombre de blocs sur la première diagonale supérieure.
+    nbl = other_blocks_list(B, R, C, &other_b, &where, n_blocks);
+
+    // Compte le nombre de blocs sur la kième diagonale supérieure.
+    nbl1 = blocks_list_on_diag_k(B, R, C, other_b, where, n_blocks, 1);
+
     // affichage
     for(i = 0; i < n_blocks; i++) {
       printf("%d ; %d ; % d; % d; %d \n", blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, blocks[i].r);
-    }
+      }
+    printf("%d; %d; %d \n",n_blocks, nbl, nbl1);
+
     return 0;
 }
