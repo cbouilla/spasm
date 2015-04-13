@@ -44,11 +44,11 @@ int main(int argc, char **argv) {
 
   spasm_gaxpy(L, x, y);
   for(j = m; j < n; j++) {
-    y[j] = -x[j];
+    y[j] = x[j];
   }
   spasm_scatter(B->j, B->x, B->p[0], B->p[1], B->prime - 1, y, B->prime);
 
-  for(i = 0; i < m; i++) {
+  for(i = 0; i < n; i++) {
     if (y[i] != 0) {
       printf("not ok %d - sparse triangular L-solve (index %d, n=%d, m=%d\n", test, i, n, m);
       exit(0);
