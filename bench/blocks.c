@@ -42,6 +42,10 @@ int submatrix_rank(const spasm *M, int a, int b, int c, int d) {
 
   // extrait la sous-matrice
   C = spasm_submatrix(M, a, c, b, d, SPASM_WITH_NUMERICAL_VALUES);
+  if (spasm_nnz(C) == 0) {
+    spasm_csr_free(C);
+    return 0;
+  }
 
   // calcule la décomposition LU
   p = spasm_cheap_pivots(C);
@@ -57,6 +61,21 @@ int submatrix_rank(const spasm *M, int a, int b, int c, int d) {
 
   return r;
 }
+
+
+/*
+ * Renvoie le rang de M[a:c, b:d].
+ */
+int submatrix_nnz(const spasm *M, int a, int b, int c, int d) {
+  spasm *C;
+  int r;
+
+  // extrait la sous-matrice
+  C = spasm_submatrix(M, a, c, b, d, SPASM_WITH_NUMERICAL_VALUES);
+  r = spasm_nnz(C);
+  spasm_csr_free(C);
+  return r;
+  }
 
 
 /*
@@ -168,6 +187,7 @@ void intervals_fill(interval_t *R, interval_t *C, block_t *blocks, int n_blocks 
     R[i].a = blocks[i].i0 + blocks[i].r;
     R[i].b = blocks[i].i1;
 
+
     // Intervalles des colonnes :
     C[i].a = blocks[i].j0 +blocks[i].r;
     C[i].b = blocks[i].j1;
@@ -190,7 +210,7 @@ void intervals_list(interval_t **R, interval_t **C, block_t *blocks, int n_block
  * M et remplit ces blocs.
  */
 
-int count_other_blocks(const spasm *M, const interval_t *R, const interval_t *C, block_t *other_b, int n_blocks) {
+int count_other_blocks(const spasm *M, const interval_t *R, const interval_t *C, block_t *other_b, const block_t *blocks, int n_blocks) {
   int k, i, j, nbl;
   nbl=0;
   for (k=0; k<n_blocks-1; k++) {
@@ -207,11 +227,11 @@ int count_other_blocks(const spasm *M, const interval_t *R, const interval_t *C,
 	i--;
       }
       //remplissage des blocks.
-      other_b[nbl].i0 = R[i].a;
-      other_b[nbl].i1 = R[i].b;
-      other_b[nbl].j0 = C[j].a;
-      other_b[nbl].j1 = C[j].b;
-      other_b[nbl].r = submatrix_rank(M, R[i].a, C[j].a, R[i].b, C[j].b);
+      other_b[nbl].i0 = blocks[i].i0;
+      other_b[nbl].i1 = blocks[i].i1;
+      other_b[nbl].j0 = blocks[j].j0;
+      other_b[nbl].j1 = blocks[j].j1;
+      other_b[nbl].r = submatrix_rank(M, blocks[i].i0, blocks[j].j0, blocks[i].i1, blocks[j].j1);
 
       nbl++;
     }
@@ -219,7 +239,7 @@ int count_other_blocks(const spasm *M, const interval_t *R, const interval_t *C,
   return nbl;
 }
 
-int other_blocks_list(const spasm *M, const interval_t *R, const interval_t *C, block_t **other_b, int n_blocks) {
+int other_blocks_list(const spasm *M, const interval_t *R, const interval_t *C, block_t **other_b, const block_t *blocks, int n_blocks) {
   int nbl, mem;
   mem = n_blocks-1;
 
@@ -227,11 +247,30 @@ int other_blocks_list(const spasm *M, const interval_t *R, const interval_t *C, 
   *other_b = spasm_calloc(mem, sizeof(block_t));
 
   //remplir les blocks
-  nbl = count_other_blocks(M, R, C, *other_b, n_blocks);
+  nbl = count_other_blocks(M, R, C, *other_b, blocks, n_blocks);
 
 
 
   return nbl;
+}
+
+/*
+ * Recopier une liste de blocks
+ */
+void blocks_dupli(block_t *blocks2, const block_t *blocks1, int nbl) {
+  int i;
+  for (i=0; i<nbl; i++) {
+	blocks2[i].i0 = blocks1[i].i0;
+	blocks2[i].i1 = blocks1[i].i1;
+	blocks2[i].j0 = blocks1[i].j0;
+	blocks2[i].j1 = blocks1[i].j1;
+	blocks2[i].r = blocks1[i].r;
+      }
+}
+
+void blocks_copy(block_t **blocks2, const block_t *blocks1, int nbl) {
+  *blocks2 = spasm_malloc(nbl*sizeof(block_t));
+  blocks_dupli(*blocks2, blocks1, nbl);
 }
 
 
@@ -239,8 +278,8 @@ int main() {
     spasm_triplet *T;
     spasm *A, *B;
     spasm_dm *x;
-    int n_blocks, i, *qinv, nbl, n_tot;
-    block_t *blocks;
+    int n_blocks, i, j, *qinv, nbl, n_tot;
+    block_t *blocks1, *blocks2;
     interval_t *R, *C;
 
     // charge la matrice depuis l'entrée standard
@@ -257,40 +296,57 @@ int main() {
     free(qinv);
 
     // calcule la liste des blocs
-    n_blocks = block_list(B, x, &blocks);
+    n_blocks = block_list(B, x, &blocks1);
 
     //affichage
+    int nnz_diag = 0;
     for (i=0; i<n_blocks; i++) {
-      printf("%d ; %d ; %d ; %d ; %d \n", blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, blocks[i].r);
+      //      printf("%d ; %d ; %d ; %d ; %d \n", blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, blocks[i].r);
+	int dim_i =  blocks1[i].i1 - blocks1[i].i0;
+	int dim_j =  blocks1[i].j1 - blocks1[i].j0;
+	int r = blocks1[i].r;
+
+	//printf("%d ; %d ; %d ; %d  ---> %d x %d    %d\n", blocks1[i].i0, blocks1[i].j0, blocks1[i].i1, blocks1[i].j1, dim_i, dim_j, r);
+	nnz_diag += r;
+      
     }
-    printf ("%d \n", n_blocks);
+
+    printf(" \n%d \n------------------------------\n", n_blocks);
+    // printf("NNZ en tout : %d, NNZ sur la diagonale : %d\n", spasm_nnz(B), nnz_diag);
+    // exit(0);
 
     // Compte le nombre de blocs sur les diagonales supérieures.
     nbl = n_blocks;
     n_tot = n_blocks;
-    while (nbl>0) {
+    for (j=0; j<10; j++) {
 
     // Détermine les intervalles de lignes et de colonnes.
-      intervals_list(&R, &C, blocks, nbl);
-      free(blocks);
-   
+      intervals_list(&R, &C, blocks1, nbl);
+      blocks_copy(&blocks2, blocks1, nbl);
+      free(blocks1);
+
     // compte les blocks sur la diagonale.
-      nbl = other_blocks_list(B, R, C, &blocks, nbl);
+      nbl = other_blocks_list(B, R, C, &blocks1, blocks2, nbl);
       n_tot = n_tot + nbl;
 
     // affichage
       for (i=0; i<nbl; i++) {
-	printf("%d ; %d ; %d ; %d ; %d \n", blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, blocks[i].r);
+	int dim_i =  blocks1[i].i1 - blocks1[i].i0;
+	int dim_j =  blocks1[i].j1 - blocks1[i].j0;
+	int r = blocks1[i].r;
+
+	//printf("%d ; %d ; %d ; %d  ---> %d x %d    %d\n", blocks1[i].i0, blocks1[i].j0, blocks1[i].i1, blocks1[i].j1, dim_i, dim_j, r);
       }
-      printf("%d \n", nbl);
+    printf("%d \n------------------------------\n", nbl);
 
     // libère la mémoire.
       free (R);
       free (C);
+      free (blocks2);
 
 
     }
-    printf("%d \n", n_tot);
+    // printf("%d \n------------------------------\n", n_tot);
 
     // affichage
     return 0;
