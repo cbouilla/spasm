@@ -199,3 +199,17 @@ void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha) {
     x[i] = alpha;
   }
 }
+
+void spasm_identity(spasm *I, int n) {
+  int i;
+
+
+  for(i=0; i<n; i++) {
+    I->p[i] = i;
+    I->j[i] = i;
+    I->x[i] = 1;
+  }
+  I->p[n] = n;
+
+  return I;
+}

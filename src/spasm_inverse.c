@@ -6,33 +6,22 @@
  * Find x such as x * L = ek.
  *
  * The solution is scattered in x, its pattern is given by xi.
- * The return value nz is the number of non-zero entries of x. 
+ * The return value top is the start of the stack. 
  */
 int spasm_linverse(const spasm *L, int k, spasm_GFp *x, int *xi, const int *pinv ) {
   spasm *I;
-  int n, prime, i, top, nz=0;
+  int n, prime, top;
 
   n = L->n; // number of rows of L
   prime = L->prime; 
 
   I = spasm_csr_alloc(n, n, n, prime, 1);
-
-  for(i=0; i<n; i++) {
-    I->p[i]=i;
-    I->j[i]=i;
-    I->x[i]=1;
-  }
-  I->p[n]=n; // Identity Matrix
-
+  spasm_identity(I, n);
   top = spasm_sparse_backward_solve(L, I, k, xi, x, pinv);
-
-  for (i = top; i < n; i++) {
-    if (x[i] != 0) nz++;
-  }
 
   spasm_csr_free(I);
 
-  return nz;
+  return top;
 }
 
 
@@ -40,10 +29,10 @@ int spasm_linverse(const spasm *L, int k, spasm_GFp *x, int *xi, const int *pinv
  * Calculate y = x * M, where x and M are sparse.
  *
  * The result is scattered in y, its pattern is given by yi. 
- * The return value nz is the number of non-zero entries in y.
+ * The return value ytop is the number of non-zero entries in y.
  */
-int spasm_sparse_vector_matrix_multiply(const spasm *M, const spasm_GFp *x, const int *xi, int xnz, spasm_GFp *y, int *yi) {
-  int p, j, i=0, m, nz=0, Mnz=spasm_nnz(M), prime, *Mp, *Mj, *w, *wi;
+int spasm_sparse_vector_matrix_multiply(const spasm *M, const spasm_GFp *x, const int *xi, int top, spasm_GFp *y, int *yi) {
+  int p, j, m, n, nz, Mnz=spasm_nnz(M), prime, *Mp, *Mj, *w;
   spasm_GFp *Mx;
 
   // check inputs
@@ -54,6 +43,7 @@ int spasm_sparse_vector_matrix_multiply(const spasm *M, const spasm_GFp *x, cons
   }
 
   m = M->m;
+  n = M->n;
   Mp = M->p;
   Mj = M->j;
   Mx = M->x;
@@ -64,27 +54,16 @@ int spasm_sparse_vector_matrix_multiply(const spasm *M, const spasm_GFp *x, cons
   for (j = 0; j < m; j++) {
     w[j] = -1;
   }
-  wi = spasm_calloc(m, sizeof(int));
 
   // scatter y and find its pattern
-  for (j = 0; j < xnz; j++) {
+  for (j = top; j < n; j++) {
     p = xi[j];
-    nz = spasm_scatter_and_pattern(Mj, Mx, Mp[p], Mp[p+1], x[p], y, wi, w, nz, prime); 
+    nz = spasm_scatter_and_pattern(Mj, Mx, Mp[p], Mp[p+1], x[p], y, yi, w, nz, prime); 
   }
 
-  // reallocate yi
-  yi = spasm_realloc(yi, nz*sizeof(int));
-
-  for (j = 0; j < xnz; j++) {
-    if (w[j] >= 0) {
-      yi[i] = j;
-      i++;
-    }
-  }
 
   // free workspace
   free(w);
-  free(wi);
   free(Mp);
   free(Mj);
   free(Mx);
@@ -114,15 +93,15 @@ void spasm_compress_vector(const spasm_GFp *scat, const int *xi, const int nz, s
 
 int spasm_inverse_and_sparse_vect_multiplication(const spasm *L, const spasm *M, int k, spasm_GFp *y, int *yi, const int *pinv) {
   spasm_GFp *x, *yscat;
-  int *xi, xnz, nz, Lm, m;
+  int *xi, xnz, nz, Ln, n;
 
-  Lm = L->m;
-  m = M->m;
+  Ln = L->n;
+  n = M->n;
 
   //get workspace
-  x = spasm_calloc(Lm, sizeof(spasm_GFp));
-  xi = spasm_calloc(Lm, sizeof(int));
-  yscat = spasm_calloc(m, sizeof(spasm_GFp));
+  x = spasm_calloc(Ln, sizeof(spasm_GFp));
+  xi = spasm_calloc(Ln, sizeof(int));
+  yscat = spasm_calloc(n, sizeof(spasm_GFp));
 
   //solve x * L = ek
   xnz = spasm_linverse(L, k, x, xi, pinv);

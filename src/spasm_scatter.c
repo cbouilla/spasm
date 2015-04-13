@@ -19,8 +19,8 @@ void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_G
     
 }
 
-int spasm_scatter_and_pattern(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp *x, int *xi, int *w, int prime) {
-  int j, p, nz=0;
+int spasm_scatter_and_pattern(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp *x, int *xi, int *w, int nz, int prime) {
+  int j, p;
 
     for (p = from; p < to; p++) {
       j = Aj[p];
