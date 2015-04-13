@@ -24,8 +24,8 @@ spasm * spasm_kernel(const spasm *A_t, const int *column_permutation) {
 
     /* allocate result and workspace */
     K = spasm_csr_alloc(m - r, m, L->nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
-    xi = malloc(3*r * sizeof(int));
-    spasm_vector_zero(xi, 3*r);
+    xi = malloc(3*m * sizeof(int));
+    spasm_vector_zero(xi, 3*m);
     x = malloc(m * sizeof(spasm_GFp));
     //    y = malloc(r * sizeof(spasm_GFp));
 
@@ -56,7 +56,7 @@ spasm * spasm_kernel(const spasm *A_t, const int *column_permutation) {
       /* finalize previous row of K */
       Kp[i - r] = nz;
 
-      for(p = top; p < r; p++) {
+      for(p = top; p < m; p++) {
 	j = xi[p];
 	if (x[j] != 0) {
 	  Kj[nz] = q[j];
