@@ -303,6 +303,7 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
     assert(B != NULL);
     assert(xi != NULL);
     assert(x != NULL);
+    assert(pinv == SPASM_IDENTITY_PERMUTATION);
 
     m = L->m;
     Lp = L->p;
@@ -327,6 +328,7 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
     /* clear x */
     for (p = top; p < m; p++) {
       x[ xi[p] ] = 0;
+      printf("support : %d\n", xi[p]);
     }
 
     /* scatter B[k] into x */
@@ -344,20 +346,19 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
       i = xi[px];
 
       /* i maps to row I of L */
-      I = (pinv != NULL) ? (pinv[i]) : i;
+      I = i;
 
-      if (I < 0) {
+      if (I >= m) {
 	/* row I is empty */
-            continue;
+	spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1], prime - x[I], x, prime);
+      } else {
+	/* get L[i,i] */
+	const spasm_GFp diagonal_entry = Lx[ Lp[I + 1] - 1];
+	assert( diagonal_entry != 0 );
+	// axpy-in-place
+	x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+	spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1] - 1, prime - x[i], x, prime);
       }
-
-      /* get L[i,i] */
-      const spasm_GFp diagonal_entry = Lx[ Lp[I + 1] - 1];
-      assert( diagonal_entry != 0 );
-      // axpy-in-place
-      x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-
-      spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1] - 1, prime - x[i], x, prime);
     }
 
 #ifdef SPASM_TIMING
