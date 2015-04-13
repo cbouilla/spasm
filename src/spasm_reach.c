@@ -46,9 +46,9 @@ int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks,
 	inew = (pinv != NULL) ? pinv[i] : i;
 
 	/*
-	 * has row i been seen before ? adjacent columns are Gj[     Gp[jnew]
-	 * : Gp[jnew + 1] ] UNSEEN columns are   Gj[ pstack[head] : Gp[jnew +
-	 * 1] ]
+	 * has row i been seen before ?
+	 * adjacent columns are Gj[ Gp[jnew]     : Gp[jnew + 1] ]
+	 * UNSEEN columns are   Gj[ pstack[head] : Gp[jnew + 1] ]
 	 */
 
 	if (!marks[i]) {
@@ -136,16 +136,16 @@ int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xi, const i
     m = G->m;
     Bp = B->p;
     Bj = B->j;
-    top = m;
+    top = l;
 
     pstack = xi + l;
     marks = pstack + l;
 
     /*
-     * iterates over the k-th row of B.  For each column index j present in
-     * B[k], check if i is in the pattern (i.e. if it is marked). If not,
-     * start a DFS from i to add all nodes reachable therefrom to the
-     * pattern.
+     * iterates over the k-th row of B.  For each column index j
+     * present in B[k], check if j is in the pattern (i.e. if it is
+     * marked). If not, start a DFS from j and add to the pattern all
+     * columns reachable from j.
      */
     for (p = Bp[k]; p < Bp[k + 1]; p++) {
 	if (!marks[Bj[p]]) {

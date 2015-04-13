@@ -7,6 +7,7 @@ dense_lsolve
 gaxpy
 reach
 sparse_[lu]solve
+sparse_[lu]solve_big
 sparse_utsolve
 lu
 pluq
