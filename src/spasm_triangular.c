@@ -229,7 +229,7 @@ int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xi, s
 #endif
 
     /* xi[top : n] = Reach( U, B[k] ) */
-    top = spasm_reach(U, B, k, xi, pinv);
+    top = spasm_reach(U, B, k, m, xi, pinv);
 
 #ifdef SPASM_TIMING
     reach += spasm_ticks() - start;
@@ -292,7 +292,7 @@ int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xi, s
  *
  */
 int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
-  int i, I, p, px, top, m, prime, *Lp, *Lj, *Bp, *Bj;
+  int i, I, p, px, top, n, m, prime, *Lp, *Lj, *Bp, *Bj;
   spasm_GFp *Lx, *Bx;
 
 #ifdef SPASM_TIMING
@@ -305,6 +305,7 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
     assert(x != NULL);
     assert(pinv == SPASM_IDENTITY_PERMUTATION);
 
+    n = L->n;
     m = L->m;
     Lp = L->p;
     Lj = L->j;
@@ -319,16 +320,16 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
     start = spasm_ticks();
 #endif
     /* xi[top : m] = Reach( L, B[k] ) */
-    top = spasm_reach(L, B, k, xi, pinv);
+    top = spasm_reach(L, B, k, n, xi, pinv);
 
 #ifdef SPASM_TIMING
     reach += spasm_ticks() - start;
 #endif
 
     /* clear x */
-    for (p = top; p < m; p++) {
+    for (p = top; p < n; p++) {
       x[ xi[p] ] = 0;
-      printf("support : %d\n", xi[p]);
+      //      printf("support : %d\n", xi[p]);
     }
 
     /* scatter B[k] into x */
@@ -341,7 +342,7 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
     start = spasm_ticks();
 #endif
 
-    for (px = top; px < m; px++) {
+    for (px = top; px < n; px++) {
       /* x[i] is nonzero */
       i = xi[px];
 
@@ -349,7 +350,7 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
       I = i;
 
       if (I >= m) {
-	/* row I is empty */
+	/* column I is part of an implicit identity matrix */
 	spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1], prime - x[I], x, prime);
       } else {
 	/* get L[i,i] */

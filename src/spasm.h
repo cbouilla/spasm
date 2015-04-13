@@ -159,7 +159,7 @@ int spasm_scatter_and_pattern(const int *Aj, const spasm_GFp *Ax, int from, int 
 
 /* spasm_reach.c */
 int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
-int spasm_reach(const spasm * G, const spasm * B, int k, int *xi, const int *pinv);
+int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xi, const int *pinv);
 
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);

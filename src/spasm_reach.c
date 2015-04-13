@@ -46,9 +46,9 @@ int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks,
 	inew = (pinv != NULL) ? pinv[i] : i;
 
 	/*
-	 * has row i been seen before ? adjacent columns are Gj[     Gp[jnew]
-	 * : Gp[jnew + 1] ] UNSEEN columns are   Gj[ pstack[head] : Gp[jnew +
-	 * 1] ]
+	 * has row i been seen before ?
+	 * adjacent columns are Gj[ Gp[jnew]     : Gp[jnew + 1] ]
+	 * UNSEEN columns are   Gj[ pstack[head] : Gp[jnew + 1] ]
 	 */
 
 	if (!marks[i]) {
@@ -113,17 +113,19 @@ int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks,
  *
  * k : k-th row of B is used.
  *
- * xi: size 3m. Used as workspace. Output in xi[top:m]
+ * l : upper-bound on both dimensions of the matrix
+ *
+ * xi: size 3l. Used as workspace. Output in xi[top:l]
  *
  * pinv: mapping of rows to columns of G.
  *
  * return value : top
  *
- * xi [top...m-1] = nodes reachable from graph of G*P' via nodes in B(:,k).
+ * xi [top...l-1] = nodes reachable from graph of G*P' via nodes in B(:,k).
  *
- * xi [m...3m-1] used as workspace
+ * xi [l...3l-1] used as workspace
  */
-int spasm_reach(const spasm * G, const spasm * B, int k, int *xi, const int *pinv) {
+int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xi, const int *pinv) {
     int p, m, top, *Bp, *Bj, *pstack, *marks;
 
     /* check inputs */
@@ -134,16 +136,16 @@ int spasm_reach(const spasm * G, const spasm * B, int k, int *xi, const int *pin
     m = G->m;
     Bp = B->p;
     Bj = B->j;
-    top = m;
+    top = l;
 
-    pstack = xi + m;
-    marks = pstack + m;
+    pstack = xi + l;
+    marks = pstack + l;
 
     /*
-     * iterates over the k-th row of B.  For each column index j present in
-     * B[k], check if i is in the pattern (i.e. if it is marked). If not,
-     * start a DFS from i to add all nodes reachable therefrom to the
-     * pattern.
+     * iterates over the k-th row of B.  For each column index j
+     * present in B[k], check if j is in the pattern (i.e. if it is
+     * marked). If not, start a DFS from j and add to the pattern all
+     * columns reachable from j.
      */
     for (p = Bp[k]; p < Bp[k + 1]; p++) {
 	if (!marks[Bj[p]]) {
@@ -152,7 +154,7 @@ int spasm_reach(const spasm * G, const spasm * B, int k, int *xi, const int *pin
     }
 
     /* unmark all marked nodes. */
-    for (p = top; p < m; p++) {
+    for (p = top; p < l; p++) {
       marks[ xi[p] ] = 0;
     }
 

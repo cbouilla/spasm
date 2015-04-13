@@ -10,7 +10,7 @@ check_PROGRAMS = io GFp gaxpy reach dense_usolve dense_lsolve \
 	         sparse_usolve sparse_lsolve lu permuted_lu  \
 	         pluq permuted_pluq lu_solve pluq_solve sort \
                  vec_perm mat_perm transpose dm submatrix cc scc \
-		 sparse_utsolve kernel
+		 sparse_utsolve sparse_lsolve_big kernel
 
 AM_TESTS_ENVIRONMENT = \
 	env AM_TAP_AWK='$(AWK)'

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..10
+echo 1..11
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/l1.sms
@@ -41,3 +41,8 @@ INPUT_MATRIX=$srcdir/Matrix/u1.sms
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/upper_trapeze.sms
 ./sparse_utsolve 10 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/lower_trapeze.sms
+./sparse_lsolve_big 11 < $INPUT_MATRIX
+
