@@ -9,6 +9,7 @@ reach
 sparse_[lu]solve
 sparse_[lu]solve_big
 sparse_utsolve
+sparse_vect_matrix_prod
 lu
 pluq
 permuted_lu

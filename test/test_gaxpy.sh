@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..1
+echo 1..4
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/m1.sms
@@ -13,3 +13,15 @@ if diff -w $OUT $EXPECTED >/dev/null ; then
 else
   echo 'not ok 1 - matrix-vector product'
 fi
+
+#####################################################"
+INPUT_MATRIX=$srcdir/Matrix/m1.sms
+./sparse_vect_matrix_prod 2 < $INPUT_MATRIX
+
+#####################################################"
+INPUT_MATRIX=$srcdir/Matrix/medium.sms
+./sparse_vect_matrix_prod 3 < $INPUT_MATRIX
+
+#####################################################"
+INPUT_MATRIX=$srcdir/Matrix/rectangular_l.sms
+./sparse_vect_matrix_prod 4 < $INPUT_MATRIX

@@ -118,7 +118,6 @@ void spasm_partition_free(spasm_partition *P);
 void spasm_partition_tighten(spasm_partition *P);
 void spasm_vector_zero(spasm_GFp *x, int n);
 void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha);
-void spasm_identity(spasm *I, int n);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x);
@@ -155,7 +154,6 @@ spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 
 /* spasm_scatter.c */
 void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime);
-int spasm_scatter_and_pattern(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp *x, int *xi, int *w, int nz, int prime);
 
 /* spasm_reach.c */
 int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
