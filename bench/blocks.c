@@ -55,11 +55,47 @@ int submatrix_rank(const spasm *M, int a, int b, int c, int d) {
   // note le nombre de lignes non-nulles de U
   r = LU->U->n;
 
-  // libère la décomposition et la sous-matrice
+  // libère la sous-matrice et la mémoire dont on n'a plus besoin.
   spasm_free_LU(LU);
   spasm_csr_free(C);
 
   return r;
+}
+
+
+/*
+ * Stocke le L de la décomposition LU dans L
+ *  
+ */
+spasm * submatrix_L(const spasm *M, int a, int b, int c, int d) {
+  spasm *C, *L;
+  int *p;
+  spasm_lu *LU;
+
+  //extrait la sous_matrice
+  C = spasm_submatrix(M, a, c, b, d, SPASM_WITH_NUMERICAL_VALUES);
+  if (spasm_nnz(C)==0) {
+    spasm_csr_free(C);
+    L = NULL;
+    return 0;
+  }
+
+  //calcule la décomposition LU
+  p = spasm_cheap_pivots(C);
+  LU = spasm_LU(C, p, SPASM_KEEP_L); // on garde L
+  free(p);
+
+  // récupère L
+  L = LU->L;
+
+  // libère la mémoire en trop.
+  spasm_csr_free(C);
+  spasm_csr_free(LU->U);
+  free(LU->qinv);
+  free(LU->p);
+
+  return L;
+  
 }
 
 
@@ -126,6 +162,11 @@ void count_blocks(const spasm *M, spasm_cc *Y, block_t *blocks, int *start, int 
 }
 
 /*
+ *
+ */
+
+
+/*
  * Etant donné une matrice M déjà permutée sous forme triangulaire par
  * blocs, et la decsription de la décomposition, détermine la liste
  * des blocs diagonaux.
@@ -172,6 +213,29 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks) {
   return k;
 }
 
+/*
+ * Etant donné un bloc diagonal, trouve le L de sa décomposition LU 
+ * et calcule le produit du bas de l'inverse de L et du bloc "derrière"
+ * le bloc diagonal  
+ */
+void find_salmon_block (const spasm *M, const block_t block, spasm *S) {
+  spasm *L, *B;
+  int i0, i1, j1, j2, from, to;
+
+  i0 = block.i0;
+  i1 = block.i1;
+  j1 = block.j1;
+  j2 = M->m;
+  from = block.r;
+  to = i1;
+
+  // B sous-matrice définie associée au bloc [i0:i1, j1:j2]
+  B = spasm_submatrix(M, i0, i1, j1, j2, SPASM_WITH_NUMERICAL_VALUES);
+  L = submatrix_L(M, i0, j1, i1, j2);
+
+  linvxm(L, B, from, to, S, SPASM_IDENTITY_PERMUTATION);
+
+}
 
 /*
  * Etant donnée le rang des blocks diagonaux, Bi, d'une matrice M, triangulaire par
@@ -300,25 +364,26 @@ int main() {
 
     //affichage
     int nnz_diag = 0;
+    int r = 0;
     for (i=0; i<n_blocks; i++) {
       //      printf("%d ; %d ; %d ; %d ; %d \n", blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, blocks[i].r);
-	int dim_i =  blocks1[i].i1 - blocks1[i].i0;
-	int dim_j =  blocks1[i].j1 - blocks1[i].j0;
-	int r = blocks1[i].r;
+      //int dim_i =  blocks1[i].i1 - blocks1[i].i0;
+      //int dim_j =  blocks1[i].j1 - blocks1[i].j0;
+      r = r + blocks1[i].r;
 
 	//printf("%d ; %d ; %d ; %d  ---> %d x %d    %d\n", blocks1[i].i0, blocks1[i].j0, blocks1[i].i1, blocks1[i].j1, dim_i, dim_j, r);
-	nnz_diag += r;
+	//nnz_diag += r;
       
     }
 
-    printf(" \n%d \n------------------------------\n", n_blocks);
+    printf(" \n %d \n------------------------------\n", n_blocks);
     // printf("NNZ en tout : %d, NNZ sur la diagonale : %d\n", spasm_nnz(B), nnz_diag);
     // exit(0);
 
     // Compte le nombre de blocs sur les diagonales supérieures.
     nbl = n_blocks;
     n_tot = n_blocks;
-    for (j=0; j<10; j++) {
+     for (j=0; j<10; j++) {
 
     // Détermine les intervalles de lignes et de colonnes.
       intervals_list(&R, &C, blocks1, nbl);
@@ -345,7 +410,7 @@ int main() {
       free (blocks2);
 
 
-    }
+       }
     // printf("%d \n------------------------------\n", n_tot);
 
     // affichage
