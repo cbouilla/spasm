@@ -118,6 +118,7 @@ void spasm_partition_free(spasm_partition *P);
 void spasm_partition_tighten(spasm_partition *P);
 void spasm_vector_zero(spasm_GFp *x, int n);
 void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha);
+spasm * spasm_identity(int n, int prime);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x);
@@ -202,6 +203,11 @@ spasm_partition * spasm_strongly_connected_components(const spasm *A);
 
 /* spasm_kernel.c */
 spasm * spasm_kernel(const spasm *A, const int * column_permutation);
+
+/* spasm_inverse.c */
+int spasm_sparse_vector_matrix_prod(const spasm *M, const spasm_GFp *x, const int *xi, int xnz, spasm_GFp *y, int *yi);
+int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *y, int *yi, int *pinv);
+void linvxm(const spasm *L, const spasm *M, int from, int to, spasm *Y, int *pinv);
 
 
 /* utilities */

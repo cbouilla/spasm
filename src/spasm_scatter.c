@@ -16,4 +16,5 @@ void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_G
       // axpy-inplace
       x[j] = (x[j] + ((beta * Ax[p]))) % prime /* ultra-naive */;
     }
+    
 }

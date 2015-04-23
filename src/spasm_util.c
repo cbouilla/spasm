@@ -199,3 +199,19 @@ void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha) {
     x[i] = alpha;
   }
 }
+
+spasm * spasm_identity(int n, int prime) {
+  spasm *I; 
+  int i;
+
+  I = spasm_csr_alloc(n, n, n, prime, 1);
+
+  for(i=0; i<n; i++) {
+    I->p[i] = i;
+    I->j[i] = i;
+    I->x[i] = 1;
+  }
+  I->p[n] = n;
+
+  return I;
+}
