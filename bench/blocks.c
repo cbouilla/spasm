@@ -30,6 +30,29 @@ typedef struct {
   int b; // [a; b[
 } interval_t;
 
+/*
+ * type de donnée qui décrit les blocs se présent sur une diagonale.
+ */
+typedef struct {
+  int nbmax; // nombre de blocs sur la diagonale au maximum.
+  int *nr; // numéro de l'intervalle ligne correspondant.
+  int *nc; //numéro de l'intervalle colonne correspondant.
+} diag_t;
+
+
+/* alloue la mémoire d'un diag_t
+ */
+diag_t * diag_alloc(int nbmax) {
+  diag_t *D;
+
+  D = spasm_malloc(sizeof(diag_t));
+
+  D->nbmax = nbmax;
+  D->nr = spasm_calloc(nbmax, sizeof(int));
+  D->nc = spasm_calloc(nbmax, sizeof(int));
+
+  return D;
+}
 
 /*
  * Renvoie le rang de M[a:c, b:d].
@@ -66,7 +89,7 @@ int submatrix_rank(const spasm *M, int a, int b, int c, int d) {
 /*
  * Stocke le L de la décomposition LU dans L
  *  
- */
+ *
 spasm * submatrix_L(const spasm *M, int a, int b, int c, int d) {
   spasm *C, *L;
   int *p;
@@ -97,11 +120,12 @@ spasm * submatrix_L(const spasm *M, int a, int b, int c, int d) {
   return L;
   
 }
+*/
 
 
 /*
  * Renvoie le rang de M[a:c, b:d].
- */
+ *
 int submatrix_nnz(const spasm *M, int a, int b, int c, int d) {
   spasm *C;
   int r;
@@ -112,6 +136,18 @@ int submatrix_nnz(const spasm *M, int a, int b, int c, int d) {
   spasm_csr_free(C);
   return r;
   }
+*/
+
+
+// incrémente empty de 1 si le bloc "block" est vide :
+int is_block_empty(block_t block, int empty) {
+  int k, r;
+  r = block.r;
+  k = ((r == 0) ? 1 : 0);
+  empty = empty + k;
+  return empty;
+}
+
 
 
 /*
@@ -218,7 +254,7 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks) {
  * et calcule le produit du bas de l'inverse de L et du bloc "derrière"
  * le bloc diagonal  
  */
-void find_salmon_block (const spasm *M, const block_t block, spasm *S) {
+/*void find_salmon_block (const spasm *M, const block_t block, spasm *S) {
   spasm *L, *B;
   int i0, i1, j1, j2, from, to;
 
@@ -235,7 +271,7 @@ void find_salmon_block (const spasm *M, const block_t block, spasm *S) {
 
   linvxm(L, B, from, to, S, SPASM_IDENTITY_PERMUTATION);
 
-}
+  }*/
 
 /*
  * Etant donnée le rang des blocks diagonaux, Bi, d'une matrice M, triangulaire par
@@ -266,6 +302,83 @@ void intervals_list(interval_t **R, interval_t **C, block_t *blocks, int n_block
 
   intervals_fill(*R, *C, blocks, n_blocks);
 } 
+
+/*
+ * Etant donnée une matrice diagonale par blocs, renvoie le
+ * numéro du bloc diagonal correspondant à la colonne j pour tout j
+ */
+void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
+  int j, m, k;
+
+  m = M->m;
+  k = 0;  
+
+  for (j = 0; j < m; j++) {   
+    while (blocks[k].j1 <= j) {
+      k++;
+    }
+    Q[j] = k;
+  }
+
+}
+
+/*
+ * Etant donnés trois entiers l et c et une diagonale D, vérifie
+ * si (l,c) est le dernier bloc ajouté dans D, si ce n'est pas le cas
+ * ajouter (l,c) à D.
+ * 
+ * 
+ */
+int block_mark(diag_t *D, int l, int c, int last_b) {
+  int *nr, *nc;
+
+  nr = D->nr;
+  nc = D->nc;
+  if (nr[last_b] == l && nc[last_b] == c) return last_b; // <--- si bloc dernier marqué ne rien faire.
+  last_b++;
+  nr[last_b] = l;
+  nc[last_b] = c;
+  return last_b;
+}
+
+
+/*
+ * Pour chaque i dans l'intervalle de ligne l trouver j tel que
+ * A[i,j] != 0, vérifier si le block d'intervalles (l, Q[j]) est
+ * marqué comme appartenant à la diagonale Q[j] - l, et si ce n'est
+ * pas le cas, le marquer.
+ *
+ * La valeur renvoyée correspond au nombre de blocs traités.
+ */
+int block_repartition(const spasm *M, const block_t *blocks, int n_block, const int *Q, diag_t **D, int *last_b) {
+  int l, i, p, j, i0, i1, *Mp, *Mj, c, k, nbl;
+
+  Mp = M->p;
+  Mj = M->j;
+  nbl = 0;
+
+  for (l = 0; l < n_block; l++) {
+    i0 = blocks[l].i0;
+    i1 = blocks[l].i1;
+
+    // trouver les emplacements des blocs non vides situés sur l'intervalle de lignes n°l.
+    for (i = i0; i < i1; i++) {
+      for (p = Mp[i]; p < Mp[i+1]; p++) {
+	j = Mj[p];
+	c = Q[j];
+	k = c - l;
+	last_b[k] = block_mark(D[k], l, c, last_b[k]);
+      }
+    }
+  }
+
+  // compter les blocs traités.
+  for (k = 0; k < n_block; k++) {
+    nbl = nbl + last_b[k];
+  }
+  return nbl;
+}
+
 
 
 /*
@@ -344,7 +457,8 @@ int main() {
     spasm_dm *x;
     int n_blocks, i, j, *qinv, nbl, n_tot;
     block_t *blocks1, *blocks2;
-    interval_t *R, *C;
+    diag_t **D;
+    //interval_t *R, *C;
 
     // charge la matrice depuis l'entrée standard
     T = spasm_load_sms(stdin, 42013);
@@ -362,56 +476,93 @@ int main() {
     // calcule la liste des blocs
     n_blocks = block_list(B, x, &blocks1);
 
+    int k, nbmax, *last_b, *Q;
+ 
+    // allocation mémoire de diag
+    D = spasm_malloc(n_blocks * sizeof(diag_t));
+  
+    for (k = 0; k < n_blocks; k++) {
+      nbmax = n_blocks - k;
+      D[k] = diag_alloc(nbmax);
+    }
+   
+    // allocation mémoire de last_b et Q
+    last_b = calloc(n_blocks, sizeof(int));
+    Q = malloc(B->m * sizeof(int));
+
+    // trouver le numéro de l'intervalle auquel appartient une colonne.
+    column_diag_number(B, blocks1, Q);
+
+   
+    // trouver la répartition des blocs non vide.
+    nbl = block_repartition(B, blocks1, n_blocks, Q, D, last_b); 
+
     //affichage
-    int nnz_diag = 0;
-    int r = 0;
-    for (i=0; i<n_blocks; i++) {
+    n_tot = n_blocks + 1;
+    n_tot = n_tot * n_blocks;
+    n_tot = n_tot/2;
+
+    printf("nombre total de blocs : %d\n", n_tot);
+    printf("nombre de blocs non vides : %d\n", nbl);
+
+    //libérer la mémoire
+    free(blocks1);
+    free(D);
+
+    //affichage
+    //int nnz_diag = 0;
+    //empty = 0;
+    //for (i=0; i<n_blocks; i++) {
       //      printf("%d ; %d ; %d ; %d ; %d \n", blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, blocks[i].r);
       //int dim_i =  blocks1[i].i1 - blocks1[i].i0;
       //int dim_j =  blocks1[i].j1 - blocks1[i].j0;
-      r = r + blocks1[i].r;
+      //empty = is_block_empty(blocks1[i], empty);
 
 	//printf("%d ; %d ; %d ; %d  ---> %d x %d    %d\n", blocks1[i].i0, blocks1[i].j0, blocks1[i].i1, blocks1[i].j1, dim_i, dim_j, r);
 	//nnz_diag += r;
       
-    }
+    //}
 
-    printf(" \n %d \n------------------------------\n", n_blocks);
+    // printf(" \n %d \n------------------------------\n", n_blocks);
     // printf("NNZ en tout : %d, NNZ sur la diagonale : %d\n", spasm_nnz(B), nnz_diag);
     // exit(0);
 
     // Compte le nombre de blocs sur les diagonales supérieures.
-    nbl = n_blocks;
-    n_tot = n_blocks;
-     for (j=0; j<10; j++) {
+    //nbl = n_blocks;
+    //n_tot = n_blocks;
+    //for (j=0; j<10; j++) {
 
     // Détermine les intervalles de lignes et de colonnes.
-      intervals_list(&R, &C, blocks1, nbl);
-      blocks_copy(&blocks2, blocks1, nbl);
-      free(blocks1);
+    //intervals_list(&R, &C, blocks1, nbl);
+    //blocks_copy(&blocks2, blocks1, nbl);
+    //free(blocks1);
 
     // compte les blocks sur la diagonale.
-      nbl = other_blocks_list(B, R, C, &blocks1, blocks2, nbl);
-      n_tot = n_tot + nbl;
+    //nbl = other_blocks_list(B, R, C, &blocks1, blocks2, nbl);
+    //n_tot = n_tot + nbl;
 
     // affichage
-      for (i=0; i<nbl; i++) {
+    /*
+     *for (i=0; i<nbl; i++) {
 	int dim_i =  blocks1[i].i1 - blocks1[i].i0;
 	int dim_j =  blocks1[i].j1 - blocks1[i].j0;
 	int r = blocks1[i].r;
+	empty = is_block_empty(blocks1[i], empty);
 
 	//printf("%d ; %d ; %d ; %d  ---> %d x %d    %d\n", blocks1[i].i0, blocks1[i].j0, blocks1[i].i1, blocks1[i].j1, dim_i, dim_j, r);
       }
-    printf("%d \n------------------------------\n", nbl);
+    */
+      //printf("%d \n------------------------------\n", empty);
 
     // libère la mémoire.
-      free (R);
-      free (C);
-      free (blocks2);
+    //free (R);
+    //free (C);
+    //free (blocks2);
 
 
-       }
-    // printf("%d \n------------------------------\n", n_tot);
+    //}
+   
+//printf("%d \n------------------------------\n", empty);
 
     // affichage
     return 0;
