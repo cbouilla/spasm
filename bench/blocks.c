@@ -54,6 +54,14 @@ diag_t * diag_alloc(int nbmax) {
   return D;
 }
 
+void diag_free(diag_t *D) {
+  if(D == NULL) return;
+
+  free(D->nr);
+  free(D->nc);
+  free(D);
+}
+
 /*
  * Renvoie le rang de M[a:c, b:d].
  */
@@ -355,10 +363,18 @@ int block_mark(diag_t *D, int l, int c, int last_b) {
 
   nr = D->nr;
   nc = D->nc;
-  if (nr[last_b] == l && nc[last_b] == c) return last_b; // <--- si bloc dernier marqué ne rien faire.
-  last_b++;
-  nr[last_b] = l;
-  nc[last_b] = c;
+
+  if (last_b == -1) {
+    last_b++;
+    nr[last_b] = l;
+    nc[last_b] = c;
+  }
+  else {
+    if (nr[last_b] == l && nc[last_b] == c) return last_b; // <--- si bloc dernier marqué ne rien faire.
+    last_b++;
+    nr[last_b] = l;
+    nc[last_b] = c;
+  }
   return last_b;
 }
 
@@ -497,6 +513,8 @@ int main() {
     // calcule la liste des blocs
     n_blocks = block_list(B, x, &blocks1);
 
+    free(x);
+
     int k, nbmax, *last_b, *Q;
  
     // allocation mémoire de diag
@@ -508,7 +526,9 @@ int main() {
     }
    
     // allocation mémoire de last_b et Q
-    last_b = calloc(n_blocks, sizeof(int));
+    last_b = malloc(n_blocks * sizeof(int));
+    spasm_vector_set(last_b, 0, n_blocks, -1);
+    
     Q = malloc(B->m * sizeof(int));
 
     // trouver le numéro de l'intervalle auquel appartient une colonne.
@@ -528,7 +548,15 @@ int main() {
 
     //libérer la mémoire
     free(blocks1);
+    free(Q);
+    free(last_b);
+    for (k = 0; k < n_blocks; k++) {
+      diag_free(D[k]);
+    }
     free(D);
+    spasm_csr_free(B);
+    spasm_csr_free(A);
+
 
     //affichage
     //int nnz_diag = 0;
