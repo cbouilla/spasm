@@ -337,12 +337,13 @@ void intervals_list(interval_t **R, interval_t **C, block_t *blocks, int n_block
 /*
  * Etant donnée une matrice diagonale par blocs, renvoie le
  * numéro du bloc diagonal correspondant à la colonne j pour tout j
+ * et celui correspondant à la ligne i pour tout i;
  */
 void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
   int j, m, k;
 
   m = M->m;
-  k = 0;  
+  k = 0;
 
   for (j = 0; j < m; j++) {   
     while (blocks[k].j1 <= j) {
@@ -353,13 +354,15 @@ void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
 
 }
 
+
+
 /*
  * vérifie si un entier k appartient à la liste D et si ce n'est pas le cas l'ajouter
  *
  * la valeur renvoyée est le nombre d'éléments dans la liste.
  */
 int diag_list(int *D, int k, int size) {
-  int i, j;
+  int i, start, end, found;
 
   // initialisation de la liste.
   if (size == 0) {
@@ -368,13 +371,29 @@ int diag_list(int *D, int k, int size) {
   }
   
   // vérifier si k appartient à la liste.
-  for (i = 0; i < size && D[i] <= k; i++) {
-    if(D[i] == k) return size;
+
+  //par dichotomie :
+
+  found = 0; // On n'a pas encore trouvé k dans la liste
+  start = 0;
+  end = size;
+
+  while(found == 0 && (end - start) > 1) {
+    i = (start + end)/2;
+    found = ((D[i] == k) ? 1 : 0);
+
+    if (D[i] > k) end = i;
+    else start = i;
   }
 
-  // insérer k dans la liste.
-  for (j = size; j > i; j--) {
-    D[j] = D[j-1];
+  // si on a trouver k dans la liste ne rien faire.
+  if (found == 1) return size;
+
+  // Si k n'est pas dans la liste l'insérer.
+  i = size;
+  while (D[i-1] > k) {
+    D[i] = D[i-1];
+    i--;
   }
   D[i] = k;
   size++;
@@ -385,29 +404,27 @@ int diag_list(int *D, int k, int size) {
 /*
  * donne le nombre de diagonale qui contiennent au moins un block non vide.
  */
-int diag_count(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, int *D) {
-  int l, i, p, j, i0, i1, *Mp, *Mj, c, k, n_diag;
+int diag_count(const spasm *M, const block_t *blocks, const int *Q, int *D) {
+  int l, i, p, j, *Mp, *Mj, n, c, k, n_diag;
 
   Mp = M->p;
   Mj = M->j;
+  n = M->n;
+  l = 0;
   n_diag = 0;
 
-  for (l = 0; l < n_blocks; l++) {
-    i0 = blocks[l].i0;
-    i1 = blocks[l].i1;
+    for (i = 0; i < n; i++) {
+      while (blocks[l].i1 <= i) l++;
 
- 
-    for (i = i0; i < i1; i++) {
       for (p = Mp[i]; p < Mp[i+1]; p++) {
 	j = Mj[p];
 	c = Q[j];
 	k = c - l;
 	n_diag = diag_list(D, k, n_diag);
+	printf("---%d---\n", n_diag);
       }
     }
-  }
 
- 
   return n_diag;
 }
 
@@ -476,20 +493,19 @@ int dicho(const int *L, int k, int t) {
  *
  * La valeur renvoyée correspond au nombre de blocs traités.
  */
-int blocks_repartition(const spasm *M, const block_t *blocks, int n_block, const int *Q, diag_t **diags, int n_diag, int *next_b, const int *D) {
-  int l, i, p, j, i0, i1, *Mp, *Mj, c, k, nbl, d;
+int blocks_repartition(const spasm *M, const block_t *blocks, const int *Q, diag_t **diags, int n_diag, int *next_b, const int *D) {
+  int l, i, p, j, n, *Mp, *Mj, c, k, nbl, d;
 
   Mp = M->p;
   Mj = M->j;
+  n = M->n;
   nbl = 0;
+  l = 0;
  
 
-  for (l = 0; l < n_block; l++) {
-    i0 = blocks[l].i0;
-    i1 = blocks[l].i1;
-
     // trouver les emplacements des blocs non vides situés sur l'intervalle de lignes n°l.
-    for (i = i0; i < i1; i++) {
+    for (i = 0; i < n; i++) {
+      while (blocks[l].i1 <= i) l++;
       for (p = Mp[i]; p < Mp[i+1]; p++) {
 	j = Mj[p];
 	c = Q[j];
@@ -505,7 +521,7 @@ int blocks_repartition(const spasm *M, const block_t *blocks, int n_block, const
        
       }
     }
-  }
+
 
   // compter les blocs traités.
   for (k = 0; k < n_diag; k++) {
@@ -610,6 +626,7 @@ int main() {
 
     // calcule la liste des blocs
     n_blocks = block_list(B, x, &blocks1);
+    printf("blocs diagonaux : %d\n", n_blocks);
 
     free(x);
 
@@ -621,9 +638,20 @@ int main() {
 
     // trouver le numéro de l'intervalle auquel appartient une colonne.
     column_diag_number(B, blocks1, Q);
+    printf("-------------------------\n");
 
     // trouver le nombre de diagonales ayant au moins un bloc non vide.
-    n_diag = diag_count(B, blocks1, n_blocks, Q, not_empty);
+    n_diag = diag_count(B, blocks1, Q, not_empty);
+
+    printf("%d\n", n_diag);
+
+    // libération de la mémoire, fin du programme.
+    free(blocks1);
+    free(Q);
+    free(not_empty);
+    spasm_csr_free(B);
+    spasm_csr_free(A);
+    exit(0);
 
     // allocation mémoire de diag
     diags = spasm_malloc(n_diag * sizeof(diag_t));
@@ -636,7 +664,7 @@ int main() {
     next_b = calloc(n_diag ,sizeof(int));
 
     // trouver la répartition des blocs non vide.
-    nbl = blocks_repartition(B, blocks1, n_blocks, Q, diags, n_diag, next_b, not_empty); 
+    nbl = blocks_repartition(B, blocks1, Q, diags, n_diag, next_b, not_empty); 
 
     //affichage
     //printf("nombre total de blocs : %d\n", n_tot);
