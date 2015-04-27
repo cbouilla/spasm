@@ -48,6 +48,7 @@ diag_t * diag_alloc(int nbmax) {
 
   D = spasm_malloc(sizeof(diag_t));
 
+  D->ndiag = 0;
   D->nbmax = nbmax;
   D->nr = spasm_calloc(nbmax, sizeof(int));
   D->nc = spasm_calloc(nbmax, sizeof(int));
@@ -384,14 +385,12 @@ int diag_list(int *D, int k, int size) {
 /*
  * donne le nombre de diagonale qui contiennent au moins un block non vide.
  */
-int diag_count(const spasm *M, const block_t *blocks, int n_blocks, const int *Q) {
-  int l, i, p, j, i0, i1, *Mp, *Mj, c, k, n_diag, *D;
+int diag_count(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, int *D) {
+  int l, i, p, j, i0, i1, *Mp, *Mj, c, k, n_diag;
 
   Mp = M->p;
   Mj = M->j;
   n_diag = 0;
-
-  D = spasm_malloc(n_blocks * sizeof(int));
 
   for (l = 0; l < n_blocks; l++) {
     i0 = blocks[l].i0;
@@ -408,9 +407,11 @@ int diag_count(const spasm *M, const block_t *blocks, int n_blocks, const int *Q
     }
   }
 
-  free(D);
+ 
   return n_diag;
 }
+
+
 
 
 /*
@@ -420,26 +421,52 @@ int diag_count(const spasm *M, const block_t *blocks, int n_blocks, const int *Q
  * 
  * 
  */
-int block_mark(diag_t *diags, int l, int c, int last_b) {
+int block_mark(diag_t *diags, int l, int c, int k, int next_b) {
   int *nr, *nc;
 
   nr = diags->nr;
   nc = diags->nc;
 
-  if (last_b == -1) {
-    last_b++;
-    nr[last_b] = l;
-    nc[last_b] = c;
+  diags->ndiag = k;
+
+  if (next_b == 0) {
+    nr[next_b] = l;
+    nc[next_b] = c;
+    next_b++;
+   return  next_b;
   }
-  else {
-    if (nr[last_b] == l && nc[last_b] == c) return last_b; // <--- si bloc dernier marqué ne rien faire.
-    last_b++;
-    nr[last_b] = l;
-    nc[last_b] = c;
-  }
-  return last_b;
+   
+  if (nr[next_b - 1] == l && nc[next_b - 1] == c) return next_b; // <--- si bloc dernier marqué ne rien faire.
+
+  nr[next_b] = l;
+  nc[next_b] = c;
+  next_b++;
+  return next_b;
 }
 
+/*
+ * Etant donnée une liste L de taille t, d'entiers disincts et 
+ * ordonnés, et un élément k de L, trouve l'unique i vérifiant
+ * L[i] = k.
+ */
+int dicho(const int *L, int k, int t) {
+  int i, start, end, found;
+
+  found = 0; // <--- On n'a pas encore trouvé i. 
+  start = 0;
+  end = t;
+    
+  while (found == 0 && (end - start) > 1) {
+    i = (start + end)/2 ; 
+    found = ((L[i] == k) ? 1 : 0); // <--- test si i est l'indice qu'on recherche.
+    if (L[i] > k) end = i;
+    else start = i;
+  }
+
+  if (L[start] == k) return start;
+  else return -1; // valeur renvoyée par défaut si k n'appartient pas à la liste L.
+
+}
 
 /*
  * Pour chaque i dans l'intervalle de ligne l trouver j tel que
@@ -449,12 +476,13 @@ int block_mark(diag_t *diags, int l, int c, int last_b) {
  *
  * La valeur renvoyée correspond au nombre de blocs traités.
  */
-int block_repartition(const spasm *M, const block_t *blocks, int n_block, const int *Q, diag_t **diags, int *last_b) {
-  int l, i, p, j, i0, i1, *Mp, *Mj, c, k, nbl;
+int blocks_repartition(const spasm *M, const block_t *blocks, int n_block, const int *Q, diag_t **diags, int n_diag, int *next_b, const int *D) {
+  int l, i, p, j, i0, i1, *Mp, *Mj, c, k, nbl, d;
 
   Mp = M->p;
   Mj = M->j;
   nbl = 0;
+ 
 
   for (l = 0; l < n_block; l++) {
     i0 = blocks[l].i0;
@@ -466,14 +494,22 @@ int block_repartition(const spasm *M, const block_t *blocks, int n_block, const 
 	j = Mj[p];
 	c = Q[j];
 	k = c - l;
-	last_b[k] = block_mark(diags[k], l, c, last_b[k]);
+
+	// trouver l'unique d tel que D[d] = c - l.
+	d = dicho(D, k, n_diag);
+	if (d == -1) {
+	  printf ("Error : digonal %d is supposed to be empty\n", k);
+	  return -1;
+	}
+	next_b[d] = block_mark(diags[d], l, c, k, next_b[d]);
+       
       }
     }
   }
 
   // compter les blocs traités.
-  for (k = 0; k < n_block; k++) {
-    nbl = nbl + last_b[k] +1;
+  for (k = 0; k < n_diag; k++) {
+    nbl = nbl + next_b[k];
   }
   return nbl;
 }
@@ -556,7 +592,7 @@ int main() {
     spasm_dm *x;
     int n_blocks, i, j, *qinv, nbl, n_tot;
     block_t *blocks1, *blocks2;
-    diag_t **D;
+    diag_t **diags;
     //interval_t *R, *C;
 
     // charge la matrice depuis l'entrée standard
@@ -577,44 +613,35 @@ int main() {
 
     free(x);
 
-    int k, nbmax, *last_b, *Q, n_diag1, n_diag2;
+    int k, nbmax, *next_b, *Q, n_diag, *not_empty;
  
-    // allocation mémoire de diag
-    D = spasm_malloc(n_blocks * sizeof(diag_t));
-  
-    for (k = 0; k < n_blocks; k++) {
-      nbmax = n_blocks - k;
-      D[k] = diag_alloc(nbmax);
-    }
-   
-    // allocation mémoire de last_b et Q
-    last_b = malloc(n_blocks * sizeof(int));
-    spasm_vector_set(last_b, 0, n_blocks, -1);
-    
+    // allocation mémoire de not_empty et Q
+    not_empty = malloc(n_blocks * sizeof(int));
     Q = malloc(B->m * sizeof(int));
 
     // trouver le numéro de l'intervalle auquel appartient une colonne.
     column_diag_number(B, blocks1, Q);
 
-    n_diag1 = diag_count(B, blocks1, n_blocks, Q);
+    // trouver le nombre de diagonales ayant au moins un bloc non vide.
+    n_diag = diag_count(B, blocks1, n_blocks, Q, not_empty);
+
+    // allocation mémoire de diag
+    diags = spasm_malloc(n_diag * sizeof(diag_t));
+  
+    for (k = 0; k < n_diag; k++) {
+      diags[k] = diag_alloc(n_blocks);
+    }
+   
+    //allocation mémoire de next_b;
+    next_b = calloc(n_diag ,sizeof(int));
 
     // trouver la répartition des blocs non vide.
-    nbl = block_repartition(B, blocks1, n_blocks, Q, D, last_b); 
-
-    n_diag2 = 0;
-    for (k = 0; k < n_blocks ; k++) {
-      if(last_b[k] != -1) n_diag2 ++;
-    }
-
-    printf("%d, %d\n",n_diag1, n_diag2);
+    nbl = blocks_repartition(B, blocks1, n_blocks, Q, diags, n_diag, next_b, not_empty); 
 
     //affichage
-    n_tot = n_blocks + 1;
-    n_tot = n_tot * n_blocks;
-    n_tot = n_tot/2;
-
     //printf("nombre total de blocs : %d\n", n_tot);
-    //printf("nombre de blocs non vides : %d\n", nbl);
+
+    printf("nombre de blocs non vides : %d\n", nbl);
 
     
     //for (k = 0; k < n_blocks; k++) {
@@ -625,11 +652,12 @@ int main() {
     //libérer la mémoire
     free(blocks1);
     free(Q);
-    free(last_b);
-    for (k = 0; k < n_blocks; k++) {
-      diag_free(D[k]);
+    free(next_b);
+    free(not_empty);
+    for (k = 0; k < n_diag; k++) {
+      diag_free(diags[k]);
     }
-    free(D);
+    free(diags);
     spasm_csr_free(B);
     spasm_csr_free(A);
 
