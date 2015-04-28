@@ -240,12 +240,9 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks) {
     count_blocks(M, DM->V, NULL, &k, &last_i, &last_j);
   }
 
-  // en principe on arrive forcément en bas de la matrice
-  assert(last_i == M->n);
-
-  // si on atteint pas le bord droit de la matrice, prévoir un bloc
-  // vide pour aller jusqu'au bout
-  if (last_j != M->m) {
+  // si on atteint pas le bord bas-droit de la matrice, prévoir un
+  // bloc vide pour aller jusqu'au bout
+  if (last_i != M->n || last_j != M->m) {
     k++;
   }
   
@@ -268,7 +265,7 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks) {
 
   // si on atteint pas le bord droit de la matrice, ajouter un bloc
   // vide pour aller jusqu'au bout
-  if (last_j != M->m) {
+  if (last_i != M->n || last_j != M->m) {
     (*blocks)[k].i0 = last_i;
     (*blocks)[k].j0 = last_j;
     (*blocks)[k].i1 = M->n;
