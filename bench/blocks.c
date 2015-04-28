@@ -372,6 +372,9 @@ int diag_list(int *D, int k, int size) {
   
   // vérifier si k appartient à la liste.
 
+  // On commence par vérifier si k n'est pas la dernière diagonale marquée.
+  if (D[size - 1] == k) return size;
+
   //par dichotomie :
 
   found = 0; // On n'a pas encore trouvé k dans la liste
@@ -386,7 +389,7 @@ int diag_list(int *D, int k, int size) {
     else start = i;
   }
 
-  // si on a trouver k dans la liste ne rien faire.
+  // si on a trouvé k dans la liste ne rien faire.
   if (found == 1) return size;
 
   // Si k n'est pas dans la liste l'insérer.
