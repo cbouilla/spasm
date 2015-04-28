@@ -149,13 +149,13 @@ int submatrix_nnz(const spasm *M, int a, int b, int c, int d) {
 */
 
 
-// incrémente empty de 1 si le bloc "block" est vide :
-int is_block_empty(block_t block, int empty) {
+// incrémente fill de 1 si le bloc "block" n'est pas vide :
+int is_block_empty(block_t block, int fill) {
   int k, r;
   r = block.r;
-  k = ((r == 0) ? 1 : 0);
-  empty = empty + k;
-  return empty;
+  k = ((r == 0) ? 0 : 1);
+  fill = fill + k;
+  return fill;
 }
 
 
@@ -373,24 +373,20 @@ int diag_list(int *D, int k, int size) {
 
   //par dichotomie :
 
-  found = 0; // On n'a pas encore trouvé k dans la liste
   start = 0;
   end = size;
 
-  while(found == 0 && (end - start) > 1) {
+  while( (end - start) > 1) {
     i = (start + end)/2;
-    found = ((D[i] == k) ? 1 : 0);
+    if (D[i] == k) return size; // si k est dans la liste ne rien faire.
 
     if (D[i] > k) end = i;
     else start = i;
   }
 
-  // si on a trouvé k dans la liste ne rien faire.
-  if (found == 1) return size;
-
   // Si k n'est pas dans la liste l'insérer.
   i = size;
-  while (D[i-1] > k) {
+  while (D[i-1] > k && i > 0) {
     D[i] = D[i-1];
     i--;
   }
@@ -427,7 +423,34 @@ int diag_count(const spasm *M, const block_t *blocks, const int *Q, int *D) {
   return n_diag;
 }
 
+/*
+ * Autre fonction qui donne le nombre de diagonale qui contiennent au moins
+ * un bloc non vide.
+ */
+int not_empty_diags(const spasm *M, const block_t *blocks, const int *Q, int *D) {
+  int i, l, p, j, *Mp, *Mj, n, c, k, n_diags;
 
+  Mp = M->p;
+  Mj = M->j;
+  n = M->n;
+  l = 0; // <--- numéro du bloc de ligne qu'on regarde.
+  n_diags = 0;
+
+  for (i = 0; i < n; i++) {
+    while (blocks[l].i1 <= i) l++;
+
+    for (p = Mp[i]; p < Mp[i+1]; p++) {
+      j = Mj[p];
+      c = Q[j]; 
+      k = c - l; // <--- numéro de la diagonale à laquelle appartient l'entrée.
+      if (D[k] != l) {
+	n_diags++;
+	D[k] = l;
+      }
+    }
+  }
+  return n_diags;
+}
 
 
 /*
@@ -629,11 +652,15 @@ int main() {
 
     free(x);
 
-    int k, nbmax, *next_b, *Q, n_diag, *not_empty;
+    int k, nbmax, *next_b, *Q, n_diag, n_diags, *not_empty, *D;
  
     // allocation mémoire de not_empty et Q
     not_empty = malloc(n_blocks * sizeof(int));
     Q = malloc(B->m * sizeof(int));
+    D = malloc(n_blocks * sizeof(int));
+    for (i = 0; i < n_blocks; i++) {
+      D[i] = -1;
+    }
 
     // trouver le numéro de l'intervalle auquel appartient une colonne.
     column_diag_number(B, blocks1, Q);
@@ -643,6 +670,10 @@ int main() {
     n_diag = diag_count(B, blocks1, Q, not_empty);
 
     printf("%d\n", n_diag);
+
+    n_diags = not_empty_diags(B, blocks1, Q, D);
+
+    printf("%d\n", n_diags);
 
     // libération de la mémoire, fin du programme.
     free(blocks1);
