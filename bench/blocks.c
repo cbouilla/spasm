@@ -371,9 +371,8 @@ int diag_list(int *D, int k, int size) {
   }
   
   // vérifier si k appartient à la liste.
-
-  // On commence par vérifier si k n'est pas la dernière diagonale marquée.
   if (D[size - 1] == k) return size;
+  if (D[0] == k) return size;
 
   //par dichotomie :
 
@@ -435,7 +434,7 @@ int diag_count(const spasm *M, const block_t *blocks, const int *Q, int *D) {
 
 
 /*
- * Etant donnés trois entiers l et c et une diagonale D, vérifie
+ * Etant donnés deux entiers l et c et une diagonale D, vérifie
  * si (l,c) est le dernier bloc ajouté dans D, si ce n'est pas le cas
  * ajouter (l,c) à D.
  * 
