@@ -359,7 +359,7 @@ void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
  * la valeur renvoyée est le nombre d'éléments dans la liste.
  */
 int diag_list(int *D, int k, int size) {
-  int i, start, end, found;
+  int i, j, start, end, found;
 
   // initialisation de la liste.
   if (size == 0) {
@@ -368,9 +368,7 @@ int diag_list(int *D, int k, int size) {
   }
   
   // vérifier si k appartient à la liste.
-  if (D[size - 1] == k) return size;
-  if (D[0] == k) return size;
-
+  
   //par dichotomie :
 
   start = 0;
@@ -384,13 +382,15 @@ int diag_list(int *D, int k, int size) {
     else start = i;
   }
 
+  if (D[start] == k) return size; // si k dans la liste ne rien faire.
+
   // Si k n'est pas dans la liste l'insérer.
-  i = size;
-  while (D[i-1] > k && i > 0) {
-    D[i] = D[i-1];
-    i--;
+  j = size;
+  while (j > 0 && k < D[j - 1]) {
+    D[j] = D[j-1];
+    j--;
   }
-  D[i] = k;
+  D[j] = k;
   size++;
 
   return size;
@@ -424,17 +424,19 @@ int diag_count(const spasm *M, const block_t *blocks, const int *Q, int *D) {
 }
 
 /*
- * Autre fonction qui donne le nombre de diagonale qui contiennent au moins
- * un bloc non vide.
+ * Détermine le nombre de blocs non vide et les diagonales auquels ils appartiennent.
+ *
+ * Ici seul le dernier bloc observé à la diagonale k est stocké à D[k]. On n'a pas
+ * d'information sur les autres blocs.
  */
-int not_empty_diags(const spasm *M, const block_t *blocks, const int *Q, int *D) {
-  int i, l, p, j, *Mp, *Mj, n, c, k, n_diags;
+int filled_blocks(const spasm *M, const block_t *blocks, const int *Q, int *D) {
+  int i, l, p, j, *Mp, *Mj, n, c, k, fill;
 
   Mp = M->p;
   Mj = M->j;
   n = M->n;
   l = 0; // <--- numéro du bloc de ligne qu'on regarde.
-  n_diags = 0;
+  fill = 0;
 
   for (i = 0; i < n; i++) {
     while (blocks[l].i1 <= i) l++;
@@ -444,12 +446,12 @@ int not_empty_diags(const spasm *M, const block_t *blocks, const int *Q, int *D)
       c = Q[j]; 
       k = c - l; // <--- numéro de la diagonale à laquelle appartient l'entrée.
       if (D[k] != l) {
-	n_diags++;
-	D[k] = l;
+	fill++;
+	D[k] = l; // <--- l remplace la valeur précédente de D[k].
       }
     }
   }
-  return n_diags;
+  return fill;
 }
 
 
@@ -652,12 +654,13 @@ int main() {
 
     free(x);
 
-    int k, nbmax, *next_b, *Q, n_diag, n_diags, *not_empty, *D;
+    int k, nbmax, *next_b, *Q, n_diags, *not_empty, *D, fill;
  
     // allocation mémoire de not_empty et Q
     not_empty = malloc(n_blocks * sizeof(int));
     Q = malloc(B->m * sizeof(int));
     D = malloc(n_blocks * sizeof(int));
+
     for (i = 0; i < n_blocks; i++) {
       D[i] = -1;
     }
@@ -667,34 +670,43 @@ int main() {
     printf("-------------------------\n");
 
     // trouver le nombre de diagonales ayant au moins un bloc non vide.
-    n_diag = diag_count(B, blocks1, Q, not_empty);
+    // n_diags = diag_count(B, blocks1, Q, not_empty);
 
-    printf("%d\n", n_diag);
+    //printf("%d\n", n_diags);
 
-    n_diags = not_empty_diags(B, blocks1, Q, D);
+    fill = filled_blocks(B, blocks1, Q, D); // <--- nombre total de blocs non vide.
 
-    printf("%d\n", n_diags);
+    printf("%d\n", fill);
 
     // libération de la mémoire, fin du programme.
     free(blocks1);
     free(Q);
+    free(D);
     free(not_empty);
     spasm_csr_free(B);
     spasm_csr_free(A);
     exit(0);
 
+    // déterminer le nombre de diagonale non vide.
+    n_diags = 0;
+    for (i = 0; i < n_blocks; i++) {
+      if(D[i] != -1) n_diags++;
+    }
+
+    //printf("%d\n", n_diags);
+
     // allocation mémoire de diag
-    diags = spasm_malloc(n_diag * sizeof(diag_t));
+    diags = spasm_malloc(n_diags * sizeof(diag_t));
   
-    for (k = 0; k < n_diag; k++) {
+    for (k = 0; k < n_diags; k++) {
       diags[k] = diag_alloc(n_blocks);
     }
    
     //allocation mémoire de next_b;
-    next_b = calloc(n_diag ,sizeof(int));
+    next_b = calloc(n_diags ,sizeof(int));
 
     // trouver la répartition des blocs non vide.
-    nbl = blocks_repartition(B, blocks1, Q, diags, n_diag, next_b, not_empty); 
+    nbl = blocks_repartition(B, blocks1, Q, diags, n_diags, next_b, not_empty); 
 
     //affichage
     //printf("nombre total de blocs : %d\n", n_tot);
@@ -712,7 +724,7 @@ int main() {
     free(Q);
     free(next_b);
     free(not_empty);
-    for (k = 0; k < n_diag; k++) {
+    for (k = 0; k < n_diags; k++) {
       diag_free(diags[k]);
     }
     free(diags);
