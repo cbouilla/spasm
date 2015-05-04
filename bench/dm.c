@@ -34,7 +34,7 @@ void show(const spasm *M, spasm_cc *Y) {
     c = Y->CC->rr[i + 1];
     d = Y->CC->cc[i + 1];
 
-    //    printf("   *) Connected component (%d x %d) --- (%d, %d) to (%d, %d)\n", c-a, d-b, a,b,c,d);
+    printf("   *) Connected component (%d x %d) --- (%d, %d) to (%d, %d)\n", c-a, d-b, a,b,c,d);
     if (Y->SCC[i] != NULL) {
       for(j = 0; j < Y->SCC[i]->nr; j++) {
 	e = Y->SCC[i]->rr[j];
@@ -49,7 +49,7 @@ void show(const spasm *M, spasm_cc *Y) {
 	if  (g-e > 1) {
 	  trivial_diag_rank += 1;
 	}
-	//	printf("       *) SCC (%d x %d, deffect %d) --- (%d, %d) to (%d, %d)\n", g-e, h-f, spasm_min(g-e, h-f)-r, e, f, g, h);
+	printf("       *) SCC (%d x %d, deffect %d) --- (%d, %d) to (%d, %d)\n", g-e, h-f, spasm_min(g-e, h-f)-r, e, f, g, h);
       }
     }
   }
