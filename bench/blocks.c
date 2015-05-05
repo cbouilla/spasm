@@ -30,6 +30,15 @@ typedef struct {
   int b; // [a; b[
 } interval_t;
 
+
+/*
+ * Type de donnée qui donne la position d'un block.
+ */
+typedef struct {
+  int c; // numéro de l'interval de colonnes auquel le bloc appartient.
+  int r; // numéro de l'interval de lignes auquel le bloc appartient.
+} bposition_t;
+
 /*
  * type de donnée qui décrit les blocs se présent sur une diagonale.
  */
@@ -429,14 +438,19 @@ int diag_count(const spasm *M, const block_t *blocks, const int *Q, int *D) {
  * Ici seul le dernier bloc observé à la diagonale k est stocké à D[k]. On n'a pas
  * d'information sur les autres blocs.
  */
-int filled_blocks(const spasm *M, const block_t *blocks, const int *Q, int *D) {
-  int i, l, p, j, *Mp, *Mj, n, c, k, fill;
+int count_filled_blocks(const spasm *M, const block_t *blocks, int n_blocks, const int *Q) {
+ int i, l, p, j, *Mp, *Mj, n, c, k, fill, *D;
 
   Mp = M->p;
   Mj = M->j;
   n = M->n;
   l = 0; // <--- numéro du bloc de ligne qu'on regarde.
   fill = 0;
+
+  D = spasm_malloc(n_blocks * sizeof(int));
+  for (i = 0; i < n_blocks; i++) {
+    D[i] = -1;
+  }
 
   for (i = 0; i < n; i++) {
     while (blocks[l].i1 <= i) l++;
@@ -451,7 +465,49 @@ int filled_blocks(const spasm *M, const block_t *blocks, const int *Q, int *D) {
       }
     }
   }
+  free(D);
   return fill;
+}
+
+/*
+ * Détermine la liste des emplacements des blocs non vides si ils sont "intéressants"
+ * la valeur renoyée est le nombre de blocs "intéressants" à regarder
+ */
+int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, bposition_t *where) {
+  int i, l, p, j, *Mp, *Mj, n, c, k, fill, *D, count;
+
+  Mp = M->p;
+  Mj = M->j;
+  n = M->n;
+  l = 0; // <--- numéro du bloc de ligne qu'on regarde.
+  fill = 0;
+  count = 0;
+
+  D = spasm_malloc(n_blocks * sizeof(int));
+  for (i = 0; i < n_blocks; i++) {
+    D[i] = -1;
+  }
+
+  for (i = 0; i < n; i++) {
+    while (blocks[l].i1 <= i) l++;
+
+    for (p = Mp[i]; p < Mp[i+1]; p++) {
+      j = Mj[p];
+      c = Q[j]; 
+      k = c - l; // <--- numéro de la diagonale à laquelle appartient l'entrée.
+      if (D[k] != l) {
+	fill++;
+	D[k] = l; // <--- l remplace la valeur précédente de D[k].
+	if ((blocks[c].r < blocks[c].j1 - blocks[c].j0) && (blocks[l].r < blocks[l].i1 - blocks[l].i0)) {
+	  where[count].c = c;
+	  where[count].r = l;
+	  count++;
+	 }
+      }
+    }
+  }
+  free(D);
+  return count;
 }
 
 
@@ -654,16 +710,13 @@ int main() {
 
     free(x);
 
-    int k, nbmax, *next_b, *Q, n_diags, *not_empty, *D, fill;
+    int k, nbmax, *next_b, *Q, n_diags, *not_empty, fill, count;
+    bposition_t *where;
  
-    // allocation mémoire de not_empty et Q
-    not_empty = malloc(n_blocks * sizeof(int));
-    Q = malloc(B->m * sizeof(int));
-    D = malloc(n_blocks * sizeof(int));
 
-    for (i = 0; i < n_blocks; i++) {
-      D[i] = -1;
-    }
+    // allocation mémoire de not_empty et Q
+    //not_empty = malloc(n_blocks * sizeof(int));
+    Q = malloc(B->m * sizeof(int));
 
     // trouver le numéro de l'intervalle auquel appartient une colonne.
     column_diag_number(B, blocks1, Q);
@@ -674,25 +727,36 @@ int main() {
 
     //printf("%d\n", n_diags);
 
-    fill = filled_blocks(B, blocks1, Q, D); // <--- nombre total de blocs non vide.
+
+    fill = count_filled_blocks(B, blocks1, n_blocks, Q); // <--- nombre total de blocs non vide.
 
     printf("%d\n", fill);
 
+    //allocation de mémoire de where.
+    where = malloc(fill * sizeof(bposition_t));
+    for (i = 0; i < fill; i++) {
+      where[i].c = -1;
+      where[i].r = -1;
+    }
+
+    count = filled_blocks_list(B, blocks1, n_blocks, Q, where);
+
+    printf("%d\n", count);
     // libération de la mémoire, fin du programme.
     free(blocks1);
     free(Q);
-    free(D);
-    free(not_empty);
+    free(where);
+    //free(not_empty);
     spasm_csr_free(B);
     spasm_csr_free(A);
     exit(0);
 
-    // déterminer le nombre de diagonale non vide.
+    /* déterminer le nombre de diagonale non vide.
     n_diags = 0;
     for (i = 0; i < n_blocks; i++) {
       if(D[i] != -1) n_diags++;
     }
-
+    */
     //printf("%d\n", n_diags);
 
     // allocation mémoire de diag
