@@ -35,9 +35,22 @@ typedef struct {
  * Type de donnée qui donne la position d'un block.
  */
 typedef struct {
-  int c; // numéro de l'interval de colonnes auquel le bloc appartient.
+  int d; // numéro de la diagonale auquel le bloc appartient.
   int r; // numéro de l'interval de lignes auquel le bloc appartient.
-} bposition_t;
+} blk_t;
+
+
+/*
+ * type de donnée qui décrit une matrice triangulaire supérieure,
+ * dont on se moque de la valeur numérique des entrées.
+ */
+typedef struct {
+  int nzmax; // nombre maximum d'entrée non nulle.
+  int n; // nombre de ligne = nombre de diagonale.
+  int *d; // pointeurs sur les diagonales
+  int *i; // positions sur les lignes.
+} uptri_t;
+
 
 /*
  * type de donnée qui décrit les blocs se présent sur une diagonale.
@@ -72,6 +85,35 @@ void diag_free(diag_t *D) {
   free(D->nc);
   free(D);
 }
+
+
+/*
+ * aloue la mémoire d'un uptri_t;
+ */
+uptri_t * uptri_alloc(int nzmax, int n) {
+  uptri_t *T;
+
+  T = spasm_malloc(sizeof(uptri_t));
+
+  T->nzmax = nzmax;
+  T->n = n;
+  T->d = spasm_calloc(n+1, sizeof(int));
+  T->i = spasm_calloc(nzmax, sizeof(int));
+
+  return T;
+}
+
+/*
+ * libère la mémoire d'un uptri_t;
+ */
+void uptri_free(uptri_t *T) {
+  if (T == NULL) return;
+
+  free(T->d);
+  free(T->i);
+  free(T);
+}
+
 
 /*
  * Renvoie le rang de M[a:c, b:d].
@@ -215,10 +257,6 @@ void count_blocks(const spasm *M, spasm_cc *Y, block_t *blocks, int *start, int 
     }
   }
 }
-
-/*
- *
- */
 
 
 /*
@@ -366,7 +404,7 @@ void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
  * vérifie si un entier k appartient à la liste D et si ce n'est pas le cas l'ajouter
  *
  * la valeur renvoyée est le nombre d'éléments dans la liste.
- */
+ *
 int diag_list(int *D, int k, int size) {
   int i, j, start, end, found;
 
@@ -405,9 +443,9 @@ int diag_list(int *D, int k, int size) {
   return size;
 } 
 
-/*
+ *
  * donne le nombre de diagonale qui contiennent au moins un block non vide.
- */
+ *
 int diag_count(const spasm *M, const block_t *blocks, const int *Q, int *D) {
   int l, i, p, j, *Mp, *Mj, n, c, k, n_diag;
 
@@ -431,6 +469,7 @@ int diag_count(const spasm *M, const block_t *blocks, const int *Q, int *D) {
 
   return n_diag;
 }
+*/
 
 /*
  * Détermine le nombre de blocs non vide et les diagonales auquels ils appartiennent.
@@ -473,7 +512,7 @@ int count_filled_blocks(const spasm *M, const block_t *blocks, int n_blocks, con
  * Détermine la liste des emplacements des blocs non vides si ils sont "intéressants"
  * la valeur renoyée est le nombre de blocs "intéressants" à regarder
  */
-int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, bposition_t *where) {
+int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, blk_t *where) {
   int i, l, p, j, *Mp, *Mj, n, c, k, fill, *D, count;
 
   Mp = M->p;
@@ -498,8 +537,8 @@ int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, cons
       if (D[k] != l) {
 	fill++;
 	D[k] = l; // <--- l remplace la valeur précédente de D[k].
-	if ((blocks[c].r < blocks[c].j1 - blocks[c].j0) && (blocks[l].r < blocks[l].i1 - blocks[l].i0)) {
-	  where[count].c = c;
+	if ((k == 0) || (blocks[c].r < blocks[c].j1 - blocks[c].j0)) {
+	  where[count].d = k;
 	  where[count].r = l;
 	  count++;
 	 }
@@ -512,12 +551,113 @@ int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, cons
 
 
 /*
+ * Donne la matrice des positions des blocs sous forme uptri_t
+ * à partir de la liste "where", du nombre de blocs "count" et
+ * du nombre de blocs diagonaux "n_blocks".
+ */
+uptri_t * blocks_position_matrix(const blk_t *w, int n_blocks, int count) {
+  int k, *Bd, *Bi, *tmp, sum, p;
+  uptri_t *B;
+
+  /* allocation du résultat */
+  B = uptri_alloc(count, n_blocks);
+
+  tmp = spasm_calloc(n_blocks, sizeof(int));
+  Bd = B->d;
+  Bi = B->i;
+
+  /* compte le nombre d'entrée sur une diagonale */
+  for (k = 0; k < count; k++) {
+    tmp[ w[k].d ]++;
+  }
+
+  /* implémente les pointeurs de diagonales */
+  sum = 0;
+  for (k = 0; k < n_blocks; k++) {
+    Bd[k] = sum;
+    sum += tmp[k];
+    tmp[k] = Bd[k];
+  }
+  Bd[n_blocks] = sum;
+
+  /* trouve l'emplacement des entrées sur chaque diagonale */
+  for (k = 0; k < count; k++) {
+    p = tmp[ w[k].d ]++; // <-- p-ième entrée de B, sur la diagonale wd[k].
+    Bi[p] = w[k].r;  // On note le numéro de ligne correspondant à l'entrée.
+  }
+
+  /* libération de mémoire, retourner le resultat. */
+  free(tmp);
+  return B;
+}
+
+/*
+ * Pour une diagonale donnée, parcours les lignes i, de la matrices qui contiennent un bloc
+ * intéressant sur cette diagonale. Si le bloc est succesptible de subir une élimination,
+ * note le numéro de la diagonale à RE[i].
+ */
+void row_elimination(int n_diag, const block_t *blocks, const uptri_t *B, int n_blocks, int *RE) {
+  int k, p, *Bd, *Bi, i0, i1;
+
+  assert(n_diag >= 0 && n_diag < n_blocks);
+
+  if (n_diag == 0) {
+    for (k = 0; k < n_blocks; k++) {
+      RE[k] = 0 ;
+      // Sur la diagonale, tous les blocs sont éliminés.
+    }
+    return;		       
+  }
+
+
+  Bd = B->d;
+  Bi = B->i; 
+
+  // On regarde ce qui se passe sur la digonale précédente.
+  for (k = Bd[n_diag]; k < Bd[n_diag-1]; k++) {
+    p = Bi[k]; // <--- intervalle de ligne qui correspond à une entrée non nulle sur la diagonale n_diag.
+    i0 = blocks[p].i0;
+    i1 = blocks[p].i1;
+
+    if (i0 < i1) {
+      RE[p] = n_diag;
+    }
+  }
+
+}
+
+
+/*
+ *
+ */
+void rightest_eliminated_block(const uptri_t *B, int *RE, int n_blocks, blk_t *right, const block_t *blocks) {
+  int k, diag, *Bd, *Bi, count;
+
+  Bd = B->d;
+  Bi = B->i;
+  count = 0;
+
+  for (diag = 1; diag < n_blocks; diag++) {
+
+    row_elimination(diag-1, blocks, B, n_blocks, RE);
+
+    for (k = Bd[diag]; k < Bd[diag+1]; k++) {
+      right[count].d = RE[ Bi[k] ];
+      right[count].r = Bi[k];
+      count++;
+    }
+  }
+
+}
+
+
+/*
  * Etant donnés deux entiers l et c et une diagonale D, vérifie
  * si (l,c) est le dernier bloc ajouté dans D, si ce n'est pas le cas
  * ajouter (l,c) à D.
  * 
  * 
- */
+ *
 int block_mark(diag_t *diags, int l, int c, int k, int next_b) {
   int *nr, *nc;
 
@@ -541,11 +681,11 @@ int block_mark(diag_t *diags, int l, int c, int k, int next_b) {
   return next_b;
 }
 
-/*
+ *
  * Etant donnée une liste L de taille t, d'entiers disincts et 
  * ordonnés, et un élément k de L, trouve l'unique i vérifiant
  * L[i] = k.
- */
+ *
 int dicho(const int *L, int k, int t) {
   int i, start, end, found;
 
@@ -565,14 +705,14 @@ int dicho(const int *L, int k, int t) {
 
 }
 
-/*
+ *
  * Pour chaque i dans l'intervalle de ligne l trouver j tel que
  * A[i,j] != 0, vérifier si le block d'intervalles (l, Q[j]) est
  * marqué comme appartenant à la diagonale Q[j] - l, et si ce n'est
  * pas le cas, le marquer.
  *
  * La valeur renvoyée correspond au nombre de blocs traités.
- */
+ *
 int blocks_repartition(const spasm *M, const block_t *blocks, const int *Q, diag_t **diags, int n_diag, int *next_b, const int *D) {
   int l, i, p, j, n, *Mp, *Mj, c, k, nbl, d;
 
@@ -610,7 +750,7 @@ int blocks_repartition(const spasm *M, const block_t *blocks, const int *Q, diag
   return nbl;
 }
 
-
+*/
 
 /*
  * Etant donnée les listes des intervalles "intéressants" de lignes et de colonnes, 
@@ -686,9 +826,8 @@ int main() {
     spasm_triplet *T;
     spasm *A, *B;
     spasm_dm *x;
-    int n_blocks, i, j, *qinv, nbl, n_tot;
-    block_t *blocks1, *blocks2;
-    diag_t **diags;
+    int n_blocks, i, *qinv;
+    block_t *blocks1;
     //interval_t *R, *C;
 
     // charge la matrice depuis l'entrée standard
@@ -710,8 +849,9 @@ int main() {
 
     free(x);
 
-    int k, nbmax, *next_b, *Q, n_diags, *not_empty, fill, count;
-    bposition_t *where;
+    int *Q, fill, count, *RE;
+    blk_t *where;
+    uptri_t *P;
  
 
     // allocation mémoire de not_empty et Q
@@ -733,15 +873,20 @@ int main() {
     printf("%d\n", fill);
 
     //allocation de mémoire de where.
-    where = malloc(fill * sizeof(bposition_t));
+    where = malloc(fill * sizeof(blk_t));
     for (i = 0; i < fill; i++) {
-      where[i].c = -1;
+      where[i].d = -1;
       where[i].r = -1;
     }
 
     count = filled_blocks_list(B, blocks1, n_blocks, Q, where);
+    P = blocks_position_matrix(where, n_blocks, count);
 
     printf("%d\n", count);
+
+    // allocation mémoire de RE
+    RE = spasm_malloc(n_blocks * sizeof(int));
+
     // libération de la mémoire, fin du programme.
     free(blocks1);
     free(Q);
@@ -749,6 +894,7 @@ int main() {
     //free(not_empty);
     spasm_csr_free(B);
     spasm_csr_free(A);
+    uptri_free(P);
     exit(0);
 
     /* déterminer le nombre de diagonale non vide.
@@ -759,41 +905,11 @@ int main() {
     */
     //printf("%d\n", n_diags);
 
-    // allocation mémoire de diag
-    diags = spasm_malloc(n_diags * sizeof(diag_t));
-  
-    for (k = 0; k < n_diags; k++) {
-      diags[k] = diag_alloc(n_blocks);
-    }
-   
-    //allocation mémoire de next_b;
-    next_b = calloc(n_diags ,sizeof(int));
-
-    // trouver la répartition des blocs non vide.
-    nbl = blocks_repartition(B, blocks1, Q, diags, n_diags, next_b, not_empty); 
-
-    //affichage
-    //printf("nombre total de blocs : %d\n", n_tot);
-
-    printf("nombre de blocs non vides : %d\n", nbl);
-
     
     //for (k = 0; k < n_blocks; k++) {
     //printf("%d ; %d\n", k, last_b[k]+1);
     // }
     
-
-    //libérer la mémoire
-    free(blocks1);
-    free(Q);
-    free(next_b);
-    free(not_empty);
-    for (k = 0; k < n_diags; k++) {
-      diag_free(diags[k]);
-    }
-    free(diags);
-    spasm_csr_free(B);
-    spasm_csr_free(A);
 
 
     //affichage
