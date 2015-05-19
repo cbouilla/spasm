@@ -23,7 +23,7 @@ typedef struct {
 
 
 /*
- * type de données qui décrit un intervalle.
+ * Type de données qui décrit un intervalle.
  */
 typedef struct {
   int a; // décrit l'intervalle 
@@ -35,13 +35,13 @@ typedef struct {
  * Type de donnée qui donne la position d'un block.
  */
 typedef struct {
-  int d; // numéro de la diagonale auquel le bloc appartient.
+  int c; // numéro de la colonne auquel le bloc appartient.
   int r; // numéro de l'interval de lignes auquel le bloc appartient.
 } blk_t;
 
 
 /*
- * type de donnée qui décrit une matrice triangulaire supérieure,
+ * Type de donnée qui décrit une matrice triangulaire supérieure,
  * dont on se moque de la valeur numérique des entrées.
  */
 typedef struct {
@@ -53,7 +53,7 @@ typedef struct {
 
 
 /*
- * type de donnée qui décrit les blocs se présent sur une diagonale.
+ * Type de donnée qui décrit les blocs se présent sur une diagonale.
  */
 typedef struct {
   int ndiag; // numero de la diagonale.
@@ -61,6 +61,17 @@ typedef struct {
   int *nr; // numéro de l'intervalle ligne correspondant.
   int *nc; //numéro de l'intervalle colonne correspondant.
 } diag_t;
+
+
+/*
+ * Type de donnée qui définie les actions prévue en une ligne/colonne.
+ * Utilise les listes simplement chaînées
+ */
+typedef struct action action_t;
+struct action {
+  int act; // élément de la liste chaînée
+  struct action *next; // pointeur sur l'élément suivant
+}; 
 
 
 /* alloue la mémoire d'un diag_t
@@ -538,7 +549,7 @@ int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, cons
 	fill++;
 	D[k] = l; // <--- l remplace la valeur précédente de D[k].
 	if ((k == 0) || (blocks[c].r < blocks[c].j1 - blocks[c].j0)) {
-	  where[count].d = k;
+	  where[count].c = c;
 	  where[count].r = l;
 	  count++;
 	 }
@@ -556,19 +567,28 @@ int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, cons
  * du nombre de blocs diagonaux "n_blocks".
  */
 uptri_t * blocks_position_matrix(const blk_t *w, int n_blocks, int count) {
-  int k, *Bd, *Bi, *tmp, sum, p;
+  int k, *wd, *Bd, *Bi, *tmp, sum, p;
   uptri_t *B;
+
+  /* Pour chaque bloc w[k] trouver sa diagonale. */
+
+  wd = spasm_malloc(count * sizeof(int)); // Allocation mémoire diagonale
+
+  for (k = 0; k < count; k++) {
+    wd[k] = w[k].c - w[k].r; // <--- diagonale à laquelle appartient le bloc w[k]
+  }
 
   /* allocation du résultat */
   B = uptri_alloc(count, n_blocks);
 
   tmp = spasm_calloc(n_blocks, sizeof(int));
+
   Bd = B->d;
   Bi = B->i;
 
   /* compte le nombre d'entrée sur une diagonale */
   for (k = 0; k < count; k++) {
-    tmp[ w[k].d ]++;
+    tmp[ wd[k] ]++;
   }
 
   /* implémente les pointeurs de diagonales */
@@ -582,71 +602,207 @@ uptri_t * blocks_position_matrix(const blk_t *w, int n_blocks, int count) {
 
   /* trouve l'emplacement des entrées sur chaque diagonale */
   for (k = 0; k < count; k++) {
-    p = tmp[ w[k].d ]++; // <-- p-ième entrée de B, sur la diagonale wd[k].
+    p = tmp[ wd[k] ]++; // <-- p-ième entrée de B, sur la diagonale wd[k].
     Bi[p] = w[k].r;  // On note le numéro de ligne correspondant à l'entrée.
   }
 
   /* libération de mémoire, retourner le resultat. */
   free(tmp);
+  free(wd);
   return B;
 }
 
+
 /*
- * Pour une diagonale donnée, parcours les lignes i, de la matrices qui contiennent un bloc
- * intéressant sur cette diagonale. Si le bloc est succesptible de subir une élimination,
- * note le numéro de la diagonale à RE[i].
+ * Pour un bloc donné blk (r, c), si le bloc est susceptible d'être éliminé, alors
+ * Er[r] = c (on regarde les lignes) et Ec[c] = r (on regarde les colonnes).
+ * renvoie 1 si le bloc est succeptible d'être éliminé, 0 sinon.
  */
-void row_elimination(int n_diag, const block_t *blocks, const uptri_t *B, int n_blocks, int *RE) {
-  int k, p, *Bd, *Bi, i0, i1;
+int may_be_eliminated(blk_t blk, const block_t *blocks, int *Er, int *Ec) {
+  int r, c, i0, i1;
 
-  assert(n_diag >= 0 && n_diag < n_blocks);
+  r = blk.r;
+  c = blk.c;
 
-  if (n_diag == 0) {
-    for (k = 0; k < n_blocks; k++) {
-      RE[k] = 0 ;
-      // Sur la diagonale, tous les blocs sont éliminés.
-    }
-    return;		       
+  i0 = blocks[r].i0;
+  i1 = blocks[r].i1;
+
+  if (i0 < i1) {
+    Er[r] = c;
+    Ec[c] = r;
+    return 1;
   }
+  return 0;
+}
 
+/*
+ * Pour un bloc donné blk, trouve (r,c) le dernier bloc éliminé à gauche de blk
+ */
+int left_elimination(blk_t blk, const int *Er, const uptri_t *B) {
+  int r, c, d, *Bd, *Bi, k;
 
   Bd = B->d;
-  Bi = B->i; 
+  Bi = B->i;
 
-  // On regarde ce qui se passe sur la digonale précédente.
-  for (k = Bd[n_diag]; k < Bd[n_diag-1]; k++) {
-    p = Bi[k]; // <--- intervalle de ligne qui correspond à une entrée non nulle sur la diagonale n_diag.
-    i0 = blocks[p].i0;
-    i1 = blocks[p].i1;
+  r = blk.r;
+  c = Er[r]; // <--- le dernier bloc éliminé à gauche de blk est (r,c)
 
-    if (i0 < i1) {
-      RE[p] = n_diag;
-    }
+  // on cherche la position de (r,c) dans B
+  d = c - r;
+
+  for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
+
+  if(Bi[k] != r) {
+    printf("Error : under block (%d, %d) doesn't match any entries in position matrix \n", r, c);
+    return -1;
+  }
+ 
+  return k;
+}
+
+/*
+ * Pour un bloc blk, trouve (r,c) le dernier bloc éliminé en dessous de blk
+ */
+int under_elimination(blk_t blk, const int *Ec, const uptri_t *B) {
+  int r, c, d, *Bd, *Bi, k;
+
+  Bd = B->d;
+  Bi = B->i;
+
+  c = blk.c;
+  r = Ec[c]; // <--- le dernier bloc éliminé sous blk est (r,c)
+
+  // On cherche la position de (r,c) dans B
+  d = c - r;
+
+  for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
+
+  if (Bi[k] != r) {
+    printf("Error : under block (%d, %d) doesn't match any entries in position matrix \n", r, c);
+    return -1;
   }
 
+  return k;
 }
 
 
 /*
- *
+ * Pour un indice k correspondant à une entrée sur la matrice dans une diagonale inférieure à diag
+ * renvoie le numéro de la diagonale sur laquelle se trouve le bloc d'indice k.
  */
-void rightest_eliminated_block(const uptri_t *B, int *RE, int n_blocks, blk_t *right, const block_t *blocks) {
-  int k, diag, *Bd, *Bi, count;
+int diag_index(const uptri_t *B, int k, int diag) {
+  int d, *Bd;
+
+  Bd = B->d;
+
+  assert(Bd[diag] > k);
+
+  for (d = diag; d >=0 && Bd[d] > k; d--); // <--- numéro de la diagonale sur laquelle est le bloc d'indice k.
+
+  return d ;
+}
+
+
+
+
+/*
+ * Parcourt la matrice diagonale par diagonale, pour chaque entrée, stocke le bloc éliminé 
+ * immediatement à gauche et celui immédiatement à droite. (On regarde les entrée à partir
+ * de la première diagonale supérieure)
+ *
+ * Détermine si le bloc est susceptible d'être éliminé ou non
+ * 
+ * Ajoute les actions aux bonnes colonnes et aux bonnes lignes
+ *
+ * Effectue les actions si nécessaire.
+ *
+ * renvoie la nouvelle valeur du nombre de bloc
+ */
+int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks) {
+  int k, i, j, d, diag, count, *Bd, *Bi, *Ec, *Er,  *left, *under, l, u, elim, c_act, r_act;
+  blk_t blk;
 
   Bd = B->d;
   Bi = B->i;
-  count = 0;
+  count = B->nzmax;
+  c_act = 0; // nombre d'action en colonnes.
+  r_act = 0; // nombre d'action en lignes.
+
+  // Allocation mémoire pour listes des blocs ayant subit une élimination.
+  Ec = spasm_malloc(n_blocks * sizeof(int));
+  Er = spasm_malloc(n_blocks * sizeof(int));
+
+  // Allocation mémoire de under et left.
+  left = spasm_malloc(count * sizeof(blk_t)); // pour tout k, left[k] désigne l'indice du dernier bloc éliminé à gauche du bloc d'indice k.
+  under = spasm_malloc(count *sizeof(blk_t)); // under[k] désigne l'indice du dernier bloc éliminé sous le bloc d'indice k
+
+  for(k = 0; k < n_blocks; k++) {
+    left[k] = -1; // Si k désigne un bloc sur la diagonale principale, il n'y a pas de bloc éliminé avant
+    under[k] = -1; // on initialise à -1.
+    
+    Er[k] = k; // Initialisation des blocs Ec et Er
+    Ec[k] = k; // Sur la diagonale tous les blocs sont éliminés.
+  }
 
   for (diag = 1; diag < n_blocks; diag++) {
+   
+    for (k = Bd[diag]; k < Bd[diag + 1]; k++) {
+      blk.r = Bi[k];
+      blk.c = Bi[k] + diag;
 
-    row_elimination(diag-1, blocks, B, n_blocks, RE);
+      /* Donne l'entrée correspondant au dernier bloc éliminé à gauche
+       * Et en dessous du bloc (i, j)
+       */
+      left[k] = left_elimination(blk, Er, B);
+      under[k] = under_elimination(blk, Ec, B);
 
-    for (k = Bd[diag]; k < Bd[diag+1]; k++) {
-      right[count].d = RE[ Bi[k] ];
-      right[count].r = Bi[k];
-      count++;
+      if (left[k] == -1 || under[k] == -1) {
+	printf("Error entry %d of position matrix \n", k);
+	return 0;
+      }
+      
+      /* Regarde les actions à ajouter 
+       * sur les colonnes à gauche.
+       */
+      l = left[k];
+      d = diag;
+      while (l != -1) {
+	d = diag_index(B, l, d); // détermine les diagonales des bloc éliminés à gauche du bloc d'indice k.
+	j = d + Bi[l]; // colonne du bloc d'indice l
+
+	// ajouter blk.c dans la liste des actions prévues en j.
+	c_act++; //<--- compte le nombre d'action à ajouter en colonnes.
+	l = left[l];
+      } 
+
+      /* Regarde si le bloc doit être éliminé ou non.
+       * met à jour les listes Er et Ec
+       */
+      elim = may_be_eliminated(blk, blocks, Er, Ec);
+
+      /* Si le bloc doit être éliminé on regarde les action à 
+       * ajouter sur les lignes en dessous.
+       */
+      if(elim == 1) {
+	u = under[k];
+	while(u != -1) {
+	  i = Bi[l]; // ligne correspondant au bloc d'indice u
+
+	  //ajouter blk.r dans la liste d'action prévues en i.
+	  r_act++; // <--- compte le nombre d'action à ajouter en lignes
+	  u = left[u];
+	}
+      }
+      
+      /* Regarde si le bloc blk ne déclenche pas lui-même d'action.
+       * Dans tous les cas, on déclenche les actions prévues sur la ligne blk.r
+       * Si on élimine le bloc, on déclenche les actions prévues sur la colonne blk.c
+       */
+
     }
   }
+
+  return count;
 
 }
 
@@ -849,7 +1005,7 @@ int main() {
 
     free(x);
 
-    int *Q, fill, count, *RE;
+    int *Q, fill, count;
     blk_t *where;
     uptri_t *P;
  
@@ -875,7 +1031,7 @@ int main() {
     //allocation de mémoire de where.
     where = malloc(fill * sizeof(blk_t));
     for (i = 0; i < fill; i++) {
-      where[i].d = -1;
+      where[i].c = -1;
       where[i].r = -1;
     }
 
@@ -884,13 +1040,19 @@ int main() {
 
     printf("%d\n", count);
 
-    // allocation mémoire de RE
-    RE = spasm_malloc(n_blocks * sizeof(int));
+    // allocation mémoire de Er et Ec.
+   
+   
+    
+   
+
 
     // libération de la mémoire, fin du programme.
     free(blocks1);
     free(Q);
     free(where);
+    //free(left);
+    //free(low);
     //free(not_empty);
     spasm_csr_free(B);
     spasm_csr_free(A);
