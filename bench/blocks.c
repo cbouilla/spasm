@@ -650,10 +650,13 @@ int left_elimination(blk_t blk, const int *Er, const uptri_t *B) {
   // on cherche la position de (r,c) dans B
   d = c - r;
 
-  for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
+  k = Bd[d];
+  while (k < Bd[d+1] && Bi[k] != r) 
+    k++;
+  // for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
 
   if(Bi[k] != r) {
-    printf("Error : under block (%d, %d) doesn't match any entries in position matrix \n", r, c);
+    //printf("Error : under block (%d, %d) doesn't match any entries in position matrix \n", r, c);
     return -1;
   }
  
@@ -675,10 +678,13 @@ int under_elimination(blk_t blk, const int *Ec, const uptri_t *B) {
   // On cherche la position de (r,c) dans B
   d = c - r;
 
-  for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
+  //for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
+  k = Bd[d];
+  while(k < Bd[d+1] && Bi[k] != r)
+    k++;
 
   if (Bi[k] != r) {
-    printf("Error : under block (%d, %d) doesn't match any entries in position matrix \n", r, c);
+    //printf("Error : under block (%d, %d) doesn't match any entries in position matrix \n", r, c);
     return -1;
   }
 
@@ -718,15 +724,18 @@ int diag_index(const uptri_t *B, int k, int diag) {
  *
  * renvoie la nouvelle valeur du nombre de bloc
  */
-int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks) {
-  int k, i, j, d, diag, count, *Bd, *Bi, *Ec, *Er,  *left, *under, l, u, elim, c_act, r_act;
+int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c_act, int *r_act) {
+  int k, i, j, d, diag, count, *Bd, *Bi, *Ec, *Er,  *left, *under, l, u, elim; 
+    //*c_act, *r_act;
   blk_t blk;
 
   Bd = B->d;
   Bi = B->i;
   count = B->nzmax;
-  c_act = 0; // nombre d'action en colonnes.
-  r_act = 0; // nombre d'action en lignes.
+
+
+  /* Allocation des espaces de mémoire.
+   */
 
   // Allocation mémoire pour listes des blocs ayant subit une élimination.
   Ec = spasm_malloc(n_blocks * sizeof(int));
@@ -736,13 +745,28 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks) {
   left = spasm_malloc(count * sizeof(blk_t)); // pour tout k, left[k] désigne l'indice du dernier bloc éliminé à gauche du bloc d'indice k.
   under = spasm_malloc(count *sizeof(blk_t)); // under[k] désigne l'indice du dernier bloc éliminé sous le bloc d'indice k
 
+  // Allocation mémoire de c_act et r_act, comptent les actions sur les colonnes et les lignes.
+  // r_act = spasm_malloc(n_blocks * sizeof(blk_t)); // pour tout i, r_act[i] désigne le nombre d'action à effectuer à la ligne i.
+  // c_act = spasm_malloc(n_blocks * sizeof(blk_t)); // pour tout j, c_act[j] désigne le nombre d'action à effectuer à la colonne j.
+
+
+  /* Initialisation des données
+   */
+  
   for(k = 0; k < n_blocks; k++) {
     left[k] = -1; // Si k désigne un bloc sur la diagonale principale, il n'y a pas de bloc éliminé avant
     under[k] = -1; // on initialise à -1.
     
     Er[k] = k; // Initialisation des blocs Ec et Er
     Ec[k] = k; // Sur la diagonale tous les blocs sont éliminés.
+
+    r_act[k] = 0; // Au début du programme, aucune action n'est prévue.
+    c_act[k] = 0;
   }
+
+
+  /* Parcours de la matrice pour les diagonales supérieures.
+   */
 
   for (diag = 1; diag < n_blocks; diag++) {
    
@@ -756,10 +780,10 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks) {
       left[k] = left_elimination(blk, Er, B);
       under[k] = under_elimination(blk, Ec, B);
 
-      if (left[k] == -1 || under[k] == -1) {
-	printf("Error entry %d of position matrix \n", k);
-	return 0;
-      }
+      // if (left[k] == -1 || under[k] == -1) {
+      //printf("Error entry %d of position matrix \n", k);
+      //return 0;
+      //}
       
       /* Regarde les actions à ajouter 
        * sur les colonnes à gauche.
@@ -770,8 +794,13 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks) {
 	d = diag_index(B, l, d); // détermine les diagonales des bloc éliminés à gauche du bloc d'indice k.
 	j = d + Bi[l]; // colonne du bloc d'indice l
 
-	// ajouter blk.c dans la liste des actions prévues en j.
-	c_act++; //<--- compte le nombre d'action à ajouter en colonnes.
+	// teste si blk.c appartient à la liste des actions prévues en j.
+
+	// ajoute blk.c dans la liste des actions prévues en j.
+
+	// incrémente le compteur d'action de la colonne j.
+	c_act[j]++;
+
 	l = left[l];
       } 
 
@@ -786,11 +815,17 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks) {
       if(elim == 1) {
 	u = under[k];
 	while(u != -1) {
-	  i = Bi[l]; // ligne correspondant au bloc d'indice u
+	  i = Bi[u]; // ligne correspondant au bloc d'indice u
 
-	  //ajouter blk.r dans la liste d'action prévues en i.
-	  r_act++; // <--- compte le nombre d'action à ajouter en lignes
-	  u = left[u];
+	  // teste si blk.r appartient à la listes des actions prévues en i.
+
+	  // ajoute blk.r dans la liste d'action prévues en i.
+
+	  // incrémente le compteur d'action de la ligne i.
+
+	  r_act[i]++;
+	  
+	  u = under[u];
 	}
       }
       
@@ -801,6 +836,15 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks) {
 
     }
   }
+
+  /* Libération de la mémoire auxiliaire.
+   */
+  free(Ec);
+  free(Er);
+  free(left);
+  free(under);
+  //free(r_act);
+  //free(c_act);
 
   return count;
 
@@ -1005,7 +1049,7 @@ int main() {
 
     free(x);
 
-    int *Q, fill, count;
+    int *Q, fill, count, *c_act, *r_act;
     blk_t *where;
     uptri_t *P;
  
@@ -1040,9 +1084,13 @@ int main() {
 
     printf("%d\n", count);
 
-    // allocation mémoire de Er et Ec.
+
    
-   
+    r_act = spasm_malloc(n_blocks * sizeof(blk_t)); // pour tout i, r_act[i] désigne le nombre d'action à effectuer à la ligne i.
+    c_act = spasm_malloc(n_blocks * sizeof(blk_t)); // pour tout j, c_act[j] désigne le nombre d'action à effectuer à la colonne j.
+
+    count = emergence_simulation(P, blocks1, n_blocks, c_act, r_act);
+    printf("%d ; %d \n", c_act[9], r_act[8]);
     
    
 
@@ -1051,8 +1099,8 @@ int main() {
     free(blocks1);
     free(Q);
     free(where);
-    //free(left);
-    //free(low);
+    free(c_act);
+    free(r_act);
     //free(not_empty);
     spasm_csr_free(B);
     spasm_csr_free(A);
