@@ -68,7 +68,8 @@ typedef struct {
  * Utilise les listes simplement chaînées
  */
 typedef struct action action_t;
-struct action {
+struct action 
+{
   int act; // élément de la liste chaînée
   struct action *next; // pointeur sur l'élément suivant
 }; 
@@ -650,10 +651,7 @@ int left_elimination(blk_t blk, const int *Er, const uptri_t *B) {
   // on cherche la position de (r,c) dans B
   d = c - r;
 
-  k = Bd[d];
-  while (k < Bd[d+1] && Bi[k] != r) 
-    k++;
-  // for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
+  for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
 
   if(Bi[k] != r) {
     //printf("Error : under block (%d, %d) doesn't match any entries in position matrix \n", r, c);
@@ -678,10 +676,7 @@ int under_elimination(blk_t blk, const int *Ec, const uptri_t *B) {
   // On cherche la position de (r,c) dans B
   d = c - r;
 
-  //for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
-  k = Bd[d];
-  while(k < Bd[d+1] && Bi[k] != r)
-    k++;
+  for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
 
   if (Bi[k] != r) {
     //printf("Error : under block (%d, %d) doesn't match any entries in position matrix \n", r, c);
@@ -709,7 +704,95 @@ int diag_index(const uptri_t *B, int k, int diag) {
 }
 
 
+/*
+ * Etant donnés r, et c, regarde si le bloc (r,c) correspond à une entrée de la matrice des positions.
+ * renvoie si 0 si c'est le cas et 1 sinon.
+ */
+int is_entry_zero(const uptri_t *B, int r, int c) {
+  int d, *Bi, *Bd, k;
 
+  Bi = B->i;
+  Bd = B->d;
+
+  d = c - r;
+
+  for (k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
+
+  if (Bi[k] != r) return 1;
+
+  return 0;
+}
+
+
+/*
+ * Retourne 0 si k appartient à la liste chaînée list et 1 sinon.
+ */
+int is_action_new(action_t *list, int k) {
+  action_t *tmp;
+
+  tmp = list;
+
+  while(tmp != NULL) {
+    if(tmp->act == k) return 0;
+    tmp = tmp->next;
+  }
+
+  return 1;
+}
+
+/*
+ * Ajoute une action en tête de liste. 
+ */
+action_t * new_action(action_t *list, int k) {
+  action_t *new;
+
+  new = spasm_malloc(sizeof(action_t)); //<--- création d'un nouvel élément de la chaine
+  new->act = k; // <--- la valeur de l'action est k.
+  new->next = list; // <--- l'élément suivant est le premier élément de la liste list.
+
+  return new;
+}
+
+/*
+ * Etant donné c, parcourt les actions r d'une liste chaînée list, 
+ * et regarde pour tout r, si (r,c) est dans la matrice B. 
+ * Renvoie le total des actions déclanchées.
+ */
+int row_action_set_off(const uptri_t *B, action_t *list, int c) {
+  int r, tot;
+  action_t *tmp;
+
+  tmp = list;
+  tot = 0;
+
+  while(tmp != NULL) {
+    r = tmp->act;
+    tot += is_entry_zero(B, r, c);
+    tmp = tmp->next;
+  }
+
+  return tot;
+}
+
+/*
+ * Etant donné r, parcourt les actions c d'une liste chaînée et regarde pour tout c
+ * si (r, c) est dans la matrice B. Renvoie le total des actions déclanchées.
+ */
+int col_action_set_off(const uptri_t *B, action_t *list, int r) {
+  int c, tot;
+  action_t *tmp;
+
+  tmp = list;
+  tot = 0;
+
+  while(tmp != NULL) {
+    c = tmp->act;
+    tot += is_entry_zero(B, r, c);
+    tmp = tmp->next;
+  }
+
+  return tot;
+}
 
 /*
  * Parcourt la matrice diagonale par diagonale, pour chaque entrée, stocke le bloc éliminé 
@@ -725,17 +808,29 @@ int diag_index(const uptri_t *B, int k, int diag) {
  * renvoie la nouvelle valeur du nombre de bloc
  */
 int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c_act, int *r_act) {
-  int k, i, j, d, diag, count, *Bd, *Bi, *Ec, *Er,  *left, *under, l, u, elim; 
+  int k, i, j, d, diag, count, *Bd, *Bi, *Ec, *Er,  *left, *under, l, u, elim, add, start; 
     //*c_act, *r_act;
   blk_t blk;
+  action_t **Row, **Col;
 
   Bd = B->d;
   Bi = B->i;
   count = B->nzmax;
-
-
+  start = 0; // nombre d'action déclenchées, initialisée à 0 au début du programme.
+ 
   /* Allocation des espaces de mémoire.
    */
+
+  // Allocation mémoire des tableaux de listes chaînées.
+  Row = spasm_malloc(n_blocks * sizeof(action_t*));
+  Col = spasm_malloc(n_blocks * sizeof(action_t*));
+
+  // Initialisation des listes chaînées :
+  for (k = 0; k <n_blocks; k++) {
+    Row[k] = NULL; // Au départ une liste chaînées pointe sur NULL
+    Col[k] = NULL;
+  }
+
 
   // Allocation mémoire pour listes des blocs ayant subit une élimination.
   Ec = spasm_malloc(n_blocks * sizeof(int));
@@ -794,15 +889,23 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 	d = diag_index(B, l, d); // détermine les diagonales des bloc éliminés à gauche du bloc d'indice k.
 	j = d + Bi[l]; // colonne du bloc d'indice l
 
-	// teste si blk.c appartient à la liste des actions prévues en j.
+	// teste si blk.c appartient à la liste des actions prévues en j
+	add = is_action_new(Col[j], blk.c);
 
-	// ajoute blk.c dans la liste des actions prévues en j.
+	// ajoute blk.c dans la liste des actions prévues en j, si ce n'est pas le cas.
+	if(add) {    
+	  Col[j] = new_action(Col[j], blk.c);
+	}
 
-	// incrémente le compteur d'action de la colonne j.
-	c_act[j]++;
+	// incrémente le compteur si nécessaire.
+	c_act[j] += add;
 
 	l = left[l];
       } 
+
+      //On compte les actions que le bloc déclenche sur la ligne blk.r
+      start += row_action_set_off(B, Row[blk.r], blk.c);
+
 
       /* Regarde si le bloc doit être éliminé ou non.
        * met à jour les listes Er et Ec
@@ -818,15 +921,21 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 	  i = Bi[u]; // ligne correspondant au bloc d'indice u
 
 	  // teste si blk.r appartient à la listes des actions prévues en i.
+	  add = is_action_new(Row[i], blk.r);
 
-	  // ajoute blk.r dans la liste d'action prévues en i.
+	  // ajoute blk.r dans la liste d'action prévues en i, si ce n'est pas le cas.
+	  if(add) {
+	    Row[i] = new_action(Row[i], blk.r);
+	  }
 
 	  // incrémente le compteur d'action de la ligne i.
-
-	  r_act[i]++;
+	  r_act[i] += add;
 	  
 	  u = under[u];
 	}
+
+	//On compte les actions que le bloc déclenche sur la colonne blk.c
+	start += col_action_set_off(B, Col[blk.c], blk.r);
       }
       
       /* Regarde si le bloc blk ne déclenche pas lui-même d'action.
@@ -843,10 +952,12 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
   free(Er);
   free(left);
   free(under);
+  free(Row);
+  free(Col);
   //free(r_act);
   //free(c_act);
 
-  return count;
+  return start;
 
 }
 
@@ -1049,7 +1160,7 @@ int main() {
 
     free(x);
 
-    int *Q, fill, count, *c_act, *r_act;
+    int *Q, fill, count, *c_act, *r_act, start;
     blk_t *where;
     uptri_t *P;
  
@@ -1089,11 +1200,13 @@ int main() {
     r_act = spasm_malloc(n_blocks * sizeof(blk_t)); // pour tout i, r_act[i] désigne le nombre d'action à effectuer à la ligne i.
     c_act = spasm_malloc(n_blocks * sizeof(blk_t)); // pour tout j, c_act[j] désigne le nombre d'action à effectuer à la colonne j.
 
-    count = emergence_simulation(P, blocks1, n_blocks, c_act, r_act);
-    printf("%d ; %d \n", c_act[9], r_act[8]);
-    
-   
+    start = emergence_simulation(P, blocks1, n_blocks, c_act, r_act);
 
+    for (i = 0; i < n_blocks; i++) {    
+      printf("%d ; %d \n", c_act[i], r_act[i]);
+    }
+   
+    printf("nb d'actions déclanchées %d \n", start);
 
     // libération de la mémoire, fin du programme.
     free(blocks1);
