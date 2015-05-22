@@ -615,75 +615,55 @@ uptri_t * blocks_position_matrix(const blk_t *w, int n_blocks, int count) {
 
 
 /*
- * Pour un bloc donné blk (r, c), si le bloc est susceptible d'être éliminé, alors
- * Er[r] = c (on regarde les lignes) et Ec[c] = r (on regarde les colonnes).
+ * Pour un bloc donné par son entrée k et sa diagonale dans la matrice, 
+ * si le bloc est susceptible d'être éliminé, alors, 
+ * Er[r] = k (on regarde les lignes) et Ec[c] = k (on regarde les colonnes).
  * renvoie 1 si le bloc est succeptible d'être éliminé, 0 sinon.
  */
-int may_be_eliminated(blk_t blk, const block_t *blocks, int *Er, int *Ec) {
-  int r, c, i0, i1;
+int may_be_eliminated(int k, int diag, const uptri_t *B, const block_t *blocks, int *Er, int *Ec) {
+  int r, c, i0, i1, *Bi;
 
-  r = blk.r;
-  c = blk.c;
+  Bi = B->i;
+
+  r = Bi[k];
+  c = Bi[k] + diag;
 
   i0 = blocks[r].i0;
   i1 = blocks[r].i1;
 
   if (i0 < i1) {
-    Er[r] = c;
-    Ec[c] = r;
+    Er[r] = k;
+    Ec[c] = k;
     return 1;
   }
   return 0;
 }
 
 /*
- * Pour un bloc donné blk, trouve (r,c) le dernier bloc éliminé à gauche de blk
+ * Pour un bloc donné par son entrée k dans la matrice, 
+ * trouve le dernier bloc éliminé à gauche.
  */
-int left_elimination(blk_t blk, const int *Er, const uptri_t *B) {
-  int r, c, d, *Bd, *Bi, k;
+int left_elimination(int k, const int *Er, const uptri_t *B) {
+  int *Bi;
 
-  Bd = B->d;
   Bi = B->i;
-
-  r = blk.r;
-  c = Er[r]; // <--- le dernier bloc éliminé à gauche de blk est (r,c)
-
-  // on cherche la position de (r,c) dans B
-  d = c - r;
-
-  for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
-
-  if(Bi[k] != r) {
-    //printf("Error : under block (%d, %d) doesn't match any entries in position matrix \n", r, c);
-    return -1;
-  }
  
-  return k;
+
+  return Er[Bi[k]];
+
 }
 
 /*
- * Pour un bloc blk, trouve (r,c) le dernier bloc éliminé en dessous de blk
+ * Pour un bloc donné par son entrée k et sa diagonale diag, 
+ * trouve le dernier bloc éliminé en dessous
  */
-int under_elimination(blk_t blk, const int *Ec, const uptri_t *B) {
-  int r, c, d, *Bd, *Bi, k;
+int under_elimination(int k, int diag, const int *Ec, const uptri_t *B) {
+  int  *Bi, c;
 
-  Bd = B->d;
   Bi = B->i;
+  c = Bi[k] + diag;
 
-  c = blk.c;
-  r = Ec[c]; // <--- le dernier bloc éliminé sous blk est (r,c)
-
-  // On cherche la position de (r,c) dans B
-  d = c - r;
-
-  for(k = Bd[d]; k < Bd[d+1] && Bi[k] != r; k++);
-
-  if (Bi[k] != r) {
-    //printf("Error : under block (%d, %d) doesn't match any entries in position matrix \n", r, c);
-    return -1;
-  }
-
-  return k;
+  return Ec[c];
 }
 
 
@@ -739,6 +719,7 @@ int is_action_new(action_t *list, int k) {
 
   return 1;
 }
+
 
 /*
  * Ajoute une action en tête de liste. 
@@ -852,13 +833,19 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
     left[k] = -1; // Si k désigne un bloc sur la diagonale principale, il n'y a pas de bloc éliminé avant
     under[k] = -1; // on initialise à -1.
     
-    Er[k] = k; // Initialisation des blocs Ec et Er
-    Ec[k] = k; // Sur la diagonale tous les blocs sont éliminés.
+    Er[k] = -1; // Initialisation des blocs Ec et Er
+    Ec[k] = -1; // Au début aucun n'est éliminé.
 
     r_act[k] = 0; // Au début du programme, aucune action n'est prévue.
     c_act[k] = 0;
+
   }
 
+  for (k = 0; k < Bd[1]; k++) {
+    Er[Bi[k]] = k;  // Pour chaque ligne, on élimine l'entrée correspondante
+    Ec[Bi[k]] = k; // Pour chaque colonne, on élimine l'entrée correspondante
+
+  }
 
   /* Parcours de la matrice pour les diagonales supérieures.
    */
@@ -872,8 +859,9 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
       /* Donne l'entrée correspondant au dernier bloc éliminé à gauche
        * Et en dessous du bloc (i, j)
        */
-      left[k] = left_elimination(blk, Er, B);
-      under[k] = under_elimination(blk, Ec, B);
+      
+      left[k] = left_elimination(k, Er, B);
+      under[k] = under_elimination(k, diag, Ec, B);
 
       // if (left[k] == -1 || under[k] == -1) {
       //printf("Error entry %d of position matrix \n", k);
@@ -886,6 +874,7 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
       l = left[k];
       d = diag;
       while (l != -1) {
+
 	d = diag_index(B, l, d); // détermine les diagonales des bloc éliminés à gauche du bloc d'indice k.
 	j = d + Bi[l]; // colonne du bloc d'indice l
 
@@ -904,13 +893,13 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
       } 
 
       //On compte les actions que le bloc déclenche sur la ligne blk.r
-      start += row_action_set_off(B, Row[blk.r], blk.c);
+      //start += row_action_set_off(B, Row[blk.r], blk.c);
 
 
       /* Regarde si le bloc doit être éliminé ou non.
        * met à jour les listes Er et Ec
        */
-      elim = may_be_eliminated(blk, blocks, Er, Ec);
+      elim = may_be_eliminated(k, diag, B, blocks, Er, Ec);
 
       /* Si le bloc doit être éliminé on regarde les action à 
        * ajouter sur les lignes en dessous.
@@ -935,7 +924,7 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 	}
 
 	//On compte les actions que le bloc déclenche sur la colonne blk.c
-	start += col_action_set_off(B, Col[blk.c], blk.r);
+	//start += col_action_set_off(B, Col[blk.c], blk.r);
       }
       
       /* Regarde si le bloc blk ne déclenche pas lui-même d'action.
@@ -944,6 +933,7 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
        */
 
     }
+    
   }
 
   /* Libération de la mémoire auxiliaire.
@@ -1202,10 +1192,11 @@ int main() {
 
     start = emergence_simulation(P, blocks1, n_blocks, c_act, r_act);
 
+    /*
     for (i = 0; i < n_blocks; i++) {    
       printf("%d ; %d \n", c_act[i], r_act[i]);
     }
-   
+    */
     printf("nb d'actions déclanchées %d \n", start);
 
     // libération de la mémoire, fin du programme.
