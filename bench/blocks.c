@@ -231,8 +231,8 @@ int is_block_empty(block_t block, int fill) {
  * La position du coin inférieur droit du dernier bloc rencontrée doit être passée dans *last_i et *last_j. Ces valeurs sont modifiées.
  *
  */
-void count_blocks(const spasm *M, spasm_cc *Y, block_t *blocks, int *start, int *last_i, int *last_j) {
-  int i, j, a,b,c,d, r;
+void count_blocks(spasm_cc *Y, block_t *blocks, int *start) {
+  int i, j, a,b,c,d;
 
   for(i = 0; i < Y->CC->nr; i++) {
     if (Y->SCC[i] != NULL) {
@@ -242,34 +242,17 @@ void count_blocks(const spasm *M, spasm_cc *Y, block_t *blocks, int *start, int 
 	  c = Y->SCC[i]->rr[j + 1];
 	  d = Y->SCC[i]->cc[j + 1];
 
-	  if ((*last_i != a) || (*last_j != b)) {
-	    // "hole" between last seen block and this one
-	    if (blocks != NULL) {
-	      blocks[*start].i0 = *last_i;
-	      blocks[*start].j0 = *last_j;
-	      blocks[*start].i1 = a;
-	      blocks[*start].j1 = b;
-	      blocks[*start].r  = 0;
-	    }
-	    (*start)++;
-	  }
-
 	  if (blocks != NULL) {
-	    r = submatrix_rank(M, a, b, c, d);
 	    blocks[*start].i0 = a;
 	    blocks[*start].j0 = b;
 	    blocks[*start].i1 = c;
 	    blocks[*start].j1 = d;
-	    blocks[*start].r  = r;
 	  }
 	  (*start)++;
-	  (*last_i) = c;
-	  (*last_j) = d;
       }
     }
   }
 }
-
 
 /*
  * Etant donné une matrice M déjà permutée sous forme triangulaire par
@@ -282,55 +265,51 @@ void count_blocks(const spasm *M, spasm_cc *Y, block_t *blocks, int *start, int 
  * le nombre de blocs est renvoyé. Il faut passer un pointeur vers une
  * liste de blocs, qui est modifiée.
  */
-int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks) {
-  int k, last_i, last_j;
-
+int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr) {
+  int i, k;
+  block_t *blocks;
+  
   // étape 1 : détermine le nombre de blocs
   k = 0;
-  last_i = 0;
-  last_j = 0;
   if (DM->H != NULL) {
-    count_blocks(M, DM->H, NULL, &k, &last_i, &last_j);
+    count_blocks(DM->H, NULL, &k);
   }
   if (DM->S != NULL) {
-    count_blocks(M, DM->S, NULL, &k, &last_i, &last_j);
+    count_blocks(DM->S, NULL, &k);
   }
   if (DM->V != NULL) {
-    count_blocks(M, DM->V, NULL, &k, &last_i, &last_j);
+    count_blocks(DM->V, NULL, &k);
   }
 
-  // si on atteint pas le bord bas-droit de la matrice, prévoir un
-  // bloc vide pour aller jusqu'au bout
-  if (last_i != M->n || last_j != M->m) {
-    k++;
-  }
-  
   // étape 2 : allouer la liste des blocs
-  *blocks = spasm_malloc(sizeof(block_t) * k);
-
+  blocks = spasm_malloc(sizeof(block_t) * k);
+  *blocks_ptr = blocks;
+  
   // étape 3 : remplir la liste des blocs
   k = 0;
-  last_i = 0;
-  last_j = 0;
   if (DM->H != NULL) {
-    count_blocks(M, DM->H, *blocks, &k, &last_i, &last_j);
+    count_blocks(DM->H, blocks, &k);
   }
   if (DM->S != NULL) {
-    count_blocks(M, DM->S, *blocks, &k, &last_i, &last_j);
+    count_blocks(DM->S, blocks, &k);
   }
   if (DM->V != NULL) {
-    count_blocks(M, DM->V, *blocks, &k, &last_i, &last_j);
+    count_blocks(DM->V, blocks, &k);
   }
 
-  // si on atteint pas le bord droit de la matrice, ajouter un bloc
-  // vide pour aller jusqu'au bout
-  if (last_i != M->n || last_j != M->m) {
-    (*blocks)[k].i0 = last_i;
-    (*blocks)[k].j0 = last_j;
-    (*blocks)[k].i1 = M->n;
-    (*blocks)[k].j1 = M->m;
-    (*blocks)[k].r  = 0;
-    k++;
+  // étape 4 : "malaxer" la liste des blocs (il faut que leurs coins se touchent).
+  blocks[0].i0 = 0;
+  blocks[0].j0 = 0;
+  for (i = 1; i < k; i++) {
+    blocks[i - 1].i1 = blocks[i].i0;
+    blocks[i - 1].j1 = blocks[i].j0;
+  }
+  blocks[k-1].i1 = M->n;
+  blocks[k-1].j1 = M->m;
+
+  // étape 5 : calculer les rangs
+  for (i = 0; i < k; i++) {
+    blocks[i].r = submatrix_rank(M, blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1);
   }
 
   return k;
@@ -1156,6 +1135,9 @@ int main() {
 
     // calcule la liste des blocs
     n_blocks = block_list(B, x, &blocks1);
+    for(i = 0; i < n_blocks; i++) {
+      printf("%d : (%d, %d) -- (%d, %d)\n", i, blocks1[i].i0, blocks1[i].j0, blocks1[i].i1, blocks1[i].j1);
+    }
     printf("blocs diagonaux : %d\n", n_blocks);
 
     free(x);
