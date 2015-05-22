@@ -812,19 +812,14 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
     left[k] = -1; // Si k désigne un bloc sur la diagonale principale, il n'y a pas de bloc éliminé avant
     under[k] = -1; // on initialise à -1.
     
-    Er[k] = -1; // Initialisation des blocs Ec et Er
-    Ec[k] = -1; // Au début aucun n'est éliminé.
+    Er[Bi[k]] = k; // Pour chaque ligne, on élimine l'entrée correspondante
+    Ec[Bi[k]] = k; // Pour chaque colonne, on élimine l'entrée correspondante
 
     r_act[k] = 0; // Au début du programme, aucune action n'est prévue.
     c_act[k] = 0;
 
   }
 
-  for (k = 0; k < Bd[1]; k++) {
-    Er[Bi[k]] = k;  // Pour chaque ligne, on élimine l'entrée correspondante
-    Ec[Bi[k]] = k; // Pour chaque colonne, on élimine l'entrée correspondante
-
-  }
 
   /* Parcours de la matrice pour les diagonales supérieures.
    */
@@ -872,7 +867,7 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
       } 
 
       //On compte les actions que le bloc déclenche sur la ligne blk.r
-      //start += row_action_set_off(B, Row[blk.r], blk.c);
+      start += row_action_set_off(B, Row[blk.r], blk.c);
 
 
       /* Regarde si le bloc doit être éliminé ou non.
@@ -903,7 +898,7 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 	}
 
 	//On compte les actions que le bloc déclenche sur la colonne blk.c
-	//start += col_action_set_off(B, Col[blk.c], blk.r);
+	start += col_action_set_off(B, Col[blk.c], blk.r);
       }
       
       /* Regarde si le bloc blk ne déclenche pas lui-même d'action.
@@ -1174,11 +1169,11 @@ int main() {
 
     start = emergence_simulation(P, blocks1, n_blocks, c_act, r_act);
 
-    /*
+    
     for (i = 0; i < n_blocks; i++) {    
       printf("%d ; %d \n", c_act[i], r_act[i]);
     }
-    */
+    
     printf("nb d'actions déclanchées %d \n", start);
 
     // libération de la mémoire, fin du programme.
@@ -1205,7 +1200,7 @@ int main() {
     //for (k = 0; k < n_blocks; k++) {
     //printf("%d ; %d\n", k, last_b[k]+1);
     // }
-    
+     
 
 
     //affichage
