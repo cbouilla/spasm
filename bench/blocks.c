@@ -64,16 +64,25 @@ typedef struct {
 
 
 /*
- * Type de donnée qui définie les actions prévue en une ligne/colonne.
+ * Type de donnée qui définie les actions prévues en une ligne/colonne.
  * Utilise les listes simplement chaînées
  */
-typedef struct action action_t;
-struct action 
+typedef struct action 
 {
   int act; // élément de la liste chaînée
   struct action *next; // pointeur sur l'élément suivant
-}; 
+} action_t; 
 
+
+/*
+ * Type de donnée qui définie les actions prévues en unz ligne colonne.
+ * Utilise les arbres binaires de recherche.
+ */
+typedef struct actree {
+  int act; // valeur du noeud.
+  struct actree *right; // pointeur sur la valeur de droite (supérieure)
+  struct actree *left; // pointeur sur la valeur de gauche (inférieure)
+} actree_t;
 
 /* alloue la mémoire d'un diag_t
  */
@@ -755,6 +764,125 @@ int col_action_set_off(const uptri_t *B, action_t *list, int r) {
 }
 
 /*
+ * vide une liste d'action et libère la mémoire
+ */
+action_t * clear_action(action_t *list) {
+ 
+  if (!list) return NULL;
+
+  action_t *tmp;
+
+  tmp = list->next;
+  free(list);
+  return clear_action(tmp);
+
+}
+
+/*
+ * Ajoute une action dans un arbre binaire tree si celle-ci n'existe pas déjà.
+ * renvoie 1 si l'action a été ajouté et 0 sinon.
+ */
+int new_act(actree_t **tree, int k) {
+  actree_t *new, *tmp1, *tmp2;
+
+  //Allocation et initialisation de l'arbre new.
+  new = malloc(sizeof(actree_t));
+
+  new->act = k;
+  new->left = NULL;
+  new->right = NULL;
+
+  tmp1 = *tree;
+
+  if (tmp1 == NULL) {
+    *tree = new;
+    return 1; // ajout du premier élément de la liste.
+  }
+
+  while(tmp1 != NULL) {
+
+    if (k == tmp1->act) { 
+      free(new);      
+      return 0;
+    }
+
+    tmp2 = tmp1;
+    if (k > tmp1->act) {
+      tmp1 = tmp1->right;
+      if(tmp1 == NULL) {
+	tmp2->right = new;
+	return 1;
+      }
+    }
+    else {
+      tmp1 = tmp1->left;
+      if(tmp1 == NULL) {
+	tmp2->left = new;
+	return 1;
+      }
+    }
+  }
+
+  printf("Error : tree search fail for k = %d \n", k);
+  return -1;
+}
+
+/*
+ * Etant donné c, parcourt les actions r d'un arbre binaire tree, et regarde pour tout r, 
+ * si (r,c) est dans la matrice B. Renvoie le total des actions déclanchées.
+ */
+void row_act_set_off(const uptri_t *B, actree_t *tree, int c, int *tot) {
+  int r;
+  actree_t *tmp;
+
+  tmp = tree;
+
+  if(!tmp) return;
+  if(tmp->left) row_act_set_off(B, tmp->left, c, tot);
+  if(tmp->right) row_act_set_off(B, tmp->right, c, tot);
+
+  r = tmp->act;
+  (*tot) += is_entry_zero(B, r, c);
+
+}
+
+/*
+ * Etant donné r, parcourt les actions c d'un arbre binaire tree, et regarde pour tout c, 
+ * si (r,c) est dans la matrice B. Renvoie le total des actions déclanchées.
+ */
+void col_act_set_off(const uptri_t *B, actree_t *tree, int r, int *tot) {
+  int c;
+  actree_t *tmp;
+  
+  tmp = tree;
+
+  if (!tmp) return;
+  if (tmp->left) col_act_set_off(B, tmp->left, r, tot);
+  if (tmp->right) col_act_set_off(B, tmp->right, r, tot);
+
+  c = tmp->act;
+  (*tot) += is_entry_zero(B, r, c);
+}
+
+/*
+ * Vide un arbre d'actions, libère la mémoire.
+ */
+void clear_act(actree_t **tree) {
+  actree_t *tmp;
+
+  if(*tree == NULL) return;
+
+  tmp = *tree;
+  if(tmp->left != NULL) clear_act(&tmp->left);
+  if(tmp->right != NULL) clear_act(&tmp->right);
+
+  free(tmp);
+  *tree = NULL;
+
+}
+
+
+/*
  * Parcourt la matrice diagonale par diagonale, pour chaque entrée, stocke le bloc éliminé 
  * immediatement à gauche et celui immédiatement à droite. (On regarde les entrée à partir
  * de la première diagonale supérieure)
@@ -771,7 +899,8 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
   int k, i, j, d, diag, count, *Bd, *Bi, *Ec, *Er,  *left, *under, l, u, elim, add, start; 
     //*c_act, *r_act;
   blk_t blk;
-  action_t **Row, **Col;
+  //action_t **Row, **Col;
+  actree_t **Rtree, **Ctree;
 
   Bd = B->d;
   Bi = B->i;
@@ -782,13 +911,20 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
    */
 
   // Allocation mémoire des tableaux de listes chaînées.
-  Row = spasm_malloc(n_blocks * sizeof(action_t*));
-  Col = spasm_malloc(n_blocks * sizeof(action_t*));
+  //Row = spasm_malloc(n_blocks * sizeof(action_t*));
+  //Col = spasm_malloc(n_blocks * sizeof(action_t*));
+
+  //Allocation mémoire des tableaux d'arbres binaires.
+  Rtree = spasm_malloc(n_blocks * sizeof(actree_t*));
+  Ctree = spasm_malloc(n_blocks * sizeof(actree_t*));
 
   // Initialisation des listes chaînées :
   for (k = 0; k <n_blocks; k++) {
-    Row[k] = NULL; // Au départ une liste chaînées pointe sur NULL
-    Col[k] = NULL;
+    //Row[k] = NULL; // Au départ une liste chaînées pointe sur NULL
+    //Col[k] = NULL;
+
+    Rtree[k] = NULL; // Au départ, les arbres pointent sur NULL
+    Ctree[k] = NULL; 
   }
 
 
@@ -853,22 +989,24 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 	j = d + Bi[l]; // colonne du bloc d'indice l
 
 	// teste si blk.c appartient à la liste des actions prévues en j
-	add = is_action_new(Col[j], blk.c);
+	//add = is_action_new(Col[j], blk.c);
 
 	// ajoute blk.c dans la liste des actions prévues en j, si ce n'est pas le cas.
-	if(add) {    
-	  Col[j] = new_action(Col[j], blk.c);
-	}
+	//if(add) {    
+	//Col[j] = new_action(Col[j], blk.c);
+	//	}
 
 	// incrémente le compteur si nécessaire.
-	c_act[j] += add;
+	//c_act[j] += add;
+
+	c_act[j] += new_act(&Ctree[j], blk.c);
 
 	l = left[l];
       } 
 
       //On compte les actions que le bloc déclenche sur la ligne blk.r
-      start += row_action_set_off(B, Row[blk.r], blk.c);
-
+      //start += row_action_set_off(B, Row[blk.r], blk.c);
+      row_act_set_off(B, Rtree[blk.r], blk.c, &start);
 
       /* Regarde si le bloc doit être éliminé ou non.
        * met à jour les listes Er et Ec
@@ -884,21 +1022,24 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 	  i = Bi[u]; // ligne correspondant au bloc d'indice u
 
 	  // teste si blk.r appartient à la listes des actions prévues en i.
-	  add = is_action_new(Row[i], blk.r);
+	  //add = is_action_new(Row[i], blk.r);
 
 	  // ajoute blk.r dans la liste d'action prévues en i, si ce n'est pas le cas.
-	  if(add) {
-	    Row[i] = new_action(Row[i], blk.r);
-	  }
+	  // if(add) {
+	  //Row[i] = new_action(Row[i], blk.r);
+	  //	  }
 
 	  // incrémente le compteur d'action de la ligne i.
-	  r_act[i] += add;
+	  //r_act[i] += add;
+
+	  r_act[i] += new_act(&Rtree[i], blk.r);
 	  
 	  u = under[u];
 	}
 
 	//On compte les actions que le bloc déclenche sur la colonne blk.c
-	start += col_action_set_off(B, Col[blk.c], blk.r);
+	//start += col_action_set_off(B, Col[blk.c], blk.r);
+	col_act_set_off(B, Ctree[blk.c], blk.r, &start);
       }
       
       /* Regarde si le bloc blk ne déclenche pas lui-même d'action.
@@ -912,12 +1053,24 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 
   /* Libération de la mémoire auxiliaire.
    */
+   
+  for(k = 0; k < n_blocks; k++) {
+    // Row[k] = clear_action(Row[k]);
+    //Col[k] = clear_action(Col[k]);
+    
+    clear_act(&Rtree[k]);
+    clear_act(&Ctree[k]);
+  }
+  
+  
   free(Ec);
   free(Er);
   free(left);
   free(under);
-  free(Row);
-  free(Col);
+  //free(Row);
+  //free(Col);
+  free(Rtree);
+  free(Ctree);
   //free(r_act);
   //free(c_act);
 
