@@ -22,7 +22,7 @@ void spasm_row_entries_sort(spasm *M, int with_value) {
 	l--;
       }
       j[l+1] = tmpj;
-      if (with_value) x[l+1] = x[l];
+      if (with_value) x[l+1] = tmpx;
     }
   }
 

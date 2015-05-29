@@ -49,6 +49,7 @@ typedef struct {
   int n; // nombre de ligne = nombre de diagonale.
   int *d; // pointeurs sur les diagonales
   int *i; // positions sur les lignes.
+  int *j; // positions sur les colonnes.
 } uptri_t;
 
 
@@ -111,15 +112,17 @@ void diag_free(diag_t *D) {
 /*
  * aloue la mémoire d'un uptri_t;
  */
-uptri_t * uptri_alloc(int nzmax, int n) {
+uptri_t * uptri_alloc(int nzmax, int n, int look_row, int look_col) {
   uptri_t *T;
 
   T = spasm_malloc(sizeof(uptri_t));
 
   T->nzmax = nzmax;
   T->n = n;
-  T->d = spasm_calloc(n+1, sizeof(int));
-  T->i = spasm_calloc(nzmax, sizeof(int));
+  T->d = spasm_malloc( (n+1) * sizeof(int));
+  T->i = (look_row ? spasm_malloc(nzmax * sizeof(int)) : NULL);
+  T->j = (look_col ? spasm_malloc(nzmax * sizeof(int)) : NULL);
+
 
   return T;
 }
@@ -132,6 +135,7 @@ void uptri_free(uptri_t *T) {
 
   free(T->d);
   free(T->i);
+  free(T->j);
   free(T);
 }
 
@@ -551,11 +555,11 @@ int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, cons
 
 
 /*
- * Donne la matrice des positions des blocs sous forme uptri_t
+ * Donne la matrice des positions des blocs sous forme uptri_t en regardant les lignes
  * à partir de la liste "where", du nombre de blocs "count" et
  * du nombre de blocs diagonaux "n_blocks".
  */
-uptri_t * blocks_position_matrix(const blk_t *w, int n_blocks, int count) {
+uptri_t * position_matrix_row_view(const blk_t *w, int n_blocks, int count) {
   int k, *wd, *Bd, *Bi, *tmp, sum, p;
   uptri_t *B;
 
@@ -568,7 +572,7 @@ uptri_t * blocks_position_matrix(const blk_t *w, int n_blocks, int count) {
   }
 
   /* allocation du résultat */
-  B = uptri_alloc(count, n_blocks);
+  B = uptri_alloc(count, n_blocks, 1, 0); // <--- On regarde les lignes
 
   tmp = spasm_calloc(n_blocks, sizeof(int));
 
@@ -593,11 +597,77 @@ uptri_t * blocks_position_matrix(const blk_t *w, int n_blocks, int count) {
   for (k = 0; k < count; k++) {
     p = tmp[ wd[k] ]++; // <-- p-ième entrée de B, sur la diagonale wd[k].
     Bi[p] = w[k].r;  // On note le numéro de ligne correspondant à l'entrée.
-  }
+ }
 
   /* libération de mémoire, retourner le resultat. */
   free(tmp);
   free(wd);
+  return B;
+}
+
+/*
+ * Donne la matrice des positions des blocs sous forme uptri_t en regardant les colonnes
+ * à partir de la liste "w", du nombre de blocs "count" et du nombre de blocs diagonaux
+ * "n_blocks".
+ *
+ * Les colonnes sont triées par ordres croissant.
+ */
+uptri_t * position_matrix_col_view(const blk_t *w, int n_blocks, int count) {
+  int k, *wd, *Bd, *Bj, *tmp, sum, p, tmpj, l;
+  uptri_t *B;
+
+  /* Pour chaque bloc w[k] trouver sa diagonale. */
+  wd = spasm_malloc(count * sizeof(int));
+
+  for(k = 0; k < count; k++) {
+    wd[k] = w[k].c - w[k].r; 
+  }
+
+  /* allocation du résultat */
+  B = uptri_alloc(count, n_blocks, 0, 1); // <--- On regarde les colonnes.
+
+  tmp = spasm_calloc(n_blocks, sizeof(int));
+
+  Bd = B->d;
+  Bj = B->j;
+
+  /* compte le nombre d'entrée sur une diagonale */
+  for (k = 0; k < count; k++) {
+    tmp[ wd[k] ]++;
+  }
+
+  /* implémente pointeurs de diagonales. */
+  sum = 0;
+  for(k = 0; k < n_blocks; k++) {
+    Bd[k] = sum;
+    sum += tmp[k];
+    tmp[k] = Bd[k]; 
+  }
+  Bd[n_blocks] = sum;
+
+  /* trouve les emplacements des entrées sur chaque diagonales (numéro de la colonne) */
+  for (k = 0; k < count; k++) {
+    p = tmp[ wd[k] ]++;
+    Bj[p] = w[k].c;
+  }
+
+  /* trie les emplacements par ordre croissant (tri par insertion) */
+  for (k = 0 ; k < n_blocks; k++) {
+    for (p = Bd[k] + 1; p < Bd[k+1]; p++) {
+      tmpj = Bj[p];
+      l = p-1;
+      while(l >= 0 && Bj[l] > tmpj) {
+	Bj[l+1] = Bj[l];
+	l--;
+      }
+      Bj[l+1] = tmpj;
+    }
+  }
+
+  /* libération de mémoire auxiliaire, renvoi du résultat. */
+  free(tmp);
+  free(wd);
+
   return B;
 }
 
@@ -899,7 +969,7 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
   int k, i, j, d, diag, count, *Bd, *Bi, *Ec, *Er,  *left, *under, l, u, elim, add, start; 
     //*c_act, *r_act;
   blk_t blk;
-  //action_t **Row, **Col;
+  // action_t **Row, **Col;
   actree_t **Rtree, **Ctree;
 
   Bd = B->d;
@@ -993,11 +1063,11 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 
 	// ajoute blk.c dans la liste des actions prévues en j, si ce n'est pas le cas.
 	//if(add) {    
-	//Col[j] = new_action(Col[j], blk.c);
+	  //Col[j] = new_action(Col[j], blk.c);
 	//	}
 
 	// incrémente le compteur si nécessaire.
-	//c_act[j] += add;
+	//	c_act[j] += add;
 
 	c_act[j] += new_act(&Ctree[j], blk.c);
 
@@ -1006,7 +1076,7 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 
       //On compte les actions que le bloc déclenche sur la ligne blk.r
       //start += row_action_set_off(B, Row[blk.r], blk.c);
-      row_act_set_off(B, Rtree[blk.r], blk.c, &start);
+       row_act_set_off(B, Rtree[blk.r], blk.c, &start);
 
       /* Regarde si le bloc doit être éliminé ou non.
        * met à jour les listes Er et Ec
@@ -1025,10 +1095,10 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 	  //add = is_action_new(Row[i], blk.r);
 
 	  // ajoute blk.r dans la liste d'action prévues en i, si ce n'est pas le cas.
-	  // if(add) {
-	  //Row[i] = new_action(Row[i], blk.r);
+	  //if(add) {
+	     //Row[i] = new_action(Row[i], blk.r);
 	  //	  }
-
+	  
 	  // incrémente le compteur d'action de la ligne i.
 	  //r_act[i] += add;
 
@@ -1055,8 +1125,8 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
    */
    
   for(k = 0; k < n_blocks; k++) {
-    // Row[k] = clear_action(Row[k]);
-    //Col[k] = clear_action(Col[k]);
+    //Row[k] = clear_action(Row[k]);
+     //Col[k] = clear_action(Col[k]);
     
     clear_act(&Rtree[k]);
     clear_act(&Ctree[k]);
@@ -1282,7 +1352,7 @@ int main() {
 
     int *Q, fill, count, *c_act, *r_act, start;
     blk_t *where;
-    uptri_t *P;
+    uptri_t *P, *S;
  
 
     // allocation mémoire de not_empty et Q
@@ -1311,7 +1381,8 @@ int main() {
     }
 
     count = filled_blocks_list(B, blocks1, n_blocks, Q, where);
-    P = blocks_position_matrix(where, n_blocks, count);
+    P = position_matrix_row_view(where, n_blocks, count);
+    S = position_matrix_col_view(where, n_blocks, count);
 
     printf("%d\n", count);
 
