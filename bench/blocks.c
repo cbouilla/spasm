@@ -10,6 +10,10 @@
  */
 
 
+
+/****************** Structures ***********************/
+
+
 /*
  * type de données qui décrit un bloc rectangulaire.
  */
@@ -67,23 +71,38 @@ typedef struct {
 /*
  * Type de donnée qui définie les actions prévues en une ligne/colonne.
  * Utilise les listes simplement chaînées
- */
+ *
 typedef struct action 
 {
   int act; // élément de la liste chaînée
   struct action *next; // pointeur sur l'élément suivant
 } action_t; 
 
+*/
 
 /*
- * Type de donnée qui définie les actions prévues en unz ligne colonne.
- * Utilise les arbres binaires de recherche.
+ * Liste chaînée d'entier.
  */
-typedef struct actree {
-  int act; // valeur du noeud.
-  struct actree *right; // pointeur sur la valeur de droite (supérieure)
-  struct actree *left; // pointeur sur la valeur de gauche (inférieure)
-} actree_t;
+typedef struct list
+{
+  int val;
+  struct list *next;
+} list_t;
+
+/*
+ * Arbres binaire de recherche.
+ */
+typedef struct tree
+{
+  int val;
+  struct tree *left;
+  struct tree *right;
+} tree_t;
+
+
+
+/****************** allocation et libération de mémoire *******************/ 
+
 
 /* alloue la mémoire d'un diag_t
  */
@@ -138,6 +157,41 @@ void uptri_free(uptri_t *T) {
   free(T->j);
   free(T);
 }
+
+/*
+ * vide une liste chaînée, libère la mémoire.
+ */
+void clear_list(list_t **list) {
+  list_t *tmp;
+
+  if(*list == NULL) return;
+
+  tmp = *list;
+  if(tmp->next) clear_list(&tmp->next);
+  free(tmp);
+  list = NULL;
+}
+
+
+/*
+ * Vide un arbre binaire, libère la mémoire.
+ */
+void clear_tree(tree_t **tree) {
+  tree_t *tmp;
+
+  if(*tree == NULL) return;
+
+  tmp = *tree;
+  if(tmp->left != NULL) clear_tree(&tmp->left);
+  if(tmp->right != NULL) clear_tree(&tmp->right);
+
+  free(tmp);
+  *tree = NULL;
+
+}
+
+
+/******* Décomposition par bloc ********/
 
 
 /*
@@ -209,23 +263,8 @@ spasm * submatrix_L(const spasm *M, int a, int b, int c, int d) {
 */
 
 
-/*
- * Renvoie le rang de M[a:c, b:d].
- *
-int submatrix_nnz(const spasm *M, int a, int b, int c, int d) {
-  spasm *C;
-  int r;
 
-  // extrait la sous-matrice
-  C = spasm_submatrix(M, a, c, b, d, SPASM_WITH_NUMERICAL_VALUES);
-  r = spasm_nnz(C);
-  spasm_csr_free(C);
-  return r;
-  }
-*/
-
-
-// incrémente fill de 1 si le bloc "block" n'est pas vide :
+/* incrémente fill de 1 si le bloc "block" n'est pas vide :
 int is_block_empty(block_t block, int fill) {
   int k, r;
   r = block.r;
@@ -233,7 +272,7 @@ int is_block_empty(block_t block, int fill) {
   fill = fill + k;
   return fill;
 }
-
+*/
 
 
 /*
@@ -353,39 +392,57 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr) {
   }*/
 
 /*
- * Etant donnée le rang des blocks diagonaux, Bi, d'une matrice M, triangulaire par
- * blocs, détermine la liste des intervalles définis par [Bi.i0 + Bi.r ; Bi.i1[
- * d'une part (intervalles de lignes), et [Bi.j0 +Bi.r ; Bi.j1[ d'autre part
- * (intervalles de colonnes). 
+ * Etant donné le rang des blocks diagonaux, Bi, d'une matrice M, triangulaire par
+ * blocs, détermine pour chaque Bi le nombre de pivot qu'il reste à trouver sur
+ * l'intervalle de ligne d'une part et l'intervalle de colonne d'autre part.
  */
-void intervals_fill(interval_t *R, interval_t *C, block_t *blocks, int n_blocks ) {
-  int i;
+void remaining_pivots_init(int *R, int *C, const block_t *blocks, int n_blocks ) {
+  int i, a;
   for (i=0; i<n_blocks; i++) {
 
     // Intervalles des lignes :
-    R[i].a = blocks[i].i0 + blocks[i].r;
-    R[i].b = blocks[i].i1;
-
+    a = blocks[i].i0 + blocks[i].r; //<--- numéro de la ligne à partir de laquelle il n'y a plus de pivots
+    R[i] = blocks[i].i1 - a; 
 
     // Intervalles des colonnes :
-    C[i].a = blocks[i].j0 +blocks[i].r;
-    C[i].b = blocks[i].j1;
+    a = blocks[i].j0 + blocks[i].r; //<--- numéro de la colonne à partir de laquelle il n'y a plus de pivots
+    C[i] = blocks[i].j1 - a;
+   
   }
 
 }
 
+/*
+ * Etant donné un intervalle de ligne row et un bloc, met à jour le nombre de pivots
+ * qu'il reste à trouver sur l'intervalle row.
+ */
+int row_pivot_update(int row, block_t block) {
+  int a, b, val;
 
-void intervals_list(interval_t **R, interval_t **C, block_t *blocks, int n_blocks) {
-  *R = spasm_malloc(sizeof(interval_t) * n_blocks);
-  *C = spasm_malloc(sizeof(interval_t) * n_blocks);
+  a = block.i0 + block.r;
+  b = block.i1 - a;
+  val = (row > b) ? row - b : 0;
 
-  intervals_fill(*R, *C, blocks, n_blocks);
-} 
+  return val;
+}
+
+/*
+ * Etant donnée un intervalle de colonne col et un bloc, met à jour le nombre de pivots
+ * qu'il reste à trouver sur l'intervalle col.
+ */
+int col_pivot_update(int col, block_t block) {
+  int a, b, val;
+
+  a = block.j0 + block.r;
+  b = block.i1 - a;
+  val = (col > b) ? col - b : 0;
+
+  return val;
+}
 
 /*
  * Etant donnée une matrice diagonale par blocs, renvoie le
- * numéro du bloc diagonal correspondant à la colonne j pour tout j
- * et celui correspondant à la ligne i pour tout i;
+ * numéro du bloc diagonal correspondant à la colonne j pour tout j.
  */
 void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
   int j, m, k;
@@ -404,76 +461,8 @@ void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
 
 
 
-/*
- * vérifie si un entier k appartient à la liste D et si ce n'est pas le cas l'ajouter
- *
- * la valeur renvoyée est le nombre d'éléments dans la liste.
- *
-int diag_list(int *D, int k, int size) {
-  int i, j, start, end, found;
+/********************* Recherche des blocs non vide ********************/
 
-  // initialisation de la liste.
-  if (size == 0) {
-    D[0] = k;
-    return 1;
-  }
-  
-  // vérifier si k appartient à la liste.
-  
-  //par dichotomie :
-
-  start = 0;
-  end = size;
-
-  while( (end - start) > 1) {
-    i = (start + end)/2;
-    if (D[i] == k) return size; // si k est dans la liste ne rien faire.
-
-    if (D[i] > k) end = i;
-    else start = i;
-  }
-
-  if (D[start] == k) return size; // si k dans la liste ne rien faire.
-
-  // Si k n'est pas dans la liste l'insérer.
-  j = size;
-  while (j > 0 && k < D[j - 1]) {
-    D[j] = D[j-1];
-    j--;
-  }
-  D[j] = k;
-  size++;
-
-  return size;
-} 
-
- *
- * donne le nombre de diagonale qui contiennent au moins un block non vide.
- *
-int diag_count(const spasm *M, const block_t *blocks, const int *Q, int *D) {
-  int l, i, p, j, *Mp, *Mj, n, c, k, n_diag;
-
-  Mp = M->p;
-  Mj = M->j;
-  n = M->n;
-  l = 0;
-  n_diag = 0;
-
-    for (i = 0; i < n; i++) {
-      while (blocks[l].i1 <= i) l++;
-
-      for (p = Mp[i]; p < Mp[i+1]; p++) {
-	j = Mj[p];
-	c = Q[j];
-	k = c - l;
-	n_diag = diag_list(D, k, n_diag);
-	printf("---%d---\n", n_diag);
-      }
-    }
-
-  return n_diag;
-}
-*/
 
 /*
  * Détermine le nombre de blocs non vide et les diagonales auquels ils appartiennent.
@@ -606,71 +595,49 @@ uptri_t * position_matrix_row_view(const blk_t *w, int n_blocks, int count) {
 }
 
 /*
- * Donne la matrice des positions des blocs sous forme uptri_t en regardant les colonnes
- * à partir de la liste "w", du nombre de blocs "count" et du nombre de blocs diagonaux
- * "n_blocks".
- *
- * Les colonnes sont triées par ordres croissant.
+ * Donne la transposée de la matrice de positions des blocs, à partir de la liste "where"
+ * du nombre de blocs "count" et du nombres de blocs diagonaux "n_blocks".
  */
-uptri_t * position_matrix_col_view(const blk_t *w, int n_blocks, int count) {
-  int k, *wd, *Bd, *Bj, *tmp, sum, p, tmpj, l;
-  uptri_t *B;
+spasm * transpose_blocks_spasm(const blk_t *w, int n_blocks, int count, int prime) {
+  int k, *Tp, *Tj, *tmp, sum, p;
+  spasm *T;
 
-  /* Pour chaque bloc w[k] trouver sa diagonale. */
-  wd = spasm_malloc(count * sizeof(int));
-
-  for(k = 0; k < count; k++) {
-    wd[k] = w[k].c - w[k].r; 
-  }
-
-  /* allocation du résultat */
-  B = uptri_alloc(count, n_blocks, 0, 1); // <--- On regarde les colonnes.
+  /* allocation mémoire */
+  T = spasm_csr_alloc(n_blocks, n_blocks, count, prime, 0);
 
   tmp = spasm_calloc(n_blocks, sizeof(int));
 
-  Bd = B->d;
-  Bj = B->j;
+  Tp = T->p;
+  Tj = T->j;
 
-  /* compte le nombre d'entrée sur une diagonale */
-  for (k = 0; k < count; k++) {
-    tmp[ wd[k] ]++;
+  /* compte les entrées sur les lignes de la matrice (colonnes des blocs) */
+  for(k = 0; k < count; k++) {
+    tmp[w[k].c]++;
   }
 
-  /* implémente pointeurs de diagonales. */
+  /* implémente les pointeurs sur les lignes de la matrice */
   sum = 0;
-  for(k = 0; k < n_blocks; k++) {
-    Bd[k] = sum;
+  for (k = 0; k < n_blocks; k++) {
+    Tp[k] = sum;
     sum += tmp[k];
-    tmp[k] = Bd[k]; 
+    tmp[k] = Tp[k];
   }
-  Bd[n_blocks] = sum;
+  Tp[n_blocks] = sum;
 
-  /* trouve les emplacements des entrées sur chaque diagonales (numéro de la colonne) */
-  for (k = 0; k < count; k++) {
-    p = tmp[ wd[k] ]++;
-    Bj[p] = w[k].c;
-  }
-
-  /* trie les emplacements par ordre croissant (tri par insertion) */
-  for (k = 0 ; k < n_blocks; k++) {
-    for (p = Bd[k] + 1; p < Bd[k+1]; p++) {
-      tmpj = Bj[p];
-      l = p-1;
-      while(l >= 0 && Bj[l] > tmpj) {
-	Bj[l+1] = Bj[l];
-	l--;
-      }
-      Bj[l+1] = tmpj;
-    }
+  /* trouve l'emplacement des entrées sur chaque ligne */
+  for(k = 0; k < count; k++) {
+    p = tmp[ w[k].c ]++;
+    Tj[p] = w[k].r;
   }
 
-  /* libération de mémoire auxiliaire, renvoi du résultat. */
+  /* libération de mémoire, retourner le résultat. */
   free(tmp);
-  free(wd);
+  return T;
 
-  return B;
 }
 
+
+/************************ Apparitions de nouveau blocs *********************/
 
 /*
  * Pour un bloc donné par son entrée k et sa diagonale dans la matrice, 
@@ -764,7 +731,7 @@ int is_entry_zero(const uptri_t *B, int r, int c) {
 
 /*
  * Retourne 0 si k appartient à la liste chaînée list et 1 sinon.
- */
+ *
 int is_action_new(action_t *list, int k) {
   action_t *tmp;
 
@@ -777,11 +744,11 @@ int is_action_new(action_t *list, int k) {
 
   return 1;
 }
-
+*/
 
 /*
  * Ajoute une action en tête de liste. 
- */
+ *
 action_t * new_action(action_t *list, int k) {
   action_t *new;
 
@@ -791,12 +758,13 @@ action_t * new_action(action_t *list, int k) {
 
   return new;
 }
+*/
 
 /*
  * Etant donné c, parcourt les actions r d'une liste chaînée list, 
  * et regarde pour tout r, si (r,c) est dans la matrice B. 
  * Renvoie le total des actions déclanchées.
- */
+ *
 int row_action_set_off(const uptri_t *B, action_t *list, int c) {
   int r, tot;
   action_t *tmp;
@@ -812,11 +780,12 @@ int row_action_set_off(const uptri_t *B, action_t *list, int c) {
 
   return tot;
 }
+*/
 
 /*
  * Etant donné r, parcourt les actions c d'une liste chaînée et regarde pour tout c
  * si (r, c) est dans la matrice B. Renvoie le total des actions déclanchées.
- */
+ *
 int col_action_set_off(const uptri_t *B, action_t *list, int r) {
   int c, tot;
   action_t *tmp;
@@ -832,10 +801,11 @@ int col_action_set_off(const uptri_t *B, action_t *list, int r) {
 
   return tot;
 }
+*/
 
 /*
  * vide une liste d'action et libère la mémoire
- */
+ *
 action_t * clear_action(action_t *list) {
  
   if (!list) return NULL;
@@ -847,18 +817,19 @@ action_t * clear_action(action_t *list) {
   return clear_action(tmp);
 
 }
+*/
 
 /*
- * Ajoute une action dans un arbre binaire tree si celle-ci n'existe pas déjà.
+ * Ajoute un élement dans un arbre binaire tree si celle-ci n'existe pas déjà.
  * renvoie 1 si l'action a été ajouté et 0 sinon.
  */
-int new_act(actree_t **tree, int k) {
-  actree_t *new, *tmp1, *tmp2;
+int new_node(tree_t **tree, int k) {
+  tree_t *new, *tmp1, *tmp2;
 
   //Allocation et initialisation de l'arbre new.
-  new = malloc(sizeof(actree_t));
+  new = malloc(sizeof(tree_t));
 
-  new->act = k;
+  new->val = k;
   new->left = NULL;
   new->right = NULL;
 
@@ -871,13 +842,13 @@ int new_act(actree_t **tree, int k) {
 
   while(tmp1 != NULL) {
 
-    if (k == tmp1->act) { 
+    if (k == tmp1->val) { 
       free(new);      
       return 0;
     }
 
     tmp2 = tmp1;
-    if (k > tmp1->act) {
+    if (k > tmp1->val) {
       tmp1 = tmp1->right;
       if(tmp1 == NULL) {
 	tmp2->right = new;
@@ -897,13 +868,15 @@ int new_act(actree_t **tree, int k) {
   return -1;
 }
 
+
+
 /*
  * Etant donné c, parcourt les actions r d'un arbre binaire tree, et regarde pour tout r, 
  * si (r,c) est dans la matrice B. Renvoie le total des actions déclanchées.
  */
-void row_act_set_off(const uptri_t *B, actree_t *tree, int c, int *tot) {
+void row_act_set_off(const uptri_t *B, tree_t *tree, int c, int *tot) {
   int r;
-  actree_t *tmp;
+  tree_t *tmp;
 
   tmp = tree;
 
@@ -911,7 +884,7 @@ void row_act_set_off(const uptri_t *B, actree_t *tree, int c, int *tot) {
   if(tmp->left) row_act_set_off(B, tmp->left, c, tot);
   if(tmp->right) row_act_set_off(B, tmp->right, c, tot);
 
-  r = tmp->act;
+  r = tmp->val;
   (*tot) += is_entry_zero(B, r, c);
 
 }
@@ -920,9 +893,9 @@ void row_act_set_off(const uptri_t *B, actree_t *tree, int c, int *tot) {
  * Etant donné r, parcourt les actions c d'un arbre binaire tree, et regarde pour tout c, 
  * si (r,c) est dans la matrice B. Renvoie le total des actions déclanchées.
  */
-void col_act_set_off(const uptri_t *B, actree_t *tree, int r, int *tot) {
+void col_act_set_off(const uptri_t *B, tree_t *tree, int r, int *tot) {
   int c;
-  actree_t *tmp;
+  tree_t *tmp;
   
   tmp = tree;
 
@@ -930,25 +903,8 @@ void col_act_set_off(const uptri_t *B, actree_t *tree, int r, int *tot) {
   if (tmp->left) col_act_set_off(B, tmp->left, r, tot);
   if (tmp->right) col_act_set_off(B, tmp->right, r, tot);
 
-  c = tmp->act;
+  c = tmp->val;
   (*tot) += is_entry_zero(B, r, c);
-}
-
-/*
- * Vide un arbre d'actions, libère la mémoire.
- */
-void clear_act(actree_t **tree) {
-  actree_t *tmp;
-
-  if(*tree == NULL) return;
-
-  tmp = *tree;
-  if(tmp->left != NULL) clear_act(&tmp->left);
-  if(tmp->right != NULL) clear_act(&tmp->right);
-
-  free(tmp);
-  *tree = NULL;
-
 }
 
 
@@ -970,7 +926,7 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
     //*c_act, *r_act;
   blk_t blk;
   // action_t **Row, **Col;
-  actree_t **Rtree, **Ctree;
+  tree_t **Rtree, **Ctree;
 
   Bd = B->d;
   Bi = B->i;
@@ -985,8 +941,8 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
   //Col = spasm_malloc(n_blocks * sizeof(action_t*));
 
   //Allocation mémoire des tableaux d'arbres binaires.
-  Rtree = spasm_malloc(n_blocks * sizeof(actree_t*));
-  Ctree = spasm_malloc(n_blocks * sizeof(actree_t*));
+  Rtree = spasm_malloc(n_blocks * sizeof(tree_t*));
+  Ctree = spasm_malloc(n_blocks * sizeof(tree_t*));
 
   // Initialisation des listes chaînées :
   for (k = 0; k <n_blocks; k++) {
@@ -1069,7 +1025,7 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 	// incrémente le compteur si nécessaire.
 	//	c_act[j] += add;
 
-	c_act[j] += new_act(&Ctree[j], blk.c);
+	c_act[j] += new_node(&Ctree[j], blk.c);
 
 	l = left[l];
       } 
@@ -1102,7 +1058,7 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 	  // incrémente le compteur d'action de la ligne i.
 	  //r_act[i] += add;
 
-	  r_act[i] += new_act(&Rtree[i], blk.r);
+	  r_act[i] += new_node(&Rtree[i], blk.r);
 	  
 	  u = under[u];
 	}
@@ -1128,8 +1084,8 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
     //Row[k] = clear_action(Row[k]);
      //Col[k] = clear_action(Col[k]);
     
-    clear_act(&Rtree[k]);
-    clear_act(&Ctree[k]);
+    clear_tree(&Rtree[k]);
+    clear_tree(&Ctree[k]);
   }
   
   
@@ -1149,156 +1105,108 @@ int emergence_simulation(uptri_t *B, const block_t *blocks, int n_blocks, int *c
 }
 
 
-/*
- * Etant donnés deux entiers l et c et une diagonale D, vérifie
- * si (l,c) est le dernier bloc ajouté dans D, si ce n'est pas le cas
- * ajouter (l,c) à D.
- * 
- * 
- *
-int block_mark(diag_t *diags, int l, int c, int k, int next_b) {
-  int *nr, *nc;
-
-  nr = diags->nr;
-  nc = diags->nc;
-
-  diags->ndiag = k;
-
-  if (next_b == 0) {
-    nr[next_b] = l;
-    nc[next_b] = c;
-    next_b++;
-   return  next_b;
-  }
-   
-  if (nr[next_b - 1] == l && nc[next_b - 1] == c) return next_b; // <--- si bloc dernier marqué ne rien faire.
-
-  nr[next_b] = l;
-  nc[next_b] = c;
-  next_b++;
-  return next_b;
-}
-
- *
- * Etant donnée une liste L de taille t, d'entiers disincts et 
- * ordonnés, et un élément k de L, trouve l'unique i vérifiant
- * L[i] = k.
- *
-int dicho(const int *L, int k, int t) {
-  int i, start, end, found;
-
-  found = 0; // <--- On n'a pas encore trouvé i. 
-  start = 0;
-  end = t;
-    
-  while (found == 0 && (end - start) > 1) {
-    i = (start + end)/2 ; 
-    found = ((L[i] == k) ? 1 : 0); // <--- test si i est l'indice qu'on recherche.
-    if (L[i] > k) end = i;
-    else start = i;
-  }
-
-  if (L[start] == k) return start;
-  else return -1; // valeur renvoyée par défaut si k n'appartient pas à la liste L.
-
-}
-
- *
- * Pour chaque i dans l'intervalle de ligne l trouver j tel que
- * A[i,j] != 0, vérifier si le block d'intervalles (l, Q[j]) est
- * marqué comme appartenant à la diagonale Q[j] - l, et si ce n'est
- * pas le cas, le marquer.
- *
- * La valeur renvoyée correspond au nombre de blocs traités.
- *
-int blocks_repartition(const spasm *M, const block_t *blocks, const int *Q, diag_t **diags, int n_diag, int *next_b, const int *D) {
-  int l, i, p, j, n, *Mp, *Mj, c, k, nbl, d;
-
-  Mp = M->p;
-  Mj = M->j;
-  n = M->n;
-  nbl = 0;
-  l = 0;
- 
-
-    // trouver les emplacements des blocs non vides situés sur l'intervalle de lignes n°l.
-    for (i = 0; i < n; i++) {
-      while (blocks[l].i1 <= i) l++;
-      for (p = Mp[i]; p < Mp[i+1]; p++) {
-	j = Mj[p];
-	c = Q[j];
-	k = c - l;
-
-	// trouver l'unique d tel que D[d] = c - l.
-	d = dicho(D, k, n_diag);
-	if (d == -1) {
-	  printf ("Error : digonal %d is supposed to be empty\n", k);
-	  return -1;
-	}
-	next_b[d] = block_mark(diags[d], l, c, k, next_b[d]);
-       
-      }
-    }
-
-
-  // compter les blocs traités.
-  for (k = 0; k < n_diag; k++) {
-    nbl = nbl + next_b[k];
-  }
-  return nbl;
-}
-
-*/
+/****************** Traite les blocs sur les diag supérieures ********************/
 
 /*
- * Etant donnée les listes des intervalles "intéressants" de lignes et de colonnes, 
- * détermine le nombre de blocs à traîter sur la première diagonale supérieure de
- * M et remplit ces blocs.
+ * met à jour les tables des pivots à chercher pour la diagonale diag.
  */
+void update_remaining_pivots(int diag, const spasm *M, const uptri_t *B, int *R, int *C, const block_t *blocks) {
+  int k, i, j, *Bd, *Bi, nbl, l;
+  block_t *current;
 
-int count_other_blocks(const spasm *M, const interval_t *R, const interval_t *C, block_t *other_b, const block_t *blocks, int n_blocks) {
-  int k, i, j, nbl;
-  nbl=0;
-  for (k=0; k<n_blocks-1; k++) {
-    if (R[k].a < R[k].b) {
-     j = k+1;
-      while ((C[j].a == C[j].b )&& (j<=n_blocks-1)) {
-	j++;
-      }
-      if (j==n_blocks) {
-	return nbl;
-      }
-      i=j-1;
-      while (R[i].a == R[i].b) {
-	i--;
-      }
-      //remplissage des blocks.
-      other_b[nbl].i0 = blocks[i].i0;
-      other_b[nbl].i1 = blocks[i].i1;
-      other_b[nbl].j0 = blocks[j].j0;
-      other_b[nbl].j1 = blocks[j].j1;
-      other_b[nbl].r = submatrix_rank(M, blocks[i].i0, blocks[j].j0, blocks[i].i1, blocks[j].j1);
+  Bd = B->d;
+  Bi = B->i;
 
-      nbl++;
+  nbl = Bd[diag+1] - Bd[diag]; // <--- nombre d'entrée sur la diagonale k. 
+
+  current = spasm_calloc(nbl, sizeof(block_t));
+  l = 0;
+
+  // Parcours des entrées de la diagonale diag :
+  for(k = Bd[diag]; k < Bd[diag +1]; k++) {
+    i = Bi[k];
+    j = i + diag; 
+   
+    //remplissage des données des blocks rencontrés sur la diagonales.
+    if(R[i] > 0 && C[j] > 0) {
+      current[l].i0 = blocks[i].i0;
+      current[l].i1 = blocks[i].i1;
+      current[l].j0 = blocks[j].j0;
+      current[l].j1 = blocks[j].j1;
+      current[l].r = submatrix_rank(M, current[l].i0, current[l].j0, current[l].i1, current[l].j1);
+    
+      //mise à jour des tables R et C du nombre de pivots restants en ligne et en colonne.
+      R[i] = row_pivot_update(R[i], current[l]);
+      C[j] = col_pivot_update(C[j], current[l]);
+
     }
+    l++;
+  }      
+  free(current);
+}
+
+/*
+ * Parcourt la matrice diagonale par diagonale et compte le nombre de pivot
+ * qu'il faut encore trouver par intervalle de lignes et de colonnes sur les diagonales
+ * supérieures.
+ * Le programme s'arrête quand on a trouvé tous les pivots.
+ * La valeur renvoyée est le numéro de la diagonale où le programme s'est arrêté.
+ */
+int last_diag_estimation(const spasm *M, const uptri_t *B, const block_t *blocks, int n_blocks) {
+  int k, diag, *R, *C, Mn, Mm, nbl, start;
+  char matrix_type;
+
+  Mn = M->n;
+  Mm = M->m;
+
+  diag = 0;
+
+  matrix_type = (Mn > Mm) ? 'V' : 'H'; // regarde si la matrice est verticale ou horizontale.
+
+  //Allocation mémoire des tables R et C du nombre de pivots qu'il reste à trouver.
+  R = spasm_malloc(n_blocks * sizeof(int));
+  C = spasm_malloc(n_blocks * sizeof(int));
+
+  // Initialisations des tables R et C.
+  remaining_pivots_init(R, C, blocks, n_blocks);
+
+  switch (matrix_type) {
+  case 'H' :
+    k = 0;
+    nbl = n_blocks - 1;
+
+    while(k < nbl) {
+      for ( ; k < nbl && R[k] == 0; k++); // parcourt R jusqu'à ce qu'on trouve une entrée non nulle.
+      diag++;
+      update_remaining_pivots(diag, M, B, R, C, blocks);
+      nbl--;
+    }
+    break;
+  case 'V' :
+    k = n_blocks - 1;
+    start = 0;
+
+    while(k > start) {
+      for( ; k > start && C[k] == 0; k--); // parcourt C à l'enver jusqu'à ce qu'on trouve une entrée non nulle.
+      diag++;
+      update_remaining_pivots(diag, M, B, R, C, blocks);
+      start++;
+    }
+    break;
+  default :
+    printf("Matrix error. \n");
+    diag = -1;
+    break;
   }
-  return nbl;
+
+  free(R);
+  free(C);
+  return diag;
+  
 }
 
-int other_blocks_list(const spasm *M, const interval_t *R, const interval_t *C, block_t **other_b, const block_t *blocks, int n_blocks) {
-  int nbl, mem;
-  mem = n_blocks-1;
+/*************** Divers util ***************/
 
-  //allouer la mémoire des blocks grace au pointeurs temporaires;
-  *other_b = spasm_calloc(mem, sizeof(block_t));
-
-  //remplir les blocks
-  nbl = count_other_blocks(M, R, C, *other_b, blocks, n_blocks);
-
-
-
-  return nbl;
-}
 
 /*
  * Recopier une liste de blocks
@@ -1319,6 +1227,8 @@ void blocks_copy(block_t **blocks2, const block_t *blocks1, int nbl) {
   blocks_dupli(*blocks2, blocks1, nbl);
 }
 
+
+/**************** Fonction main *********************/
 
 int main() {
     spasm_triplet *T;
@@ -1350,9 +1260,9 @@ int main() {
 
     free(x);
 
-    int *Q, fill, count, *c_act, *r_act, start;
+    int *Q, fill, count, start, last_diag;
     blk_t *where;
-    uptri_t *P, *S;
+    uptri_t *P;
  
 
     // allocation mémoire de not_empty et Q
@@ -1382,33 +1292,25 @@ int main() {
 
     count = filled_blocks_list(B, blocks1, n_blocks, Q, where);
     P = position_matrix_row_view(where, n_blocks, count);
-    S = position_matrix_col_view(where, n_blocks, count);
-
+   
+    // G = transpose_blocks_spasm(where, n_blocks, count, B->prime);
     printf("%d\n", count);
 
+    last_diag = last_diag_estimation(B, P, blocks1, n_blocks);
 
+    printf("estimation de la dernière diagonale %d \n", last_diag);
    
-    r_act = spasm_malloc(n_blocks * sizeof(blk_t)); // pour tout i, r_act[i] désigne le nombre d'action à effectuer à la ligne i.
-    c_act = spasm_malloc(n_blocks * sizeof(blk_t)); // pour tout j, c_act[j] désigne le nombre d'action à effectuer à la colonne j.
-
-    start = emergence_simulation(P, blocks1, n_blocks, c_act, r_act);
-
-    
-    for (i = 0; i < n_blocks; i++) {    
-      printf("%d ; %d \n", c_act[i], r_act[i]);
-    }
-    
-    printf("nb d'actions déclanchées %d \n", start);
 
     // libération de la mémoire, fin du programme.
     free(blocks1);
     free(Q);
     free(where);
-    free(c_act);
-    free(r_act);
+    //free(c_act);
+    //free(r_act);
     //free(not_empty);
     spasm_csr_free(B);
     spasm_csr_free(A);
+    //spasm_csr_free(G);
     uptri_free(P);
     exit(0);
 
