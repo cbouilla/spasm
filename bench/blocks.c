@@ -1172,8 +1172,8 @@ int last_diag_estimation(const spasm *M, const uptri_t *B, const block_t *blocks
 
   switch (matrix_type) {
   case 'H' :
-    k = 0;
-    nbl = n_blocks - 1;
+    k = 0;// indicateur qui parcours les intervalles de lignes
+    nbl = n_blocks- 1;
 
     while(k < nbl) {
       for ( ; k < nbl && R[k] == 0; k++); // parcourt R jusqu'à ce qu'on trouve une entrée non nulle.
