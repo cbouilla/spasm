@@ -68,6 +68,17 @@ typedef struct {
 } diag_t;
 
 
+/* 
+ * Type de donnée qui décrit le graphe "sympa" pour prévoir l'apparition des blocs.
+ */
+typedef struct {
+  int entry; 
+  int next; // entrée suivante sur la ligne.
+  int col; // indice de colonne sur laquelle se trouve l'arrête
+  //int diag; // indice de la diagonale correspondante
+} edge_t;
+
+
 /*
  * Type de donnée qui définie les actions prévues en une ligne/colonne.
  * Utilise les listes simplement chaînées
@@ -89,6 +100,7 @@ typedef struct list
   struct list *next;
 } list_t;
 
+
 /*
  * Arbres binaire de recherche.
  */
@@ -101,7 +113,7 @@ typedef struct tree
 
 
 
-/****************** allocation et libération de mémoire *******************/ 
+/************************ allocation et libération de mémoire *************************/ 
 
 
 /* alloue la mémoire d'un diag_t
@@ -158,6 +170,7 @@ void uptri_free(uptri_t *T) {
   free(T);
 }
 
+
 /*
  * vide une liste chaînée, libère la mémoire.
  */
@@ -190,8 +203,83 @@ void clear_tree(tree_t **tree) {
 
 }
 
+/************************ fonctions diverses *******************************/
 
-/******* Décomposition par bloc ********/
+/* * * * * * * * * * * * * sur les blocs * * * * * * * * * * * */
+
+/*
+ * Recopier une liste de blocks
+ */
+void blocks_dupli(block_t *blocks2, const block_t *blocks1, int nbl) {
+  int i;
+  for (i=0; i<nbl; i++) {
+	blocks2[i].i0 = blocks1[i].i0;
+	blocks2[i].i1 = blocks1[i].i1;
+	blocks2[i].j0 = blocks1[i].j0;
+	blocks2[i].j1 = blocks1[i].j1;
+	blocks2[i].r = blocks1[i].r;
+      }
+}
+
+void blocks_copy(block_t **blocks2, const block_t *blocks1, int nbl) {
+  *blocks2 = spasm_malloc(nbl*sizeof(block_t));
+  blocks_dupli(*blocks2, blocks1, nbl);
+}
+
+
+/* * * * * * * * * * * * * sur les listes chaînées * * * * * * * * * * */
+
+/*
+ * Recherche l'élément a dans une liste chaînée d'entiers.
+ * Retourne 1 si l'élément est dans la liste et 0 sinon.
+ */
+int exist_element(list_t *list, int a) {
+  list_t *tmp;
+
+  tmp = list;
+  while (tmp) {
+    if(tmp->val == a) return 1;
+    tmp = tmp->next;
+  }
+  return 0;
+}
+
+/*
+ * Ajouter un élément en tête de liste chaînée.
+ */
+list_t * new_element(list_t *list, int a) {
+  list_t *new;
+  new = spasm_malloc(sizeof(list_t));
+
+  new->val = a;
+  new->next = list;
+
+  return new;
+}
+
+/* * * * * * * * * * * Autres * * * * * * * * * * */
+/*
+ * Recherche dichotomique dans une table tab, triée entre start et end.
+ */
+int dichotomie(int *tab, int start, int end, int val) {
+  int found, mid;
+
+  found = 0;
+
+  while(!found && (end-start) > 1) {
+    mid = (start + end)/2;
+    found = (tab[mid] == val);
+    if(tab[mid] > val) end = mid;
+    else start = mid;
+  }
+
+  if (tab[start] == val) return start;
+
+  else return -1;
+
+}
+
+/*********************** Décomposition par bloc *****************************/
 
 
 /*
@@ -594,6 +682,11 @@ uptri_t * position_matrix_row_view(const blk_t *w, int n_blocks, int count) {
   return B;
 }
 
+
+/************** Apparition de nouveaux blocs : prédiction de la structure *********************/
+
+/* * * * * * * * * * Construction d'un graphe "sympa" * * * * * * * * * * */
+
 /*
  * Donne la transposée de la matrice de positions des blocs, à partir de la liste "where"
  * du nombre de blocs "count" et du nombres de blocs diagonaux "n_blocks".
@@ -633,11 +726,112 @@ spasm * transpose_blocks_spasm(const blk_t *w, int n_blocks, int count, int prim
   /* libération de mémoire, retourner le résultat. */
   free(tmp);
   return T;
-
 }
 
 
-/************************ Apparitions de nouveau blocs *********************/
+/*
+ * On fait pointer chaque entrée sur la suivante pour obtenir le graphe "sympa".
+ */
+int row_intersection_graph(spasm *T, edge_t *rows, int n_blocks) {
+  int k, i, *Tj, *Tp, n_entry, exist, j, jplus;
+  list_t **adjency; //liste d'adjacence du graphe.
+  
+  //get workspace
+  adjency = spasm_malloc(n_blocks * sizeof(list_t));
+
+  for (i = 0; i < n_blocks; i++) {
+    adjency[i] = NULL;
+  }
+
+  Tp = T->p;
+  Tj = T->j;
+
+  n_entry = 0;
+
+  for (i = 0; i < n_blocks; i++) {
+    for (k = Tp[i]; k < Tp[i+1] - 1; k++) {
+      j = Tj[k];
+      jplus = Tj[k+1];
+
+      exist = exist_element(adjency[j], jplus);
+	if(!exist) {
+	  rows[n_entry].entry = j; //entrée courante.
+	  rows[n_entry].next = jplus; //entrée suivante sur la ligne.
+	  rows[n_entry].col = i; //numéro de la colonne correspondante.
+	  n_entry ++;
+
+	  adjency[j] = new_element(adjency[j], jplus);
+	}
+    }
+  }
+
+  // free workspace
+  for (i = 0; i < n_blocks; i++) {
+    clear_list(&adjency[i]);
+  }
+  free(adjency);
+
+  return n_entry;
+}
+
+/*
+ * On écrit la matrice d'adjacence du graphe "sympa".
+ */
+spasm * row_intersection_matrix(edge_t *row, int n_blocks, int count) {
+  int sum, p, k, *Sp, *Sj, *Sx, *w;
+  spasm *S;
+
+  /* Allocate result */
+  S = spasm_csr_alloc(n_blocks, n_blocks, count, 46337, 1);
+
+  /*get workspace */
+  w = spasm_calloc(n_blocks, sizeof(int));
+  Sp = S->p;
+  Sj = S->j;
+  Sx = S->x;
+
+  /* compute row counts */
+  for (k = 0; k < count; k++) {
+    w[ row[k].entry ]++;
+  }
+
+  /* compute row pointers */
+  sum = 0;
+  for (k = 0; k < n_blocks; k++) {
+    Sp[k] = sum;
+    sum += w[k];
+    w[k] = Sp[k];
+  }
+  Sp[n_blocks] = sum;
+
+  /* dispatch entries */
+  for(k = 0; k < count; k++) {
+    p = w[row[k].entry]++;
+    Sj[p] = row[k].next;
+    Sx[p] = row[k].col;
+  }
+
+  /* free workspace */
+  free(w);
+  return S;
+
+}
+
+/* * * * * * * * * * * Algorithme non incrémental * * * * * * * * * * * * * */
+
+/* 
+ * Prend en entrée deux tableaux a et b et des indices start_a, end_a, start_b, end_b
+ * tel que a soit ordonnée entre start_a et end_a et b soit ordonnée entre start_b et
+ * end_b.
+ * 
+ * Recopie les éléments de b qui ne sont pas déjà présent dans a, dans la liste a en
+ * conservant l'ordre.
+ *
+ * la valeur renvoyée est le nombre d'élément ajoutés à la liste a. 
+ */
+
+
+/******************* Apparitions de nouveau blocs : méthode longue *******************/
 
 /*
  * Pour un bloc donné par son entrée k et sa diagonale dans la matrice, 
@@ -1205,28 +1399,6 @@ int last_diag_estimation(const spasm *M, const uptri_t *B, const block_t *blocks
   
 }
 
-/*************** Divers util ***************/
-
-
-/*
- * Recopier une liste de blocks
- */
-void blocks_dupli(block_t *blocks2, const block_t *blocks1, int nbl) {
-  int i;
-  for (i=0; i<nbl; i++) {
-	blocks2[i].i0 = blocks1[i].i0;
-	blocks2[i].i1 = blocks1[i].i1;
-	blocks2[i].j0 = blocks1[i].j0;
-	blocks2[i].j1 = blocks1[i].j1;
-	blocks2[i].r = blocks1[i].r;
-      }
-}
-
-void blocks_copy(block_t **blocks2, const block_t *blocks1, int nbl) {
-  *blocks2 = spasm_malloc(nbl*sizeof(block_t));
-  blocks_dupli(*blocks2, blocks1, nbl);
-}
-
 
 /**************** Fonction main *********************/
 
@@ -1260,9 +1432,11 @@ int main() {
 
     free(x);
 
-    int *Q, fill, count, start, last_diag;
+    int *Q, fill, count, start, last_diag, entries;
     blk_t *where;
-    uptri_t *P;
+    //uptri_t *P;
+    spasm *Tr, *G;
+    edge_t *rows;
  
 
     // allocation mémoire de not_empty et Q
@@ -1291,7 +1465,17 @@ int main() {
     }
 
     count = filled_blocks_list(B, blocks1, n_blocks, Q, where);
-    P = position_matrix_row_view(where, n_blocks, count);
+    Tr = transpose_blocks_spasm(where, n_blocks, count, B->prime);
+    spasm_row_entries_sort(&Tr, 0);
+
+    rows = spasm_malloc((count - n_blocks) * sizeof(edge_t));
+
+     entries = row_intersection_graph(Tr, rows, n_blocks);
+     printf("%d\n", entries);
+     G = row_intersection_matrix(rows, n_blocks, entries);
+
+
+    /*P = position_matrix_row_view(where, n_blocks, count);
    
     // G = transpose_blocks_spasm(where, n_blocks, count, B->prime);
     printf("%d\n", count);
@@ -1299,7 +1483,9 @@ int main() {
     last_diag = last_diag_estimation(B, P, blocks1, n_blocks);
 
     printf("estimation de la dernière diagonale %d \n", last_diag);
-   
+    */
+
+
 
     // libération de la mémoire, fin du programme.
     free(blocks1);
@@ -1308,10 +1494,12 @@ int main() {
     //free(c_act);
     //free(r_act);
     //free(not_empty);
+    free(rows);
     spasm_csr_free(B);
     spasm_csr_free(A);
-    //spasm_csr_free(G);
-    uptri_free(P);
+    spasm_csr_free(Tr);
+    spasm_csr_free(G);
+    //uptri_free(P);
     exit(0);
 
     /* déterminer le nombre de diagonale non vide.
