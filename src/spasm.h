@@ -185,6 +185,9 @@ int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
 int * spasm_row_sort (const spasm *A);
 int * spasm_cheap_pivots(const spasm *A);
 
+/* spasm_csr.c */
+void spasm_row_entries_sort(spasm *M, int with_value);
+
 /* spasm_matching.c */
 int spasm_maximum_matching(const spasm *A, int *jmatch, int *imatch);
 int * spasm_permute_row_matching(int n, const int *jmatch, const int *p, const int *qinv);

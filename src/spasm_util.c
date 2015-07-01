@@ -49,7 +49,7 @@ void * spasm_realloc(void *ptr, size_t size) {
 spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
   spasm *A;
 
-  assert(prime <= 46337); /* to avoid arithmetic overflow */
+  //assert(prime <= 46337); /* to avoid arithmetic overflow */
 
     A = spasm_malloc(sizeof(spasm)); /* allocate the cs struct */
     A->m = m;                        /* define dimensions and nzmax */
