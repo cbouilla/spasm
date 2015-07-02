@@ -44,3 +44,52 @@ spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int 
   spasm_csr_realloc(B, -1);
   return B;
 }
+
+/*
+ * returns A[r0 : r1, c0 : c1] when the column of A are sorted.  
+ */
+spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, int *py, int with_values) {
+  spasm *B;
+  int Bn, Bm, Bnz, i, j, px, k;
+  int *Ap, *Aj, *Ax, *Bp, *Bj, *Bx;
+
+  assert(A != NULL);
+  Ap = A->p;
+  Aj = A->j;
+  Ax = A->x;
+
+  Bn = spasm_max(0, r1 - r0);
+  Bm = spasm_max(0, c1 - c0);
+  Bnz = spasm_max(0, Ap[r1] - Ap[r0]);
+  B = spasm_csr_alloc(Bn, Bm, Bnz, A->prime, (A->x != NULL) && with_values);
+  Bp = B->p;
+  Bj = B->j;
+  Bx = B->x;
+
+ k = 0;
+  for(i = r0; i < r1; i++) {
+    Bp[i - r0] = k;
+
+    px = py[i]; //<--- pointer on the first entrie on row i
+
+    assert(Aj[px] >= c0);
+
+    while(Aj[px] < c1) {
+      j = Aj[px];
+      	Bj[k] = j - c0;
+	if (Bx != NULL) {
+	  Bx[k] = Ax[px];
+	}
+	px++;
+	k++;
+    }
+    py[i] = px; // Update py[i];
+  }
+
+  /* finalize */
+  Bp[r1 - r0] = k;
+
+  /* shrink */
+  spasm_csr_realloc(B, -1);
+  return B;
+}
