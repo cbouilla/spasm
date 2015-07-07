@@ -3,27 +3,26 @@
 #include "spasm.h"
 
 void spasm_row_entries_sort(spasm *M, int with_value) {
-  int i, k, l, n, *p, *j, tmpj;
-  spasm_GFp *x, tmpx;
+  int i, k, l, n, *Mp, *Mj, tmpj;
+  spasm_GFp *Mx, tmpx;
 
   n = M->n; // <--- number of rows
-  p = M->p; // <--- row pointers
-  j = M->j; // <--- column index
-  x = M->x; // <--- matrix entries
+  Mp = M->p; // <--- row pointers
+  Mj = M->j; // <--- column index
+  Mx = M->x; // <--- matrix entries
 
   for(i = 0; i < n; i++) {
-    for(k = p[i] + 1; k < p[i+1] ; k++) {
-      tmpj = j[k];
-      if (with_value) tmpx = x[k];
-      l = k-1;
-      while (l >= 0 && j[l] > tmpj) {
-	j[l+1] = j[l];
-	if (with_value) x[l+1] = x[l];
-	l--;
+    for(k = Mp[i] + 1; k < Mp[i+1] ; k++) {
+      tmpj = Mj[k];
+      if (with_value) tmpx = Mx[k];
+      for(l = k; l > Mp[i] && Mj[l-1] > tmpj; l--) {
+	Mj[l] = Mj[l-1];
+	if (with_value) Mx[l] = Mx[l-1];
       }
-      j[l+1] = tmpj;
-      if (with_value) x[l+1] = tmpx;
+      Mj[l] = tmpj;
+      if (with_value) Mx[l] = tmpx;
     }
   }
 
+  
 }

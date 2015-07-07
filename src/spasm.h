@@ -120,6 +120,7 @@ void spasm_vector_zero(spasm_GFp *x, int n);
 void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha);
 spasm * spasm_identity(int n, int prime);
 
+
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x);
 void spasm_triplet_transpose(spasm_triplet *T);
@@ -140,7 +141,7 @@ spasm *spasm_transpose(const spasm *C, int keep_values);
 
 /* spasm_submatrix.c */
 spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int with_values);
-
+spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, int *py, int with_values);
 
 /* spasm_permutation.c */
 void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);

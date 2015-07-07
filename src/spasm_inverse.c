@@ -76,31 +76,31 @@ int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *
 
   Ln = L->n;
   Mn = M->n;
-  assert(Ln = Mn );
+  assert(Ln == Mn );
 
   prime = L->prime;
   Mprime = M->prime;
-  assert(prime = Mprime);
+  assert(prime == Mprime);
 
 
   /* First solve x * L = ek */
   // get workspace.
-  x = malloc(Ln * sizeof(spasm_GFp));
-  xi = malloc(3*Ln * sizeof(int));
-  spasm_vector_zero(xi, 3*Ln);
-  spasm_vector_zero(x, Ln);
+  x = malloc(Mn * sizeof(spasm_GFp));
+  xi = malloc(3*Mn * sizeof(int));
+  spasm_vector_zero(xi, 3*Mn);
+  spasm_vector_zero(x, Mn);
 
-  I = spasm_identity(Ln, prime); // <--- Identity matrix
+  I = spasm_identity(Mn, prime); // <--- Identity matrix
 
   top = spasm_sparse_backward_solve(L, I, k, xi, x, pinv);
 
   free(I); // <--- free extra-workspace
 
   /* find x pattern, xxi. */
-  xnz = Ln - top;
+  xnz = Mn - top;
   xxi = malloc(xnz * sizeof(int));
   i = 0;
-  for(p = top; p < Ln; p++) {
+  for(p = top; p < Mn; p++) {
     xxi[i] = xi[p];
     i++; 
   }
