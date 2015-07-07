@@ -140,6 +140,7 @@ spasm *spasm_transpose(const spasm *C, int keep_values);
 
 /* spasm_submatrix.c */
 spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int with_values);
+spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, int *py, int with_values);
 
 
 /* spasm_permutation.c */
