@@ -275,11 +275,9 @@ int dichotomie(int *tab, int start, int end, int val) {
  * Stocke le L de la décomposition LU dans L.
  *  
  */
-spasm * sorted_submatrix_L(const spasm *M, int a, int b, int c, int d, int *py) {
-  spasm *C, *L;
-  int *p, *Lp, *Lj;
-  int n, m, nzmax, prime, k;
-  spasm_GFp *Lx;
+spasm_lu * sorted_submatrix_LU(const spasm *M, int a, int b, int c, int d, int *py) {
+  spasm *C;
+  int *p;
   spasm_lu *LU;
 
   //extrait la sous_matrice
@@ -293,35 +291,11 @@ spasm * sorted_submatrix_L(const spasm *M, int a, int b, int c, int d, int *py) 
   p = spasm_cheap_pivots(C);
   LU = spasm_LU(C, p, SPASM_KEEP_L); // on garde L
   free(p);
-
-  // recopie le L de la décomposition LU dans L
-  n = LU->L->n;
-  m = LU->L->m;
-  nzmax = LU->L->nzmax;
-  prime = LU->L->prime;
-
-  //Allocation mémoire.
-  L = spasm_csr_alloc(n, m, nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
-  Lp = L->p;
-  Lj = L->j;
-  Lx = L->x;
-
-  //Remplissage de la matrice
-  for (k = 0; k < n+1; k++) {
-    Lp[k] = LU->L->p[k];
-  }
-
-  for (k = 0; k < nzmax; k++) {
-    Lj[k] = LU->L->j[k];
-    Lx[k] = LU->L->x[k];
-  }
-
  
   // libère la mémoire en trop.
   spasm_csr_free(C);
-  spasm_free_LU(LU);
 
-  return L;
+  return LU;
   
 }
 
@@ -368,10 +342,10 @@ void count_blocks(spasm_cc *Y, block_t *blocks, int *start) {
  * le nombre de blocs est renvoyé. Il faut passer un pointeur vers une
  * liste de blocs, qui est modifiée.
  */
-int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr, spasm ***L_ptr, int *py) {
+int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr, spasm_lu ***LU_ptr, int *py) {
   int i, k;
   block_t *blocks;
-  spasm **L;
+  spasm_lu **LU;
 
   // étape 1 : détermine le nombre de blocs
   k = 0;
@@ -389,8 +363,8 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr, spasm *
 
   blocks = spasm_malloc(sizeof(block_t) * k);
   *blocks_ptr = blocks;
-  L = spasm_malloc(k * sizeof(spasm*));
-  *L_ptr = L;
+  LU = spasm_malloc(k * sizeof(spasm_lu *));
+  *LU_ptr = LU;
   
   // étape 3 : remplir la liste des blocs
   k = 0;
@@ -416,8 +390,9 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr, spasm *
 
   // étape 5 : calculer les L et les rangs
   for (i = 0; i < k; i++) {
-    L[i] = sorted_submatrix_L(M, blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, py);
-    blocks[i].r = L[i]->m;
+    LU[i] = sorted_submatrix_LU(M, blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, py);
+    blocks[i].r = LU[i]->U->n;
+   
   }
 
 
@@ -1105,6 +1080,7 @@ spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int r,
   return R;
 }
 
+
 /*
  * Parcours la k-ième diagonale de la matrice par bloc, k >0. 
  * Pour chaque bloc "intéressant" extrait la sous-matrice correspondante,
@@ -1114,22 +1090,36 @@ spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int r,
  * On se contente ici de faire le produit par le L^(-1) du bloc diagonal à gauche du bloc
  * qu'on regarde actuellement. On renvoie la matrice produit R)
  */
-int * upper_research(const spasm *M, const uptri_t *B, int k, const block_t *blocks, const spasm **L, int *py, spasm ***R_ptr) {
-  spasm **R;   
-  int px, i, j, i0, i1, j0, j1, r, *Bd, *Bi, nbl;
+int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *blocks, const spasm **L, int *py, spasm ***R_ptr) {
+  spasm **R;
+  int px, i, j, i0, i1, j0, j1, ri, rj, r, *Bd, *Bi, nbl;
 
   // vérifier les entrées.
-  if(M == NULL || B == NULL) return NULL;
+  if(M == NULL || B == NULL) return -1;
   assert(k > 0 && k < B->n);
 
   Bd = B->d;
   Bi = B->i;
  
+  // Compter le nombre d'élément dans la liste des blocs
+  nbl = 0;
+  for(px = Bd[k]; px < Bd[k+1]; px++) {
+    i = Bi[px];
+    j = i+k;
+    i0 = blocks[i].i0;
+    i1 = blocks[i].i1;
+    j0 = blocks[j].j0;
+    j1 = blocks[j].j1;
+    ri = blocks[i].r;
+    rj = blocks[j].r;
 
-  nbl = Bd[k+1] - Bd[k];
+    if(i0 + ri < i1 && j0 + rj < j1) {
+      nbl++;
+    }
+  }
  
 
-  //Allouer la mémoire de R.
+  //Allouer la mémoire de .
   R = spasm_malloc(nbl * sizeof(spasm*));
   *R_ptr = R;
 
@@ -1144,18 +1134,26 @@ int * upper_research(const spasm *M, const uptri_t *B, int k, const block_t *blo
     j0 = blocks[j].j0;
     i1 = blocks[i].i1;
     j1 = blocks[j].j1;
-  
+   
+    //   trouver le rang du bloc diagonal en dessous. vérifier qu'il n'est pas complet en colonne.
     //   trouver le rang du bloc diagonal à sa gauche. vérifier qu'il n'est pas complet en ligne.
-    r = blocks[i].r;
-    if(i0 + r < i1) {
+    ri = blocks[i].r;
+    rj = blocks[j].r;
+    if(i0 + ri < i1 && j0 + rj < j1) {
       //   extraire la sous-matrice et calculer le produit.
-      R[nbl] = lazy_product(M, i0, j0, i1, j1, py, r, L[i]);
+      R[nbl] = lazy_product(M, i0, j0, i1, j1, py, ri, L[i]);
+      
+      //   concaténer les lignes de cette matrices avec celle du U du bloc diagonal en dessous.
+      //   calculer la décomposition LU de cette nouvelle matrice, pour récupérer son rang.
+      //   garder L et U pour les calculs ultérieurs. 
+     
       nbl++;
     }
   }
-  // retourner la matrice résultat R.
 
+  // retourner le nombre de bloc sur la diag.
   return nbl;
+
 }
 
 
@@ -1163,8 +1161,9 @@ int * upper_research(const spasm *M, const uptri_t *B, int k, const block_t *blo
 
 int main() {
   spasm_triplet *T;
-  spasm *A, *B, **L0, **R;
+  spasm *A, *B, **L0, **U, **R;
   spasm_dm *x;
+  spasm_lu **LU;
   int n_blocks, i, *qinv, nbl, *py;
   block_t *blocks0;
   spasm *Tr, *G;
@@ -1176,7 +1175,8 @@ int main() {
   T = spasm_load_sms(stdin, 42013);
   A = spasm_compress(T);
   spasm_triplet_free(T);
-  
+
+
   /* met la matrice sous forme triangulaire par blocs
    * Calcule le rang des blocks de la première diagonale
    * garde en mémoire le L de la décomposition LU des blocs diagonaux */
@@ -1195,13 +1195,17 @@ int main() {
   //initialise py la liste de pointeur sur les colonnes.
   py = spasm_malloc(B->n * sizeof(int));
   for(i = 0; i < B->n; i++) {
-    py[i] = B->p[i];
+    if (B->p[i] != B->p[i+1]) {
+      py[i] = B->p[i]; // non-empty row
+    } else {
+      py[i] = -1;
+    }
   }
 
   //calcule la liste des blocs
-  n_blocks = block_list(B, x, &blocks0, &L0, py);
+  n_blocks = block_list(B, x, &blocks0, &LU, py);
   for(i = 0; i < n_blocks; i++) {
-    printf("%d : (%d, %d) -- (%d, %d), rank %d\n", i, blocks0[i].i0, blocks0[i].j0, blocks0[i].i1, blocks0[i].j1, blocks0[i].r);
+     printf("%d : (%d, %d) -- (%d, %d), rank %d\n", i, blocks0[i].i0, blocks0[i].j0, blocks0[i].i1, blocks0[i].j1, blocks0[i].r);
   }
 
   printf("--------------------------\n");
@@ -1211,6 +1215,7 @@ int main() {
 
   printf("--------------------------\n");
 
+  
   /* Determine les blocs où il peut encore se cacher des pivots
    * On commence par regarder quels sont les blocs non vides dans la matrice B */
 
@@ -1250,16 +1255,30 @@ int main() {
 
   // mise de la structure sous forme uptri_t pour l'avoir "diagonale par diagonale"
   uptri_t *DS = diagonal_structure(blocks_mat, r_tab, n_rows);
-  int *Dd = DS->d;
+ 
 
   /* Parcours les blocs "interessants" de la première diagonale supérieure 
    * (blocs non vides nétant pas sur un intervalle de lignes ou de colonnes "complet")
    * pour chacun d'entre eux, multiplie la partie inférieure par l'inverse de L. */
-  nbl = upper_research(B, DS, 1, blocks0, L0, py, &R);
+  
+  // récupérer le L de la décomposition LU des blocs diagonaux.
+
+  L0 = spasm_malloc(n_blocks * sizeof(spasm *));
+  U = spasm_malloc(n_blocks * sizeof(spasm*));
+for(i = 0; i < n_blocks; i++) {
+  L0[i] = LU[i]->L; 
+  U[i] = LU[i]->U;
+    }
+
+ printf("--------------------------\n");
+
+ nbl = upper_research(B, DS, 1, blocks0, L0, py, &R);
 
  printf("nombre de blocs à traiter sur la première diagonale supérieure : %d\n", nbl);
 
-
+ for(i = 0; i < nbl; i++) {
+   printf("%d : n = %d, m = %d, nzmax = %d\n", i, R[i]->n, R[i]->m, R[i]->nzmax);
+ }
 
   //spasm *row_inter = row_intersection_graph(Tr, rows, n_blocks);
   //spasm * blocks_mat = blocks_spasm(where, n_blocks, count, B->prime, 0);
@@ -1268,18 +1287,25 @@ int main() {
   // spasm_save_csr(stdout, blocks_mat);
 
   // libération de la mémoire, fin du programme.
-  for(i = 0; i < n_blocks; i++) spasm_csr_free(L0[i]);
+ for(i = 0; i < n_blocks; i++) {
+   spasm_free_LU(LU[i]);
+ }
+ for(i = 0; i < nbl; i++) {
+   spasm_csr_free(R[i]);
+ }
 
-  // free(rows);
-  // free(r_tab);
+ // free(rows);
+ // free(r_tab);
   
   spasm_csr_free(B);
   spasm_csr_free(A);
   free(blocks0);
-  free(L0);
+  //free(L0);
+  free(LU);
   free(Q);
   free(where);
   free(r_tab);
+  free(R);
   // spasm_csr_free(Tr);
   // spasm_csr_free(G);
   // spasm_csr_free(row_inter);

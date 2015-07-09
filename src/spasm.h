@@ -189,6 +189,9 @@ int * spasm_cheap_pivots(const spasm *A);
 /* spasm_csr.c */
 void spasm_row_entries_sort(spasm *M, int with_value);
 
+/* spasm_concatenate.c */
+spasm * spasm_row_concatenation(spasm *A, spasm *B, int with_values);
+
 /* spasm_matching.c */
 int spasm_maximum_matching(const spasm *A, int *jmatch, int *imatch);
 int * spasm_permute_row_matching(int n, const int *jmatch, const int *p, const int *qinv);

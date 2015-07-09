@@ -92,7 +92,7 @@ spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, i
       }
       if (px == Ap[i+1]) py[i] = -1; // <-- no more entries on row i.
       else py[i] = px; // Update py[i];
-      if (Aj[px] < c1 && px < Ap[i+1]) {
+      if (px < Ap[i+1] && Aj[px] < c1) {
 	printf("row %d Error\n", i);
       }
     }
