@@ -1750,7 +1750,7 @@ int main() {
   n_rows = rows_to_watch(blocks1, r_tab, n_blocks);
   FS = final_structure_by_diag(G, r_tab, n_rows);
 
-  printf("nombre de blocs intéressant au total : %d\n", FS->nzmax);
+  printf("nombre de blocs intéressants au total : %d\n", FS->nzmax + n_blocks);
 
   // libération de la mémoire, fin du programme.
   //    free(blocks1);
