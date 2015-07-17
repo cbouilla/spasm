@@ -1002,114 +1002,88 @@ uptri_t * diagonal_structure(const spasm *B, int *r_tab, int n_rows) {
 
 /****************** Traite les blocs sur les diag supérieures ********************/
 
-/* /\* */
-/*  * Extrait une sous-matrice C [a : c, b : d].  */
-/*  * Calcule le produit des lignes de L^(-1) à partir de r. */
-/*  * retourne la sous-matrice de ce produit. */
-/*  *\/ */
-/* spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int r, const spasm  *L) { */
-/*   spasm *C, *R; */
-/*   int k, i, px, *yi, ynz, Cn, Cm, nzmax, Rn, prime, *Rp, *Rj; */
-/*   spasm_GFp *y, *Rx; */
+/*
+ * Extrait une sous-matrice C [a : c, b : d].
+ * Calcule le produit des lignes de L^(-1) à partir de r.
+ * retourne la sous-matrice de ce produit.
+ */
+spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int *p, int r, const spasm  *L) {
+  spasm *C, *R;
+  int k, k_new, i, px, *yi, ynz, Cn, Cm, nzmax, Rn, prime, *Rp, *Rj;
+  spasm_GFp *y, *Rx;
 
-/*   // vérifier les entrées. */
-/*   assert(a + r < c); */
-/*   if(M == NULL || L == NULL) return NULL; */
+  // vérifier les entrées.
+  assert(a + r < c);
+  if(M == NULL || L == NULL) return NULL;
 
-/*   //extrait la sous-matrice de M, triée. */
-/*   C = sorted_spasm_submatrix(M, a, c, b, d, py, SPASM_WITH_NUMERICAL_VALUES); */
-/*   if(spasm_nnz(C) == 0) { */
-/*     spasm_csr_free(C); */
-/*     return NULL; */
-/*   } */
+  //extrait la sous-matrice de M, triée.
+  C = sorted_spasm_submatrix(M, a, c, b, d, py, SPASM_WITH_NUMERICAL_VALUES);
+  if(spasm_nnz(C) == 0) {
+    spasm_csr_free(C);
+    return NULL;
+  }
 
-/*   //Allouer le résultat B (nombre d'entrée de C). */
-/*   Cn = C->n; */
-/*   Cm = C->m; */
-/*   nzmax = C->nzmax; */
-/*   Rn = Cn - r; */
-/*   prime = C->prime; */
+  //Allouer le résultat B (nombre d'entrée de C).
+  Cn = C->n;
+  Cm = C->m;
+  nzmax = C->nzmax;
+  Rn = Cn - r;
+  prime = C->prime;
 
-/*   R = spasm_csr_alloc(Rn, Cm, nzmax, prime, SPASM_WITH_NUMERICAL_VALUES); */
-/*   Rp = R->p; */
-/*   Rj = R->j; */
-/*   Rx = R->x; */
+  R = spasm_csr_alloc(Rn, Cm, nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
+  Rp = R->p;
+  Rj = R->j;
+  Rx = R->x;
 
-/*   //intialiser Rp. */
-/*   Rp[0] = 0; */
+  //intialiser Rp.
+  Rp[0] = 0;
 
-/*   //Allouer mémoire de y et de yi et initialiser à 0. */
-/*   y = spasm_malloc(Cm * sizeof(spasm_GFp)); */
-/*   yi = spasm_malloc(Cm * sizeof(int)); */
-/*   spasm_vector_zero(y, Cm); */
-/*   spasm_vector_zero(yi, Cm); */
+  //Allouer mémoire de y et de yi et initialiser à 0.
+  y = spasm_malloc(Cm * sizeof(spasm_GFp));
+  yi = spasm_malloc(Cm * sizeof(int));
+  spasm_vector_zero(y, Cm);
+  spasm_vector_zero(yi, Cm);
 
-/*   // Pour k allant de r à Cn : */
-/*   for(k = r; k < Cn; k++) { */
-/*     //   calculer le produit de la k-ième ligne de L^(-1) par C. */
-/*     //   le stocker dans y, et son support dans yi. */
-/*     ynz = spasm_inverse_and_product(L, C, k, y, yi, SPASM_IDENTITY_PERMUTATION); */
+  i = 0;
+  // Pour k allant de r à Cn :
+  for(k = r; k < Cn; k++) {
+    //   effectuer les permutations de lignes.
+    k_new = p[k];
+    //   calculer le produit de la k-ième ligne de L^(-1) par C.
+    //   le stocker dans y, et son support dans yi.
+    ynz = spasm_inverse_and_product(L, C, k_new, y, yi, SPASM_IDENTITY_PERMUTATION);
 
-/*     //   mettre à jour Rp. */
-/*     i = k - r; */
-/*     Rp[i+1] = Rp[i] + ynz; */
+    //   mettre à jour Rp.
+    Rp[i+1] = Rp[i] + ynz;
 
-/*     //   réallouer de la mémoire si besoin. */
-/*     if(nzmax < Rp[i+1]) { */
-/*       nzmax = 2 * nzmax + ynz; */
-/*       spasm_csr_realloc(R, nzmax); */
-/*       Rj = R->j; */
-/*       Rx = R->x; */
-/*     } */
+    //   réallouer de la mémoire si besoin.
+    if(nzmax < Rp[i+1]) {
+      nzmax = 2 * nzmax + ynz;
+      spasm_csr_realloc(R, nzmax);
+      Rj = R->j;
+      Rx = R->x;
+    }
 
-/*     //   ajouter les entrées dans Rj et Rx. */
-/*     for(px = 0; px < ynz; px++) { */
-/*       Rj[ Rp[i] + px ] = yi[px];  */
-/*       Rx[ Rp[i] + px ] = y[ yi[px] ]; */
-/*     } */
-  
-/*   } */
-/*   // Finaliser, ajuster le nombre d'entrée de R. */
-/*   spasm_csr_realloc(R, -1); */
+    //   ajouter les entrées dans Rj et Rx.
+    for(px = 0; px < ynz; px++) {
+      Rj[ Rp[i] + px ] = yi[px];
+      Rx[ Rp[i] + px ] = y[ yi[px] ];
+    }
+    i++;  
 
-/*   // Libérer mémoire auxiliaire. */
-/*   free(y); */
-/*   free(yi); */
-/*   spasm_csr_free(C); */
+  }
+  // Finaliser, ajuster le nombre d'entrée de R.
+  spasm_csr_realloc(R, -1);
 
-/*   // Retourner R. */
-/*   return R; */
-/* } */
+  // Libérer mémoire auxiliaire.
+  free(y);
+  free(yi);
+  spasm_csr_free(C);
 
+  // Retourner R.
+  return R;
+}
 
-/* /\* */
-/*  * Prend en argument les coordonnées d'un bloc a, b, c, d, deux matrice trapézoïdales : */
-/*  * L (inférieure) et U (supérieure), un entier r. */
-/*  * Effectue le "produit paresseux" sur la sous matrice [a : c, b : d] */
-/*  * Effectue la concaténation des lignes de U et des lignes de R. */
-/*  * Calcule la décomposition LU de la matrice obtenue. */
-/*  *  */
-/*  *\/ */
-/* spasm_lu * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int r, spasm *L, spasm *U) { */
-/*   spasm_lu *LU; */
-/*   spasm *C, *R; */
-/*   int *p; */
-
-/*   // R : produit paresseux */
-/*   R = lazy_product(M, a, b, c, d, py, r, L); */
-/*   // C : concaténation de U et de R */
-/*   C = spasm_row_concatenation(U, R, SPASM_WITH_NUMERICAL_VALUES); */
-/*   // trouver les "cheap pivots" de C */
-/*   p = spasm_cheap_pivots(C); */
-/*   // faire la décomposition LU de C */
-/*   LU = spasm_LU(C, p, SPASM_KEEP_L); */
-/*   // libérer la mémoire auxilaire */
-/*   free(p); */
-/*   spasm_csr_free(R); */
-/*   spasm_csr_free(C); */
-/*   // renvoyer LU */
-/*   return LU; */
-/* } */
 
 
 /*
@@ -1121,52 +1095,34 @@ uptri_t * diagonal_structure(const spasm *B, int *r_tab, int n_rows) {
  * la valeur renvoyée est le nombre de pivot supplémentaire trouvés.
  */
 int upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int *p,  int r, spasm *L) {
-  spasm *C;
-  int *yi, Cn, Cm, i, i_new, ynz, npiv;
-  spasm_GFp *y;
+  spasm *R;
+  int nnz;
 
-  /* Extrait la sous matrice C[a : c, b : d] */
-  C = sorted_spasm_submatrix(M, a, c, b, d, py, SPASM_WITH_NUMERICAL_VALUES); 
-  if(spasm_nnz(C) == 0) {
-    spasm_csr_free(C);
+
+  // fait les calculs paresseux et récupère la matrice R.
+  R = lazy_product(M, a, b, c, d, py, p, r, L);
+  if(spasm_nnz(R)==0) {
+    spasm_csr_free(R);
     return 0;
   }
 
-  Cn = C->n;
-  Cm = C->m;
+  // fait les bonnes permutation de lignes de R afin de trouver le pivot le moins couteux
+  // Continue la décomposition LU avec les lignes de R prise une par une.
 
-  /* Allouer mémoire auxiliaire, initialisation des variables. */
-  y = spasm_malloc(Cm * sizeof(spasm_GFp));
-  yi = spasm_malloc(Cm * sizeof(int));
-  npiv = 0;
-
-  /* Regarde les lignes sur lesquelles il reste des pivots à trouver */
-  // Pour chaque lignes i dans [r, Cn[ :
-  for(i = r; i < Cn; i++) {
-
-  // --- mettre y et yi à zero.
-    spasm_vector_zero(y, Cm);
-    spasm_vector_zero(yi, Cm);
-
-  // --- Applique la permutation p à i pour trouver la ligne intéressante i_new
-    i_new = p[i];
-
-  // --- trouve le vecteur y tel que y * L^(-1) = Ci_new 
-    ynz = spasm_inverse_and_product(L, C, i_new, y, yi, SPASM_IDENTITY_PERMUTATION);
-
-  // --- Complète la décomposition LU avec U trapézoïdale supérieure et x la ligne suivante à entrer.
-  // --- Met à jour le L et les permutations.
-    /* A faire : reprendre la fonction de la décomposition LU
-     * En attendant : on incrémente npiv de 1 si y n'est pas nul. */
-    npiv = (ynz != 0 ? npiv + 1 : npiv);
-  }
-  /* libérer la mémoire. */
-  spasm_csr_free(C);
-  free(yi);
-  free(y);
-
-  /* renvoyer le nombre de pivots suplémentaire trouver lors de la décomposition LU */
-  return npiv;
+  /* Pour ceci faire appel à fonction qui étant donné une matrice R et une ligne i de R :
+   * ---> Résout le système triangulaire supérieur x * U = B_i
+   * ---> Trouve le pivot dans x (si il existe).
+   * ---> Répartit x dans U (et L) de la décomposition.
+   * ---> Prend en compte les permutations de lignes et de colonnes
+   * ---> Renvoie la valeur 1 si on a trouvé un pivot et 0 sinon.
+   *
+   * (Cette fonction n'étant pas encore implémentée, on se contente ici de 
+   * renvoyer le nombre d'entrée de R)
+   */
+  nnz = spasm_nnz(R);
+  spasm_csr_free(R);
+  // renvoie n_piv, le nombre de nouveau pivots trouvé lors de cette décomposition. 
+  return nnz;
 } 
 
 
@@ -1186,7 +1142,6 @@ int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *block
 
   // vérifier les entrées.
   if(M == NULL || B == NULL) return -1;
-  printf("k = %d, B->n = %d \n", k, B->n);
   assert(k > 0 && k < B->n);
 
   Bd = B->d;
@@ -1361,6 +1316,10 @@ int main() {
   nbl = upper_research(B, DS, 1, blocks0, L0, LUp, py, &n_piv); 
 
   printf("nombre de blocs à traiter sur la première diagonale supérieure : %d\n", nbl);
+
+  for(i = 0; i < nbl; i++) {
+    printf("nnz : %d \n", n_piv[i]);
+  }
 
 
   //spasm *row_inter = row_intersection_graph(Tr, rows, n_blocks);
