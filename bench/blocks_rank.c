@@ -1094,9 +1094,10 @@ spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int *p
  *
  * la valeur renvoyée est le nombre de pivot supplémentaire trouvés.
  */
-int upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int *p,  int r, spasm *L) {
+int upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int *p, int *qinv, int r, spasm *L, spasm *U) {
   spasm *R;
-  int nnz;
+  int i, *xi, top, m, *row_perm, i_new, n, entries;
+  spasm_GFp *x;
 
 
   // fait les calculs paresseux et récupère la matrice R.
@@ -1105,24 +1106,61 @@ int upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, i
     spasm_csr_free(R);
     return 0;
   }
+  assert(U->m == R->m); // check inputs
+
+  m = R->m;
+  n = R->n;
+
+  entries = 0;
+
+  // allocation de mémoire et initilialisation.
+  xi = spasm_malloc(m * sizeof(int));
+  x = spasm_malloc(m * sizeof(spasm_GFp));
+  spasm_vector_zero(xi, m);
+  spasm_vector_zero(x, m);
 
   // fait les bonnes permutation de lignes de R afin de trouver le pivot le moins couteux
-  // Continue la décomposition LU avec les lignes de R prise une par une.
+  row_perm = spasm_cheap_pivots(R);
 
-  /* Pour ceci faire appel à fonction qui étant donné une matrice R et une ligne i de R :
-   * ---> Résout le système triangulaire supérieur x * U = B_i
-   * ---> Trouve le pivot dans x (si il existe).
-   * ---> Répartit x dans U (et L) de la décomposition.
-   * ---> Prend en compte les permutations de lignes et de colonnes
-   * ---> Renvoie la valeur 1 si on a trouvé un pivot et 0 sinon.
-   *
-   * (Cette fonction n'étant pas encore implémentée, on se contente ici de 
-   * renvoyer le nombre d'entrée de R)
-   */
-  nnz = spasm_nnz(R);
+  // Continue la décomposition LU avec les lignes de R :
+
+  for(i = 0; i < n; i++) {
+    // On prend les lignes une a une :
+    // -1- On récumpère le nouveau i (i_new) de la permutation.
+    i_new = row_perm[i];
+
+    // -2- On résout le système triangulaire.
+    top = spasm_sparse_forward_solve(U, R, i_new, xi, x, qinv);
+
+    top = m - top; //<--- nombre d'entrées supposée non nulle dans x.
+    entries += top;
+
+    // -3- On trouve le pivot et on dispatche les coeffs dans U et dans L
+
+    /* Pour le point -3-, faire appel à une fonction qui prend en argument un vecteur x et :
+     * ---> Trouve le pivot dans x (si il existe).
+     * ---> Répartit x dans U (et L) de la décomposition.
+     * ---> Prend en compte les permutations de lignes et de colonnes
+     * ---> Renvoie la valeur 1 si on a trouvé un pivot et 0 sinon.
+     *
+     * (Cette fonction n'étant pas encore implémentée, on se contente ici de 
+     * renvoyer la somme des nombres d'entrées dans les solutions du système)
+     */
+
+
+
+    // -4- On finalise L et U.
+
+  }
+
+  // libérer la mémoire
   spasm_csr_free(R);
+  free(xi);
+  free(x);
+  free(row_perm);
+
   // renvoie n_piv, le nombre de nouveau pivots trouvé lors de cette décomposition. 
-  return nnz;
+  return entries;
 } 
 
 
@@ -1136,7 +1174,7 @@ int upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, i
  * qu'on regarde actuellement et l'éliminition du bloc en même temps que la décomposition LU
  * La valeur renvoyée est le nombre de blocs sur la diagonale)
  */
-int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *blocks, spasm **L, int **p, int *py, int **npiv_ptr) {
+int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *blocks, spasm **L, spasm **U, int **p, int **qinv, int *py, int **npiv_ptr) {
   int px, i, j, i0, i1, j0, j1, ri, rj, *Bd, *Bi, nbl, *n_piv;
   
 
@@ -1187,7 +1225,7 @@ int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *block
     rj = blocks[j].r;
     if (i0 + ri < i1 && j0 + rj < j1) {
     //   extraire la sous-matrice et calculer le produit.
-      n_piv[nbl] = upper_block_treatment(M, i0, j0, i1, j1, py, p[i], ri, L[i]);
+      n_piv[nbl] = upper_block_treatment(M, i0, j0, i1, j1, py, p[i], qinv[j], ri, L[i], U[j]);
 
     nbl++;
     }
@@ -1206,8 +1244,8 @@ int main() {
   spasm_triplet *T;
   spasm *A, *B, **L0, **U;
   spasm_dm *x;
-  spasm_lu **LU, **LU1;
-  int n_blocks, i, *qinv, nbl, *py, **LUp, *n_piv;
+  spasm_lu **LU;
+  int n_blocks, i, *qinv, nbl, *py, **LUp, *n_piv, **LUqinv;
   block_t *blocks0;
   spasm *Tr, *G;
   int count, n_rows, *r_tab;
@@ -1262,7 +1300,7 @@ int main() {
   /* Determine les blocs où il peut encore se cacher des pivots
    * On commence par regarder quels sont les blocs non vides dans la matrice B */
 
-  int *Q, fill, start, last_diag, entries;
+  int *Q, fill;
   blk_t *where;
 
   // Détermine à quel intervalle appartient une colonne :
@@ -1305,15 +1343,17 @@ int main() {
   L0 = spasm_malloc(n_blocks * sizeof(spasm *));
   U = spasm_malloc(n_blocks * sizeof(spasm*));
   LUp = spasm_malloc(n_blocks * sizeof(int *));
+  LUqinv = spasm_malloc(n_blocks * sizeof(int *));
   for(i = 0; i < n_blocks; i++) {
     L0[i] = LU[i]->L; 
     U[i] = LU[i]->U;
     LUp[i] = LU[i]->p;
+    LUqinv[i] = LU[i]->qinv;
   }
 
   printf("--------------------------\n");
 
-  nbl = upper_research(B, DS, 1, blocks0, L0, LUp, py, &n_piv); 
+  nbl = upper_research(B, DS, 1, blocks0, L0, U, LUp, LUqinv, py, &n_piv); 
 
   printf("nombre de blocs à traiter sur la première diagonale supérieure : %d\n", nbl);
 
