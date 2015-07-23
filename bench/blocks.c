@@ -1657,7 +1657,7 @@ int main() {
   spasm_triplet *T;
   spasm *A, *B;
   spasm_dm *x;
-  int n_blocks, i, *qinv;
+  int n_blocks, i, *qinv, rank;
   block_t *blocks1;
   spasm *Tr, *G;
   int count, n_rows, *r_tab;
@@ -1684,10 +1684,13 @@ int main() {
  
   // calcule la liste des blocs
   n_blocks = block_list(B, x, &blocks1);
+  rank = 0;
   for(i = 0; i < n_blocks; i++) {
     printf("%d : (%d, %d) -- (%d, %d), rank %d\n", i, blocks1[i].i0, blocks1[i].j0, blocks1[i].i1, blocks1[i].j1, blocks1[i].r);
+    rank += blocks1[i].r;
   }
   printf("blocs diagonaux : %d\n", n_blocks);
+  printf("borne inf sur le rang : %d\n", rank);
 
   free(x);
 
@@ -1711,7 +1714,7 @@ int main() {
 
   fill = count_filled_blocks(B, blocks1, n_blocks, Q); // <--- nombre total de blocs non vide.
 
-  //printf("nombre total de blocks non-vide : %d\n", fill);
+  printf("nombre total de blocks non-vide : %d\n", fill);
 
   //allocation de mémoire de where.
   where = malloc(fill * sizeof(blk_t));
@@ -1721,7 +1724,7 @@ int main() {
   }
     
   count = filled_blocks_list(B, blocks1, n_blocks, Q, where);
-  printf("nombre de blocs non vide structure initiale %d\n", count);
+  printf("nombre de blocs structure initiale %d\n", count);
 
   Tr = blocks_spasm(where, n_blocks, count, B->prime, 1);
   //#else
@@ -1743,7 +1746,7 @@ int main() {
   printf("nombre d'arêtes graphe d'adjacence : %d\n", spasm_nnz(row_inter));
    G = filled_structure(blocks_mat, row_inter);
    //spasm_save_csr(stdout, G);
-  printf("nombre de blocs dans la structure finale : %d\n", G->nzmax);
+  printf("nombre de blocs dus au remplissage : %d\n", G->nzmax);
 
   r_tab = spasm_malloc(n_blocks *sizeof(int));  
 

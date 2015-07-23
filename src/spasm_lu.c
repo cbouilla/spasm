@@ -310,10 +310,10 @@ void spasm_free_LU(spasm_lu *X) {
  * unz : number of entries in U. lnz : number of entries in L.
  * deff : rank defficiency. Current row in U is i - def.
  * i : current row in L (also current row in U if def = 0)
- * p : row permutation. qinv : inverse of column permutation.
- * n : maximum number of rows
+ * p : rows permutation. qinv : inverse of columns permutation.
+ * n : size of p.
  *
- * return value is 1 if pivot found, and 0 otherwise.
+ * return value is 1 if a pivot has been found, and 0 otherwise.
  */
 int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n) {
   int found, unz, lnz, m, ipiv, j, px, deff;
@@ -337,7 +337,7 @@ int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *un
   ipiv = -1; //<--- no pivot found so far.
 
   //search pivot in genericaly nonzero entries of x.
-  for(px = top; px < m; px ++) {
+  for(px = top; px < m; px++) {
     j = xi[px]; 
     //if x[j] = 0 (numerical cancelation) we ignore it
     if(x[j] == 0) continue;
@@ -383,6 +383,8 @@ int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *un
     for(px = top; px < m; px++) {
       // dispatch other entries in U.
       j = xi[px]; // <--- non zero entries
+
+      if(x[j] == 0) continue; //<-- if numerical cancelation, we ignore it.
 
       if(qinv[j] < 0) {
 	// no pivot in column j yet

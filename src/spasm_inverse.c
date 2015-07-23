@@ -94,7 +94,7 @@ int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *
 
   top = spasm_sparse_backward_solve(L, I, k, xi, x, pinv);
 
-  free(I); // <--- free extra-workspace
+  spasm_csr_free(I); // <--- free extra-workspace
 
   /* find x pattern, xxi. */
   xnz = Mn - top;
