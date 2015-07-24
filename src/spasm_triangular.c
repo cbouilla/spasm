@@ -357,14 +357,14 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
 	const spasm_GFp diagonal_entry = Lx[ Lp[I + 1] - 1];
 	assert( diagonal_entry != 0 );
 	// axpy-in-place
-	x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+	x[i] = (x[I] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
 	spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1] - 1, prime - x[i], x, prime);
       }
 
-      	xi[px] = I;
-      	tmp = x[i];
-      	x[i] = 0;
-      	x[I] = tmp;
+       xi[px] = I;
+       tmp = x[i];
+       x[i] = 0;
+       x[ xi[px] ] = tmp;
 
     }
 

@@ -52,6 +52,7 @@ int main(int argc, char **argv) {
 
   top = spasm_sparse_backward_solve(L, B, 0, xi, x, p);
 
+
   spasm_gaxpy(L, x, y);
  for(j = m; j < n; j++) {
     y[j] = x[p[j]];
