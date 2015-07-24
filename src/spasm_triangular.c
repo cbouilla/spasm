@@ -361,10 +361,10 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
 	spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1] - 1, prime - x[i], x, prime);
       }
 
-      xi[px] = I;
-      tmp = x[i];
-      x[i] = 0;
-      x[I] = tmp;
+      	xi[px] = I;
+      	tmp = x[i];
+      	x[i] = 0;
+      	x[I] = tmp;
 
     }
 

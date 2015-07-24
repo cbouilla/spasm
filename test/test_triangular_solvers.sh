@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..11
+echo 1..13
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/l1.sms
@@ -46,3 +46,10 @@ INPUT_MATRIX=$srcdir/Matrix/upper_trapeze.sms
 INPUT_MATRIX=$srcdir/Matrix/lower_trapeze.sms
 ./sparse_lsolve_big 11 < $INPUT_MATRIX
 
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/singular2.sms
+./sparse_permuted_lsolve 12 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/singular3.sms
+./sparse_permuted_lsolve 13 < $INPUT_MATRIX
