@@ -59,8 +59,8 @@ int spasm_sparse_vector_matrix_prod(const spasm *M, const spasm_GFp *x, const in
 
 
 /*
- * Given M, L, and k, calculate y = x * M, 
- * where x is such as x * L = ek.
+ * Given M, L, and k, compute y = x * M, 
+ * where x is such as x * L = ek. (x is the k-th row of L^(-1))
  * the return value nz is the number of non-zero entries in y.
  */
 
@@ -76,17 +76,12 @@ int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *
 
   Ln = L->n;
   Mn = M->n;
-  if(Ln != Mn) {
-    printf("Error : incompatible matrix size, %d, %d\n", Ln, Mn);
-    return 0;
-  }
+  assert(Ln = Mn );
 
   prime = L->prime;
   Mprime = M->prime;
-  if(prime != Mprime) {
-    printf("Error : incompatible matrix field, GF%d, GF%d\n", prime, Mprime);
-    return 0;
-  }
+  assert(prime = Mprime);
+
 
   /* First solve x * L = ek */
   // get workspace.
@@ -123,53 +118,3 @@ int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *
 }
 
 
-/* Given M, L, and two integers "from" and "to", calculate the product
- * Y = X * M, where row i of X, x_i, is such as x_i * L = e_(i+from).
- *
- * Y is given as a "spasm" matrix.
- */
-
-void linvxm(const spasm *L, const spasm *M, int from, int to, spasm *Y, int *pinv) {
-  int i, p, val, k, j, *yi, nz, *Yp, *Yj;
-  spasm_GFp *y, m, *Yx;
-
-  m = M->m;
-  Yp = Y->p;
-  Yj = Y->j;
-  Yx = Y->x;
-
-  // get workspace.
-  y = malloc(m * sizeof(spasm_GFp));
-  yi = malloc(m * sizeof(int));
-  spasm_vector_zero(y, m);
-  spasm_vector_zero(yi, m);
-
-  // variables initialisation.
-  Yp[0] = 0;
-  p = 1;
-  val = 0;
- 
-  for(i = from; i < to; i++) {
-
-    // find the ith row of Y :
-    nz = spasm_inverse_and_product(L, M, i, y, yi, pinv); // <--- nz : number of non zero-entries on row i.
-    Yp[p] = Yp[p-1] + nz; // <--- update row pointers tab.
-    p++;
-
-    for(k = 0; k < nz; k++) {
-      j = yi[k];     
-      Yj[val] = j; // <--- add new column indice 
-      Yx[val] = y[j]; // <--- add new numerical value
-      val++;
-    }
-
-    // re-initialize y and yi.
-    spasm_vector_zero(y, m); 
-    spasm_vector_zero(yi, m);
-  }
-
-  // free workspace
-  free(y);
-  free(yi);
- 
-}
