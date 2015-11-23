@@ -70,22 +70,33 @@ spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, i
   for(i = r0; i < r1; i++) {
     Bp[i - r0] = k;
 
-    px = py[i]; //<--- pointer on the first entrie on row i
-
-    assert(Aj[px] >= c0);
-
-    while(Aj[px] < c1) {
-      j = Aj[px];
+    px = py[i]; //<--- pointer on the first entry on row i
+    
+    if(px != -1){
+      if(Aj[px] < c0) {
+	printf("error row %d ----> Aj[%d] = %d\n", i, px, Aj[px]);
+	// assert(Aj[px] >= c0);
+	exit(-1);
+      }
+ 
+      while(px < Ap[i+1] && Aj[px] < c1) {
+	j = Aj[px];
+     
       	Bj[k] = j - c0;
+	
 	if (Bx != NULL) {
 	  Bx[k] = Ax[px];
 	}
 	px++;
 	k++;
+      }
+      if (px == Ap[i+1]) py[i] = -1; // <-- no more entries on row i.
+      else py[i] = px; // Update py[i];
+      if (px < Ap[i+1] && Aj[px] < c1) {
+	printf("row %d Error\n", i);
+      }
     }
-    py[i] = px; // Update py[i];
   }
-
   /* finalize */
   Bp[r1 - r0] = k;
 
@@ -93,3 +104,4 @@ spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, i
   spasm_csr_realloc(B, -1);
   return B;
 }
+

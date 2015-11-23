@@ -292,7 +292,7 @@ int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xi, s
  *
  */
 int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
-  int i, I, p, px, top, n, m, prime, *Lp, *Lj, *Bp, *Bj;
+  int i, I, p, px, top, n, m, prime, *Lp, *Lj, *Bp, *Bj, tmp;
   spasm_GFp *Lx, *Bx;
 
 #ifdef SPASM_TIMING
@@ -303,7 +303,7 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
     assert(B != NULL);
     assert(xi != NULL);
     assert(x != NULL);
-    assert(pinv == SPASM_IDENTITY_PERMUTATION);
+    //assert(pinv == SPASM_IDENTITY_PERMUTATION);
 
     n = L->n;
     m = L->m;
@@ -347,20 +347,29 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
       i = xi[px];
 
       /* i maps to row I of L */
-      I = i;
+      I = (pinv == SPASM_IDENTITY_PERMUTATION) ? i : pinv[i];
 
-      if (I >= m) {
+      if (i >= m) {
 	/* column I is part of an implicit identity matrix */
-	spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1], prime - x[I], x, prime);
+	spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1], prime - x[i], x, prime);
       } else {
 	/* get L[i,i] */
 	const spasm_GFp diagonal_entry = Lx[ Lp[I + 1] - 1];
 	assert( diagonal_entry != 0 );
 	// axpy-in-place
-	x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+	x[i] = (x[I] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
 	spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1] - 1, prime - x[i], x, prime);
       }
+
+       xi[px] = I;
+       tmp = x[i];
+       x[i] = 0;
+       x[ xi[px] ] = tmp;
+
     }
+
+
+
 
 #ifdef SPASM_TIMING
     scatter += spasm_ticks() - start;

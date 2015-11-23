@@ -215,3 +215,38 @@ spasm * spasm_identity(int n, int prime) {
 
   return I;
 }
+
+/*
+ * duplicate a matrix.
+ */
+spasm * spasm_duplicate(const spasm * A) {
+  spasm *B;
+  int k, n, m, nzmax, prime, with_values;
+  int *Ap, *Aj, *Bp, *Bj;
+  spasm_GFp *Ax, *Bx;
+
+  n = A->n;
+  m = A->m;
+  nzmax = A->nzmax;
+  prime = A->prime;
+  Ap = A->p;
+  Aj = A->j;
+  Ax = A->x;
+  with_values = (Ax != NULL) ? 1 : 0;
+
+  B = spasm_csr_alloc(n, m, nzmax, prime, with_values);
+  Bp = B->p;
+  Bj = B->j;
+  Bx = B->x;
+
+  for(k = 0; k <= n; k++) {
+    Bp[k] = Ap[k];
+  }
+  for(k = 0; k < nzmax; k++) {
+    Bj[k] = Aj[k];
+    if(with_values) Bx[k] = Ax[k];
+  }
+
+  return B;
+
+}

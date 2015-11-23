@@ -291,6 +291,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     return N;
 }
 
+
 void spasm_free_LU(spasm_lu *X) {
   assert( X != NULL );
   spasm_csr_free(X->L);
@@ -298,4 +299,118 @@ void spasm_free_LU(spasm_lu *X) {
   free(X->qinv);
   free(X->p);
   free(X);
+}
+
+
+/*
+ * Dispatch x entries in U (and L), find pivot if there is one.
+ *
+ * xi : x pattern.
+ * top : first index in xi.
+ * unz : number of entries in U. lnz : number of entries in L.
+ * deff : rank defficiency. Current row in U is i - def.
+ * i : current row in L (also current row in U if def = 0)
+ * p : rows permutation. qinv : inverse of columns permutation.
+ * n : size of p.
+ *
+ * return value is 1 if a pivot has been found, and 0 otherwise.
+ */
+int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n) {
+  int found, unz, lnz, m, ipiv, j, px, deff;
+  int *Uj, *Lj;
+  spasm_GFp *Ux, *Lx;
+
+  assert(U != NULL);
+
+  m = U->m;
+
+  Uj = U->j;
+  Ux = U->x;
+  Lj = (L != NULL) ? L->j : NULL;
+  Lx = (L != NULL) ? L->x : NULL;
+
+  unz = *unz_ptr;
+  lnz = *lnz_ptr;
+  deff = *deff_ptr;
+ 
+  /* --- Find pivot and dispatch coeffs ----------------------------------- */
+  ipiv = -1; //<--- no pivot found so far.
+
+  //search pivot in genericaly nonzero entries of x.
+  for(px = top; px < m; px++) {
+    j = xi[px]; 
+    //if x[j] = 0 (numerical cancelation) we ignore it
+    if(x[j] == 0) continue;
+
+    if(qinv[j] < 0) {
+      // no pivot on column j yet.
+      
+      if(ipiv == -1 || j < ipiv) {
+	ipiv = j; // <--- best pivot so far is on column j.
+      }
+
+    }
+    else if(L != NULL) {
+      // column j already pivotal.
+      // dispatch x[j] in L[i_l, qinv[j]]
+      Lj[lnz] = qinv[j];
+      Lx[lnz] = x[j];
+      lnz ++;
+    }
+
+  }
+
+  // pivot found : 
+  if(ipiv != -1) {
+  
+    found = 1;
+    // Last entry on row i of L is 1.
+    if(L != NULL) {
+      Lj[lnz] = i - deff; 
+      Lx[lnz] = 1;
+      lnz++;
+    } 
+
+    // update permutation
+    qinv[ipiv] = i - deff;
+    p[i - deff] = i; 
+
+    // add entries in U
+    Uj[unz] = ipiv;
+    Ux[unz] = x[ipiv]; // <--- add pivot first.
+    unz++;
+
+    for(px = top; px < m; px++) {
+      // dispatch other entries in U.
+      j = xi[px]; // <--- non zero entries
+
+      if(x[j] == 0) continue; //<-- if numerical cancelation, we ignore it.
+
+      if(qinv[j] < 0) {
+	// no pivot in column j yet
+	Uj[unz] = j;
+	Ux[unz] = x[j];
+	unz++;
+      }
+    }
+
+  }
+
+  //no pivot found :
+  else { 
+    found = 0;
+    deff++;
+    p[n - deff] = i;
+  }
+
+  /* --- Clear workspace -------------------------------------------------- */
+  spasm_vector_zero(xi, m);
+  spasm_vector_zero(x, m);
+
+  /* --- Return ----------------------------------------------------------- */
+  *unz_ptr = unz; 
+  *lnz_ptr = lnz;
+  *deff_ptr = deff;
+
+  return found;
 }
