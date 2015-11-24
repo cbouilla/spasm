@@ -1239,7 +1239,6 @@ int main() {
   A = spasm_compress(T);
   spasm_triplet_free(T);
 
-
   /* met la matrice sous forme triangulaire par blocs
    * Calcule le rang des blocks de la première diagonale
    * garde en mémoire le L de la décomposition LU des blocs diagonaux */
