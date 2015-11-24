@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..10
+echo 1..15
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/small.sms

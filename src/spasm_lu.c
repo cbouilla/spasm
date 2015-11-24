@@ -6,6 +6,8 @@
 uint64_t data_shuffling = 0;
 #endif
 
+#define DEBUG
+
 /*
  * /!\ the ``row_permutation'' argument is NOT embedded in P. This means that :
  *  a) L is ***really*** lower-(triangular/trapezoidal)
@@ -242,6 +244,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 	      unz++;
 	    }
 	  }
+
 	} else {
 	  defficiency++;
 	  p[n - defficiency] = i;
@@ -266,7 +269,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
       }
 
     }
-
+    
     /* --- Finalize L and U ------------------------------------------------- */
     fprintf(stderr, "\n");
 
@@ -288,6 +291,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     free(col_weights);
 #endif
 
+    
     return N;
 }
 
@@ -384,7 +388,7 @@ int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *un
       // dispatch other entries in U.
       j = xi[px]; // <--- non zero entries
 
-      if(x[j] == 0) continue; //<-- if numerical cancelation, we ignore it.
+      //if(x[j] == 0) continue; //<-- if numerical cancelation, we ignore it.
 
       if(qinv[j] < 0) {
 	// no pivot in column j yet
