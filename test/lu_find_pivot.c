@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "spasm.h"
 
+#define DEBUG
 
 int main(int argc, char **argv){
   spasm *A, *U, *L;
@@ -60,7 +61,7 @@ int main(int argc, char **argv){
   lnz = unz = 0;
 
   /* --- Main loop : compute L[i] and U[i] ---------*/
-  for(i=0; i<r; i++){
+  for(i=0; i<n; i++){
     Lp[i] = lnz;
     Up[i - deff] = unz;
 
@@ -99,18 +100,20 @@ int main(int argc, char **argv){
 
   /* check L, U, LU decompisition of A */
   LU = spasm_LU(A, SPASM_IDENTITY_PERMUTATION, 1);
+#ifdef DEBUG
+  printf("n = %d, m = %d \n", n, m);
+#endif  
   for(i = 0; i < m; i++){
     if(qinv[i] != LU->qinv[i]){
       printf("Not ok %d qinv column %d \n", test, i);
       exit(0);
     }
   }
-
+  
   
   for (i = 0; i < n; i++){
     if(p[i] != LU->p[i]){
       printf("Not ok %d p row %d\n", test, i);
-      printf("p[i] = %d and should be %d \n", p[i], LU->p[i]);
       exit(0);
     }
     if(L->p[i+1] != LU->L->p[i+1]){
@@ -148,4 +151,12 @@ for (i = 0; i < npiv; i++){
   }
 
  printf("Ok %d L*U = A\n", test);
+
+ spasm_csr_free(A);
+ spasm_csr_free(U);
+ spasm_csr_free(L);
+ free(p);
+ free(qinv);
+ spasm_free_LU(LU);
+ return 0;
 }
