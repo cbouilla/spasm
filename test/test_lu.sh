@@ -41,3 +41,23 @@ INPUT_MATRIX=$srcdir/Matrix/rectangular_h.sms
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/rectangular_l.sms
 ./permuted_lu 10 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/small.sms
+./lu_find_pivot 11 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/medium.sms
+./lu_find_pivot 12 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/singular.sms
+./lu_find_pivot 13 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/rectangular_h.sms
+./lu_find_pivot 14 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/rectangular_l.sms
+./lu_find_pivot 15 < $INPUT_MATRIX
