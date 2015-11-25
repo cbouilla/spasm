@@ -150,7 +150,7 @@ for (i = 0; i < npiv; i++){
     }
   }
 
- printf("Ok %d L*U = A\n", test);
+ printf("ok %d L*U = A\n", test);
 
  spasm_csr_free(A);
  spasm_csr_free(U);
