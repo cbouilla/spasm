@@ -408,8 +408,8 @@ int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *un
   }
 
   /* --- Clear workspace -------------------------------------------------- */
-  spasm_vector_zero(xi, m);
-  spasm_vector_zero(x, m);
+  // spasm_vector_zero(xi, m);
+  // spasm_vector_zero(x, m);
 
   /* --- Return ----------------------------------------------------------- */
   *unz_ptr = unz; 
@@ -418,3 +418,4 @@ int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *un
 
   return found;
 }
+
