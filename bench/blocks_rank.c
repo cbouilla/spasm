@@ -1097,8 +1097,8 @@ spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int *p
  *
  * la valeur renvoyée est le nombre de pivot supplémentaire trouvés.
  */
-int upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int *p, int *qinv, int r, spasm *L, spasm *U) {
-  spasm *R;
+spasm * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int *p, int *qinv, int r, spasm *L, spasm *U) {
+  spasm *R, *L_new;
   int m, Rn, n, inew, top, i, j, deff, unz, lnz, npiv;
   int *perm, *xi;
   spasm_GFp *x;
@@ -1118,13 +1118,18 @@ int upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, i
   Rn = R->n;
   n = R->n + r;
   deff = 0;
-  npiv = r;
+  npiv = 0;
 
-  // reallocate and resize U and L
+  //L_new à NULL pour le moment:
+  L_new = NULL;
+
+  // initialize L_new :
+  lnz = r; 
+  
+  // reallocate and resize U :
   spasm_csr_resize(U, U->m, U->m);
   spasm_csr_realloc(U, 2 * U->nzmax + m);
-  spasm_csr_resize(L, L->n, L->n);
-  spasm_csr_realloc(L, 2 * U->nzmax + m);
+ 
 
   //initialisation des vecteurs x et xi
   x = spasm_malloc(m * sizeof(spasm_GFp));
@@ -1138,9 +1143,6 @@ int upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, i
     // On prend les lignes une a une :
   for (i = 0; i < Rn; i++){
     //---- Réallocation de mémoire :
-    if (lnz + m > L->nzmax) {
-      spasm_csr_realloc(L, 2 * L->nzmax + m);
-    }
     if (unz + m > U->nzmax) {
       spasm_csr_realloc(U, 2 * U->nzmax + m);
     }
@@ -1150,17 +1152,16 @@ int upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, i
     // -2- On résout le système triangulaire.
     top = spasm_sparse_forward_solve(U, R, inew, xi, x, qinv);
     // -3- On trouve le pivot et on dispatche les coeffs dans la (r+i)-ème ligne de U et L.
-    npiv += spasm_find_pivot(xi, x, top, U, L, &unz, &lnz, j, &deff , qinv, p, n);
+    npiv += spasm_find_pivot(xi, x, top, U, L_new, &unz, &lnz, j, &deff , qinv, p, n); // problème de mémoire à débuguer.
       }
   // -4- On finalise L et U.
   U->p[j - deff] = unz;
-  L->p[n] = lnz;
 
   //resize and realloc :
   spasm_csr_resize(U, j - deff, m);
-  spasm_csr_resize(L, n, n - deff);  
+  //spasm_csr_resize(L_new, n, n - deff);  
   spasm_csr_realloc(U, -1);
-  spasm_csr_realloc(L, -1);
+  //spasm_csr_realloc(L_new, -1);
 
   // libérer la mémoire
   spasm_csr_free(R);
