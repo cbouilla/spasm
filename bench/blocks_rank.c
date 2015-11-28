@@ -1002,6 +1002,7 @@ uptri_t * diagonal_structure(const spasm *B, int *r_tab, int n_rows) {
 
 /****************** Traite les blocs sur les diag supérieures ********************/
 
+
 /*
  * Extrait une sous-matrice C [a : c, b : d].
  * Calcule le produit des lignes de L^(-1) à partir de r (en tenant compte des
@@ -1097,77 +1098,82 @@ spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int *p
  *
  * la valeur renvoyée est le nombre de pivot supplémentaire trouvés.
  */
-spasm * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int *p, int *qinv, int r, spasm *L, spasm *U) {
-  spasm *R, *L_new;
-  int m, Rn, n, inew, top, i, j, deff, unz, lnz, npiv;
-  int *perm, *xi;
-  spasm_GFp *x;
+int * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int *p, int *qinv, int r0, int r1, spasm *L, spasm *U) {
+  spasm *R;
+  int m, n, dn, dm, piv_max, inew, top, i, j, deff, unz, lnz, npiv;
+  int *perm, *xi, *yi;
+  spasm_GFp *x, *y;
 
-  // fait les calculs paresseux et récupère la matrice R.
-  R = lazy_product(M, a, b, c, d, py, p, r, L);
+  // fait les calculs paresseux.
+  //  R = lazy_product(M, a, b, c, d, py, p, r, L);
+
+  // commence par extraire la sous matrice R [a : c , b : d]
+  assert(a + r0 < c);
+  assert(b + r1 < d);
+  if(M == NULL || L == NULL) return 0;
+
+  //extrait la sous-matrice de M, triée.
+ 
+  R = sorted_spasm_submatrix(M, a, c, b, d, py, SPASM_WITH_NUMERICAL_VALUES);
   if(spasm_nnz(R)==0) {
     spasm_csr_free(R);
     return 0;
   }
-   unz = U->nzmax;
-   lnz = L->nzmax;
- 
-  assert(U->m == R->m); // check inputs
-  assert(L->n == R->n + r);
-  m = R->m;
-  Rn = R->n;
-  n = R->n + r;
-  deff = 0;
-  npiv = 0;
 
-  //L_new à NULL pour le moment:
-  L_new = NULL;
+  m = R->m; // nombre de colonne
+  n = R->n; // nombre de ligne de R.
+  dn = n - r0; // nombre de ligne dans Rinf.
+  dm = m - r1;
 
-  // initialize L_new :
-  lnz = r; 
-  
-  // reallocate and resize U :
-  spasm_csr_resize(U, U->m, U->m);
-  spasm_csr_realloc(U, 2 * U->nzmax + m);
- 
+  piv_max = spasm_min(dn, dm); //nombre maximum de pivots dans la sous-matrice.
+  npiv = 0; // nombre de nouveau pivots trouvé.
 
-  //initialisation des vecteurs x et xi
-  x = spasm_malloc(m * sizeof(spasm_GFp));
-  xi = spasm_malloc(3 * m * sizeof(int));
-  spasm_vector_zero(xi, 3 * m);
-  spasm_vector_zero(x, m); 
+  //initialisation des vecteurs.
+  //x = spasm_malloc(m * sizeof(spasm_GFp));
+  //xi = spasm_malloc(3 * m * sizeof(int));
+  y = spasm_malloc(m * sizeof(spasm_GFp));
+  yi = spasm_malloc(m * sizeof(int));
+  spasm_vector_zero(y, m);
+  spasm_vector_zero(yi, m);
+  // spasm_vector_zero(xi, 3 * m);
+  // spasm_vector_zero(x, m);
 
   // fait les bonnes permutation de lignes de R afin de trouver le pivot le moins couteux
-  perm=spasm_cheap_pivots(R);
-  // Continue la décomposition LU avec les lignes de R :
+ 
+  // Continue la décomposition LU avec les lignes choisie de R :
     // On prend les lignes une a une :
-  for (i = 0; i < Rn; i++){
-    //---- Réallocation de mémoire :
-    if (unz + m > U->nzmax) {
-      spasm_csr_realloc(U, 2 * U->nzmax + m);
+  for (i = r0; i < n; i++){
+    //tester si il reste des pivots à trouver :
+    if(npiv >= piv_max){
+      return npiv;
     }
-    j = i+r;
-    // -1- On récumpère le nouveau i (i_new) de la permutation.
-    inew = perm[i];
+    //-1- On permute les lignes :
+    inew = p[i];
+   
+    // -2- On effectue les calculs paresseux de la ligne i :
+    //(cas de la première diag simple :)
+    npiv = spasm_inverse_and_product(L, R, inew, y, yi, p);
+    //---- Réallocation de mémoire :
+    
     // -2- On résout le système triangulaire.
-    top = spasm_sparse_forward_solve(U, R, inew, xi, x, qinv);
+    
     // -3- On trouve le pivot et on dispatche les coeffs dans la (r+i)-ème ligne de U et L.
-    npiv += spasm_find_pivot(xi, x, top, U, L_new, &unz, &lnz, j, &deff , qinv, p, n); // problème de mémoire à débuguer.
-      }
+    
+  }
   // -4- On finalise L et U.
-  U->p[j - deff] = unz;
-
-  //resize and realloc :
-  spasm_csr_resize(U, j - deff, m);
+ 
+ //resize and realloc :
+  //spasm_csr_resize(U, j - deff, m);
   //spasm_csr_resize(L_new, n, n - deff);  
-  spasm_csr_realloc(U, -1);
+  // spasm_csr_realloc(U, -1);
   //spasm_csr_realloc(L_new, -1);
 
   // libérer la mémoire
   spasm_csr_free(R);
-  free(perm);
-  free(x);
-  free(xi);
+  //  free(x);
+  // free(xi);
+  free(y);
+  free(yi);
   // renvoie n_piv, le nombre de nouveau pivots trouvé lors de cette décomposition. 
   return npiv;
 } 
@@ -1234,7 +1240,8 @@ int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *block
     rj = blocks[j].r;
     if (i0 + ri < i1 && j0 + rj < j1) {
     //   extraire la sous-matrice et calculer le produit.
-      n_piv[nbl] = upper_block_treatment(M, i0, j0, i1, j1, py, p[i], qinv[j], ri, L[i], U[j]);
+
+      n_piv[nbl] = upper_block_treatment(M, i0, j0, i1, j1, py, p[i], qinv[j], ri, rj,  L[i], U[j]);
 
     nbl++;
     }
