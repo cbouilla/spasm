@@ -1099,8 +1099,8 @@ spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int *p
  * la valeur renvoyée est le nombre de pivot supplémentaire trouvés.
  */
 int * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int *p, int *qinv, int r0, int r1, spasm *L, spasm *U) {
-  spasm *R;
-  int m, n, dn, dm, piv_max, inew, top, i, j, deff, unz, lnz, npiv;
+  spasm *R, *A;
+  int m, n, dn, dm, piv_max, inew, top, i, j, deff, unz, lnz, anz, npiv;
   int *perm, *xi, *yi;
   spasm_GFp *x, *y;
 
@@ -1120,25 +1120,32 @@ int * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py,
     return 0;
   }
 
+  assert(R->m == U->m);
+
   m = R->m; // nombre de colonne
   n = R->n; // nombre de ligne de R.
   dn = n - r0; // nombre de ligne dans Rinf.
   dm = m - r1;
 
+  unz = U->nzmax;
+  lnz = 0;
+  deff = 0;
+
   piv_max = spasm_min(dn, dm); //nombre maximum de pivots dans la sous-matrice.
   npiv = 0; // nombre de nouveau pivots trouvé.
 
   //initialisation des vecteurs.
-  //x = spasm_malloc(m * sizeof(spasm_GFp));
-  //xi = spasm_malloc(3 * m * sizeof(int));
+  x = spasm_malloc(m * sizeof(spasm_GFp));
+  xi = spasm_malloc(3 * m * sizeof(int));
   y = spasm_malloc(m * sizeof(spasm_GFp));
   yi = spasm_malloc(m * sizeof(int));
   spasm_vector_zero(y, m);
   spasm_vector_zero(yi, m);
-  // spasm_vector_zero(xi, 3 * m);
-  // spasm_vector_zero(x, m);
+  spasm_vector_zero(xi, 3 * m);
+  spasm_vector_zero(x, m);
 
-  // fait les bonnes permutation de lignes de R afin de trouver le pivot le moins couteux
+  // Reallocation mémoire de U :
+  spasm_csr_realloc(U, 2 * U->nzmax + m);
  
   // Continue la décomposition LU avec les lignes choisie de R :
     // On prend les lignes une a une :
@@ -1152,26 +1159,42 @@ int * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py,
    
     // -2- On effectue les calculs paresseux de la ligne i :
     //(cas de la première diag simple :)
-    npiv = spasm_inverse_and_product(L, R, inew, y, yi, p);
-    //---- Réallocation de mémoire :
+    anz = spasm_inverse_and_product(L, R, inew, y, yi, p);
+
+    // On récupère la sortie (y,yi) dans une matrice A :
+    A = spasm_csr_alloc(1, m, anz, U->prime, SPASM_WITH_NUMERICAL_VALUES);
+    A->p[0] = 0;
+    A->p[1] = anz;
+    for (j = 0; j < anz ; j++){
+      A->j[j] = yi[j];
+      A->x[j] = y[yi[j]];
+    }
+   // -3- On continue LU avec la nouvelle ligne qu'on vient de générer :
+    //-3.1- Réallocation de mémoire :
+    if(unz + m > U->nzmax){
+      spasm_realloc(U, 2 * U->nzmax + m);
+    }  
+    // -3.2- On résout le système triangulaire.
+    top = spasm_sparse_forward_solve(U, A, 0, xi, x, qinv);
     
-    // -2- On résout le système triangulaire.
-    
-    // -3- On trouve le pivot et on dispatche les coeffs dans la (r+i)-ème ligne de U et L.
-    
+    // -3.3- On trouve le pivot et on dispatche les coeffs dans la (r+i)-ème ligne de U et L.
+    npiv += spasm_find_pivot(xi, x, top, U, NULL, &unz, &lnz, i, &deff, qinv, p, n);
+
+    //-3.4- Libérer A.
+    spasm_csr_free(A);
   }
   // -4- On finalise L et U.
  
  //resize and realloc :
-  //spasm_csr_resize(U, j - deff, m);
+  spasm_csr_resize(U, j - deff, m);
   //spasm_csr_resize(L_new, n, n - deff);  
-  // spasm_csr_realloc(U, -1);
+  spasm_csr_realloc(U, -1);
   //spasm_csr_realloc(L_new, -1);
 
   // libérer la mémoire
   spasm_csr_free(R);
-  //  free(x);
-  // free(xi);
+  free(x);
+  free(xi);
   free(y);
   free(yi);
   // renvoie n_piv, le nombre de nouveau pivots trouvé lors de cette décomposition. 
