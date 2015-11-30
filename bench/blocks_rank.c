@@ -1009,84 +1009,84 @@ uptri_t * diagonal_structure(const spasm *B, int *r_tab, int n_rows) {
  * permutations).
  * retourne la sous-matrice de ce produit.
  */
-spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int *p, int r, const spasm  *L) {
-  spasm *C, *R;
-  int k, k_new, i, px, *yi, ynz, Cn, Cm, nzmax, Rn, prime, *Rp, *Rj;
-  spasm_GFp *y, *Rx;
+/* spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int *p, int r, const spasm  *L) { */
+/*   spasm *C, *R; */
+/*   int k, k_new, i, px, *yi, ynz, Cn, Cm, nzmax, Rn, prime, *Rp, *Rj; */
+/*   spasm_GFp *y, *Rx; */
 
-  // vérifier les entrées.
-  assert(a + r < c);
-  if(M == NULL || L == NULL) return NULL;
+/*   // vérifier les entrées. */
+/*   assert(a + r < c); */
+/*   if(M == NULL || L == NULL) return NULL; */
 
-  //extrait la sous-matrice de M, triée.
+/*   //extrait la sous-matrice de M, triée. */
  
-  C = sorted_spasm_submatrix(M, a, c, b, d, py, SPASM_WITH_NUMERICAL_VALUES);
-  if(spasm_nnz(C) == 0) {
-    spasm_csr_free(C);
-    return NULL;
-  }
+/*   C = sorted_spasm_submatrix(M, a, c, b, d, py, SPASM_WITH_NUMERICAL_VALUES); */
+/*   if(spasm_nnz(C) == 0) { */
+/*     spasm_csr_free(C); */
+/*     return NULL; */
+/*   } */
  
 
-  //Allouer le résultat B (nombre d'entrée de C).
-  Cn = C->n;
-  Cm = C->m;
-  nzmax = C->nzmax;
-  Rn = Cn - r;
-  prime = C->prime;
+/*   //Allouer le résultat B (nombre d'entrée de C). */
+/*   Cn = C->n; */
+/*   Cm = C->m; */
+/*   nzmax = C->nzmax; */
+/*   Rn = Cn - r; */
+/*   prime = C->prime; */
 
-  R = spasm_csr_alloc(Rn, Cm, nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
-  Rp = R->p;
-  Rj = R->j;
-  Rx = R->x;
+/*   R = spasm_csr_alloc(Rn, Cm, nzmax, prime, SPASM_WITH_NUMERICAL_VALUES); */
+/*   Rp = R->p; */
+/*   Rj = R->j; */
+/*   Rx = R->x; */
 
-  //intialiser Rp.
-  Rp[0] = 0;
+/*   //intialiser Rp. */
+/*   Rp[0] = 0; */
 
-  //Allouer mémoire de y et de yi et initialiser à 0.
-  y = spasm_malloc(Cm * sizeof(spasm_GFp));
-  yi = spasm_malloc(Cm * sizeof(int));
-  spasm_vector_zero(y, Cm);
-  spasm_vector_zero(yi, Cm);
+/*   //Allouer mémoire de y et de yi et initialiser à 0. */
+/*   y = spasm_malloc(Cm * sizeof(spasm_GFp)); */
+/*   yi = spasm_malloc(Cm * sizeof(int)); */
+/*   spasm_vector_zero(y, Cm); */
+/*   spasm_vector_zero(yi, Cm); */
 
-  i = 0;
-  // Pour k allant de r à Cn :
-  for(k = r; k < Cn; k++) {
-    //   effectuer les permutations de lignes.
-    k_new = p[k];
-    //   calculer le produit de la k-ième ligne de L^(-1) par C.
-    //   le stocker dans y, et son support dans yi.
+/*   i = 0; */
+/*   // Pour k allant de r à Cn : */
+/*   for(k = r; k < Cn; k++) { */
+/*     //   effectuer les permutations de lignes. */
+/*     k_new = p[k]; */
+/*     //   calculer le produit de la k-ième ligne de L^(-1) par C. */
+/*     //   le stocker dans y, et son support dans yi. */
    
-    ynz = spasm_inverse_and_product(L, C, k_new, y, yi, p);
+/*     ynz = spasm_inverse_and_product(L, C, k_new, y, yi, p); */
     
-    //   mettre à jour Rp.
-    Rp[i+1] = Rp[i] + ynz;
+/*     //   mettre à jour Rp. */
+/*     Rp[i+1] = Rp[i] + ynz; */
 
-    //   réallouer de la mémoire si besoin.
-    if(nzmax < Rp[i+1]) {
-      nzmax = 2 * nzmax + ynz;
-      spasm_csr_realloc(R, nzmax);
-      Rj = R->j;
-      Rx = R->x;
-    }
+/*     //   réallouer de la mémoire si besoin. */
+/*     if(nzmax < Rp[i+1]) { */
+/*       nzmax = 2 * nzmax + ynz; */
+/*       spasm_csr_realloc(R, nzmax); */
+/*       Rj = R->j; */
+/*       Rx = R->x; */
+/*     } */
 
-    //   ajouter les entrées dans Rj et Rx.
-    for(px = 0; px < ynz; px++) {
-      Rj[ Rp[i] + px ] = yi[px];
-      Rx[ Rp[i] + px ] = y[ yi[px] ];
-    }
-    i++;  
-  }
-  // Finaliser, ajuster le nombre d'entrée de R.
-  spasm_csr_realloc(R, -1);
+/*     //   ajouter les entrées dans Rj et Rx. */
+/*     for(px = 0; px < ynz; px++) { */
+/*       Rj[ Rp[i] + px ] = yi[px]; */
+/*       Rx[ Rp[i] + px ] = y[ yi[px] ]; */
+/*     } */
+/*     i++;   */
+/*   } */
+/*   // Finaliser, ajuster le nombre d'entrée de R. */
+/*   spasm_csr_realloc(R, -1); */
   
-  // Libérer mémoire auxiliaire.
-  free(y);
-  free(yi);
-  spasm_csr_free(C);
+/*   // Libérer mémoire auxiliaire. */
+/*   free(y); */
+/*   free(yi); */
+/*   spasm_csr_free(C); */
 
-  // Retourner R.
-  return R;
-}
+/*   // Retourner R. */
+/*   return R; */
+/* } */
 
 
 
@@ -1098,10 +1098,10 @@ spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int *p
  *
  * la valeur renvoyée est le nombre de pivot supplémentaire trouvés.
  */
-int * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int *p, int *qinv, int r0, int r1, spasm *L, spasm *U) {
+int upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py, int *p, int *qinv, int r0, int r1, spasm *L, spasm *U, spasm *L_new) {
   spasm *R, *A;
   int m, n, dn, dm, piv_max, inew, top, i, j, deff, unz, lnz, anz, npiv;
-  int *perm, *xi, *yi;
+  int *xi, *yi;
   spasm_GFp *x, *y;
 
   // fait les calculs paresseux.
@@ -1128,7 +1128,7 @@ int * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py,
   dm = m - r1;
 
   unz = U->nzmax;
-  lnz = 0;
+  lnz = dn + r1;
   deff = 0;
 
   piv_max = spasm_min(dn, dm); //nombre maximum de pivots dans la sous-matrice.
@@ -1172,13 +1172,16 @@ int * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py,
    // -3- On continue LU avec la nouvelle ligne qu'on vient de générer :
     //-3.1- Réallocation de mémoire :
     if(unz + m > U->nzmax){
-      spasm_realloc(U, 2 * U->nzmax + m);
+      spasm_csr_realloc(U, 2 * U->nzmax + m);
     }  
+    if(lnz + m > L->nzmax){
+      spasm_csr_realloc(L, 2 * L->nzmax + m);
+    }
     // -3.2- On résout le système triangulaire.
     top = spasm_sparse_forward_solve(U, A, 0, xi, x, qinv);
     
     // -3.3- On trouve le pivot et on dispatche les coeffs dans la (r+i)-ème ligne de U et L.
-    npiv += spasm_find_pivot(xi, x, top, U, NULL, &unz, &lnz, i, &deff, qinv, p, n);
+    npiv += spasm_find_pivot(xi, x, top, U, L_new, &unz, &lnz, i, &deff, qinv, p, n);
 
     //-3.4- Libérer A.
     spasm_csr_free(A);
@@ -1186,10 +1189,10 @@ int * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py,
   // -4- On finalise L et U.
  
  //resize and realloc :
-  spasm_csr_resize(U, j - deff, m);
-  //spasm_csr_resize(L_new, n, n - deff);  
+  spasm_csr_resize(U, i - deff, m);
+  spasm_csr_resize(L_new, n, n - deff);  
   spasm_csr_realloc(U, -1);
-  //spasm_csr_realloc(L_new, -1);
+  spasm_csr_realloc(L_new, -1);
 
   // libérer la mémoire
   spasm_csr_free(R);
@@ -1197,7 +1200,7 @@ int * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py,
   free(xi);
   free(y);
   free(yi);
-  // renvoie n_piv, le nombre de nouveau pivots trouvé lors de cette décomposition. 
+  // renvoie npiv, le nombre de nouveau pivots trouvé lors de cette décomposition. 
   return npiv;
 } 
 
@@ -1212,9 +1215,9 @@ int * upper_block_treatment(const spasm *M, int a, int b, int c, int d, int *py,
  * qu'on regarde actuellement et l'éliminition du bloc en même temps que la décomposition LU
  * La valeur renvoyée est le nombre de blocs sur la diagonale)
  */
-int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *blocks, spasm **L, spasm **U, int **p, int **qinv, int *py, int **npiv_ptr) {
-  int px, i, j, i0, i1, j0, j1, ri, rj, *Bd, *Bi, nbl, *n_piv;
-  
+int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *blocks, spasm **L, spasm **U, int **p, int **qinv, int *py, spasm ***L_ptr, int **npiv_ptr) {
+  int px, i, j, l, i0, i1, j0, j1, ri, rj, *Bd, *Bi, nbl, *n_piv, Ln;
+  spasm **L_new;
 
   // vérifier les entrées.
   if(M == NULL || B == NULL) return -1;
@@ -1240,10 +1243,11 @@ int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *block
     }
   }
 
- 
-  //Allouer la mémoire de .
+  //Allouer la mémoire de n_piv et de L_new.
   n_piv = spasm_malloc(nbl * sizeof(int));
   *npiv_ptr = n_piv;
+  L_new = spasm_malloc(nbl * sizeof(spasm*));
+  *L_ptr = L_new;
 
   // parcourir la deuxième diagonale de la matrice des blocs.
   // Pour chaque bloc rencontré :
@@ -1262,9 +1266,19 @@ int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *block
     ri = blocks[i].r;
     rj = blocks[j].r;
     if (i0 + ri < i1 && j0 + rj < j1) {
-    //   extraire la sous-matrice et calculer le produit.
+      // Initialisation de L_new[nbl]
+      Ln = i1- i0;
+      Ln = Ln - ri;
+      Ln = Ln + rj;
+      L_new[nbl] = spasm_csr_alloc(Ln, Ln, 4 * Ln, M->prime, SPASM_WITH_NUMERICAL_VALUES);
+      for(l = 0; l < rj; l++){
+	L_new[nbl]->p[l] = l;
+	L_new[nbl]->j[l] = p[j][l];
+	L_new[nbl]->x[l] = 1;
+      }
 
-      n_piv[nbl] = upper_block_treatment(M, i0, j0, i1, j1, py, p[i], qinv[j], ri, rj,  L[i], U[j]);
+    //   extraire la sous-matrice et calculer le produit.
+      n_piv[nbl] = upper_block_treatment(M, i0, j0, i1, j1, py, p[i], qinv[j], ri, rj,  L[i], U[j], L_new[nbl]);
 
     nbl++;
     }
@@ -1281,7 +1295,7 @@ int upper_research(const spasm *M, const uptri_t *B, int k, const block_t *block
 
 int main() {
   spasm_triplet *T;
-  spasm *A, *B, **L0, **U;
+  spasm *A, *B, **L0, **U, **L1;
   spasm_dm *x;
   spasm_lu **LU;
   int n_blocks, i, *qinv, nbl, *py, **LUp, *n_piv, **LUqinv;
@@ -1386,7 +1400,7 @@ int main() {
     LUqinv[i] = LU[i]->qinv;
   }
 
-  nbl = upper_research(B, DS, 1, blocks0, L0, U, LUp, LUqinv, py, &n_piv); 
+  nbl = upper_research(B, DS, 1, blocks0, L0, U, LUp, LUqinv, py, &L1, &n_piv); 
 
   printf("nombre de blocs à traiter sur la première diagonale supérieure : %d\n", nbl);
 
@@ -1406,9 +1420,9 @@ int main() {
  for(i = 0; i < n_blocks; i++) {
    spasm_free_LU(LU[i]);
  }
- /* for(i = 0; i < nbl; i++) { */
- /*   spasm_free_LU(LU1[i]); */
- /* } */
+ for(i = 0; i < nbl; i++) {
+   spasm_csr_free(L1[i]);
+ }
 
  // free(rows);
  // free(r_tab);
@@ -1417,6 +1431,7 @@ int main() {
   spasm_csr_free(A);
   free(blocks0);
   free(L0);
+  free(L1);
   free(LU);
   free(U);
   free(LUp);
