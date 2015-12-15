@@ -92,7 +92,7 @@ int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *
 
   I = spasm_identity(Mn, prime); // <--- Identity matrix
 
-  top = spasm_sparse_backward_solve(L, I, k, xi, x, pinv);
+  top = spasm_sparse_backward_solve(L, I, k, xi, x, pinv,0);
 
   spasm_csr_free(I); // <--- free extra-workspace
 

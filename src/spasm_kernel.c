@@ -34,7 +34,7 @@ spasm * spasm_kernel(const spasm *A_t, const int *column_permutation) {
     for(i = r; i < m; i++) {
       //      spasm_vector_zero(x, m);
       //      spasm_vector_zero(y, r);
-      top = spasm_sparse_backward_solve(L, L, i, xi, x, SPASM_IDENTITY_PERMUTATION);
+      top = spasm_sparse_backward_solve(L, L, i, xi, x, SPASM_IDENTITY_PERMUTATION, 0);
       //      printf("r = %d, top = %d\n", r, top);
 
       /* ---- test ----

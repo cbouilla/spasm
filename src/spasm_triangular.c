@@ -291,7 +291,7 @@ int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xi, s
  * top is the return value.
  *
  */
-int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv) {
+int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv, int r_bound) {
   int i, I, p, px, top, n, m, prime, *Lp, *Lj, *Bp, *Bj, tmp;
   spasm_GFp *Lx, *Bx;
 
@@ -349,10 +349,10 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
       /* i maps to row I of L */
       I = (pinv == SPASM_IDENTITY_PERMUTATION) ? i : pinv[i];
 
-      if (i >= m) {
+       if (i >= m) {
 	/* column I is part of an implicit identity matrix */
 	spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1], prime - x[i], x, prime);
-      } else {
+       } else if(i >= r_bound) {
 	/* get L[i,i] */
 	const spasm_GFp diagonal_entry = Lx[ Lp[I + 1] - 1];
 	assert( diagonal_entry != 0 );
@@ -377,3 +377,5 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
 
     return top;
 }
+
+

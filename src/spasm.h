@@ -170,7 +170,7 @@ int spasm_is_lower_triangular(const spasm *A);
 
 void spasm_dense_back_solve(const spasm * L, spasm_GFp *b, spasm_GFp * x, const int *p);
 int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, const int *q);
-int spasm_sparse_backward_solve(const spasm * L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
+int spasm_sparse_backward_solve(const spasm * L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv, int r_bound);
 int spasm_sparse_forward_solve(const spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
 
 /* spasm_lu.c */
@@ -216,6 +216,9 @@ spasm * spasm_kernel(const spasm *A, const int * column_permutation);
 int spasm_sparse_vector_matrix_prod(const spasm *M, const spasm_GFp *x, const int *xi, int xnz, spasm_GFp *y, int *yi);
 int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *y, int *yi, int *pinv);
 void linvxm(const spasm *L, const spasm *M, int from, int to, spasm *Y, int *pinv);
+
+/* spasm_lazy.c */
+int spasm_lazy_solve_update(int d, int k, int n_blocks, int *i_ptr, const int **ri, const int **rj, const int **p);
 
 
 /* utilities */
