@@ -218,7 +218,11 @@ int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *
 void linvxm(const spasm *L, const spasm *M, int from, int to, spasm *Y, int *pinv);
 
 /* spasm_lazy.c */
-int spasm_lazy_solve_update(int d, int k, int n_blocks, int *i_ptr, const int **ri, const int **rj, const int **p);
+int spasm_lazy_vector_update(int d, int k, int n_blocks, int *i_ptr, const int **ri, const int **rj, const int **p);
+int spasm_lazy_vector_size(int ri, int rj, int a1);
+spasm *spasm_convert_vector_to_matrix(int *x, int *xi, int size, int prime, int xnz);
+void spasm_new_lazy_permutation(int bound, const int *Lperm, int *p_new, int vec_size);
+int spasm_lazy_product(int d, int i, int k, int N, spasm ***L, const spasm *M, const int **ri, const int **rj, const int **p, const int *a1, const int ***Lperm, spasm_GFp *u, int *ui);
 
 
 /* utilities */
