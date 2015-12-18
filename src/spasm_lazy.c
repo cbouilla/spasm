@@ -115,10 +115,11 @@ void spasm_new_lazy_permutation(int bound, const int *Lperm, int *p_new, int vec
  * The return value is ynz, the number of non-zero
  * entries in the output vector.
  */
-int spasm_lazy_product(int d, int i, int k, int N, spasm ***L, const spasm *M, const int **ri, const int **rj, const int **p, const int *a1, const int ***Lperm, spasm_GFp *u, int *ui){
+int spasm_lazy_product(int d, int i, int k, int N, spasm_list **L, const spasm *M, const int **ri, const int **rj, const int **p, const int *a1, const int ***Lperm, spasm_GFp *u, int *ui){
   spasm **B;
+  spasm_list **Ltmp;
   int n_vec, l, j, top, l_new, k_new, Bn, index, Mn, i_new, vnz, unz, prime;
-  int *p_new, *count, *vec_size, *vi;
+  int *p_new, *count, *vec_size, *vi, *ynz;
   int **x, **y;
   spasm_GFp **xi, **yi;
   spasm_GFp *v;
@@ -132,6 +133,7 @@ int spasm_lazy_product(int d, int i, int k, int N, spasm ***L, const spasm *M, c
 
   Mn = M->n;
   prime = M->prime;
+  Ltmp = L;
 
   /* Get workspace */
   B = spasm_malloc(d * sizeof(spasm*));
@@ -139,6 +141,8 @@ int spasm_lazy_product(int d, int i, int k, int N, spasm ***L, const spasm *M, c
   x = spasm_malloc(d * sizeof(spasm_GFp*));
   yi = spasm_malloc(d * sizeof(int*));
   y = spasm_malloc(d * sizeof(spasm_GFp*));
+
+  ynz = spasm_malloc(d * sizeof(int));
 
   v = spasm_malloc(Mn * sizeof(spasm_GFp));
   vi = spasm_malloc(Mn * sizeof(int));
@@ -163,18 +167,21 @@ int spasm_lazy_product(int d, int i, int k, int N, spasm ***L, const spasm *M, c
   spasm_vector_zero(x[0], vec_size[0]);
   spasm_vector_zero(y[0], vec_size[0]);
   spasm_vector_zero(yi[0], 3 * vec_size[0]);
- 
+
   x[0][i] = 1;
   xi[0][0] = i;
+  y[0][i] = 1;
+  yi[0][0] = i; // <-- copy x in y
+  ynz[0] = 1;
 
   B[0] = spasm_convert_vector_to_matrix(x[0], xi[0], vec_size[0], prime, 1);
   free(x[0]);
   free(xi[0]);
+  
   n_vec = 1;
   vnz = 0;
   
   spasm_vector_zero(count, d);
-
 
   /* For each diagonal greater than 1 */
   while(d > 1){
@@ -183,6 +190,9 @@ int spasm_lazy_product(int d, int i, int k, int N, spasm ***L, const spasm *M, c
     /* Get next x, xi workspace */
     for(l = 0; l < n_vec +1; l++){
       k_new = k+l;
+
+      assert(Ltmp[k_new]->diag <= d);
+
     vec_size[l] = spasm_lazy_vector_size(ri[k_new][d-1], rj[k_new+d][d -1], a1[k_new]);
     x[l] = spasm_malloc(vec_size[l] * sizeof(spasm_GFp));
     xi[l] = spasm_malloc(vec_size[l] * sizeof(int));
@@ -194,28 +204,47 @@ int spasm_lazy_product(int d, int i, int k, int N, spasm ***L, const spasm *M, c
       k_new = k + l;
       Bn = B[l]->n;
 
-  /* Find the good permutation */
-      p_new = spasm_malloc(Bn * sizeof(int));
-      spasm_new_lazy_permutation(rj[k_new + d][d - 1], Lperm[d-1][k_new], p_new, Bn);
+      // test if L_{d,k_new} exist. If so solve the system.
+      if(Ltmp[k_new] != NULL && Ltmp[k_new]->diag == d) { //<-- L_{d,k_new} exist.
 
-  /* Solve the triangular system */
-      top = spasm_sparse_backward_solve(L[d][k_new], B[l], 0, yi[l], y[l], p_new, rj[k_new + d][d -1]);
+	/* Find the good permutation */
+	p_new = spasm_malloc(Bn * sizeof(int));
+	spasm_new_lazy_permutation(rj[k_new + d][d - 1], Lperm[d-1][k_new], p_new, Bn);
 
-      //free extra worskpace
-      spasm_csr_free(B[l]);
-      free(p_new);
+	/* Solve the triangular system */
+	spasm_vector_zero(y[l], Bn);
+	spasm_vector_zero(y[l], 3*Bn);
 
-  /* For each j in y[l] pattern, dispatch j for next step*/
-      for(j = top; j < Bn; j++){
-	//find the corresponding vector and the index in it :
-	index = yi[l][j];
+	top = spasm_sparse_backward_solve(Ltmp[k_new]->M, B[l], 0, yi[l], y[l], p_new, rj[k_new + d][d -1]);
 
-	l_new = spasm_lazy_vector_update(d, k_new, N, &index, ri, rj, p);
-	l_new = l_new + l;
+	//free extra worskpace
+	spasm_csr_free(B[l]);
+	free(p_new);
+	Ltmp[k_new] = Ltmp[k_new]->prev;
+    
+	/* For each j in y[l] pattern, dispatch j for next step*/
+	for(j = top; j < Bn; j++){
+	  //find the corresponding vector and the index in it :
+	  index = yi[l][j];
 
-	xi[l_new][count[l_new]] = index;
-	count[l_new]++;
-	x[l_new][index] = y[l][yi[l][j]];
+	  l_new = spasm_lazy_vector_update(d, k_new, N, &index, ri, rj, p);
+	  l_new = l_new + l;
+
+	  xi[l_new][count[l_new]] = index;
+	  count[l_new]++;
+	  x[l_new][index] = y[l][yi[l][j]];
+	}
+      }
+      else{
+	for(j = 0; j < ynz[l]; j++){
+	  index = yi[l][j];
+	  l_new = spasm_lazy_vector_update(d, k_new, N, &index, ri, rj, p);
+	  l_new = l_new + l;
+
+	  xi[l_new][count[l_new]] = index;
+	  count[l_new]++;
+	  x[l_new][index] = y[l][yi[l][j]];
+	}
       }
     }
     
@@ -224,18 +253,25 @@ int spasm_lazy_product(int d, int i, int k, int N, spasm ***L, const spasm *M, c
     for(l = 0; l < n_vec; l++){
     /* Update matrix B */
       B[l] = spasm_convert_vector_to_matrix(x[l], xi[l], vec_size[l], prime, count[l]); 
-      free(x[l]);
-      free(xi[l]);
+     
 
     /*Initialise y, yi for next step */
       k_new = k+l;
       y[l] = spasm_realloc(y[l], vec_size[l] * sizeof(int));
       yi[l] = spasm_realloc(yi[l], 3*vec_size[l] * sizeof(int));
-      spasm_vector_zero(y[l], vec_size[l]);
-      spasm_vector_zero(y[l], 3*vec_size[l]);
 
+      for(j = 0; j < vec_size[l]; j++){
+	y[l][j] = x[l][j];
+	yi[l][j] = xi[l][j];
+      }     
+
+      free(x[l]);
+      free(xi[l]);
+
+      /*Initialise size of y for next step */
+      ynz[l] = count[l];
+      spasm_vector_zero(count, d);
     }
-
   }
 
   assert(d == 1);
@@ -244,25 +280,36 @@ int spasm_lazy_product(int d, int i, int k, int N, spasm ***L, const spasm *M, c
     k_new = k + l;
     Bn = B[l]->n;
 
-    /* Find the good permutation */
-    p_new = spasm_malloc(Bn * sizeof(int));
-    spasm_new_lazy_permutation(rj[k_new + d][d - 1], Lperm[d-1][k_new], p_new, Bn);
+    if(Ltmp[k_new] != NULL && Ltmp[k_new]->diag == 0){
 
-    /* Solve the triangular system */
-    top = spasm_sparse_backward_solve(L[d][k_new], B[l], 0, yi[l], y[l], p_new, rj[k_new + d][d - 1]);
+      //empty y
+      spasm_vector_zero(y[l], Bn);
+      spasm_vector_zero(yi[l], 3*Bn);
 
-    //free extra worskpace
-    spasm_csr_free(B[l]);
-    free(p_new);
+      /* Solve the triangular system */
+      top = spasm_sparse_backward_solve(Ltmp[k_new]->M, B[l], 0, yi[l], y[l], p[k_new], 0);
 
-    /* dispatch yi in vi and y in v. */
-    for(j = top; j < Bn; j++){
-      index = yi[l][j];
-      i_new = index + a1[k_new];
-      vi[vnz] = i_new;
-      v[i_new] = y[l][index];
-      vnz ++;
-    } 
+      //free extra worskpace
+      spasm_csr_free(B[l]);
+    
+      /* dispatch yi in vi and y in v. */
+      for(j = top; j < Bn; j++){
+	index = yi[l][j];
+	i_new = index + a1[k_new];
+	vi[vnz] = i_new;
+	v[i_new] = y[l][index];
+	vnz ++;
+      }
+    }
+    else {
+      for(j = 0; j < ynz[l]; j++){
+	index = yi[l][j];
+	i_new = index + a1[k_new];
+	vi[vnz] = i_new;
+	v[i_new] = y[l][index];
+	vnz ++;
+      }
+    }
     //free extra workspace
     free(yi[l]);
     free(y[l]);
