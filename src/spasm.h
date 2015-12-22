@@ -66,9 +66,11 @@ typedef struct {
 
 typedef struct toto {
   spasm *M;
+  int *permut;
   int diag;
   struct toto *prev;
 }spasm_list;
+
 
 
 /* example (this is Matrix/t1)
@@ -229,7 +231,7 @@ int spasm_lazy_vector_update(int d, int k, int n_blocks, int *i_ptr, const int *
 int spasm_lazy_vector_size(int ri, int rj, int a1);
 spasm *spasm_convert_vector_to_matrix(int *x, int *xi, int size, int prime, int xnz);
 void spasm_new_lazy_permutation(int bound, const int *Lperm, int *p_new, int vec_size);
-int spasm_lazy_product(int d, int i, int k, int N, spasm_list **L, const spasm *M, const int **ri, const int **rj, const int **p, const int *a1, const int ***Lperm, spasm_GFp *u, int *ui);
+int spasm_lazy_product(int d, int i, int k, int N, spasm_list **L, const spasm *M, const int **ri, const int **rj, const int **p, const int *a1, spasm_GFp *u, int *ui);
 
 
 /* utilities */

@@ -1004,90 +1004,95 @@ uptri_t * diagonal_structure(const spasm *B, int *r_tab, int n_rows) {
 
 
 /*
- * Extrait une sous-matrice C [a : c, b : d].
+ * Extrait une sous-matrice C [a : c, b : d], sur la première diagonale supérieure.
  * Calcule le produit des lignes de L^(-1) à partir de r (en tenant compte des
  * permutations).
  * retourne la sous-matrice de ce produit.
  */
-/* spasm * lazy_product(const spasm *M, int a, int b, int c, int d, int *py, int *p, int r, const spasm  *L) { */
-/*   spasm *C, *R; */
-/*   int k, k_new, i, px, *yi, ynz, Cn, Cm, nzmax, Rn, prime, *Rp, *Rj; */
-/*   spasm_GFp *y, *Rx; */
+spasm * lazy_submatrix_first_diag(const spasm *M, int a, int b, int c, int d, int *py, int *p, int r, const spasm  *L) {
+  spasm *C, *R;
+  int k, k_new, i, px, *yi, ynz, Cn, Cm, nzmax, Rn, prime, *Rp, *Rj;
+  spasm_GFp *y, *Rx;
 
-/*   // vérifier les entrées. */
-/*   assert(a + r < c); */
-/*   if(M == NULL || L == NULL) return NULL; */
+  // vérifier les entrées.
+  assert(a + r < c);
+  if(M == NULL || L == NULL) return NULL;
 
-/*   //extrait la sous-matrice de M, triée. */
+  //extrait la sous-matrice de M, triée.
  
-/*   C = sorted_spasm_submatrix(M, a, c, b, d, py, SPASM_WITH_NUMERICAL_VALUES); */
-/*   if(spasm_nnz(C) == 0) { */
-/*     spasm_csr_free(C); */
-/*     return NULL; */
-/*   } */
+  C = sorted_spasm_submatrix(M, a, c, b, d, py, SPASM_WITH_NUMERICAL_VALUES);
+  if(spasm_nnz(C) == 0) {
+    spasm_csr_free(C);
+    return NULL;
+  }
  
 
-/*   //Allouer le résultat B (nombre d'entrée de C). */
-/*   Cn = C->n; */
-/*   Cm = C->m; */
-/*   nzmax = C->nzmax; */
-/*   Rn = Cn - r; */
-/*   prime = C->prime; */
+  //Allouer le résultat B (nombre d'entrée de C).
+  Cn = C->n;
+  Cm = C->m;
+  nzmax = C->nzmax;
+  Rn = Cn - r;
+  prime = C->prime;
 
-/*   R = spasm_csr_alloc(Rn, Cm, nzmax, prime, SPASM_WITH_NUMERICAL_VALUES); */
-/*   Rp = R->p; */
-/*   Rj = R->j; */
-/*   Rx = R->x; */
+  R = spasm_csr_alloc(Rn, Cm, nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
+  Rp = R->p;
+  Rj = R->j;
+  Rx = R->x;
 
-/*   //intialiser Rp. */
-/*   Rp[0] = 0; */
+  //intialiser Rp.
+  Rp[0] = 0;
 
-/*   //Allouer mémoire de y et de yi et initialiser à 0. */
-/*   y = spasm_malloc(Cm * sizeof(spasm_GFp)); */
-/*   yi = spasm_malloc(Cm * sizeof(int)); */
-/*   spasm_vector_zero(y, Cm); */
-/*   spasm_vector_zero(yi, Cm); */
+  //Allouer mémoire de y et de yi et initialiser à 0.
+  y = spasm_malloc(Cm * sizeof(spasm_GFp));
+  yi = spasm_malloc(Cm * sizeof(int));
+  spasm_vector_zero(y, Cm);
+  spasm_vector_zero(yi, Cm);
 
-/*   i = 0; */
-/*   // Pour k allant de r à Cn : */
-/*   for(k = r; k < Cn; k++) { */
-/*     //   effectuer les permutations de lignes. */
-/*     k_new = p[k]; */
-/*     //   calculer le produit de la k-ième ligne de L^(-1) par C. */
-/*     //   le stocker dans y, et son support dans yi. */
+  i = 0;
+  // Pour k allant de r à Cn :
+  for(k = r; k < Cn; k++) {
+    //   effectuer les permutations de lignes.
+    k_new = p[k];
+    //   calculer le produit de la k-ième ligne de L^(-1) par C.
+    //   le stocker dans y, et son support dans yi.
    
-/*     ynz = spasm_inverse_and_product(L, C, k_new, y, yi, p); */
+    ynz = spasm_inverse_and_product(L, C, k_new, y, yi, p);
     
-/*     //   mettre à jour Rp. */
-/*     Rp[i+1] = Rp[i] + ynz; */
+    //   mettre à jour Rp.
+    Rp[i+1] = Rp[i] + ynz;
 
-/*     //   réallouer de la mémoire si besoin. */
-/*     if(nzmax < Rp[i+1]) { */
-/*       nzmax = 2 * nzmax + ynz; */
-/*       spasm_csr_realloc(R, nzmax); */
-/*       Rj = R->j; */
-/*       Rx = R->x; */
-/*     } */
+    //   réallouer de la mémoire si besoin.
+    if(nzmax < Rp[i+1]) {
+      nzmax = 2 * nzmax + ynz;
+      spasm_csr_realloc(R, nzmax);
+      Rj = R->j;
+      Rx = R->x;
+    }
 
-/*     //   ajouter les entrées dans Rj et Rx. */
-/*     for(px = 0; px < ynz; px++) { */
-/*       Rj[ Rp[i] + px ] = yi[px]; */
-/*       Rx[ Rp[i] + px ] = y[ yi[px] ]; */
-/*     } */
-/*     i++;   */
-/*   } */
-/*   // Finaliser, ajuster le nombre d'entrée de R. */
-/*   spasm_csr_realloc(R, -1); */
+    //   ajouter les entrées dans Rj et Rx.
+    for(px = 0; px < ynz; px++) {
+      Rj[ Rp[i] + px ] = yi[px];
+      Rx[ Rp[i] + px ] = y[ yi[px] ];
+    }
+    i++;
+  }
+  // Finaliser, ajuster le nombre d'entrée de R.
+  spasm_csr_realloc(R, -1);
   
-/*   // Libérer mémoire auxiliaire. */
-/*   free(y); */
-/*   free(yi); */
-/*   spasm_csr_free(C); */
+  // Libérer mémoire auxiliaire.
+  free(y);
+  free(yi);
+  spasm_csr_free(C);
 
-/*   // Retourner R. */
-/*   return R; */
-/* } */
+  // Retourner R.
+  return R;
+}
 
+/*
+ * Extrait une sous-matrice [a : c, b : d] sur une diagonale diag+1 supérieure 
+ * strictement à 1. Effectue les calculs paresseux, ligne par ligne 
+ * et retourne la sous matrice du produit.
+ */
 
 
 /*

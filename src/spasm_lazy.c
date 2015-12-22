@@ -115,7 +115,7 @@ void spasm_new_lazy_permutation(int bound, const int *Lperm, int *p_new, int vec
  * The return value is ynz, the number of non-zero
  * entries in the output vector.
  */
-int spasm_lazy_product(int d, int i, int k, int N, spasm_list **L, const spasm *M, const int **ri, const int **rj, const int **p, const int *a1, const int ***Lperm, spasm_GFp *u, int *ui){
+int spasm_lazy_product(int d, int i, int k, int N, spasm_list **L, const spasm *M, const int **ri, const int **rj, const int **p, const int *a1, spasm_GFp *u, int *ui){
   spasm **B;
   spasm_list **Ltmp;
   int n_vec, l, j, top, l_new, k_new, Bn, index, Mn, i_new, vnz, unz, prime;
@@ -142,14 +142,13 @@ int spasm_lazy_product(int d, int i, int k, int N, spasm_list **L, const spasm *
   yi = spasm_malloc(d * sizeof(int*));
   y = spasm_malloc(d * sizeof(spasm_GFp*));
 
-  ynz = spasm_malloc(d * sizeof(int));
+  ynz = spasm_malloc(d * sizeof(int)); // non-zero entries in y
 
   v = spasm_malloc(Mn * sizeof(spasm_GFp));
   vi = spasm_malloc(Mn * sizeof(int));
   spasm_vector_zero(v, Mn);
   spasm_vector_zero(vi, Mn);
  
-
   count = spasm_malloc(d * sizeof(int));
   vec_size = spasm_malloc(d * sizeof(int));
   // find size of the first vector ei
@@ -209,7 +208,7 @@ int spasm_lazy_product(int d, int i, int k, int N, spasm_list **L, const spasm *
 
 	/* Find the good permutation */
 	p_new = spasm_malloc(Bn * sizeof(int));
-	spasm_new_lazy_permutation(rj[k_new + d][d - 1], Lperm[d-1][k_new], p_new, Bn);
+	spasm_new_lazy_permutation(rj[k_new + d][d - 1], Ltmp[k_new]->permut, p_new, Bn);
 
 	/* Solve the triangular system */
 	spasm_vector_zero(y[l], Bn);
