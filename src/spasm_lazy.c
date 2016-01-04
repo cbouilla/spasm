@@ -108,6 +108,40 @@ void spasm_new_lazy_permutation(int bound, const int *Lperm, int *p_new, int vec
 
 }
 
+
+/*
+ * Given a spasm_list L, a matrix Lnew, an int diag and a permutation p, add Lnew diag and p at the begining of L.
+ */
+spasm_list * spasm_list_update(spasm_list *L, spasm *Lnew, int *p, int diag){
+  spasm_list *LL;
+
+  LL = spasm_malloc(sizeof(spasm_list));
+  LL->M = Lnew;
+  LL->diag = diag;
+  LL->permut = p;
+  LL->prev = L;
+
+  return LL;
+}
+
+/*
+ * Free a spasm_list L.
+ */
+spasm_list * spasm_list_clear(spasm_list *L){
+
+  if(L == NULL){
+    return NULL;
+  }
+  else {
+    spasm_list *tmp;
+    tmp = L->prev;
+    spasm_csr_free(L->M);
+    free(L->permut);
+    free(L);
+    return spasm_list_clear(tmp);
+  }
+}
+
 /*
  * Given d a diagonal number and index k, and i, 
  * do all the step of the Lazy computation : 
