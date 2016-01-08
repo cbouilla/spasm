@@ -2,89 +2,206 @@
 #include"spasm.h"
 
 /*
- * Given a diagonal index d>0, index k and i, 
- * permutations p and R, pivots numbers indicators 
- * ri and rj, return 0 if i is in the right side of the vector
- * and 1 otherwise. Update index i for
- * the next stage (solving y_k L_{d-1,k} = x_k)
- * and the position of i in vector .
+ * replace u by u + v.
+ * return value is number of non zero entries in new vector u.
  */
-int spasm_lazy_vector_update(int d, int k, int n_blocks, int *i_ptr, const int **ri, const int **rj, const int **p){
-  int i, d_new, dr, bound, l; 
+int spasm_add_vectors(spasm_GFp *u, int *ui, int unz, spasm_GFp *v, int *vi, int vnz, int size){
+  int *w;
+  int i, j;
 
-  //check inputs.
-  assert(d > 0);
-  assert(k >= 0);
-  assert(k+1 < n_blocks-d);
+  // get workspace.
+  w = spasm_malloc(size * sizeof(int));
 
-  i = *i_ptr;
-  bound = rj[k+d][d-1];
+  //initialize tables 
+  spasm_vector_zero(w, size);
 
-  if(d > 1){
-    if(i < bound) {
-      l = 1;
+  for(j = 0; j < unz; j++){
+    i = ui[j];
+    w[i] = 1;
+  }
+
+  for(j = 0; j < vnz; j++){
+    i = vi[j];
+    if(w[i] == 0){ // u[i] = 0
+      ui[unz] = i;
+      u[i] = v[i]; // <-- 0 + v[i].
+      unz++;
     }
-    else {
-      d_new = d-1;
-      i = i - bound;
-      dr = ri[k][d_new] - ri[k][d_new];
-      i = i + rj[k+d][d_new-1];
-      i = i + dr;
-      *i_ptr = i;
-      l = 0;
+    else { //u[i] != 0 , i already in ui.
+      u[i] += v[i]; // <-- u[i] + v[i].
     }
   }
-  else {
-    if (i < bound){
-      k++;
-      i = p[k][i];
-      *i_ptr = i;
-      l = 1;
-    }
-    else {
-      i = i - bound;
-      i = i + ri[k][0];
-      i = p[k][i];
-      *i_ptr = i;
-      l = 0;
-    }
-  }
-  return l;
+
+  return unz;
 }
-
-
-/* 
- * Given rj and ri and a1 for block (k, k+d), find size of vector x_k at stage d.
- */
-int spasm_lazy_vector_size(int ri, int rj, int a1){
-  int size;
-  size = a1 - ri;
-  size += rj;
-
-  return size;
-}
-
 
 /*
- * Initialise the right side member given a vector x and its pattern.
+ * Given a system L, allocate the right-hand side member.
  */
-spasm *spasm_convert_vector_to_matrix(int *x, int *xi, int size, int prime, int xnz){
-  spasm *B;
-  int *Bp, *Bj, *Bx, j;
+void spasm_system_right_hand_init(spasm_system *L, int nnz){
+  spasm *M, *B;
+  int Mn, size, prime;
+  int *Bp;
+  
+  //check inputs.
+  assert(L->B == NULL);
+  M = L->M;
+  Mn = M->n; // number of rows of M.
+  size = L->rect; // size of the rectangular part of M.
+  size += Mn; // size of the right-hand side member
+  prime = M->prime;
 
-  B = spasm_csr_alloc(size, 1, xnz, prime, 1);
+  // Memorie allocation
+  B = spasm_csr_alloc(1, size, nnz, prime, SPASM_WITH_NUMERICAL_VALUES);
+
+  //initialisation
   Bp = B->p;
-  Bj = B->j;
-  Bx = B->x;
+  Bp[0] = 0;
+  Bp[1] = nnz;
 
-  Bp[1] = xnz;
+  L->B = B;
+}
 
-  for(j = 0; j < xnz; j++){
-    Bj[j] = xi[j];
-    Bx[j] = x [xi[j]];
+void spasm_first_system_init(spasm_system *L, int i){
+  int *Bj;
+  spasm_GFp *Bx;
+
+  //Initialise B
+  spasm_system_right_hand_init(L, 1);
+
+  Bj = L->B->j;
+  Bx = L->B->x;
+
+  Bj[0] = i;
+  Bx[0] = 1;
+
+ 
+}
+
+/*
+ * Given the solution x and it pattern xi, dispatchthe coefficient of
+ * x for next step.
+ */
+
+void spasm_lazy_right_hand_update(int d, int k, spasm_system *L0, spasm_system *L1, int bound, int *xi, int *x, int top, int stop, const int **p){
+  spasm *B0, *B1;
+  int i, i_new, j, d1, d0, start, nz0, nz1;
+  int *B0j, *B1j;
+  spasm_GFp *B0x, *B1x;
+
+ //check inputs.
+  assert(d > 0);
+  assert(k >= 0);
+
+  d1 = L0->diag; // diagonale du prochain système sur l'intervalle de lignes k
+  d0 = L1->diag; // diagonale du prochain système sur l'intervalle de colonnes k+d
+
+  assert(d1 < d);
+  assert(d0 < d);
+
+  start = L0->M->m;
+
+  nz0 = L0->Bnz;
+  nz1 = L1->Bnz;
+
+  if(L0->B == NULL){
+    int nzmax;
+    nzmax = L0->M->n;
+    nzmax += L0->rect;
+    spasm_system_right_hand_init(L0, nzmax);
   }
 
-  return B;
+  if(L1->B == NULL){
+    int nzmax;
+    nzmax = L1->M->n;
+    nzmax += L1->rect;
+    spasm_system_right_hand_init(L1, nzmax);
+  }
+
+  B0 = L0->B;
+  B1 = L1->B;
+  B0j = B0->j;
+  B0x = B0->x;
+  B1j = B1->j;
+  B1x = B1->x;
+
+  if(d1 > 0){
+    if(d0 > 0){ // Cas ou les deux systèmes suivants sont sur une diagonale supérieure.
+      for(j = top; j < stop; j++){
+	i = xi[j];
+	if(i < bound){ //On remplit la partie gauche du second membre du système 1.
+	  B1j[(nz1)] = i;
+	  B1x[(nz1)] = x[i];
+	  (nz1)++;
+	}
+	else { //On remplit la partie droite du second membre du système 0.
+	  i_new = i-bound;
+	  i_new += start;
+	  B0j[(nz0)] = i_new;
+	  B0x[(nz0)] = x[i];
+	  (nz0)++;
+	}
+      }
+    }
+    else { // Cas où le système 0 est sur la diagonale princiaple.
+      for(j = top; j < stop; j++){
+	i = xi[j];
+	if(i < bound){ //On remplit la partie gauche du second membre du système 1.
+	  B1j[(nz1)] = i;
+	  B1x[(nz1)] = x[i];
+	  (nz1)++;
+	}
+	else { //On remplit la partie droite du second membre du système 0. 
+	  i_new = i - bound;
+	  i_new += start;
+	  i_new = p[k][i_new];
+	  B0j[(nz0)] = i_new;
+	  B0x[(nz0)] = x[i];
+	  (nz0)++;
+	}
+      }
+    }
+  }
+  else { // Cas où le système 1 est sur la diagonale principale.
+    if(d0 > 0){ // Cas où le système 0 est sur une diagonale supérieure.
+      for(j = top; j < stop; j++){
+	i = xi[j];
+	if(i < bound){
+	  i_new = p[k+1][i];
+	  B1j[(nz1)] = i_new;
+	  B1x[(nz1)] = x[i];
+	  (nz1)++;
+	}
+	else { 
+	  i_new = i-bound;
+	  i_new += start;
+	  B0j[(nz0)] = i_new;
+	  B0x[(nz0)] = x[i];
+	  (nz0)++;
+	}
+      }   
+    }
+    else{ // Cas où le système 0 est sur une diagonale principale.
+      for(j = top; j < stop; j++){
+	i = xi[j];
+	if(i < bound){
+	  i_new = p[k+1][i];
+	  B1j[(nz1)] = i_new;
+	  B1x[(nz1)] = x[i];
+	  (nz1)++;
+	}
+	else {
+	  i_new = i - bound;
+	  i_new += start;
+	  i_new = p[k][i_new];
+	  B0j[(nz0)] = i_new;
+	  B0x[(nz0)] = x[i];
+	  (nz0)++;
+	}
+      }
+    }
+  }
+
 }
 
 /*
@@ -105,255 +222,225 @@ void spasm_new_lazy_permutation(int bound, const int *Lperm, int *p_new, int vec
   for(i = 0; i < diff; i++){
     p_new[bound+i] = Lperm[i]+bound;
   }
-
 }
 
+/*
+ * Given a system L, find out which is the next system corresponding to the "left part" of the solution.
+ * return the index of the row interval. 
+ */
+int spasm_next_left_system(spasm_system **L, int k, int d){
+  spasm_system *tmp;
+
+  d = d-1; 
+  k = k+1;
+  if(d == 0){
+    return k;
+  }
+
+  tmp = L[0];
+  while(tmp->diag > d){
+    tmp = tmp->next;
+  }
+  if (tmp->diag == d){
+    return k;
+  }
+  else{
+    return spasm_next_left_system(L, k, d);
+  }
+}
+
+/*
+ * Solve the system L, and dispatch coefficients for the next step.
+ */
+void spasm_lazy_system(spasm_system **L, int k, int l, int d, const int **p){
+  spasm *B, *M;
+  int bound, size, top, left, d_new;
+  int *xi;
+  spasm_GFp *x, *Lp;
+  spasm_system *Lk, *Lleft;
+
+  Lk = L[l];
+
+  //check entries
+  assert(Lk->B != NULL);
+  assert(Lk->diag == d);
+
+  bound = Lk->rect;
+  left = Lk->left; // next system corresponding to the left part of the solution.
+
+  assert(left > k); // next system is "under" the curent one.
+
+  B = Lk->B;
+  size = B->m;
+  M = Lk->M;
+  Lp = Lk->p;
+
+  // Allocate workspace
+  x = spasm_malloc(size * sizeof(spasm_GFp));
+  xi = spasm_malloc(3 * size * sizeof(int));
+
+  //initialize vector
+  spasm_vector_zero(x, size);
+  spasm_vector_zero(xi, size);
+
+  // Solve system
+  top = spasm_sparse_backward_solve(M, B, 0, xi, x, Lp, bound);
+
+  // Free right-hand side member.
+  free(B);
+
+  // Find diagonal number of next "left" system.
+  d_new = d - left;
+
+  assert(d_new < d); // "left system" is on a previous diagonal
+  assert(d_new >= 0);
+
+  Lleft = L[l+left];
+  while(Lleft->diag > d_new){
+    Lleft = Lleft->next;
+  }
+
+  // check diagonal number.
+  assert(Lleft->diag == d_new);
+
+  // find next "right system" :
+  Lk = Lk->next;
+
+  // dispatch coefficient for next systems.
+  spasm_lazy_right_hand_update(d, k, Lk, Lleft, bound, xi, x, top, size, p);
+
+  // free x, xi.
+  free(x);
+  free(xi);
+
+}
 
 /*
  * Given a spasm_list L, a matrix Lnew, an int diag and a permutation p, add Lnew diag and p at the begining of L.
  */
-spasm_list * spasm_list_update(spasm_list *L, spasm *Lnew, int *p, int diag){
-  spasm_list *LL;
+spasm_system * spasm_system_update(spasm_system *L, spasm *M, int *p, int rect, int left, int diag){
+  spasm_system *LL;
 
-  LL = spasm_malloc(sizeof(spasm_list));
-  LL->M = Lnew;
+  LL = spasm_malloc(sizeof(spasm_system));
+  LL->M = M;
+  LL->B = NULL; // No right-hand siade member stocked
   LL->diag = diag;
-  LL->permut = p;
-  LL->prev = L;
+  LL->rect = rect;
+  LL->left = left;
+  LL->p = p;
+  LL->next = L;
 
   return LL;
 }
 
 /*
- * Free a spasm_list L.
+ * Free a spasm_system L.
  */
-spasm_list * spasm_list_clear(spasm_list *L){
+spasm_system * spasm_system_clear(spasm_system *L){
 
   if(L == NULL){
     return NULL;
   }
   else {
-    spasm_list *tmp;
-    tmp = L->prev;
+    spasm_system *tmp;
+    tmp = L->next;
     spasm_csr_free(L->M);
-    free(L->permut);
+    if(L->B != NULL){
+      spasm_csr_free(L->B);
+    }
+    free(L->p);
     free(L);
-    return spasm_list_clear(tmp);
+    return spasm_system_clear(tmp);
   }
 }
 
 /*
- * Given d a diagonal number and index k, and i, 
- * do all the step of the Lazy computation : 
- * solving equations and final product.
- * The return value is ynz, the number of non-zero
- * entries in the output vector.
+ * Given a diagonal d and index k and i, do the lazy computation:
+ * solving successive systems, and final product.
+ * The return value is ynz, the number of non-zero entries in the
+ * output vector.
  */
-int spasm_lazy_product(int d, int i, int k, int N, spasm_list **L, const spasm *M, const int **ri, const int **rj, const int **p, const int *a1, spasm_GFp *u, int *ui){
-  spasm **B;
-  spasm_list **Ltmp;
-  int n_vec, l, j, top, l_new, k_new, Bn, index, Mn, i_new, vnz, unz, prime;
-  int *p_new, *count, *vec_size, *vi, *ynz;
-  int **x, **y;
-  spasm_GFp **xi, **yi;
-  spasm_GFp *v;
+int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, const spasm **A, const int **p){
+  int diag, l, nsys, nnz, nztmp;
+  spasm_system **L;
+  int *xi;
+  spasm_GFp *x;
+  spasm *B;
 
   //check inputs
   assert(d > 1);
-  assert(k >= 0);
-  assert(k+1 < N-d);
-
-  if(L == NULL || M == NULL) return 0;
-
-  Mn = M->n;
-  prime = M->prime;
-  Ltmp = L;
-
-  /* Get workspace */
-  B = spasm_malloc(d * sizeof(spasm*));
-  xi = spasm_malloc(d * sizeof(int*));
-  x = spasm_malloc(d * sizeof(spasm_GFp*));
-  yi = spasm_malloc(d * sizeof(int*));
-  y = spasm_malloc(d * sizeof(spasm_GFp*));
-
-  ynz = spasm_malloc(d * sizeof(int)); // non-zero entries in y
-
-  v = spasm_malloc(Mn * sizeof(spasm_GFp));
-  vi = spasm_malloc(Mn * sizeof(int));
-  spasm_vector_zero(v, Mn);
-  spasm_vector_zero(vi, Mn);
- 
-  count = spasm_malloc(d * sizeof(int));
-  vec_size = spasm_malloc(d * sizeof(int));
-  // find size of the first vector ei
-
-  vec_size[0] = spasm_lazy_vector_size(ri[k][d-1], rj[k+d][d-1], a1[k]);
-
-  assert(i < vec_size[0]);  
-
-  x[0] = spasm_malloc(vec_size[0] * sizeof(spasm_GFp));
-  xi[0] = spasm_malloc(1 * sizeof(int));
-  y[0] = spasm_malloc(vec_size[0] * sizeof(spasm_GFp));
-  yi[0] = spasm_malloc(3 * vec_size[0] * sizeof(int));
-
-  /* Initialise variable and vector */
-  spasm_vector_zero(x[0], vec_size[0]);
-  spasm_vector_zero(y[0], vec_size[0]);
-  spasm_vector_zero(yi[0], 3 * vec_size[0]);
-
-  x[0][i] = 1;
-  xi[0][0] = i;
-  y[0][i] = 1;
-  yi[0][0] = i; // <-- copy x in y
-  ynz[0] = 1;
-
-  B[0] = spasm_convert_vector_to_matrix(x[0], xi[0], vec_size[0], prime, 1);
-  free(x[0]);
-  free(xi[0]);
-  
-  n_vec = 1;
-  vnz = 0;
-  
-  spasm_vector_zero(count, d);
-
-  /* For each diagonal greater than 1 */
-  while(d > 1){
-    d = d - 1;
-
-    /* Get next x, xi workspace */
-    for(l = 0; l < n_vec +1; l++){
-      k_new = k+l;
-
-      assert(Ltmp[k_new]->diag <= d);
-
-    vec_size[l] = spasm_lazy_vector_size(ri[k_new][d-1], rj[k_new+d][d -1], a1[k_new]);
-    x[l] = spasm_malloc(vec_size[l] * sizeof(spasm_GFp));
-    xi[l] = spasm_malloc(vec_size[l] * sizeof(int));
-    spasm_vector_zero(xi[l], vec_size[l]);
-    spasm_vector_zero(x[l], vec_size[l]);
-    }
-  /* For each small vector */
-    for(l = 0; l < n_vec; l++){
-      k_new = k + l;
-      Bn = B[l]->n;
-
-      // test if L_{d,k_new} exist. If so solve the system.
-      if(Ltmp[k_new] != NULL && Ltmp[k_new]->diag == d) { //<-- L_{d,k_new} exist.
-
-	/* Find the good permutation */
-	p_new = spasm_malloc(Bn * sizeof(int));
-	spasm_new_lazy_permutation(rj[k_new + d][d - 1], Ltmp[k_new]->permut, p_new, Bn);
-
-	/* Solve the triangular system */
-	spasm_vector_zero(y[l], Bn);
-	spasm_vector_zero(y[l], 3*Bn);
-
-	top = spasm_sparse_backward_solve(Ltmp[k_new]->M, B[l], 0, yi[l], y[l], p_new, rj[k_new + d][d -1]);
-
-	//free extra worskpace
-	spasm_csr_free(B[l]);
-	free(p_new);
-	Ltmp[k_new] = Ltmp[k_new]->prev;
-    
-	/* For each j in y[l] pattern, dispatch j for next step*/
-	for(j = top; j < Bn; j++){
-	  //find the corresponding vector and the index in it :
-	  index = yi[l][j];
-
-	  l_new = spasm_lazy_vector_update(d, k_new, N, &index, ri, rj, p);
-	  l_new = l_new + l;
-
-	  xi[l_new][count[l_new]] = index;
-	  count[l_new]++;
-	  x[l_new][index] = y[l][yi[l][j]];
-	}
-      }
-      else{
-	for(j = 0; j < ynz[l]; j++){
-	  index = yi[l][j];
-	  l_new = spasm_lazy_vector_update(d, k_new, N, &index, ri, rj, p);
-	  l_new = l_new + l;
-
-	  xi[l_new][count[l_new]] = index;
-	  count[l_new]++;
-	  x[l_new][index] = y[l][yi[l][j]];
-	}
-      }
-    }
-    
-    n_vec++;
-
-    for(l = 0; l < n_vec; l++){
-    /* Update matrix B */
-      B[l] = spasm_convert_vector_to_matrix(x[l], xi[l], vec_size[l], prime, count[l]); 
-     
-
-    /*Initialise y, yi for next step */
-      k_new = k+l;
-      y[l] = spasm_realloc(y[l], vec_size[l] * sizeof(int));
-      yi[l] = spasm_realloc(yi[l], 3*vec_size[l] * sizeof(int));
-
-      for(j = 0; j < vec_size[l]; j++){
-	y[l][j] = x[l][j];
-	yi[l][j] = xi[l][j];
-      }     
-
-      free(x[l]);
-      free(xi[l]);
-
-      /*Initialise size of y for next step */
-      ynz[l] = count[l];
-      spasm_vector_zero(count, d);
-    }
+  if(A == NULL){
+    return 0;
   }
 
-  assert(d == 1);
-  /* solving last system and dispatch coeff in v */
-  for(l = 0; l < n_vec; l++){
-    k_new = k + l;
-    Bn = B[l]->n;
+  //Get workspace.
+  L = spasm_malloc(d * sizeof(spasm_system*));
 
-    if(Ltmp[k_new] != NULL && Ltmp[k_new]->diag == 0){
+  // Initialise L.
+  for(l = 0; l < d; l++){
+    L[l] = S[k+l];
 
-      //empty y
-      spasm_vector_zero(y[l], Bn);
-      spasm_vector_zero(yi[l], 3*Bn);
-
-      /* Solve the triangular system */
-      top = spasm_sparse_backward_solve(Ltmp[k_new]->M, B[l], 0, yi[l], y[l], p[k_new], 0);
-
-      //free extra worskpace
-      spasm_csr_free(B[l]);
-    
-      /* dispatch yi in vi and y in v. */
-      for(j = top; j < Bn; j++){
-	index = yi[l][j];
-	i_new = index + a1[k_new];
-	vi[vnz] = i_new;
-	v[i_new] = y[l][index];
-	vnz ++;
-      }
-    }
-    else {
-      for(j = 0; j < ynz[l]; j++){
-	index = yi[l][j];
-	i_new = index + a1[k_new];
-	vi[vnz] = i_new;
-	v[i_new] = y[l][index];
-	vnz ++;
-      }
-    }
-    //free extra workspace
-    free(yi[l]);
-    free(y[l]);
+    assert(L[l]->diag <= d); // check systems.
   }
 
-  /*calculate product*/
-  unz = spasm_sparse_vector_matrix_prod(M, v, vi, vnz, u, ui);
-  
-  /*free workspace */
-  free(v);
-  free(vi);
+  // Initialise variable.
+  diag = d;
+  nsys = 1;
 
-  return unz;
+  //Initialise the first system.
+
+  spasm_first_system_init(L[0], i);
+
+  while(diag > 1){ 
+    diag = diag - 1;
+
+    for(l = 0; l < nsys; l++){
+      if(L[l]->diag == diag){ // if L_{k+l, diag} exist.
+
+	//solve the system L and dispatch solution coefficient for next step.
+	spasm_lazy_system(L, k, l, diag, p);
+
+	// update L for next step.
+	L[l] = L[l]->next;
+      }
+    }
+    for(l = nsys; l < d; l++){
+      if(L[l]->diag == diag) L[l] = L[l]->next; // Update L for next step.
+    }
+    nsys++;
+  }
+
+  // Last diagonal system solving and vector-matrix product.
+  
+  // Get workspace.
+  x = spasm_malloc(usize * sizeof(spasm_GFp));
+  xi = spasm_malloc(usize * sizeof(int));
+
+  //Initialize x, xi.
+  spasm_vector_zero(x, usize);
+  spasm_vector_zero(xi, usize);
+
+  nnz = 0;
+
+  for(l = 0; l < nsys; l++){
+    assert(L[l]->diag == 0); //check diagonal number.
+    B = L[l]->B;
+
+    if(B != NULL){
+      nztmp = spasm_inverse_and_product(L[l]->M, A[l], B, 0, x, xi, p[k+l]); //last system solving + product.
+      nnz = spasm_add_vectors(u, ui, nnz, x, xi, nztmp, usize);
+      free(B);
+    }
+
+  }
+
+  //free workspace
+  free(x);
+  free(xi);
+
+  //return number of non-zero entries in u.
+
+  return nnz;
+
 }
+

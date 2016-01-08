@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv) {
   spasm_triplet *T, *S;
-  spasm  *L, *M, *I;
+  spasm  *L, *M, *I, *I1;
   spasm_GFp *y, *x, *z;
   int i, n, m, *yi, *xi, *zi, ny, nx, nz, k, test;
   char *L_filename, *M_filename;
@@ -50,6 +50,8 @@ int main(int argc, char **argv) {
   // Identity :
   I = spasm_identity(n, 32003);
 
+  I1 = spasm_identity(m, 32003);
+
   yi = spasm_malloc(n * sizeof(int));
   xi = spasm_malloc(n * sizeof(int));
   zi = spasm_malloc(m * sizeof(int));
@@ -69,7 +71,7 @@ int main(int argc, char **argv) {
     spasm_vector_zero(z, n);
     spasm_vector_zero(zi, n);
 
-    ny = spasm_inverse_and_product(L, I, k, y, yi, SPASM_IDENTITY_PERMUTATION);
+    ny = spasm_inverse_and_product(L, I, I1, k, y, yi, SPASM_IDENTITY_PERMUTATION);
     //printf("non zero entries in y : %d\n", ny);
     /* for(i = 0; i < ny; i++) { */
     /*   printf("y[%d] = %d\n", yi[i], y[yi[i]]); */
@@ -94,7 +96,7 @@ int main(int argc, char **argv) {
 
 
     //printf("ok %d - inverse\n", test);
-
+    spasm_csr_free(I);
 
     x = spasm_realloc(x, m * sizeof(spasm_GFp));
     xi = spasm_realloc(xi, m * sizeof(int));
@@ -104,7 +106,7 @@ int main(int argc, char **argv) {
     spasm_vector_zero(z, m);
     spasm_vector_zero(zi, m); 
 
-    nz = spasm_inverse_and_product(L, M, k, z, zi, SPASM_IDENTITY_PERMUTATION);
+    nz = spasm_inverse_and_product(L, M, I1, k, z, zi, SPASM_IDENTITY_PERMUTATION);
 
     //check result
 

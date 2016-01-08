@@ -64,13 +64,16 @@ typedef struct {
 } spasm_dm;
 
 
-typedef struct toto {
-  spasm *M;
-  int *permut;
-  int diag;
-  struct toto *prev;
-}spasm_list;
-
+typedef struct system {
+  spasm *M; // Matrix
+  spasm *B; // Right-hand side (NULL by deflaut, must be updated at each step)
+  int Bnz; // number of non-zero entries in B (initialized at 0);
+  int *p; // Permution over the matrix rows
+  int rect; // size of the rectangular part of M
+  int left; // difference of index between the current system and the system corresponding to the left part of the solution.
+  int diag; // diagonal number.
+  struct system *next;
+}spasm_system;
 
 
 /* example (this is Matrix/t1)
@@ -223,18 +226,18 @@ spasm * spasm_kernel(const spasm *A, const int * column_permutation);
 
 /* spasm_inverse.c */
 int spasm_sparse_vector_matrix_prod(const spasm *M, const spasm_GFp *x, const int *xi, int xnz, spasm_GFp *y, int *yi);
-int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *y, int *yi, int *pinv);
-void linvxm(const spasm *L, const spasm *M, int from, int to, spasm *Y, int *pinv);
+int spasm_inverse_and_product(const spasm *L, const spasm *M, const spasm *I, int k, spasm_GFp *y, int *yi, const int *pinv);
 
 /* spasm_lazy.c */
-int spasm_lazy_vector_update(int d, int k, int n_blocks, int *i_ptr, const int **ri, const int **rj, const int **p);
-int spasm_lazy_vector_size(int ri, int rj, int a1);
-spasm *spasm_convert_vector_to_matrix(int *x, int *xi, int size, int prime, int xnz);
+int spasm_add_vectors(spasm_GFp *u, int *ui, int unz, spasm_GFp *v, int *vi, int vnz, int size);
+void spasm_system_right_hand_init(spasm_system *L, int nnz);
+void spasm_lazy_right_hand_update(int d, int k, spasm_system *L0, spasm_system *L1, int bound, int *xi, int *x, int top, int stop, const int **p);
 void spasm_new_lazy_permutation(int bound, const int *Lperm, int *p_new, int vec_size);
-spasm_list * spasm_list_update(spasm_list *L, spasm *Lnew, int *p, int diag);
-spasm_list * spasm_list_clear(spasm_list *L);
-int spasm_lazy_product(int d, int i, int k, int N, spasm_list **L, const spasm *M, const int **ri, const int **rj, const int **p, const int *a1, spasm_GFp *u, int *ui);
-
+int spasm_next_left_system(spasm_system **L, int k, int d);
+void spasm_lazy_system(spasm_system **L, int k, int l, int d, const int **p);
+spasm_system * spasm_system_update(spasm_system *L, spasm *M, int *p, int rect, int left, int diag);
+spasm_system * spasm_system_clear(spasm_system *L);
+int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, const spasm **A, const int **p);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {

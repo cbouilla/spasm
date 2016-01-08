@@ -60,12 +60,12 @@ int spasm_sparse_vector_matrix_prod(const spasm *M, const spasm_GFp *x, const in
 
 /*
  * Given M, L, and k, compute y = x * M, 
- * where x is such as x * L = ek. (x is the k-th row of L^(-1))
+ * where x is such as x * L = I[k].
  * the return value nz is the number of non-zero entries in y.
  */
 
-int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *y, int *yi, int *pinv) {
-  spasm * I;
+int spasm_inverse_and_product(const spasm *L, const spasm *M, const spasm *I, int k, spasm_GFp *y, int *yi, const int *pinv) {
+  // spasm * I;
   spasm_GFp *x;
   int i, p, top, nz, *xi, *xxi, Ln, Mn, prime, Mprime, xnz;
 
@@ -90,11 +90,11 @@ int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *
   spasm_vector_zero(xi, 3*Mn);
   spasm_vector_zero(x, Mn);
 
-  I = spasm_identity(Mn, prime); // <--- Identity matrix
+  //I = spasm_identity(Mn, prime); // <--- Identity matrix
 
   top = spasm_sparse_backward_solve(L, I, k, xi, x, pinv,0);
 
-  spasm_csr_free(I); // <--- free extra-workspace
+  //spasm_csr_free(I); // <--- free extra-workspace
 
   /* find x pattern, xxi. */
   xnz = Mn - top;

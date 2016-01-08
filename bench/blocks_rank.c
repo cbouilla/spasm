@@ -1010,7 +1010,7 @@ uptri_t * diagonal_structure(const spasm *B, int *r_tab, int n_rows) {
  * retourne la sous-matrice de ce produit.
  */
 spasm * lazy_submatrix_first_diag(const spasm *M, int i0, int i1, int j0, int j1, int *py, int *p, int r, spasm *L) {
-  spasm *C, *R;
+  spasm *C, *R, *I;
   int l, l_new, i, px, *yi, ynz, delta_n, Cm, nzmax, Rn, prime, *Rp, *Rj;
   spasm_GFp *y, *Rx;
 
@@ -1049,6 +1049,8 @@ spasm * lazy_submatrix_first_diag(const spasm *M, int i0, int i1, int j0, int j1
   spasm_vector_zero(y, Cm);
   spasm_vector_zero(yi, Cm);
 
+  I = spasm_identity(Cm, prime);
+
   i = 0;
   // Pour k allant de r à Cn :
   for(l = r; l < delta_n; l++) {
@@ -1057,7 +1059,7 @@ spasm * lazy_submatrix_first_diag(const spasm *M, int i0, int i1, int j0, int j1
     //   calculer le produit de la k-ième ligne de L^(-1) par C.
     //   le stocker dans y, et son support dans yi.
    
-    ynz = spasm_inverse_and_product(L, C, l_new, y, yi, p);
+    ynz = spasm_inverse_and_product(L, C, I, l_new, y, yi, p);
     
     //   mettre à jour Rp.
     Rp[i+1] = Rp[i] + ynz;
@@ -1069,7 +1071,7 @@ spasm * lazy_submatrix_first_diag(const spasm *M, int i0, int i1, int j0, int j1
       Rj = R->j;
       Rx = R->x;
     }
-
+    spasm_csr_free(I);
     //   ajouter les entrées dans Rj et Rx.
     for(px = 0; px < ynz; px++) {
       Rj[ Rp[i] + px ] = yi[px];
