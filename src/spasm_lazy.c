@@ -230,14 +230,13 @@ void spasm_new_lazy_permutation(int bound, const int *Lperm, int *p_new, int vec
  */
 int spasm_next_left_system(spasm_system **L, int k, int d){
   spasm_system *tmp;
-
-  d = d-1; 
+ 
   k = k+1;
   if(d == 0){
     return k;
   }
 
-  tmp = L[0];
+  tmp = L[k];
   while(tmp->diag > d){
     tmp = tmp->next;
   }
@@ -245,7 +244,7 @@ int spasm_next_left_system(spasm_system **L, int k, int d){
     return k;
   }
   else{
-    return spasm_next_left_system(L, k, d);
+    return spasm_next_left_system(L, k, d-1);
   }
 }
 
@@ -354,6 +353,7 @@ spasm_system * spasm_system_clear(spasm_system *L){
   }
 }
 
+
 /*
  * Given a diagonal d and index k and i, do the lazy computation:
  * solving successive systems, and final product.
@@ -423,11 +423,12 @@ int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, 
   nnz = 0;
 
   for(l = 0; l < nsys; l++){
+
     assert(L[l]->diag == 0); //check diagonal number.
     B = L[l]->B;
 
     if(B != NULL){
-      nztmp = spasm_inverse_and_product(L[l]->M, A[l], B, 0, x, xi, p[k+l]); //last system solving + product.
+      nztmp = spasm_solve_and_product(L[l]->M, A[l], B, 0, x, xi, p[k+l]); //last system solving + product.
       nnz = spasm_add_vectors(u, ui, nnz, x, xi, nztmp, usize);
       free(B);
     }

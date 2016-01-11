@@ -226,7 +226,8 @@ spasm * spasm_kernel(const spasm *A, const int * column_permutation);
 
 /* spasm_inverse.c */
 int spasm_sparse_vector_matrix_prod(const spasm *M, const spasm_GFp *x, const int *xi, int xnz, spasm_GFp *y, int *yi);
-int spasm_inverse_and_product(const spasm *L, const spasm *M, const spasm *I, int k, spasm_GFp *y, int *yi, const int *pinv);
+int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *y, int *yi, const int *pinv);
+int spasm_solve_and_product(const spasm *L, const spasm *M, const spasm *A, int k, spasm_GFp *y, int *yi, const int *pinv);
 
 /* spasm_lazy.c */
 int spasm_add_vectors(spasm_GFp *u, int *ui, int unz, spasm_GFp *v, int *vi, int vnz, int size);
