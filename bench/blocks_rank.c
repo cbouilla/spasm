@@ -450,7 +450,7 @@ int col_pivot_update(int col, block_t block) {
 
 /*
  * Etant donnée une matrice diagonale par blocs, renvoie le
- * numéro du bloc diagonal correspondant à la colonne j pour tout j.
+ * numéro de l'intervalle de colonne correspondant à la colonne j pour tout j.
  */
 void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
   int j, m, k;
@@ -466,6 +466,7 @@ void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
   }
 
 }
+
 
 
 /******************** recherche d'intervalles "non complets" *******************/
@@ -1108,14 +1109,17 @@ spasm * lazy_submatrix_first_diag(const spasm *M, int i0, int i1, int j0, int j1
  */
 int upper_block_treatment(const spasm *M, int i0, int i1, int j0, int j1, int k, int d, int ri, int *py, int *p, int *qinv, spasm_system **L, spasm *U) {
   spasm *R, *Lnew, *LM;
-  int m, Rn, top, i, deff, old_rank, unz, lnz, npiv, left;
-  int *pnew, *xi, *ptmp;
+  int m, Rn, Un, r, top, i, deff, old_rank, unz, lnz, npiv, left;
+  int *pnew, *xi, *ptmp, *Lp, *Up;
   spasm_GFp *x;
 
-  // fait les calculs paresseux.
+  /* fait les calculs paresseux. */
 
   LM = L[k]->M;
   old_rank = LM->m;
+  assert(d>0); // d est la diagonale courrante supérieure à la diagonale principale.
+
+  d = d-1;
 
   if(d == 0){  //<---- d représente ici la dernière diagonale traitée dans ce cas c'est la diagonale principale.
     R = lazy_submatrix_first_diag(M, i0, i1, j0, j1, py, p, old_rank, LM);
@@ -1125,11 +1129,17 @@ int upper_block_treatment(const spasm *M, int i0, int i1, int j0, int j1, int k,
     return 0;
   }
 
+  /* Continue LU */
+
   assert(R->m == U->m);
 
   m = R->m; // nombre de colonne
   Rn = R->n; // nombre de ligne de R.
-  
+  Un = U->n; //nombre de ligne de U concaténé avec R.
+  r = spasm_min(Un + Rn, m); // nombre de ligne au maximum dans le nouveau U
+
+  assert(r > Un);
+
   deff = 0;
   npiv = 0;
 
@@ -1140,20 +1150,35 @@ int upper_block_treatment(const spasm *M, int i0, int i1, int j0, int j1, int k,
   spasm_vector_zero(xi, 3*m);
   
   // Reallocation mémoire de U :
-  spasm_csr_realloc(U, 2 * U->nzmax + m);
+
+  spasm_csr_resize(U, r, m);
   unz = U->nzmax;
+  Up = U->p;
+  spasm_csr_realloc(U, 2 * U->nzmax + m);
  
   // Allocation mémoire de L :
-  Lnew = spasm_csr_alloc(m, Rn, 2 * U->nzmax + m, R->prime, 1);
-  lnz = Lnew->nzmax;
+  Lnew = spasm_csr_alloc(Rn, r, 2 * U->nzmax + m, R->prime, 1);
+  lnz = 0;
 
+  Lp = Lnew->p;
   // Allocation de la permutation pnew des lignes de Lnew.
   pnew = spasm_malloc(Rn * sizeof(int));
 
-  // Continue la décomposition LU avec les lignes choisie de R :
+  // Initialisation :
+  for(i = 0; i < Rn; i++){
+    pnew[i] = i;
+  }
+
+  for(i = U->n; i < r; i++){
+    Up[i] = 0;
+  }
+
     // On prend les lignes une a une :
   for (i = 0; i < Rn; i++){
    
+    Lp[i] = lnz;
+    Up[i + Un - deff] = unz;
+
    //  On continue LU avec la ligne courrante :
     //-1- Réallocation de mémoire :
     if(unz + m > U->nzmax){
@@ -1166,26 +1191,32 @@ int upper_block_treatment(const spasm *M, int i0, int i1, int j0, int j1, int k,
     top = spasm_sparse_forward_solve(U, R, i, xi, x, qinv);
     
     // -3- On trouve le pivot et on dispatche les coeffs dans la (r+i)-ème ligne de U et dans la i-ème ligne de L.
+
     npiv += spasm_find_pivot(xi, x, top, U, Lnew, &unz, &lnz, i, &deff, qinv, pnew, Rn);
 
-    spasm_vector_zero(x, m);
-    spasm_vector_zero(xi, 3*m);
-
+    // spasm_vector_zero(x, m);
+    // spasm_vector_zero(xi, 3*m);
+    
   }
   // -4- On finalise Lnew et U.
- 
+  
+  Up[i - deff] = unz;
+  Lp[Rn] = lnz;
+
  //resize and realloc :
   spasm_csr_resize(U, i - deff, m);
   spasm_csr_resize(Lnew, Rn, Rn - deff);  
   spasm_csr_realloc(U, -1);
   spasm_csr_realloc(Lnew, -1);
 
-  // On met à jour la liste L.
+  /* Mise à jour des structures de données pour les calculs paresseux suivants */
+
   // On trouve quel sera le prochain système "gauche"
   left = spasm_next_left_system(L, k, d);
   left = left - k;
 
-  L[k] = spasm_system_update(L, Lnew, pnew, old_rank, left, d+1);
+ // On met à jour la liste L.
+  L[k] = spasm_system_update(L[k], Lnew, pnew, old_rank, left, d+1);
  
   // On met à jour p.
   ptmp = spasm_malloc(Rn * sizeof(int)); // Allocation de mémoire temporaire.
@@ -1309,6 +1340,7 @@ int main() {
   qinv = spasm_pinv(x->DM->q, A->m);
   B = spasm_permute(A, x->DM->p, qinv, SPASM_WITH_NUMERICAL_VALUES);
   free(qinv);
+  //spasm_dm_free(x); 
  
  // Trie les lignes 
   spasm_row_entries_sort(B, 1);
@@ -1403,6 +1435,7 @@ int main() {
 
   printf("---------------------\n");
 
+
   //spasm *row_inter = row_intersection_graph(Tr, rows, n_blocks);
   //spasm * blocks_mat = blocks_spasm(where, n_blocks, count, B->prime, 0);
   //uptri_t FS 
@@ -1412,15 +1445,10 @@ int main() {
   // libération de la mémoire, fin du programme.
  for(i = 0; i < n_blocks; i++) {
    L[i] = spasm_system_clear(L[i]);
-   spasm_csr_free(U[i]);
-   free(LUqinv[i]);
-
-   //spasm_free_LU(LU[i]);
+    spasm_csr_free(U[i]);
+    free(LUqinv[i]);
+    free(LU[i]);
  }
-
-
- // free(rows);
- // free(r_tab);
   
   spasm_csr_free(B);
   spasm_csr_free(A);
@@ -1435,12 +1463,6 @@ int main() {
   free(where);
   free(py);
   free(n_piv);
-  //  free(r_tab);
-  //  free(LU1);
-  // spasm_csr_free(Tr);
-  // spasm_csr_free(G);
-  // spasm_csr_free(row_inter);
-  //spasm_csr_free(blocks_mat);
   uptri_free(DS);
  
   return 0;
