@@ -1097,7 +1097,100 @@ spasm * lazy_submatrix_first_diag(const spasm *M, int i0, int i1, int *p, int r,
  * Calcule le produit des bonnes lignes de L^(-1)
  * retourne la sous-matrice de ce produit.
  */
+spasm * lazy_submatrix_other_diag(const spasm *M, block_t *blocks, int k, int d,int ri, int **p, spasm_system **L){
+  spasm **C;
+  spasm *R;
+  int l, l_new, i, m, n, rj, i0, i1, nzmax, rect, unz, px;
+  int *ui, *Mp, *Lp, *Rp, *Rj;
+  spasm_GFp *u, *Rx;
 
+  //check inputs
+  if(M == NULL){
+    return NULL;
+  }
+  m = M->m;
+  Mp = M->p;
+  
+  i0 = blocks[k].i0;
+  i1 = blocks[k+d].i0;
+
+  rect = L[k]->rect;
+  Lp = L[k]->p;
+
+  assert(ri >= rect); 
+
+  if(Mp[i1] - Mp[i0] == 0){
+    return NULL;
+  }
+
+  //Get workspace
+  C = spasm_malloc(d * sizeof(spasm*));
+  ui = spasm_malloc(m * sizeof(int));
+  u = spasm_malloc(m * sizeof(spasm_GFp));
+
+  for(l = 0; l < d; l++){
+    i0 = blocks[k+l].i0;
+    i1 = blocks[k+l].i1;
+
+    C[l] = spasm_rows_submatrix(M, i0, i1, SPASM_WITH_NUMERICAL_VALUES);
+  }
+
+  //Allocate result
+  i1 = blocks[k].i1;
+  i0 = blocks[k].i0 + ri;
+
+  assert(i0 < i1); //<-- at least one row in R
+  n = i1 - i0;
+  nzmax = Mp[i1] - Mp[i0];
+  R = spasm_csr_alloc(n, m, nzmax, M->prime, SPASM_WITH_NUMERICAL_VALUES);
+  Rp = R->p;
+  Rx = R->x;
+  Rj = R->j;
+
+  unz = 0;
+  i = 0;
+
+  //for each "good" i compute the lazy product
+  for(l = ri; l < i1; l++){
+    //find "good" i
+    l_new = l - rect;
+    l_new = Lp[i] + rect;
+
+    unz = spasm_lazy_computation(d, k, l_new, L, u, ui, m, C, p);
+    
+    //   mettre à jour Rp.
+    Rp[i+1] = Rp[i] + unz;
+
+    //   réallouer de la mémoire si besoin.
+    if(nzmax < Rp[i+1]) {
+      nzmax = 2 * nzmax + unz;
+      spasm_csr_realloc(R, nzmax);
+      Rj = R->j;
+      Rx = R->x;
+    }
+ 
+    //   ajouter les entrées dans Rj et Rx.
+    for(px = 0; px < unz; px++) {
+      Rj[ Rp[i] + px ] = ui[px];
+      Rx[ Rp[i] + px ] = u[ ui[px] ];
+    }
+    i++;
+  }
+  // Finaliser, ajuster le nombre d'entrée de R.
+  spasm_csr_realloc(R, -1);
+
+
+  //free workspace
+  for(l = 0; l < d; l++){
+    free(C[l]);
+  }
+
+  free(C);
+  free(ui);
+  free(u);
+
+  return R;
+}
 
 
 /*
