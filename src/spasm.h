@@ -155,6 +155,7 @@ spasm *spasm_transpose(const spasm *C, int keep_values);
 spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int with_values);
 spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, int *py, int with_values);
 void spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, spasm **B, int with_values);
+spasm * spasm_rows_submatrix(const spasm *A, int i0, int i1, int with_values);
 
 /* spasm_permutation.c */
 void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);

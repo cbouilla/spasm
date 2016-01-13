@@ -109,7 +109,7 @@ spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, i
  * Given a matrix A, a table Q such that Q[j] is the index 
  * of the interval of columns of j, and a table T, such that 
  * T[k] is the first columns of interval J_k. return a table
- * of matrices B, such that B[k] = A[:J_k]; 
+ * of matrices B, such that B[k] = A[,J_k]; 
  */
 void spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, spasm **B, int with_values){
   int k, i, j, px, An, prime;
@@ -150,7 +150,7 @@ void spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N
 
     Bnz[k] = 0;
   }
-
+ 
   for(i = 0; i < An; i++){
 
     //Initialise Bp :
@@ -158,7 +158,7 @@ void spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N
       Bp[k][i] = Bnz[k];
     }
 
-    for(px = Ap[i]; px < Ap[i+1]; i++){
+    for(px = Ap[i]; px < Ap[i+1]; px++){
       j = Aj[px];
       k = Q[j]; // <-- index of the interval where j is.
 
@@ -174,14 +174,66 @@ void spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N
 	Bx[k][Bnz[k]] = Ax[px];
       }
       Bnz[k]++;
+      
     }
   }
 
   //Finalise B :
 
   for(k = 0; k < N; k++){
-    Bp[k][N] = Bnz[k];
+    Bp[k][An] = Bnz[k];
     spasm_csr_realloc(B[k], -1);
   }
 
+  free(Bj);
+  free(Bx);
+  free(Bp);
+  free(Bnz);
+  free(Bm);
+
+}
+
+
+/*
+ * Given a matrix A, two intergers i0, i1. return the submatrix A[i0 : i1 , ].
+ */
+spasm * spasm_rows_submatrix(const spasm *A, int i0, int i1, int with_values){
+spasm *B;
+  int Bn, Bm, Bnz, i, j, px, k;
+  int *Ap, *Aj, *Ax, *Bp, *Bj, *Bx;
+
+  assert(A != NULL);
+  Ap = A->p;
+  Aj = A->j;
+  Ax = A->x;
+
+  Bn = spasm_max(0, i1 - i0);
+  Bm = A->m;
+  Bnz = spasm_max(0, Ap[i1] - Ap[i0]);
+  B = spasm_csr_alloc(Bn, Bm, Bnz, A->prime, (A->x != NULL) && with_values);
+  Bp = B->p;
+  Bj = B->j;
+  Bx = B->x;
+
+  k = 0;
+  for(i = i0; i < i1; i++) {
+    Bp[i - i0] = k;
+    for(px = Ap[i]; px < Ap[i + 1]; px++) {
+      j = Aj[px];
+      if (0 <= j && j < Bm) {
+	Bj[k] = j;
+	if (Bx != NULL) {
+	  Bx[k] = Ax[px];
+	}
+	k++;
+      }
+    }
+  }
+
+  /* finalize */
+  Bp[i1 - i0] = k;
+
+  /* shrink */
+  spasm_csr_realloc(B, -1);
+  return B;
 }
