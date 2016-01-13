@@ -1010,33 +1010,31 @@ uptri_t * diagonal_structure(const spasm *B, int *r_tab, int n_rows) {
  * permutations).
  * retourne la sous-matrice de ce produit.
  */
-spasm * lazy_submatrix_first_diag(const spasm *M, int i0, int i1, int j0, int j1, int *py, int *p, int r, spasm *L) {
-  spasm *C, *R;
-  int l, l_new, i, px, *yi, ynz, delta_n, Cm, nzmax, Rn, prime, *Rp, *Rj;
+spasm * lazy_submatrix_first_diag(const spasm *M, int i0, int i1, int *p, int r, spasm *L) {
+  spasm *R;
+  int l, l_new, i, px, *yi, ynz, n, Rm, nzmax, Rn, prime, *Rp, *Rj, *Mp;
   spasm_GFp *y, *Rx;
 
   // vérifier les entrées.
   assert(i0 + r < i1);
-  assert(j0 + r < j1);
+  assert(r < M->m);
   if(M == NULL || L == NULL) return NULL;
 
-  //extrait la sous-matrice de M, triée.
+  Mp = M->p;
  
-  C = sorted_spasm_submatrix(M, i0, i1, j0, j1, py, SPASM_WITH_NUMERICAL_VALUES);
-  if(spasm_nnz(C) == 0) {
-    spasm_csr_free(C);
+  if(Mp[i1] - Mp[i0] == 0) {
     return NULL;
   }
  
 
-  //Allouer le résultat (nombre d'entrée de C).
-  delta_n = C->n;
-  Cm = C->m;
-  nzmax = C->nzmax;
-  Rn = delta_n - r;
-  prime = C->prime;
+  //Allouer le résultat (nombre d'entrée dans entre i0 et i1).
+  n = i1 - i0;
+  Rm = M->m;
+  nzmax = Mp[i1] - Mp[i0];
+  Rn = n - r;
+  prime = M->prime;
 
-  R = spasm_csr_alloc(Rn, Cm, nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
+  R = spasm_csr_alloc(Rn, Rm, nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
   Rp = R->p;
   Rj = R->j;
   Rx = R->x;
@@ -1045,14 +1043,14 @@ spasm * lazy_submatrix_first_diag(const spasm *M, int i0, int i1, int j0, int j1
   Rp[0] = 0;
 
   //Allouer mémoire de y et de yi et initialiser à 0.
-  y = spasm_malloc(Cm * sizeof(spasm_GFp));
-  yi = spasm_malloc(Cm * sizeof(int));
-  spasm_vector_zero(y, Cm);
-  spasm_vector_zero(yi, Cm);
+  y = spasm_malloc(Rm * sizeof(spasm_GFp));
+  yi = spasm_malloc(Rm * sizeof(int));
+  spasm_vector_zero(y, Rm);
+  spasm_vector_zero(yi, Rm);
 
   i = 0;
   // Pour k allant de r à Cn :
-  for(l = r; l < delta_n; l++) {
+  for(l = r; l < n; l++) {
     //   effectuer les permutations de lignes.
     l_new = p[l];
     //   calculer le produit de la k-ième ligne de L^(-1) par C.

@@ -105,3 +105,83 @@ spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, i
   return B;
 }
 
+/*
+ * Given a matrix A, a table Q such that Q[j] is the index 
+ * of the interval of columns of j, and a table T, such that 
+ * T[k] is the first columns of interval J_k. return a table
+ * of matrices B, such that B[k] = A[:J_k]; 
+ */
+void spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, spasm **B, int with_values){
+  int k, i, j, px, An, prime;
+  int *Aj, *Ap, *Bnz, *Bm;
+  int **Bj, **Bp;
+  spasm_GFp *Ax;
+  spasm_GFp **Bx;
+
+  assert(A != NULL);
+  assert(Q != NULL);
+  assert(T != NULL);
+
+  An = A->n;
+  Aj = A->j;
+  Ax = A->x;
+  Ap = A->p;
+  prime = A->prime;
+
+  // Get workspace
+  Bj = spasm_malloc(N * sizeof(int*));
+  Bp = spasm_malloc(N * sizeof(int*));
+  Bx = spasm_malloc(N * sizeof(spasm_GFp*));
+  Bnz = spasm_malloc(N * sizeof(int));
+  Bm = spasm_malloc(N * sizeof(int));
+
+  // Initialize matrices.
+  for(k = 0; k< N; k++){
+    Bm[k] = T[k+1] - T[k]; // <--- T[N+1] = A->m.
+
+    assert(Bm[k] >= 0);
+
+    Bnz[k] = An + Bm[k] + k; // <--- educated gess.
+    B[k] = spasm_csr_alloc(An, Bm[k], Bnz[k], prime, (Ax != NULL) && with_values);
+
+    Bj[k] = B[k]->j;
+    Bp[k] = B[k]->p;
+    Bx[k] = B[k]->x;
+
+    Bnz[k] = 0;
+  }
+
+  for(i = 0; i < An; i++){
+
+    //Initialise Bp :
+    for(k = 0; k < N; k++){
+      Bp[k][i] = Bnz[k];
+    }
+
+    for(px = Ap[i]; px < Ap[i+1]; i++){
+      j = Aj[px];
+      k = Q[j]; // <-- index of the interval where j is.
+
+      // update matrix B[k] :
+
+      //reallocate memory if needed :
+      if(Bnz[k] + 1 > B[k]->nzmax){
+	spasm_csr_realloc(B[k], 2 * (Bnz[k] + 1) );
+      }
+
+      Bj[k][Bnz[k]] = j - T[k]; // corresponding column in B[k]
+      if(Ax != NULL){
+	Bx[k][Bnz[k]] = Ax[px];
+      }
+      Bnz[k]++;
+    }
+  }
+
+  //Finalise B :
+
+  for(k = 0; k < N; k++){
+    Bp[k][N] = Bnz[k];
+    spasm_csr_realloc(B[k], -1);
+  }
+
+}
