@@ -1097,10 +1097,10 @@ spasm * lazy_submatrix_first_diag(const spasm *M, int i0, int i1, int *p, int r,
  * Calcule le produit des bonnes lignes de L^(-1)
  * retourne la sous-matrice de ce produit.
  */
-spasm * lazy_submatrix_other_diag(const spasm *M, block_t *blocks, int k, int d,int ri, int **p, spasm_system **L){
+spasm * lazy_submatrix_other_diag(const spasm *M, const block_t *blocks, int k, int d,int ri, int **p, spasm_system **L){
   spasm **C;
   spasm *R;
-  int l, l_new, i, m, n, rj, i0, i1, nzmax, rect, unz, px;
+  int l, l_new, i, m, n, i0, i1, nzmax, rect, unz, px;
   int *ui, *Mp, *Lp, *Rp, *Rj;
   spasm_GFp *u, *Rx;
 
@@ -1201,7 +1201,7 @@ spasm * lazy_submatrix_other_diag(const spasm *M, block_t *blocks, int k, int d,
  *
  * la valeur renvoyée est le nombre de pivot supplémentaire trouvés.
  */
-int upper_block_treatment(const spasm *M, int i0, int i1, int k, int d, int ri, int *p, int *qinv, spasm_system **L, spasm *U) {
+int upper_block_treatment(const spasm *M, const block_t *blocks, int k, int d, int ri, int **p, int *qinv, spasm_system **L, spasm *U) {
   spasm *R, *Lnew, *LM;
   int m, Rn, Un, r, top, i, deff, old_rank, unz, lnz, npiv, left;
   int *pnew, *xi, *ptmp, *Lp, *Up;
@@ -1213,19 +1213,22 @@ int upper_block_treatment(const spasm *M, int i0, int i1, int k, int d, int ri, 
   old_rank = LM->m;
   assert(d>0); // d est la diagonale courrante supérieure à la diagonale principale.
 
-  d = d-1;
-
-  if(d == 0){  //<---- d représente ici la dernière diagonale traitée dans ce cas c'est la diagonale principale.
-    R = lazy_submatrix_first_diag(M, i0, i1, p, old_rank, LM);
+  if(d == 1){  //<---- d représente ici la diagonale courante.
+    R = lazy_submatrix_first_diag(M, blocks[k].i0, blocks[k].i1, p[k], old_rank, LM);
   }
   else {
-    // Pour l'instant, on ne regarde que le cas de la première diagonale supérieure, la fonction dans le cas général n'est pas encore finalisée.
-    return 0;
+    // Attention : cette fonction n'est pas encore vérifiée.
+    R = lazy_submatrix_other_diag(M, blocks, k, d, old_rank, p, L);
+  }
+
+  if(spasm_nnz(R)==0){
+    return 0; //check matrix
   }
 
   /* Continue LU */
 
-  assert(R->m == U->m);
+  assert(R->m == M->m);
+  assert(M->m == U->m);
 
   m = R->m; // nombre de colonne
   Rn = R->n; // nombre de ligne de R.
@@ -1306,19 +1309,19 @@ int upper_block_treatment(const spasm *M, int i0, int i1, int k, int d, int ri, 
   /* Mise à jour des structures de données pour les calculs paresseux suivants */
 
   // On trouve quel sera le prochain système "gauche"
-  left = spasm_next_left_system(L, k, d);
+  left = spasm_next_left_system(L, k, d-1);
   left = left - k;
 
  // On met à jour la liste L.
-  L[k] = spasm_system_update(L[k], Lnew, pnew, old_rank, left, d+1);
+  L[k] = spasm_system_update(L[k], Lnew, pnew, old_rank, left, d);
  
   // On met à jour p.
   ptmp = spasm_malloc(Rn * sizeof(int)); // Allocation de mémoire temporaire.
   for(i = 0; i < Rn; i++){
-    ptmp[i] = p[ri + pnew[i]];
+    ptmp[i] = p[k][ri + pnew[i]];
   }
   for(i = 0; i < Rn; i++){
-    p[ri + i] = ptmp[i];
+    p[k][ri + i] = ptmp[i];
   }
   free(ptmp);
 
@@ -1387,7 +1390,7 @@ int upper_research(const spasm **M, const uptri_t *B, int d, const block_t *bloc
     if (i0 + ri[k] < i1 && j0 + rj < j1) {
 
     //   extraire la sous-matrice et calculer le produit.
-      n_piv[nbl] = upper_block_treatment(M[k], i0, i1, k, d, ri[k], p[k], qinv[k+d], L, U[k+d]);
+      n_piv[nbl] = upper_block_treatment(M[k+d], blocks, k, d, ri[k], p, qinv[k+d], L, U[k+d]);
 
       //update ri[k]
       ri[k] += n_piv[nbl];
@@ -1414,7 +1417,7 @@ int main() {
   int n_blocks, i, *qinv, nbl, *py, **LUp, *n_piv, **LUqinv, *ri;
   block_t *blocks0;
   spasm *Tr, *G;
-  int count, n_rows, Rank;
+  int count, n_rows, Rank, prime;
   edge_t *rows;
 
   /* charge la matrice depuis l'entrée standard */
@@ -1422,6 +1425,8 @@ int main() {
   T = spasm_load_sms(stdin, 42013);
   A = spasm_compress(T);
   spasm_triplet_free(T);
+
+  prime = A->prime;
 
   /* met la matrice sous forme triangulaire par blocs
    * Calcule le rang des blocks de la première diagonale
@@ -1434,7 +1439,8 @@ int main() {
   qinv = spasm_pinv(x->DM->q, A->m);
   B = spasm_permute(A, x->DM->p, qinv, SPASM_WITH_NUMERICAL_VALUES);
   free(qinv);
-  //spasm_dm_free(x); 
+
+  spasm_csr_free(A);
  
  // Trie les lignes 
   spasm_row_entries_sort(B, 1);
@@ -1455,6 +1461,7 @@ int main() {
   for(i = 0; i < n_blocks; i++) {
     Rank += blocks0[i].r;
     printf("%d : (%d, %d) -- (%d, %d), rank %d\n", i, blocks0[i].i0, blocks0[i].j0, blocks0[i].i1, blocks0[i].j1, blocks0[i].r);
+
   }
 
   printf("--------------------------\n");
@@ -1509,7 +1516,10 @@ int main() {
   M = spasm_malloc(n_blocks * sizeof(spasm*));
   spasm_columns_submatrices(B, Q, Cstart, n_blocks, M, SPASM_WITH_NUMERICAL_VALUES);
   free(Cstart);
+ 
   spasm_csr_free(B);
+
+  
 
   /* Parcours les blocs "interessants" de la première diagonale supérieure 
    * (blocs non vides nétant pas sur un intervalle de lignes ou de colonnes "complet")
@@ -1543,12 +1553,44 @@ int main() {
 
   printf("---------------------\n");
 
+ 
+  // remplissage des autres diagonales.
+  Tr = blocks_spasm(where, n_blocks, count, prime, 1);
+  spasm_row_entries_sort(Tr, 0);
 
-  //spasm *row_inter = row_intersection_graph(Tr, rows, n_blocks);
-  //spasm * blocks_mat = blocks_spasm(where, n_blocks, count, B->prime, 0);
-  //uptri_t FS 
+  rows = spasm_malloc((spasm_nnz(Tr) - n_blocks) * sizeof(edge_t));
 
-  // spasm_save_csr(stdout, blocks_mat);
+  spasm *row_inter = row_intersection_graph(Tr, rows, n_blocks);
+  spasm * blocks_mat = blocks_spasm(where, n_blocks, count, prime, 0);
+  uptri_t *FS;
+ 
+  G = filled_structure(blocks_mat, row_inter);
+
+  int * r_tab = spasm_malloc(n_blocks *sizeof(int));
+
+  n_rows = rows_to_watch(blocks0, r_tab, n_blocks);
+  FS = diagonal_structure(G, r_tab, n_rows);
+
+  free(r_tab);
+  free(rows); 
+  spasm_csr_free(Tr);
+  spasm_csr_free(row_inter);
+  spasm_csr_free(blocks_mat);
+  spasm_csr_free(G);
+
+  printf("nombre de blocs intéressants au total : %d\n", FS->nzmax + n_blocks);
+  printf("---------------------\n");
+
+  // essai sur la deuxième diag sup :
+  //free(n_piv);
+
+  //nbl = upper_research(M, DS, 2, blocks0, L, U, LUp, LUqinv, ri, &n_piv); 
+
+  printf("nombre de blocs sur 2 diag : %d\n", nbl);
+
+  for(i = 0; i < nbl; i++){
+    printf("i : %d nombre de pivots : %d\n", i, n_piv[i]);
+  }
 
   // libération de la mémoire, fin du programme.
  for(i = 0; i < n_blocks; i++) {
@@ -1560,7 +1602,6 @@ int main() {
  }
   
   free(M);
-  spasm_csr_free(A);
   free(blocks0);
   free(ri);
   free(LU);
@@ -1573,6 +1614,7 @@ int main() {
   free(py);
   free(n_piv);
   uptri_free(DS);
+  uptri_free(FS);
  
   return 0;
 }

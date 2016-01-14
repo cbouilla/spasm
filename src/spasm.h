@@ -234,13 +234,13 @@ int spasm_solve_and_product(const spasm *L, const spasm *M, const spasm *A, int 
 /* spasm_lazy.c */
 int spasm_add_vectors(spasm_GFp *u, int *ui, int unz, spasm_GFp *v, int *vi, int vnz, int size);
 void spasm_system_right_hand_init(spasm_system *L, int nnz);
-void spasm_lazy_right_hand_update(int d, int k, spasm_system *L0, spasm_system *L1, int bound, int *xi, int *x, int top, int stop, const int **p);
+void spasm_lazy_right_hand_update(int d, int k, spasm_system *L0, spasm_system *L1, int bound, int *xi, int *x, int top, int stop, int **p);
 void spasm_new_lazy_permutation(int bound, const int *Lperm, int *p_new, int vec_size);
 int spasm_next_left_system(spasm_system **L, int k, int d);
-void spasm_lazy_system(spasm_system **L, int k, int l, int d, const int **p);
+void spasm_lazy_system(spasm_system **L, int k, int l, int d, int **p);
 spasm_system * spasm_system_update(spasm_system *L, spasm *M, int *p, int rect, int left, int diag);
 spasm_system * spasm_system_clear(spasm_system *L);
-int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, const spasm **A, const int **p);
+int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, spasm **A, int **p);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {

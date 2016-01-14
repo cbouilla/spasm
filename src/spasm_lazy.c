@@ -44,7 +44,8 @@ void spasm_system_right_hand_init(spasm_system *L, int nnz){
   int *Bp;
   
   //check inputs.
-  assert(L->B == NULL);
+  assert(!L->B);
+
   M = L->M;
   Mn = M->n; // number of rows of M.
   size = L->rect; // size of the rectangular part of M.
@@ -67,6 +68,7 @@ void spasm_first_system_init(spasm_system *L, int i){
   spasm_GFp *Bx;
 
   //Initialise B
+  assert(L->B != NULL);
   spasm_system_right_hand_init(L, 1);
 
   Bj = L->B->j;
@@ -83,7 +85,7 @@ void spasm_first_system_init(spasm_system *L, int i){
  * x for next step.
  */
 
-void spasm_lazy_right_hand_update(int d, int k, spasm_system *L0, spasm_system *L1, int bound, int *xi, int *x, int top, int stop, const int **p){
+void spasm_lazy_right_hand_update(int d, int k, spasm_system *L0, spasm_system *L1, int bound, int *xi, int *x, int top, int stop, int **p){
   spasm *B0, *B1;
   int i, i_new, j, d1, d0, start, nz0, nz1;
   int *B0j, *B1j;
@@ -104,14 +106,14 @@ void spasm_lazy_right_hand_update(int d, int k, spasm_system *L0, spasm_system *
   nz0 = L0->Bnz;
   nz1 = L1->Bnz;
 
-  if(L0->B == NULL){
+  if(!L0->B){
     int nzmax;
     nzmax = L0->M->n;
     nzmax += L0->rect;
     spasm_system_right_hand_init(L0, nzmax);
   }
 
-  if(L1->B == NULL){
+  if(!L1->B){
     int nzmax;
     nzmax = L1->M->n;
     nzmax += L1->rect;
@@ -251,7 +253,7 @@ int spasm_next_left_system(spasm_system **L, int k, int d){
 /*
  * Solve the system L, and dispatch coefficients for the next step.
  */
-void spasm_lazy_system(spasm_system **L, int k, int l, int d, const int **p){
+void spasm_lazy_system(spasm_system **L, int k, int l, int d, int **p){
   spasm *B, *M;
   int bound, size, top, left, d_new;
   int *xi;
@@ -322,7 +324,7 @@ spasm_system * spasm_system_update(spasm_system *L, spasm *M, int *p, int rect, 
 
   LL = spasm_malloc(sizeof(spasm_system));
   LL->M = M;
-  LL->B = NULL; // No right-hand siade member stocked
+  //LL->B = NULL; // No right-hand siade member stocked
   LL->diag = diag;
   LL->rect = rect;
   LL->left = left;
@@ -344,7 +346,7 @@ spasm_system * spasm_system_clear(spasm_system *L){
     spasm_system *tmp;
     tmp = L->next;
     spasm_csr_free(L->M);
-    if(L->B != NULL){
+    if(L->B){
       spasm_csr_free(L->B);
     }
     free(L->p);
@@ -360,12 +362,12 @@ spasm_system * spasm_system_clear(spasm_system *L){
  * The return value is ynz, the number of non-zero entries in the
  * output vector.
  */
-int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, const spasm **A, const int **p){
+int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, spasm **A, int **p){
   int diag, l, nsys, nnz, nztmp;
   spasm_system **L;
   int *xi;
   spasm_GFp *x;
-  spasm *B;
+  // spasm *B;
 
   //check inputs
   assert(d > 1);
@@ -384,7 +386,7 @@ int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, 
   }
 
   // Initialise variable.
-  diag = d;
+  diag = d; // Current diagonal
   nsys = 1;
 
   //Initialise the first system.
@@ -392,7 +394,7 @@ int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, 
   spasm_first_system_init(L[0], i);
 
   while(diag > 1){ 
-    diag = diag - 1;
+    diag = diag - 1; //previous diagonal
 
     for(l = 0; l < nsys; l++){
       if(L[l]->diag == diag){ // if L_{k+l, diag} exist.
@@ -425,12 +427,13 @@ int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, 
   for(l = 0; l < nsys; l++){
 
     assert(L[l]->diag == 0); //check diagonal number.
-    B = L[l]->B;
+    // B = L[l]->B;
 
-    if(B != NULL){
-      nztmp = spasm_solve_and_product(L[l]->M, A[l], B, 0, x, xi, p[k+l]); //last system solving + product.
+    if(L[l]->B){
+      nztmp = spasm_solve_and_product(L[l]->M, A[l], L[l]->B, 0, x, xi, p[k+l]); //last system solving + product.
       nnz = spasm_add_vectors(u, ui, nnz, x, xi, nztmp, usize);
-      free(B);
+      free(L[l]->B);
+      
     }
 
   }
