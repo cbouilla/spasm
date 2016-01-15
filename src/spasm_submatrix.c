@@ -237,3 +237,109 @@ spasm *B;
   spasm_csr_realloc(B, -1);
   return B;
 }
+
+/*
+ * Add a submatrix to a list.
+ */
+spasm_list * spasm_add_submatrix_to_list(spasm_list *C, spasm *M, int row){
+  spasm_list *new;
+
+  new = spasm_malloc(sizeof(spasm_list*));
+  new->M = M;
+  new->row = row;
+  new->up = C;
+
+  return new;
+}
+
+
+/*
+ * update the spasm_list with submatrices taken between row i0, and i1. 
+ */
+void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int j0, int l, spasm *B, int *Q, int *Cm, int *Cjstart, int *w, spasm_list **C){
+  int i, px, pb, j, k, n_matrices, n, nzmax, mat_index;
+  int *Bp, *Bj, *Aj, *Ap, *Mnz, *mat, *col;
+  spasm_GFp *Ax;
+  spasm **M;
+
+  //check entries :
+  assert(A != NULL && B != NULL);
+  assert(i1>i0);
+
+  Bp = B->p;
+  Bj = B->j;
+  Ap = A->p;
+  Aj = A->j;
+  Ax = (A->x != NULL) ? A->x : NULL;
+
+  n_matrices = Bp[l+1] - Bp [l];
+  n_matrices = n_matrices - 1; // <-- don't stock the diagonal submatrix.
+
+  n = i1 - i0;
+
+  //Get workspace :
+  mat = spasm_malloc(B->n * sizeof(int)); // mat[k] = index of submatrix induced by interval of column k
+
+  M = spasm_malloc(n_matrices * sizeof(spasm*));
+  Mnz = spasm_malloc(n_matrices * sizeof(int));
+  col = spasm_malloc(n_matrices * sizeof(int)); // col[k] = index of column corresponding to matrix M[k]
+
+  spasm_vector_zero(Mnz, n_matrices);
+
+  for(k = 0; k < B->n; k++){
+    mat[k] = -1; 
+  }
+
+  n_matrices = 0;
+  //initialisation
+  for(pb = Bp[l]+1; pb < Bp[l]; pb ++){ // <-- non empty submatrices except the diagonal one.
+    k = Bj[pb]; // colunm interval.
+
+    if(w[k] == 1){ // interesting interval.
+      nzmax = spasm_min(n * Cm[k], Ap[i1] - Ap[i0]); // upper bound.
+      M[n_matrices] = spasm_csr_alloc(n, Cm[k], nzmax, A->prime, (Ax != NULL));
+      mat[k] = n_matrices;      
+      n_matrices++;
+      }
+  }
+
+  for(i = i0; i < i1; i++){
+
+    for(mat_index = 0; mat_index < n_matrices; mat_index++){
+      M[mat_index]->p[i - i0] = Mnz[mat_index];
+    }
+
+    for(px = Ap[i0]; px < Ap[i1]; px++){
+      j = Aj[px];
+
+      if(j >= j0){ // <-- not on the diagonal block
+	k = Q[j]; // column interval index
+	if(w[k] == 1){ // "interesting interval"
+	  mat_index = mat[k]; //index of the corresponding matrix
+	  M[mat_index]->j[Mnz[mat_index]] = j - Cjstart[k]; //<- add the corresponding j to the corresponding matrix
+	  if(Ax != NULL){
+	    M[mat_index]->j[Mnz[mat_index]] = Ax[px]; // add the corresponding x
+	  }
+	  Mnz[mat_index]++;
+	}
+      }
+
+    }
+  }
+
+
+  //Finalize matrices and update lists.
+  for(mat_index = 0; mat_index < n_matrices; mat_index++){
+    M[mat_index]->p[i1 - i0] = Mnz[mat_index];
+    spasm_realloc(M[mat_index], -1);
+
+    //update list :
+    k = col[mat_index];
+    C[k] = spasm_add_submatrix_to_list(C[k], M[mat_index], l);
+  }
+
+  //free workspace.
+  free(col);
+  free(mat);
+  free(Mnz);
+}

@@ -468,6 +468,54 @@ void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
 }
 
 
+/*
+ * Etant donné une matrice, le tableau de ses blocs diagonaux blocks,
+ * la matrice de la position de ses blocs, un tableau Q
+ * tel que Q[j] représente le numéro de l'intervalle de colonnes auquel 
+ * j appartient, renvoie la liste des sous-matrices colonnes par 
+ * colonnes (le premier élément de la liste est celui le plus près de la 
+ * diagonale principale)
+ */
+void list_of_submatrices(spasm *A, spasm *B, block_t * blocks, int *Q, spasm_list **C){
+  int Bn, k;
+  int *Cm, *Cjstart, *w;
+
+  if(A == NULL || B == NULL){ // check inputs
+    return;
+  }
+  Bn = B->n;
+  assert(Bn = B->m); // B square.
+
+  // get workspace :
+  Cm = spasm_malloc(Bn * sizeof(int));
+  Cjstart = spasm_malloc(Bn * sizeof(int));
+  w = spasm_malloc(Bn * sizeof(int));
+
+  // Initialisation :
+  spasm_vector_zero(w, Bn);
+ 
+
+  for(k = 0; k < Bn; k++){
+    if(blocks[k].j0 + blocks[k].r < blocks[k].j1){ // Il reste des pivots à trouver sur cet intervalle.
+      Cm[k] = blocks[k].j1 - blocks[k].j0;
+      Cjstart[k] = blocks[k].j0;
+      assert(Cm[k] > 0);
+      w[k] = 1; // intervalle de colonnes k "intéressant"
+    }
+  }
+
+  for(k = 0; k < Bn-1; k++){ //Pas de matrices sur les diagonales supérieure dans le dernier intervalle de lignes.
+
+    spasm_list_of_submatrices_update(A, blocks[k].i0, blocks[k].i1, blocks[k].j1, k, B, Q, Cm, Cjstart, w, C);
+
+  }
+ 
+  // free workspace :
+  free(Cm);
+  free(Cjstart);
+  free(w);
+
+}
 
 /******************** recherche d'intervalles "non complets" *******************/
 
@@ -1582,9 +1630,9 @@ int main() {
   printf("---------------------\n");
 
   // essai sur la deuxième diag sup :
-  //free(n_piv);
+  // free(n_piv);
 
-  //nbl = upper_research(M, DS, 2, blocks0, L, U, LUp, LUqinv, ri, &n_piv); 
+  // nbl = upper_research(M, DS, 2, blocks0, L, U, LUp, LUqinv, ri, &n_piv); 
 
   printf("nombre de blocs sur 2 diag : %d\n", nbl);
 

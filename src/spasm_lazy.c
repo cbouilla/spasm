@@ -68,7 +68,6 @@ void spasm_first_system_init(spasm_system *L, int i){
   spasm_GFp *Bx;
 
   //Initialise B
-  assert(L->B != NULL);
   spasm_system_right_hand_init(L, 1);
 
   Bj = L->B->j;
@@ -324,7 +323,7 @@ spasm_system * spasm_system_update(spasm_system *L, spasm *M, int *p, int rect, 
 
   LL = spasm_malloc(sizeof(spasm_system));
   LL->M = M;
-  //LL->B = NULL; // No right-hand siade member stocked
+  LL->B = NULL; // No right-hand side member stocked
   LL->diag = diag;
   LL->rect = rect;
   LL->left = left;
@@ -346,7 +345,7 @@ spasm_system * spasm_system_clear(spasm_system *L){
     spasm_system *tmp;
     tmp = L->next;
     spasm_csr_free(L->M);
-    if(L->B){
+    if(L->B != NULL){
       spasm_csr_free(L->B);
     }
     free(L->p);
