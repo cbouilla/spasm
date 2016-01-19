@@ -1458,7 +1458,7 @@ int main() {
   // spasm_system **L;
   spasm_dm *x;
   spasm_lu **LU;
-  int n_blocks, i, ne, prime;
+  int n_blocks, i, ne, nemax, prime;
   int *qinv, *Q; 
   // int **LUp, *n_piv, **LUqinv;
   block_t *blocks;
@@ -1503,11 +1503,11 @@ int main() {
   Q = spasm_malloc(B->m * sizeof(int)); // Table qui à une colonne associe le numéro de son intervalle.
   column_diag_number(B, blocks, Q);
 
-  ne = count_filled_blocks(B, blocks, n_blocks, Q); // compte le nombre de blocs non vide.
+  nemax = count_filled_blocks(B, blocks, n_blocks, Q); // compte le nombre de blocs non vide.
 
-  where = spasm_malloc(ne * sizeof(blk_t));
+  where = spasm_malloc(nemax * sizeof(blk_t));
   filled_blocks_list(B, blocks, n_blocks, Q, where); //Donne la liste des blocs non vides.
-  BP = blocks_spasm(where, n_blocks, ne, prime, 0); //Matrice de la position des blocks.
+  BP = blocks_spasm(where, n_blocks, nemax, prime, 0); //Matrice de la position des blocks.
 
   /*
    * Liste chainée de sous matrice par intervalle de colonnes.
@@ -1560,45 +1560,22 @@ int main() {
 
   printf("--------------------------\n");
 
+  /*
+   * Ecrit la matrice des positions des blocs sous forme "uptri_t"
+   * (diagonale par diagonale)
+   */
+
+  // Suprime les blocs situé sur un intervalle de colonnes non intéressant.
   
-/*   /\* Determine les blocs où il peut encore se cacher des pivots */
-/*    * On commence par regarder quels sont les blocs non vides dans la matrice B *\/ */
+  ne = filled_blocks_list(B, blocks, n_blocks, Q, where);
 
-/*   int *Q, fill; */
-/*   blk_t *where; */
+  spasm_csr_free(B);
 
-/*   // Détermine à quel intervalle appartient une colonne : */
-/*   Q = malloc(B->m * sizeof(int)); // <-- table qui à chaque colonne j associe le numéro de son intervalle. */
-/*   column_diag_number(B, blocks0, Q); */
-
-/*   // Compte le nombre total de blocs non vide dans la matrice, sans regarder si certains intervalles sont "complets". */
-/*   fill = count_filled_blocks(B, blocks0, n_blocks, Q); */
-
-/*   // détermine l'emplacement de ses blocs */
-/*   where = malloc(fill * sizeof(blk_t)); // <-- liste les blocs non vide grace au coordonnées de leurs intervalles de lignes et de colonnes. */
-/*   for(i = 0; i < fill; i++) { */
-/*     where[i].c = -1; */
-/*     where[i].r = -1; */
-/*   } */
-
-/*   // Les blocs situés sur des intervalles de colonnes "complets" ne sont pas pris en compte. */
-/*   count = filled_blocks_list(B, blocks0, n_blocks, Q, where); */
-/*   printf("nombre de blocs non vides dans la structure initiale : %d\n", count); */
-
-/*   // écrit la matrice de la position des blocs. */
-  
-/*   printf("------------------------\n"); */
-/*   printf("Traitement de la première diagonale supérieure : Pas de remplissage.\n"); */
-/*   // mise de la structure sous forme uptri_t pour l'avoir "diagonale par diagonale" */
-/*   uptri_t *DS = position_uptri(where, n_blocks, count, 0); */
+  // mise de la structure sous forme uptri_t pour l'avoir "diagonale par diagonale"
+  uptri_t *DS = position_uptri(where, n_blocks, ne, 0);
     
 
-/*   // Mettre la matrice de départ B sous forme de liste de "matrices d'intervallecolonnes". */
   
-/* spasm_csr_free(B); */
-
-  
-
 /*   /\* Parcours les blocs "interessants" de la première diagonale supérieure  */
 /*    * (blocs non vides nétant pas sur un intervalle de lignes ou de colonnes "complet") */
 /*    * pour chacun d'entre eux, multiplie la partie inférieure par l'inverse de L. *\/ */
@@ -1691,7 +1668,7 @@ int main() {
   free(where);
   spasm_csr_free(BP);
   // free(n_piv);
-  // uptri_free(DS);
+  uptri_free(DS);
   // uptri_free(FS);
  
   return 0;

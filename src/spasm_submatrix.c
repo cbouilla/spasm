@@ -260,8 +260,12 @@ spasm_list * spasm_list_free(spasm_list *C){
     return NULL;
   }
 
-  free(C->M);
-  return spasm_list_free(C->up);
+  spasm_list *tmp;
+  tmp = C->up;
+  spasm_csr_free(C->M);
+  free(C);  
+
+  return spasm_list_free(tmp);
 
 }
 
