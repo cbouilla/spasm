@@ -162,7 +162,8 @@ spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int 
 spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, int *py, int with_values);
 void spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, spasm **B, int with_values);
 spasm * spasm_rows_submatrix(const spasm *A, int i0, int i1, int with_values);
-void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int j0, int l, spasm *B, int *Q, int *Cm, int *Cjstart, int *w, spasm_list **C);
+void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B, int *Q, int *Cm, int *Cjstart, spasm_list **C);
+spasm_list * spasm_list_free(spasm_list *C);
 
 
 /* spasm_permutation.c */
