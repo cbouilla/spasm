@@ -256,17 +256,29 @@ spasm_list * spasm_add_submatrix_to_list(spasm_list *C, spasm *M, int row){
  * clear a spasm_list.
  */
 spasm_list * spasm_list_free(spasm_list *C){
-  if(C == NULL){
-    return NULL;
-  }
+  spasm_list *tmp, *next;
 
+  tmp = C;
+
+  while(tmp != NULL){
+    next = tmp->up;
+    spasm_csr_free(tmp->M);
+    free(tmp);
+    tmp = next;  
+
+  }
+  return NULL;
+
+}
+
+spasm_list * spasm_list_delete_first_matrix(spasm_list *C){
   spasm_list *tmp;
+
   tmp = C->up;
   spasm_csr_free(C->M);
-  free(C);  
+  free(C);
 
-  return spasm_list_free(tmp);
-
+  return tmp;
 }
 
 /*
@@ -295,7 +307,7 @@ void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B,
   new = spasm_malloc(n_matrices * sizeof(spasm*));
   Mnz = spasm_malloc(n_matrices * sizeof(int));
   mat = spasm_malloc(B->n * sizeof(int)); // mat[k] : index of the matrix induced by columns interval k and rows interval l.
-  spasm_vector_zero(Mnz, n_matrices);
+  
  
  pm = 0;
 
@@ -309,7 +321,6 @@ void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B,
   for(pb = Bp[l]; pb < Bp[l+1]; pb++){
     k = Bj[pb]; // column interval
     new[pm] = spasm_csr_alloc(n, Cm[k], nzmax, A->prime, (Ax != NULL));
-    // Mnz[pm] = 0;
     mat[k] = pm;
     pm++;
  
@@ -326,12 +337,12 @@ void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B,
       pm = mat[k]; // matrix index.
 
       assert(pm != -1);
-     new[pm]->p[i - i0] = Mnz[pm];
+      new[pm]->p[i - i0] = Mnz[pm];
     }
 
     for(px = Ap[i]; px < Ap[i+1]; px++){
       j = Aj[px];
-      k = Q[j]; // column interval index
+      k = Q[j]; //column interval index
       pm = mat[k]; //matrix index.
       assert(pm != -1);
       assert(nzmax >= Mnz[pm]);

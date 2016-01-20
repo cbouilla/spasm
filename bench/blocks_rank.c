@@ -1496,6 +1496,8 @@ int main() {
 
   n_blocks = block_list(B, x, &blocks);
 
+  //free(x);
+
   /*
    * Trouve les blocs non vides dans la matrice de départ.
    */
@@ -1536,8 +1538,8 @@ int main() {
   
     LU[i] = spasm_LU(C[i]->M, SPASM_IDENTITY_PERMUTATION, SPASM_KEEP_L);
 
-    free(C[i]->M); //<-- plus besoin du bloc diagonal.
-    C[i] = C[i]->up; //<-- le premier bloc de la liste est le premier au dessus de la diagonale.
+    C[i] = spasm_list_delete_first_matrix(C[i]); //<-- plus besoin du bloc diagonal.
+    // C[i] = C[i]->up; //<-- le premier bloc de la liste est le premier au dessus de la diagonale.
 
     blocks[i].r = LU[i]->U->n;
  

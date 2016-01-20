@@ -133,6 +133,7 @@ void spasm_triplet_free(spasm_triplet *A);
 void spasm_csr_resize(spasm *A, int n, int m);
 spasm_partition * spasm_partition_alloc(int n, int m, int nr, int nc);
 void spasm_partition_free(spasm_partition *P);
+void spasm_dm_free(spasm_dm *x);
 void spasm_partition_tighten(spasm_partition *P);
 void spasm_vector_zero(spasm_GFp *x, int n);
 void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha);
@@ -164,7 +165,7 @@ void spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N
 spasm * spasm_rows_submatrix(const spasm *A, int i0, int i1, int with_values);
 void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B, int *Q, int *Cm, int *Cjstart, spasm_list **C);
 spasm_list * spasm_list_free(spasm_list *C);
-
+spasm_list * spasm_list_delete_first_matrix(spasm_list *C);
 
 /* spasm_permutation.c */
 void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
