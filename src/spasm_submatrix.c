@@ -304,11 +304,13 @@ void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B,
   n_matrices = Bp[l+1] - Bp[l];
 
   //Get workspace :
+
   new = spasm_malloc(n_matrices * sizeof(spasm*));
   Mnz = spasm_malloc(n_matrices * sizeof(int));
   mat = spasm_malloc(B->n * sizeof(int)); // mat[k] : index of the matrix induced by columns interval k and rows interval l.
   
  
+
  pm = 0;
 
  // initialization :
@@ -316,16 +318,17 @@ void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B,
    mat[i] = -1; 
  }
 
- nzmax = Ap[i1]-Ap[i0]; //upper bound.
 
   for(pb = Bp[l]; pb < Bp[l+1]; pb++){
     k = Bj[pb]; // column interval
+    nzmax = n + Cm[k]; //educated gess
     new[pm] = spasm_csr_alloc(n, Cm[k], nzmax, A->prime, (Ax != NULL));
     mat[k] = pm;
     pm++;
  
   }
 
+ 
 
   spasm_vector_zero(Mnz, n_matrices);
 
@@ -345,7 +348,9 @@ void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B,
       k = Q[j]; //column interval index
       pm = mat[k]; //matrix index.
       assert(pm != -1);
-      assert(nzmax >= Mnz[pm]);
+      if(nzmax < Mnz[pm]){
+	spasm_csr_realloc(new[pm], 2 * Mnz[pm]);
+      }
 
       new[pm]->j[Mnz[pm]] = j - Cjstart[k]; //<- add the corresponding j to the corresponding matrix.
 

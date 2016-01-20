@@ -262,7 +262,7 @@ void spasm_lazy_system(spasm_system **L, int k, int l, int d, int **p){
   Lk = L[l];
 
   //check entries
-  assert(Lk->B != NULL);
+  assert(Lk->B);
   assert(Lk->diag == d);
 
   bound = Lk->rect;
