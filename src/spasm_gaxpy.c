@@ -86,10 +86,13 @@ int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const 
  * (sparse vector) * (sparse) Matrix Compute y = x * M, where x and M are
  * sparse.
  * 
- * The result is scattered in y, its pattern is given by yi. The return value nz
- * is the number of non-zero entries in y.
+ * The result is scattered in y, its pattern is given by yi. 
+ * 
+ * THE xi ARRAY MUST BE SORTED IN ASCENDING ORDER.
+ *
+ * The return value nz is the number of non-zero entries in y.
  */
-int super_sparse_gax(const spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi) {
+int super_sparse_gax(const super_spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi) {
     int p, i, j, k, m, nz, Mnz, prime, *Mp, *Mj, *w;
     spasm_GFp *Mx;
 
