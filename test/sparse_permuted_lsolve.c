@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
   spasm_vector_zero(y, n);
 
 
-  top = spasm_sparse_backward_solve(L, B, 0, xi, x, p);
+  top = spasm_sparse_backward_solve(L, B, 0, xi, x, p, 0);
 
 
   spasm_gaxpy(L, x, y);
