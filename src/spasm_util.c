@@ -185,7 +185,7 @@ void spasm_partition_free(spasm_partition *P) {
 }
 
 void spasm_cc_free(spasm_cc *C){
-  if(C = NULL){
+  if (C == NULL){
     return;
   }
   spasm_partition_free(C->CC);
