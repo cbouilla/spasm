@@ -1370,7 +1370,9 @@ int main() {
   /* charge la matrice depuis l'entrée standard */
 
   T = spasm_load_sms(stdin, 42013);
-  A = spasm_compress(T);
+  mem_alloc = 0;  
+A = spasm_compress(T);
+
   spasm_triplet_free(T);
 
   prime = A->prime;
@@ -1383,10 +1385,11 @@ int main() {
   x = spasm_dulmage_mendelsohn(A);
 
   // B = A permutée sous forme triangulaire par blocs
+ 
   qinv = spasm_pinv(x->DM->q, A->m);
   B = spasm_permute(A, x->DM->p, qinv, SPASM_WITH_NUMERICAL_VALUES);
   free(qinv);
-
+  
   spasm_csr_free(A);
  
 
@@ -1415,16 +1418,16 @@ int main() {
   /*
    * Liste chainée de sous matrice par intervalle de colonnes.
    */
-  C = spasm_malloc(n_blocks * sizeof(spasm_list*));
+ mem_alloc = 0; 
+ C = spasm_malloc(n_blocks * sizeof(spasm_list*));
   for(i = 0; i < n_blocks; i++){
     C[i] = NULL;
   }
 
-
-  LU = spasm_malloc(n_blocks * sizeof(spasm_lu*));
-
+ 
   list_of_submatrices(B, BP, blocks, Q, C);
  
+ LU = spasm_malloc(n_blocks * sizeof(spasm_lu*));
 
   /*
    * Traitement de la diagonale principale.

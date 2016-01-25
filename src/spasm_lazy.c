@@ -323,7 +323,6 @@ spasm_system * spasm_system_update(spasm_system *L, spasm *M, int *p, int rect, 
 
   LL = spasm_malloc(sizeof(spasm_system));
   LL->M = M;
-  LL->B = NULL; // No right-hand side member stocked
   LL->diag = diag;
   LL->rect = rect;
   LL->left = left;
@@ -361,12 +360,12 @@ spasm_system * spasm_system_clear(spasm_system *L){
  * The return value is ynz, the number of non-zero entries in the
  * output vector.
  */
-int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, spasm **A, int **p){
-  int diag, l, nsys, nnz, nztmp;
+int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, spasm_list *A, int **p){
+  int diag, l, nsys, nnz, nztmp, row;
   spasm_system **L;
   int *xi;
   spasm_GFp *x;
-  // spasm *B;
+  spasm_list *tmp;
 
   //check inputs
   assert(d > 1);
@@ -422,17 +421,20 @@ int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, 
   spasm_vector_zero(xi, usize);
 
   nnz = 0;
+  tmp = A;
+  row = tmp->row;
 
-  for(l = 0; l < nsys; l++){
+  for(l = nsys-1; l >= 0; l--){ //closest to diagonal first
 
     assert(L[l]->diag == 0); //check diagonal number.
+    assert(row <= k+l);
     // B = L[l]->B;
 
-    if(L[l]->B){
-      nztmp = spasm_solve_and_product(L[l]->M, A[l], L[l]->B, 0, x, xi, p[k+l]); //last system solving + product.
+    if(L[l]->B && row == k+l){
+      nztmp = spasm_solve_and_product(L[l]->M, tmp->M, L[l]->B, 0, x, xi, p[k+l]); //last system solving + product.
       nnz = spasm_add_vectors(u, ui, nnz, x, xi, nztmp, usize);
       free(L[l]->B);
-      
+      tmp = tmp->up;
     }
 
   }

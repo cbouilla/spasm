@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <stddef.h>
 
+size_t mem_alloc; 
+
+
 /* --- primary SpaSM routines and data structures --- */
 
 typedef int spasm_GFp;
@@ -133,7 +136,6 @@ void spasm_triplet_free(spasm_triplet *A);
 void spasm_csr_resize(spasm *A, int n, int m);
 spasm_partition * spasm_partition_alloc(int n, int m, int nr, int nc);
 void spasm_partition_free(spasm_partition *P);
-void spasm_dm_free(spasm_dm *x);
 void spasm_partition_tighten(spasm_partition *P);
 void spasm_vector_zero(spasm_GFp *x, int n);
 void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha);
@@ -250,7 +252,7 @@ int spasm_next_left_system(spasm_system **L, int k, int d);
 void spasm_lazy_system(spasm_system **L, int k, int l, int d, int **p);
 spasm_system * spasm_system_update(spasm_system *L, spasm *M, int *p, int rect, int left, int diag);
 spasm_system * spasm_system_clear(spasm_system *L);
-int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, spasm **A, int **p);
+int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, spasm_list *A, int **p);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {

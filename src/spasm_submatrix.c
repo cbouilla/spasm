@@ -308,27 +308,26 @@ void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B,
   new = spasm_malloc(n_matrices * sizeof(spasm*));
   Mnz = spasm_malloc(n_matrices * sizeof(int));
   mat = spasm_malloc(B->n * sizeof(int)); // mat[k] : index of the matrix induced by columns interval k and rows interval l.
-  
+  nzmax = 1;  
+  pm = 0;
  
-
- pm = 0;
 
  // initialization :
  for(i = 0; i < B->n; i++){
    mat[i] = -1; 
  }
 
-
   for(pb = Bp[l]; pb < Bp[l+1]; pb++){
     k = Bj[pb]; // column interval
-    nzmax = n + Cm[k]; //educated gess
+    //nzmax = 4 * spasm_min(n, Cm[k]); //educated gess
+    printf("l : %d, pm : %d, mem_alloc : %zu\n", l, pm, mem_alloc);
+    //printf("n : %d, nzmax : %d\n", n, nzmax);
     new[pm] = spasm_csr_alloc(n, Cm[k], nzmax, A->prime, (Ax != NULL));
     mat[k] = pm;
     pm++;
  
   }
-
- 
+  printf("DEBUG : %d\n", l);
 
   spasm_vector_zero(Mnz, n_matrices);
 

@@ -23,6 +23,7 @@ void * spasm_malloc(size_t size) {
     perror("malloc failed");
     exit(1);
   }
+  mem_alloc += size;
   return x;
 }
 
@@ -41,6 +42,7 @@ void * spasm_realloc(void *ptr, size_t size) {
     perror("realloc failed");
     exit(1);
   }
+ 
   return x;
 }
 
@@ -60,6 +62,7 @@ spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
     A->j = spasm_malloc(nzmax * sizeof(int));
     A->x = (with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL);
     return A;
+
 }
 
 
@@ -184,25 +187,6 @@ void spasm_partition_free(spasm_partition *P) {
   free(P);
 }
 
-void spasm_cc_free(spasm_cc *C){
-  if(C = NULL){
-    return;
-  }
-  spasm_partition_free(C->CC);
-  spasm_partition_free(C->SCC);
-  free(C);
-}
-
-void spasm_dm_free(spasm_dm *x){
-  if(x == NULL){
-    return;
-  }
-  spasm_partition_free(x->DM);
-  spasm_cc_free(x->H);
-  spasm_cc_free(x->S);
-  spasm_cc_free(x->V);
-  free(x);
-}
 
 void spasm_vector_zero(spasm_GFp *x, int n) {
   int i;
