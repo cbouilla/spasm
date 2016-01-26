@@ -18,7 +18,7 @@ size_t mem_alloc;
 
 typedef int spasm_GFp;
 
-typedef struct {   /* matrix in compressed-column or triplet form */
+typedef struct {   /* matrix in compressed-row */
     int nzmax;     /* maximum number of entries */
     int n;         /* number of rows */
     int m;         /* number of columns */
@@ -27,6 +27,13 @@ typedef struct {   /* matrix in compressed-column or triplet form */
     spasm_GFp *x;  /* numerical values, size nzmax (optional) */
     int prime;
 } spasm;
+
+typedef struct {   /* matrix in compressed-row with no empty rows */
+    spasm *M;
+    int n;         /* number of non-empty rows */
+    int *p;
+} super_spasm;
+
 
 typedef struct  {   /* matrix in compressed-column or triplet form */
     int nzmax;      /* maximum number of entries */
@@ -189,6 +196,7 @@ int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xi, const i
 
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
+int super_sparse_gax(const super_spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi);
 
 /* spasm_triangular.c */
 int spasm_is_upper_triangular(const spasm *A);
