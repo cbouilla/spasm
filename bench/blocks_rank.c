@@ -469,48 +469,6 @@ void column_diag_number(const spasm *M, const block_t *blocks, int *Q) {
 }
 
 
-/*
- * Etant donné une matrice, le tableau de ses blocs diagonaux blocks,
- * la matrice de la position de ses blocs, un tableau Q
- * tel que Q[j] représente le numéro de l'intervalle de colonnes auquel 
- * j appartient, renvoie la liste des sous-matrices colonnes par 
- * colonnes (le premier élément de la liste est celui le plus près de la 
- * diagonale principale)
- */
-void list_of_submatrices(spasm *A, spasm *B, block_t * blocks, int *Q, spasm_list **C){
-  int Bn, k;
-  int *Cm, *Cjstart;
-
-  if(A == NULL || B == NULL){ // check inputs
-    return;
-  }
-  Bn = B->n;
-  assert(Bn = B->m); // B square.
-
- 
-  // get workspace :
-  Cm = spasm_malloc(Bn * sizeof(int));
- Cjstart = spasm_malloc(Bn * sizeof(int));
-
-  for(k = 0; k < Bn; k++){
-    // if(blocks[k].j0 + blocks[k].r < blocks[k].j1){ // Il reste des pivots à trouver sur cet intervalle.
-      Cm[k] = blocks[k].j1 - blocks[k].j0;
-      Cjstart[k] = blocks[k].j0;
-      assert(Cm[k] > 0);
-      // }
-  }
-
-  for(k = 0; k < Bn; k++){
-    spasm_list_of_submatrices_update(A, blocks[k].i0, blocks[k].i1, k, B, Q, Cm, Cjstart, C);
-
-    }
-
-  // free workspace :
-  free(Cm);
-  free(Cjstart);
-  // free(w);
-
-}
 
 /******************** recherche d'intervalles "non complets" *******************/
 
@@ -591,7 +549,6 @@ int count_non_empty_blocks_and_rows(const spasm *M, const block_t *blocks, int n
   for (i = 0; i < n_blocks; i++) {
     D[i] = -1;
     w[i] = -1;
-    n_rows[i] = 0;
   }
 
   for (i = 0; i < n; i++) {
@@ -621,27 +578,19 @@ int count_non_empty_blocks_and_rows(const spasm *M, const block_t *blocks, int n
  * Pour chaque intervalle de colonnes, détermine la liste P des lignes non vides.
  * La valeur renvoyée est le nombre de blocs non vides.
  */
-int non_empty_blocks_and_rows_list(const spasm *M, const block_t *blocks, int n_blocks, int * n_rows, const int *Q, blk_t *where, int ***P_pt) {
-  int i, l, p, j, *Mp, *Mj, n, c, k, *D, count, **P, *w;
+int non_empty_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, blk_t *where) {
+  int i, l, p, j, *Mp, *Mj, n, c, k, *D, count;
 
   Mp = M->p;
   Mj = M->j;
   n = M->n;
   l = 0; // <--- numéro du bloc de ligne qu'on regarde.
-  //fill = 0;
   count = 0;
-
- P = spasm_malloc(n_blocks * sizeof(int*));
-  *P_pt = P;
 
   //Get workspace.
   D = spasm_malloc(n_blocks * sizeof(int));
-  w = spasm_malloc(n_blocks * sizeof(int));
   for (i = 0; i < n_blocks; i++) {
     D[i] = -1;
-    P[i] = spasm_malloc(n_rows[i] * sizeof(int));
-    n_rows[i] = 0; // réinitialiser le compteur à 0.
-    w[i] = -1;
   }
 
   for (i = 0; i < n; i++) {
@@ -650,21 +599,15 @@ int non_empty_blocks_and_rows_list(const spasm *M, const block_t *blocks, int n_
     for (p = Mp[i]; p < Mp[i+1]; p++) {
       j = Mj[p];
       c = Q[j]; //<--- numéro de l'intervalle de colonne.
-      if(w[c] != i){
-	P[c][n_rows[c]] = i;
-	n_rows[c]++;
-	w[c] = i;
-      }
  
       k = c - l; // <--- numéro de la diagonale à laquelle appartient l'entrée.
       if (D[k] != l) {
-	//fill++;
 	D[k] = l; // <--- l remplace la valeur précédente de D[k].
-	//if ((k == 0) || (blocks[c].r < blocks[c].j1 - blocks[c].j0)) {
+	if ((k == 0) || (blocks[c].r < blocks[c].j1 - blocks[c].j0)) {
 	  where[count].c = c;
 	  where[count].r = l;
 	  count++;
-	  // }
+	  }
       }
     }
   }
@@ -1384,13 +1327,13 @@ int main() {
   spasm_triplet *T;
   spasm *A, *B, *BP;
   spasm **U;  
-  spasm_list **C;
+  super_spasm **C;
   spasm_system **L;
   spasm_dm *x;
   spasm_lu **LU;
   int n_blocks, i, ne, nemax, prime, nbl;
-  int *qinv, *Q, *ri, *n_rows; 
-  int **p, *n_piv, **Uqinv, **rows_tab;
+  int *qinv, *Q, *ri, *n_rows, *tmp; 
+  int **p, *n_piv, **Uqinv;
   block_t *blocks;
   blk_t *where;
   // spasm *Tr, *G;
@@ -1437,26 +1380,28 @@ A = spasm_compress(T);
   column_diag_number(B, blocks, Q);
 
   n_rows = spasm_malloc(n_blocks * sizeof(int)); // Nombre de lignes non vide par intervalle de colonnes.
+  spasm_vector_zero(n_rows, n_blocks);
 
-  nemax = count_non_empty_blocks_and_rows(B, blocks, n_blocks, Q, n_rows); // compte le nombre de blocs non vide.
 
-  where = spasm_malloc(nemax * sizeof(blk_t));
-  non_empty_blocks_and_rows_list(B, blocks, n_blocks, n_rows, Q, where, &rows_tab); //Donne la liste des blocs non vides.
-  BP = blocks_spasm(where, n_blocks, nemax, prime, 0); //Matrice de la position des blocks.
+  nemax = count_non_empty_blocks_and_rows(B, blocks, n_blocks, Q, n_rows); // compte le nombre de blocs non vide et le nombre de lignes non vide dans chaque intervalle de colonnes.
 
- 
+
   /*
-   * Liste chainée de sous matrice par intervalle de colonnes.
+   * Tableau de matrices super_spasme pour chaque colonnes.
    */
- /* mem_alloc = 0;  */
- /* C = spasm_malloc(n_blocks * sizeof(spasm_list*)); */
- /*  for(i = 0; i < n_blocks; i++){ */
- /*    C[i] = NULL; */
- /*  } */
+  C = spasm_malloc(n_blocks * sizeof(super_spasm*));
+  tmp = spasm_malloc((n_blocks + 1) * sizeof(int));
 
+  for(i = 0; i < n_blocks; i++){
+    tmp[i] = blocks[i].i0;
+  }
  
- /*  list_of_submatrices(B, BP, blocks, Q, C); */
- 
+  tmp[n_blocks] = B->n;
+
+  super_spasm_columns_submatrices(B, Q, tmp, n_blocks, n_rows, C, SPASM_WITH_NUMERICAL_VALUES);
+
+  free(tmp);
+
  /* LU = spasm_malloc(n_blocks * sizeof(spasm_lu*)); */
 
  /*  /\* */
@@ -1508,6 +1453,11 @@ A = spasm_compress(T);
  /*  ne = filled_blocks_list(B, blocks, n_blocks, Q, where); */
 
  /*  spasm_csr_free(B); */
+
+
+   //Donne la liste des blocs non vides.
+  // BP = blocks_spasm(where, n_blocks, nemax, prime, 0); //Matrice de la position des blocks.
+
 
  /*  // mise de la structure sous forme uptri_t pour l'avoir "diagonale par diagonale" */
  /*  uptri_t *DS = position_uptri(where, n_blocks, ne, 0); */
@@ -1593,14 +1543,13 @@ A = spasm_compress(T);
     /* spasm_csr_free(U[i]); */
     /* free(Uqinv[i]); */
     /* free(LU[i]); */
-    /* spasm_list_free(C[i]); */
-    free(rows_tab[i]);
+    super_spasm_free(C[i]);
+
  }
   
  
   free(blocks);
   free(n_rows);
-  free(rows_tab);
   /* free(ri); */
   /* free(LU); */
   /* free(L); */
@@ -1608,7 +1557,7 @@ A = spasm_compress(T);
   /* free(p); */
   /* free(Uqinv); */
   free(Q);
-  free(where);
+  //free(where);
   // spasm_csr_free(BP);
   //free(n_piv);
   // uptri_free(DS);

@@ -74,6 +74,7 @@ super_spasm *super_spasm_alloc(int ntot, int n_mat, int m, int nzmax, int prime,
   A->M = spasm_csr_alloc(n_mat, m, nzmax, prime, with_values);
   A->n = ntot;
   A->p = spasm_malloc(n_mat * sizeof(int));
+  return A;
 }
 
 

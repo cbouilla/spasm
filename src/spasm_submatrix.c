@@ -112,10 +112,10 @@ spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, i
  * T[k] is the first columns of interval J_k. return a table
  * of matrices B, such that B[k] = A[,J_k]; 
  */
-void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,int *n_rows, int N, super_spasm **B, int with_values){
+void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, int *n_rows, super_spasm **B, int with_values){
   int k, i, j, px, An, Mm, prime;
-  int *Aj, *Ap, *Mnz, *Mn, *w;
-  int **Mj, **Mp;
+  int *Aj, *Ap, *Mnz, *w;
+  int **Mj, **Mp, **Bp;
   spasm **M;
   spasm_GFp *Ax;
   spasm_GFp **Mx;
@@ -134,9 +134,9 @@ void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,
   M = spasm_malloc(N * sizeof(spasm*));
   Mj = spasm_malloc(N * sizeof(int*));
   Mp = spasm_malloc(N * sizeof(int*));
+  Bp = spasm_malloc(N * sizeof(int*));
   Mx = spasm_malloc(N * sizeof(spasm_GFp*));
   Mnz = spasm_malloc(N * sizeof(int));
-  Mn = spasm_malloc(N * sizeof(int));
   w = spasm_malloc(N * sizeof(int));
  
   // Initialize matrices.
@@ -148,15 +148,18 @@ void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,
     Mnz[k] = An + Mm + k; // <--- educated gess.
     B[k] = super_spasm_alloc(An, n_rows[k], Mm, Mnz[k], prime, (Ax != NULL) && with_values);
 
+
     M[k] = B[k]->M;
+    Bp[k] = B[k]->p;
 
     Mj[k] = M[k]->j;
     Mp[k] = M[k]->p;
     Mx[k] = M[k]->x;
 
     Mnz[k] = 0;
-    Mn[k] = 0;
-    w[0] = 0;
+    // Mn[k] = 0;
+    w[k] = -1;
+    n_rows[k] = 0;
  
   }
  
@@ -164,13 +167,17 @@ void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,
 
     //Initialise Bp :
     for(k = 0; k < N; k++){
-      Mp[k][Mn[k]] = Mnz[k];
+      Mp[k][n_rows[k]] = Mnz[k];
     }
 
     for(px = Ap[i]; px < Ap[i+1]; px++){
       j = Aj[px];
       k = Q[j]; // <-- index of the interval where j is.
-      if(w[k] == 0) w[k] = 1; // at least 1 entrie on this row on interval k.
+      if(w[k] != i){
+	Bp[k][n_rows[k]] = i; // row n_rows[k] of M[k] is row i of A.
+	n_rows[k]++;
+	w[k] = i; // at least 1 entrie on this row on interval k.
+      }
       // update matrix M[k] :
 
       //reallocate memory if needed :
@@ -185,10 +192,6 @@ void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,
       Mnz[k]++;
       
     }
-    if(w[k] == 1) {
-      Mn[k]++; //<-- next row
-      w[k] = 0;
-    }
 
 
   }
@@ -196,7 +199,7 @@ void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,
   //Finalise B :
 
   for(k = 0; k < N; k++){
-    Mp[k][An] = Mnz[k];
+    Mp[k][n_rows[k]] = Mnz[k];
     spasm_csr_realloc(M[k], -1);
   }
 
@@ -204,8 +207,8 @@ void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,
   free(Mj);
   free(Mx);
   free(Mp);
+  free(Bp);
   free(Mnz);
-  free(Mn);
   free(w);
 
 }
