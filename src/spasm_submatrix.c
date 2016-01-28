@@ -105,18 +105,20 @@ spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, i
   return B;
 }
 
+
 /*
  * Given a matrix A, a table Q such that Q[j] is the index 
  * of the interval of columns of j, and a table T, such that 
  * T[k] is the first columns of interval J_k. return a table
  * of matrices B, such that B[k] = A[,J_k]; 
  */
-void spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, spasm **B, int with_values){
-  int k, i, j, px, An, prime;
-  int *Aj, *Ap, *Bnz, *Bm;
-  int **Bj, **Bp;
+void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,int *n_rows, int N, super_spasm **B, int with_values){
+  int k, i, j, px, An, Mm, prime;
+  int *Aj, *Ap, *Mnz, *Mn, *w;
+  int **Mj, **Mp;
+  spasm **M;
   spasm_GFp *Ax;
-  spasm_GFp **Bx;
+  spasm_GFp **Mx;
 
   assert(A != NULL);
   assert(Q != NULL);
@@ -129,67 +131,82 @@ void spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N
   prime = A->prime;
 
   // Get workspace
-  Bj = spasm_malloc(N * sizeof(int*));
-  Bp = spasm_malloc(N * sizeof(int*));
-  Bx = spasm_malloc(N * sizeof(spasm_GFp*));
-  Bnz = spasm_malloc(N * sizeof(int));
-  Bm = spasm_malloc(N * sizeof(int));
-
+  M = spasm_malloc(N * sizeof(spasm*));
+  Mj = spasm_malloc(N * sizeof(int*));
+  Mp = spasm_malloc(N * sizeof(int*));
+  Mx = spasm_malloc(N * sizeof(spasm_GFp*));
+  Mnz = spasm_malloc(N * sizeof(int));
+  Mn = spasm_malloc(N * sizeof(int));
+  w = spasm_malloc(N * sizeof(int));
+ 
   // Initialize matrices.
   for(k = 0; k< N; k++){
-    Bm[k] = T[k+1] - T[k]; // <--- T[N+1] = A->m.
+    Mm = T[k+1] - T[k]; // <--- T[N+1] = A->m.
 
-    assert(Bm[k] >= 0);
+    assert(Mm >= 0);
 
-    Bnz[k] = An + Bm[k] + k; // <--- educated gess.
-    B[k] = spasm_csr_alloc(An, Bm[k], Bnz[k], prime, (Ax != NULL) && with_values);
+    Mnz[k] = An + Mm + k; // <--- educated gess.
+    B[k] = super_spasm_alloc(An, n_rows[k], Mm, Mnz[k], prime, (Ax != NULL) && with_values);
 
-    Bj[k] = B[k]->j;
-    Bp[k] = B[k]->p;
-    Bx[k] = B[k]->x;
+    M[k] = B[k]->M;
 
-    Bnz[k] = 0;
+    Mj[k] = M[k]->j;
+    Mp[k] = M[k]->p;
+    Mx[k] = M[k]->x;
+
+    Mnz[k] = 0;
+    Mn[k] = 0;
+    w[0] = 0;
+ 
   }
  
   for(i = 0; i < An; i++){
 
     //Initialise Bp :
     for(k = 0; k < N; k++){
-      Bp[k][i] = Bnz[k];
+      Mp[k][Mn[k]] = Mnz[k];
     }
 
     for(px = Ap[i]; px < Ap[i+1]; px++){
       j = Aj[px];
       k = Q[j]; // <-- index of the interval where j is.
-
-      // update matrix B[k] :
+      if(w[k] == 0) w[k] = 1; // at least 1 entrie on this row on interval k.
+      // update matrix M[k] :
 
       //reallocate memory if needed :
-      if(Bnz[k] + 1 > B[k]->nzmax){
-	spasm_csr_realloc(B[k], 2 * (Bnz[k] + 1) );
+      if(Mnz[k] + 1 > M[k]->nzmax){
+	spasm_csr_realloc(M[k], 2 * (Mnz[k] + 1) );
       }
 
-      Bj[k][Bnz[k]] = j - T[k]; // corresponding column in B[k]
+      Mj[k][Mnz[k]] = j - T[k]; // corresponding column in B[k]
       if(Ax != NULL){
-	Bx[k][Bnz[k]] = Ax[px];
+	Mx[k][Mnz[k]] = Ax[px];
       }
-      Bnz[k]++;
+      Mnz[k]++;
       
     }
+    if(w[k] == 1) {
+      Mn[k]++; //<-- next row
+      w[k] = 0;
+    }
+
+
   }
 
   //Finalise B :
 
   for(k = 0; k < N; k++){
-    Bp[k][An] = Bnz[k];
-    spasm_csr_realloc(B[k], -1);
+    Mp[k][An] = Mnz[k];
+    spasm_csr_realloc(M[k], -1);
   }
 
-  free(Bj);
-  free(Bx);
-  free(Bp);
-  free(Bnz);
-  free(Bm);
+  free(M);
+  free(Mj);
+  free(Mx);
+  free(Mp);
+  free(Mnz);
+  free(Mn);
+  free(w);
 
 }
 

@@ -65,6 +65,17 @@ spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
 
 }
 
+super_spasm *super_spasm_alloc(int ntot, int n_mat, int m, int nzmax, int prime, int with_values){
+  super_spasm *A;
+
+  assert(n_mat <= ntot);
+
+  A = spasm_malloc(sizeof(super_spasm));
+  A->M = spasm_csr_alloc(n_mat, m, nzmax, prime, with_values);
+  A->n = ntot;
+  A->p = spasm_malloc(n_mat * sizeof(int));
+}
+
 
 /* allocate a sparse matrix (triplet form) */
 spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_values) {
@@ -127,6 +138,15 @@ void spasm_csr_free(spasm *A) {
   free(A->p);
   free(A->j);
   free(A->x); // trick : free does nothing on NULL pointer
+  free(A);
+}
+
+void super_spasm_free(super_spasm *A){
+  if(A == NULL) {
+    return;
+  }
+  spasm_csr_free(A->M);
+  free(A->p);
   free(A);
 }
 

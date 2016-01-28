@@ -569,9 +569,16 @@ int rows_to_watch(block_t *blocks, int *r_tab, int n_blocks) {
  *
  * Ici seul le dernier bloc observé à la diagonale k est stocké à D[k]. On n'a pas
  * d'information sur les autres blocs.
+ *
+ * Pour chaque intervalle de colonnes, détermine également le nombre de lignes non vides dans l'intervalle en question. 
+ *
+ * Utilise un tableau auxiliaire w, initialisé à -1 pour chaque intervalle de colonnes. si w[k] != -1 alors w[k] représente la dernière ligne rencontrée.
+ *
+ * La valeur renvoyée est le nombre de blocs non vides.
+ * Le nombre de lignes non vides par intervalle de colonne est stocké dans le tableau n_rows.
  */
-int count_filled_blocks(const spasm *M, const block_t *blocks, int n_blocks, const int *Q) {
- int i, l, p, j, *Mp, *Mj, n, c, k, fill, *D;
+int count_non_empty_blocks_and_rows(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, int *n_rows) {
+  int i, l, p, j, *Mp, *Mj, n, c, k, fill, *D, *w;
 
   Mp = M->p;
   Mj = M->j;
@@ -580,8 +587,11 @@ int count_filled_blocks(const spasm *M, const block_t *blocks, int n_blocks, con
   fill = 0;
 
   D = spasm_malloc(n_blocks * sizeof(int));
+  w = spasm_malloc(n_blocks * sizeof(int));
   for (i = 0; i < n_blocks; i++) {
     D[i] = -1;
+    w[i] = -1;
+    n_rows[i] = 0;
   }
 
   for (i = 0; i < n; i++) {
@@ -589,7 +599,11 @@ int count_filled_blocks(const spasm *M, const block_t *blocks, int n_blocks, con
 
     for (p = Mp[i]; p < Mp[i+1]; p++) {
       j = Mj[p];
-      c = Q[j]; 
+      c = Q[j]; // <--- numéro de l'intervalle de colonne.
+      if(w[c] != i){
+	n_rows[c]++;
+	w[c] = i;
+      } 
       k = c - l; // <--- numéro de la diagonale à laquelle appartient l'entrée.
       if (D[k] != l) {
 	fill++;
@@ -598,26 +612,36 @@ int count_filled_blocks(const spasm *M, const block_t *blocks, int n_blocks, con
     }
   }
   free(D);
+  free(w);
   return fill;
 }
 
 /*
- * Détermine la liste des emplacements des blocs non vides si ils sont "intéressants"
- * la valeur renoyée est le nombre de blocs "intéressants" à regarder
+ * Détermine la liste des emplacements des blocs non vides.
+ * Pour chaque intervalle de colonnes, détermine la liste P des lignes non vides.
+ * La valeur renvoyée est le nombre de blocs non vides.
  */
-int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, blk_t *where) {
-  int i, l, p, j, *Mp, *Mj, n, c, k, fill, *D, count;
+int non_empty_blocks_and_rows_list(const spasm *M, const block_t *blocks, int n_blocks, int * n_rows, const int *Q, blk_t *where, int ***P_pt) {
+  int i, l, p, j, *Mp, *Mj, n, c, k, *D, count, **P, *w;
 
   Mp = M->p;
   Mj = M->j;
   n = M->n;
   l = 0; // <--- numéro du bloc de ligne qu'on regarde.
-  fill = 0;
+  //fill = 0;
   count = 0;
 
+ P = spasm_malloc(n_blocks * sizeof(int*));
+  *P_pt = P;
+
+  //Get workspace.
   D = spasm_malloc(n_blocks * sizeof(int));
+  w = spasm_malloc(n_blocks * sizeof(int));
   for (i = 0; i < n_blocks; i++) {
     D[i] = -1;
+    P[i] = spasm_malloc(n_rows[i] * sizeof(int));
+    n_rows[i] = 0; // réinitialiser le compteur à 0.
+    w[i] = -1;
   }
 
   for (i = 0; i < n; i++) {
@@ -625,16 +649,22 @@ int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, cons
 
     for (p = Mp[i]; p < Mp[i+1]; p++) {
       j = Mj[p];
-      c = Q[j]; 
+      c = Q[j]; //<--- numéro de l'intervalle de colonne.
+      if(w[c] != i){
+	P[c][n_rows[c]] = i;
+	n_rows[c]++;
+	w[c] = i;
+      }
+ 
       k = c - l; // <--- numéro de la diagonale à laquelle appartient l'entrée.
       if (D[k] != l) {
-	fill++;
+	//fill++;
 	D[k] = l; // <--- l remplace la valeur précédente de D[k].
-	if ((k == 0) || (blocks[c].r < blocks[c].j1 - blocks[c].j0)) {
+	//if ((k == 0) || (blocks[c].r < blocks[c].j1 - blocks[c].j0)) {
 	  where[count].c = c;
 	  where[count].r = l;
 	  count++;
-	 }
+	  // }
       }
     }
   }
@@ -1359,8 +1389,8 @@ int main() {
   spasm_dm *x;
   spasm_lu **LU;
   int n_blocks, i, ne, nemax, prime, nbl;
-  int *qinv, *Q, *ri; 
-  int **p, *n_piv, **Uqinv;
+  int *qinv, *Q, *ri, *n_rows; 
+  int **p, *n_piv, **Uqinv, **rows_tab;
   block_t *blocks;
   blk_t *where;
   // spasm *Tr, *G;
@@ -1399,8 +1429,6 @@ A = spasm_compress(T);
 
   n_blocks = block_list(B, x, &blocks);
 
-  //free(x);
-
   /*
    * Trouve les blocs non vides dans la matrice de départ.
    */
@@ -1408,115 +1436,117 @@ A = spasm_compress(T);
   Q = spasm_malloc(B->m * sizeof(int)); // Table qui à une colonne associe le numéro de son intervalle.
   column_diag_number(B, blocks, Q);
 
-  nemax = count_filled_blocks(B, blocks, n_blocks, Q); // compte le nombre de blocs non vide.
+  n_rows = spasm_malloc(n_blocks * sizeof(int)); // Nombre de lignes non vide par intervalle de colonnes.
+
+  nemax = count_non_empty_blocks_and_rows(B, blocks, n_blocks, Q, n_rows); // compte le nombre de blocs non vide.
 
   where = spasm_malloc(nemax * sizeof(blk_t));
-  filled_blocks_list(B, blocks, n_blocks, Q, where); //Donne la liste des blocs non vides.
+  non_empty_blocks_and_rows_list(B, blocks, n_blocks, n_rows, Q, where, &rows_tab); //Donne la liste des blocs non vides.
   BP = blocks_spasm(where, n_blocks, nemax, prime, 0); //Matrice de la position des blocks.
 
  
   /*
    * Liste chainée de sous matrice par intervalle de colonnes.
    */
- mem_alloc = 0; 
- C = spasm_malloc(n_blocks * sizeof(spasm_list*));
-  for(i = 0; i < n_blocks; i++){
-    C[i] = NULL;
-  }
+ /* mem_alloc = 0;  */
+ /* C = spasm_malloc(n_blocks * sizeof(spasm_list*)); */
+ /*  for(i = 0; i < n_blocks; i++){ */
+ /*    C[i] = NULL; */
+ /*  } */
 
  
-  list_of_submatrices(B, BP, blocks, Q, C);
+ /*  list_of_submatrices(B, BP, blocks, Q, C); */
  
- LU = spasm_malloc(n_blocks * sizeof(spasm_lu*));
+ /* LU = spasm_malloc(n_blocks * sizeof(spasm_lu*)); */
 
-  /*
-   * Traitement de la diagonale principale.
-   */
+ /*  /\* */
+ /*   * Traitement de la diagonale principale. */
+ /*   *\/ */
 
 
-  for(i = 0; i < n_blocks; i++){
-    assert(C[i] != NULL); // Au moins une sous-matrice sur la diagonale.
-    assert(C[i]->row == i); // le dernier bloc de l'intervalle de colonne est le bloc diagonal.
+ /*  for(i = 0; i < n_blocks; i++){ */
+ /*    assert(C[i] != NULL); // Au moins une sous-matrice sur la diagonale. */
+ /*    assert(C[i]->row == i); // le dernier bloc de l'intervalle de colonne est le bloc diagonal. */
    
-    assert(C[i]->M != NULL);
-    assert(spasm_nnz(C[i]->M) != 0);
+ /*    assert(C[i]->M != NULL); */
+ /*    assert(spasm_nnz(C[i]->M) != 0); */
 
   
-    LU[i] = spasm_LU(C[i]->M, SPASM_IDENTITY_PERMUTATION, SPASM_KEEP_L);
+ /*    LU[i] = spasm_LU(C[i]->M, SPASM_IDENTITY_PERMUTATION, SPASM_KEEP_L); */
 
-    C[i] = spasm_list_delete_first_matrix(C[i]); //<-- plus besoin du bloc diagonal.
-    // C[i] = C[i]->up; //<-- le premier bloc de la liste est le premier au dessus de la diagonale.
+ /*    C[i] = spasm_list_delete_first_matrix(C[i]); //<-- plus besoin du bloc diagonal. */
+ /*    // C[i] = C[i]->up; //<-- le premier bloc de la liste est le premier au dessus de la diagonale. */
 
-    blocks[i].r = LU[i]->U->n;
+ /*    blocks[i].r = LU[i]->U->n; */
  
-    if(blocks[i].r == blocks[i].j1 - blocks[i].j0){
-      C[i] = spasm_list_free(C[i]); // plus de pivots à trouver sur l'intervalle de colonnes.
-    }
+ /*    if(blocks[i].r == blocks[i].j1 - blocks[i].j0){ */
+ /*      C[i] = spasm_list_free(C[i]); // plus de pivots à trouver sur l'intervalle de colonnes. */
+ /*    } */
 
-  }
+ /*  } */
 
-  /* Affichage des résultats première diag */
+ /*  /\* Affichage des résultats première diag *\/ */
 
-  for(i = 0; i < n_blocks; i++) {
-    printf("%d : (%d, %d) -- (%d, %d), rank %d\n", i, blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, blocks[i].r);
+ /*  for(i = 0; i < n_blocks; i++) { */
+ /*    printf("%d : (%d, %d) -- (%d, %d), rank %d\n", i, blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, blocks[i].r); */
 
-  }
+ /*  } */
 
-  printf("--------------------------\n");
+ /*  printf("--------------------------\n"); */
 
-  printf("blocs diagonaux : %d\n", n_blocks);
+ /*  printf("blocs diagonaux : %d\n", n_blocks); */
 
-  printf("--------------------------\n");
+ /*  printf("--------------------------\n"); */
 
-  /*
-   * Ecrit la matrice des positions des blocs sous forme "uptri_t"
-   * (diagonale par diagonale)
-   */
+ /*  /\* */
+ /*   * Ecrit la matrice des positions des blocs sous forme "uptri_t" */
+ /*   * (diagonale par diagonale) */
+ /*   *\/ */
 
-  // Suprime les blocs situé sur un intervalle de colonnes non intéressant.
+ /*  // Suprime les blocs situé sur un intervalle de colonnes non intéressant. */
   
-  ne = filled_blocks_list(B, blocks, n_blocks, Q, where);
+ /*  ne = filled_blocks_list(B, blocks, n_blocks, Q, where); */
 
-  spasm_csr_free(B);
+ /*  spasm_csr_free(B); */
 
-  // mise de la structure sous forme uptri_t pour l'avoir "diagonale par diagonale"
-  uptri_t *DS = position_uptri(where, n_blocks, ne, 0);
+ /*  // mise de la structure sous forme uptri_t pour l'avoir "diagonale par diagonale" */
+ /*  uptri_t *DS = position_uptri(where, n_blocks, ne, 0); */
     
-  /*
-   * Initialisation des structures de données pour calculs paresseux.
-   */  
+ /*  /\* */
+ /*   * Initialisation des structures de données pour calculs paresseux. */
+ /*   *\/   */
 
-  // récupérer le L et le U de la décomposition LU des blocs diagonaux.
-  // Initialiser tableau ri et rj
-  ri = spasm_malloc(n_blocks * sizeof(int));
+ /*  // récupérer le L et le U de la décomposition LU des blocs diagonaux. */
+ /*  // Initialiser tableau ri et rj */
+ /*  ri = spasm_malloc(n_blocks * sizeof(int)); */
 
-  L = spasm_malloc(n_blocks * sizeof(spasm_system));
-  U = spasm_malloc(n_blocks * sizeof(spasm*));
-  p = spasm_malloc(n_blocks * sizeof(int *));
-  Uqinv = spasm_malloc(n_blocks * sizeof(int *));
-  for(i = 0; i < n_blocks; i++) {
-    L[i] = NULL; // Initialisation de la liste chainée.
-    U[i] = LU[i]->U;
-    p[i] = LU[i]->p;
-    Uqinv[i] = LU[i]->qinv;
-    L[i] = spasm_system_update(L[i], LU[i]->L, LU[i]->p, 0, 0, 0);
-    ri[i] = U[i]->n;
-  }
+ /*  L = spasm_malloc(n_blocks * sizeof(spasm_system)); */
+ /*  U = spasm_malloc(n_blocks * sizeof(spasm*)); */
+ /*  p = spasm_malloc(n_blocks * sizeof(int *)); */
+ /*  Uqinv = spasm_malloc(n_blocks * sizeof(int *)); */
+ /*  for(i = 0; i < n_blocks; i++) { */
+ /*    L[i] = NULL; // Initialisation de la liste chainée. */
+ /*    U[i] = LU[i]->U; */
+ /*    p[i] = LU[i]->p; */
+ /*    Uqinv[i] = LU[i]->qinv; */
+ /*    L[i] = spasm_system_update(L[i], LU[i]->L, LU[i]->p, 0, 0, 0); */
+ /*    ri[i] = U[i]->n; */
+ /*  } */
 
-  /*
-   * Traitement de la première diagonale supérieure.
-   * Pas encore de remplissage.
-   */
+ /*  /\* */
+ /*   * Traitement de la première diagonale supérieure. */
+ /*   * Pas encore de remplissage. */
+ /*   *\/ */
 
-  nbl = upper_research(C, DS, 1, blocks, L, U, p, Uqinv, ri, &n_piv);
+ /*  nbl = upper_research(C, DS, 1, blocks, L, U, p, Uqinv, ri, &n_piv); */
 
-  printf("nombre de blocs à traiter sur la première diagonale supérieure : %d\n", nbl);
+ /*  printf("nombre de blocs à traiter sur la première diagonale supérieure : %d\n", nbl); */
 
-  for(i = 0; i < nbl; i++) {
-    printf("1ere diag sup : block %d : rank : %d \n", i, n_piv[i]);
-   }
+ /*  for(i = 0; i < nbl; i++) { */
+ /*    printf("1ere diag sup : block %d : rank : %d \n", i, n_piv[i]); */
+ /*   } */
 
-  printf("---------------------\n");
+ /*  printf("---------------------\n"); */
 
  
 /*   // remplissage des autres diagonales. */
@@ -1559,26 +1589,29 @@ A = spasm_compress(T);
 
   // libération de la mémoire, fin du programme.
   for(i = 0; i < n_blocks; i++) {
-    L[i] = spasm_system_clear(L[i]);
-    spasm_csr_free(U[i]);
-    free(Uqinv[i]);
-    free(LU[i]);
-    spasm_list_free(C[i]);
+    /* L[i] = spasm_system_clear(L[i]); */
+    /* spasm_csr_free(U[i]); */
+    /* free(Uqinv[i]); */
+    /* free(LU[i]); */
+    /* spasm_list_free(C[i]); */
+    free(rows_tab[i]);
  }
   
-  free(C);
+ 
   free(blocks);
-  free(ri);
-  free(LU);
-  free(L);
-  free(U);
-  free(p);
-  free(Uqinv);
+  free(n_rows);
+  free(rows_tab);
+  /* free(ri); */
+  /* free(LU); */
+  /* free(L); */
+  /* free(U); */
+  /* free(p); */
+  /* free(Uqinv); */
   free(Q);
   free(where);
-  spasm_csr_free(BP);
-  free(n_piv);
-  uptri_free(DS);
+  // spasm_csr_free(BP);
+  //free(n_piv);
+  // uptri_free(DS);
   // uptri_free(FS);
  
   return 0;
