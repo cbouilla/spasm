@@ -213,6 +213,7 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm *B, int k, int *xi, 
 spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L);
 spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L);
 void spasm_free_LU(spasm_lu *X);
+spasm_lu *super_spasm_LU(super_spasm *A, int start, int keep_L);
 int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n);
 
 /* spasm_solutions.c */

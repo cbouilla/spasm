@@ -296,6 +296,113 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 }
 
 
+/*
+ * Given a matrix super_spasm A, an int start, compute the LU decomposition of A starting with row start.
+ */
+spasm_lu *super_spasm_LU(super_spasm *A, int start, int keep_L){
+  spasm_lu *N;
+  spasm *M, *U, *L;
+  int top, deff, unz, lnz, i, i_new, Mn, n, m, r, prime;
+  int *Ap, *p, *qinv, *xi, *Up, *Lp;
+  spasm_GFp *x;
+
+  //Check inputs :
+  assert(A != NULL);
+  assert(start >= 0);
+
+  M = A->M;
+  Ap = A->p;
+  Mn = M->n;
+  n = Mn - start;
+  assert(start < Mn);
+
+  prime = M->prime;
+  m = M->m;
+  r = spasm_min(n , m);
+  deff = 0;
+  //assert(deff >= 0);
+  
+
+  /* Allocate result */
+  N = spasm_malloc(sizeof(spasm_lu));
+
+  // Guess size of L and U.
+  unz = 4 * spasm_nnz(M) + n;
+  lnz = (keep_L) ? unz : 0; 
+
+  //Allocate L and U
+  N->L = L = (keep_L) ? spasm_csr_alloc(n, r, lnz, prime, 1) : NULL;
+  N->U = U = spasm_csr_alloc(r, m, unz, prime, 1);
+  Lp = (keep_L) ? L->p : NULL;
+  Up = U->p;
+
+  /* Get workspace */
+  x = spasm_malloc(m * sizeof(spasm_GFp));
+  xi = spasm_malloc(3 * m * sizeof(spasm_GFp));
+  spasm_vector_zero(xi, 3 * m);
+  N->qinv = qinv = spasm_malloc(m * sizeof(int));
+  N->p = p = spasm_malloc(n * sizeof(int));
+
+
+  /* initialisation */
+  for(i = 0; i < m; i++){
+    x[i] = 0;
+    qinv[i] = -1;
+  }
+
+  for(i = 0; i < n; i++){
+    p[i] = 0;
+  }
+
+  for(i = 0; i < r; i++){
+    Up[i] = 0;
+  }
+  lnz = unz = 0;
+
+  /* --- Main loop : compute U[i] (and L[i]) ---------- */
+  for(i = start; i < Mn; i++){
+    i_new = i - start;
+    if(keep_L){
+      Lp[i_new] = lnz;
+    }
+    Up[i_new - deff] = unz;
+
+    /* not enough room in U(L) ? realloc twice the size */
+    if(keep_L && lnz + m > L->nzmax){
+      spasm_csr_realloc(L, 2 * L->nzmax + m);
+    }
+    if(unz + m > U->nzmax){
+      spasm_csr_realloc(U, 2 * U->nzmax + m);
+    }
+
+    top = spasm_sparse_forward_solve(U, M, i, xi, x, qinv);
+    spasm_find_pivot(xi, x, top, U, L, &unz, &lnz, i_new, &deff, qinv, p, n);
+
+  }
+
+  /* --- Finalize L and U -------------------- */
+  Up[i - deff] = unz;
+  spasm_csr_resize(U, i - deff, m);
+  spasm_csr_realloc(U, -1);
+
+  if(keep_L){
+    Lp[n] = lnz;
+    spasm_csr_resize(L, n, n-deff);
+    spasm_csr_realloc(L, -1);
+  }
+
+  /* --- Finalize p ------------------------- */
+  for(i = 0; i < n; i++){
+    p[i] = Ap[p[i]];
+  }
+
+  /* free workspace */
+  free(x);
+  free(xi);
+
+  return N;
+}
+
 void spasm_free_LU(spasm_lu *X) {
   assert( X != NULL );
   spasm_csr_free(X->L);
