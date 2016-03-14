@@ -1118,6 +1118,7 @@ int main() {
   spasm_dm *x;
   spasm_lu **LU;
   int n_blocks, i, *qinv, rank;
+  unsigned int L_size;
   block_t *blocks;
   spasm *Tr, *G;
   int count, n_rows, *r_tab;
@@ -1144,13 +1145,15 @@ int main() {
  
   // calcule la liste des blocs
   n_blocks = block_list(B, x, &blocks, &LU);
-  rank = 0;
+  // rank = 0;
+  L_size = 0;
   for(i = 0; i < n_blocks; i++) {
     printf("%d : (%d, %d) -- (%d, %d), rank %d\n", i, blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, blocks[i].r);
-    rank += blocks[i].r;
+    //    rank += blocks[i].r;
+    L_size += (LU[i]->L->n * LU[i]->L->n);
   }
   printf("blocs diagonaux : %d\n", n_blocks);
-  printf("borne inf sur le rang : %d\n", rank);
+  printf("taille de L dense : %u\n", L_size*(sizeof(int)));
 
   free(x);
 
