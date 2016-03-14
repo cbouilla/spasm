@@ -343,10 +343,10 @@ void count_blocks(spasm_cc *Y, block_t *blocks, int *start) {
  * le nombre de blocs est renvoyé. Il faut passer un pointeur vers une
  * liste de blocs, qui est modifiée.
  */
-int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr) {
+int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr, spasm_lu ***LU_ptr, int *py) {
   int i, k;
   block_t *blocks;
-  // spasm_lu **LU;
+  spasm_lu **LU;
 
   // étape 1 : détermine le nombre de blocs
   k = 0;
@@ -364,8 +364,8 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr) {
 
   blocks = spasm_malloc(sizeof(block_t) * k);
   *blocks_ptr = blocks;
-  // LU = spasm_malloc(k * sizeof(spasm_lu *));
-  // *LU_ptr = LU;
+   LU = spasm_malloc(k * sizeof(spasm_lu *));
+  *LU_ptr = LU;
   
   // étape 3 : remplir la liste des blocs
   k = 0;
@@ -390,11 +390,11 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr) {
   blocks[k-1].j1 = M->m;
 
   // étape 5 : calculer les L et les rangs
-  /* for (i = 0; i < k; i++) { */
-  /*   LU[i] = sorted_submatrix_LU(M, blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, py); */
-  /*   blocks[i].r = LU[i]->U->n; */
+  for (i = 0; i < k; i++) {
+    LU[i] = sorted_submatrix_LU(M, blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, py);
+    blocks[i].r = LU[i]->U->n;
    
-  /* } */
+   }
 
 
   return k;
@@ -411,7 +411,7 @@ void remaining_pivots_init(int *R, int *C, const block_t *blocks, int n_blocks )
 
     // Intervalles des lignes :
     a = blocks[i].i0 + blocks[i].r; //<--- numéro de la ligne à partir de laquelle il n'y a plus de pivots
-    R[i] = blocks[i].i1 - a; 
+    R[i] = blocks[i].i1 - a;
 
     // Intervalles des colonnes :
     a = blocks[i].j0 + blocks[i].r; //<--- numéro de la colonne à partir de laquelle il n'y a plus de pivots
@@ -535,7 +535,7 @@ int rows_to_watch(block_t *blocks, int *r_tab, int n_blocks) {
  * La valeur renvoyée est le nombre de blocs non vides.
  * Le nombre de lignes non vides par intervalle de colonne est stocké dans le tableau n_rows.
  */
-int count_non_empty_blocks_and_rows(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, int *n_rows) {
+int count_non_empty_blocks(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, int *n_rows) {
   int i, l, p, j, *Mp, *Mj, n, c, k, fill, *D, *w;
 
   Mp = M->p;
@@ -1325,17 +1325,17 @@ int upper_research(spasm_list **C, const uptri_t *B, int d, const block_t *block
 
 int main() {
   spasm_triplet *T;
-  spasm *A, *B, *BP;
-  spasm **U;  
-  super_spasm **C;
-  spasm_system **L;
+  spasm *A, *B;
+  /* spasm **U;   */
+  /* super_spasm **C; */
+  /* spasm_system **L; */
   spasm_dm *x;
-  spasm_lu **LU;
-  int n_blocks, i, ne, nemax, prime, nbl;
-  int *qinv, *Q, *ri, *n_rows, *tmp; 
-  int **p, *n_piv, **Uqinv;
-  block_t *blocks;
-  blk_t *where;
+  /* spasm_lu **LU; */
+  int *qinv;
+  /* int *Q, *ri, *n_rows, *tmp;  */
+  /* int **p, *n_piv, **Uqinv; */
+  /* block_t *blocks; */
+  /* blk_t *where; */
   // spasm *Tr, *G;
   // int count, n_rows, Rank;
   // edge_t *rows;
@@ -1347,8 +1347,6 @@ int main() {
 A = spasm_compress(T);
 
   spasm_triplet_free(T);
-
-  prime = A->prime;
 
   /* met la matrice sous forme triangulaire par blocs
    * Calcule le rang des blocks de la première diagonale
@@ -1370,37 +1368,12 @@ A = spasm_compress(T);
    * trouve les blocs qui composent B
    */
 
-  n_blocks = block_list(B, x, &blocks);
+  //n_blocks = block_list(B, x, &blocks, &LU);
 
   /*
    * Trouve les blocs non vides dans la matrice de départ.
    */
 
-  Q = spasm_malloc(B->m * sizeof(int)); // Table qui à une colonne associe le numéro de son intervalle.
-  column_diag_number(B, blocks, Q);
-
-  n_rows = spasm_malloc(n_blocks * sizeof(int)); // Nombre de lignes non vide par intervalle de colonnes.
-  spasm_vector_zero(n_rows, n_blocks);
-
-
-  nemax = count_non_empty_blocks_and_rows(B, blocks, n_blocks, Q, n_rows); // compte le nombre de blocs non vide et le nombre de lignes non vide dans chaque intervalle de colonnes.
-
-
-  /*
-   * Tableau de matrices super_spasme pour chaque colonnes.
-   */
-  C = spasm_malloc(n_blocks * sizeof(super_spasm*));
-  tmp = spasm_malloc((n_blocks + 1) * sizeof(int));
-
-  for(i = 0; i < n_blocks; i++){
-    tmp[i] = blocks[i].i0;
-  }
- 
-  tmp[n_blocks] = B->n;
-
-  super_spasm_columns_submatrices(B, Q, tmp, n_blocks, n_rows, C, SPASM_WITH_NUMERICAL_VALUES);
-
-  free(tmp);
 
  /* LU = spasm_malloc(n_blocks * sizeof(spasm_lu*)); */
 
@@ -1538,25 +1511,25 @@ A = spasm_compress(T);
 /*   /\* } *\/ */
 
   // libération de la mémoire, fin du programme.
-  for(i = 0; i < n_blocks; i++) {
+  /* for(i = 0; i < n_blocks; i++) { */
     /* L[i] = spasm_system_clear(L[i]); */
     /* spasm_csr_free(U[i]); */
     /* free(Uqinv[i]); */
     /* free(LU[i]); */
-    super_spasm_free(C[i]);
+ /*    super_spasm_free(C[i]); */
 
- }
+ /* } */
   
  
-  free(blocks);
-  free(n_rows);
+  // free(blocks);
+  // free(n_rows);
   /* free(ri); */
   /* free(LU); */
   /* free(L); */
   /* free(U); */
   /* free(p); */
   /* free(Uqinv); */
-  free(Q);
+  // free(Q);
   //free(where);
   // spasm_csr_free(BP);
   //free(n_piv);

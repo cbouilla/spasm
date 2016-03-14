@@ -139,14 +139,17 @@ void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,
   Mnz = spasm_malloc(N * sizeof(int));
   w = spasm_malloc(N * sizeof(int));
  
+
   // Initialize matrices.
   for(k = 0; k< N; k++){
     Mm = T[k+1] - T[k]; // <--- T[N+1] = A->m.
 
     assert(Mm >= 0);
 
-    Mnz[k] = An + Mm + k; // <--- educated gess.
+    Mnz[k] = Mm + k; // <--- educated gess.
     B[k] = super_spasm_alloc(An, n_rows[k], Mm, Mnz[k], prime, (Ax != NULL) && with_values);
+
+    //printf("k : %d, mem_alloc : %zu\n", k, mem_alloc);
 
 
     M[k] = B[k]->M;
@@ -183,6 +186,8 @@ void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,
       //reallocate memory if needed :
       if(Mnz[k] + 1 > M[k]->nzmax){
 	spasm_csr_realloc(M[k], 2 * (Mnz[k] + 1) );
+	Mj[k] = M[k]->j;
+	Mx[k] = (Ax != NULL) ? M[k]->x : NULL;
       }
 
       Mj[k][Mnz[k]] = j - T[k]; // corresponding column in B[k]
