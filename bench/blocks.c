@@ -213,11 +213,11 @@ void clear_tree(tree_t **tree) {
 void blocks_dupli(block_t *blocks2, const block_t *blocks1, int nbl) {
   int i;
   for (i=0; i<nbl; i++) {
-	blocks2[i].i0 = blocks1[i].i0;
-	blocks2[i].i1 = blocks1[i].i1;
-	blocks2[i].j0 = blocks1[i].j0;
-	blocks2[i].j1 = blocks1[i].j1;
-	blocks2[i].r = blocks1[i].r;
+  blocks2[i].i0 = blocks1[i].i0;
+  blocks2[i].i1 = blocks1[i].i1;
+  blocks2[i].j0 = blocks1[i].j0;
+  blocks2[i].j1 = blocks1[i].j1;
+  blocks2[i].r = blocks1[i].r;
       }
 }
 
@@ -326,18 +326,18 @@ void count_blocks(spasm_cc *Y, block_t *blocks, int *start) {
   for(i = 0; i < Y->CC->nr; i++) {
     if (Y->SCC[i] != NULL) {
       for(j = 0; j < Y->SCC[i]->nr; j++) {
-	  a = Y->SCC[i]->rr[j];
-	  b = Y->SCC[i]->cc[j];
-	  c = Y->SCC[i]->rr[j + 1];
-	  d = Y->SCC[i]->cc[j + 1];
+        a = Y->SCC[i]->rr[j];
+        b = Y->SCC[i]->cc[j];
+        c = Y->SCC[i]->rr[j + 1];
+        d = Y->SCC[i]->cc[j + 1];
 
-	  if (blocks != NULL) {
-	    blocks[*start].i0 = a;
-	    blocks[*start].j0 = b;
-	    blocks[*start].i1 = c;
-	    blocks[*start].j1 = d;
-	  }
-	  (*start)++;
+        if (blocks != NULL) {
+          blocks[*start].i0 = a;
+          blocks[*start].j0 = b;
+          blocks[*start].i1 = c;
+          blocks[*start].j1 = d;
+        }
+        (*start)++;
       }
     }
   }
@@ -520,8 +520,8 @@ int rows_to_watch(block_t *blocks, int *r_tab, int n_blocks) {
   count = 0;
     for(i = 0; i < n_blocks; i++) {
       if (!full_rows(blocks[i], blocks[i].r)) {
-	r_tab[count] = i;
-	count++;
+  r_tab[count] = i;
+  count++;
       }
     }
   return count;
@@ -537,7 +537,7 @@ int rows_to_watch(block_t *blocks, int *r_tab, int n_blocks) {
  * d'information sur les autres blocs.
  */
 int count_filled_blocks(const spasm *M, const block_t *blocks, int n_blocks, const int *Q) {
- int i, l, p, j, *Mp, *Mj, n, c, k, fill, *D;
+  int i, l, p, j, *Mp, *Mj, n, c, k, fill, *D;
 
   Mp = M->p;
   Mj = M->j;
@@ -551,15 +551,17 @@ int count_filled_blocks(const spasm *M, const block_t *blocks, int n_blocks, con
   }
 
   for (i = 0; i < n; i++) {
-    while (blocks[l].i1 <= i) l++;
+    while (blocks[l].i1 <= i) {
+      l++;
+    }
 
     for (p = Mp[i]; p < Mp[i+1]; p++) {
       j = Mj[p];
       c = Q[j]; 
       k = c - l; // <--- numéro de la diagonale à laquelle appartient l'entrée.
       if (D[k] != l) {
-	fill++;
-	D[k] = l; // <--- l remplace la valeur précédente de D[k].
+        fill++;
+        D[k] = l; // <--- l remplace la valeur précédente de D[k].
       }
     }
   }
@@ -594,13 +596,13 @@ int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, cons
       c = Q[j]; 
       k = c - l; // <--- numéro de la diagonale à laquelle appartient l'entrée.
       if (D[k] != l) {
-	fill++;
-	D[k] = l; // <--- l remplace la valeur précédente de D[k].
-	if ((k == 0) || (blocks[c].r < blocks[c].j1 - blocks[c].j0)) {
-	  where[count].c = c;
-	  where[count].r = l;
-	  count++;
-	 }
+        fill++;
+        D[k] = l; // <--- l remplace la valeur précédente de D[k].
+        if ((k == 0) || (blocks[c].r < blocks[c].j1 - blocks[c].j0)) {
+          where[count].c = c;
+          where[count].r = l;
+          count++;
+        }
       }
     }
   }
@@ -779,12 +781,12 @@ spasm * row_intersection_graph(spasm *T, edge_t *rows, int n_blocks) {
 
       exist = exist_element(pred[jplus], j);
       if (!exist) {
-	rows[n_entry].entry = j;    // entrée courante.
-	rows[n_entry].next = jplus; // entrée suivante sur la ligne.
-	rows[n_entry].col = i;      // numéro de la colonne correspondante.
-	n_entry ++;
+  rows[n_entry].entry = j;    // entrée courante.
+  rows[n_entry].next = jplus; // entrée suivante sur la ligne.
+  rows[n_entry].col = i;      // numéro de la colonne correspondante.
+  n_entry ++;
 
-	pred[jplus] = new_element(pred[jplus], j);
+  pred[jplus] = new_element(pred[jplus], j);
       }
     }
   }
@@ -858,24 +860,24 @@ spasm * filled_structure(const spasm *A, const spasm *adjacency_graph) {
       //    pour chaque arête j --> i (arrive à la ligne i)
       // printf("%d\n", i);
       for(l = agp[i]; l < agp[i+1]; l++) {
-	j = agj[l];
-	col = agx[l];
+  j = agj[l];
+  col = agx[l];
 
-	if (j <= i) {
-	  printf("bug %d %d\n", i, j);
-	  exit(1);
-	  //      assert(j > i);
-	}
+  if (j <= i) {
+    printf("bug %d %d\n", i, j);
+    exit(1);
+    //      assert(j > i);
+  }
 
-	//        Dispatcher la ligne j de B à partir de la colonne c, dans w, et ajouter à x les nouvelles entrées
-	for(k = tmp_p[j]; k < tmp_p[j] + Bp[j+1]; k++) {
-	  r = tmp_j[k];
-	  if (r >= col && w[r] == 0) {
-	    w[r] = 1;
-	    x[x_size] = r;
-	    x_size++;
-	  }
-	}
+  //        Dispatcher la ligne j de B à partir de la colonne c, dans w, et ajouter à x les nouvelles entrées
+  for(k = tmp_p[j]; k < tmp_p[j] + Bp[j+1]; k++) {
+    r = tmp_j[k];
+    if (r >= col && w[r] == 0) {
+      w[r] = 1;
+      x[x_size] = r;
+      x_size++;
+    }
+  }
       }
 
     //    si B n'est pas assez gros pour recevoir x, réallouer B 2x plus gros
@@ -992,9 +994,9 @@ uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
       d = Bj[px] - i;
       // si on n'est pas sur la diagonale principale ajouter l'entrée
       if(d != 0) {
-	py = w[d];
-	Ti[py] = i;
-	w[d]++;
+  py = w[d];
+  Ti[py] = i;
+  w[d]++;
       }
       //printf("Ti[%d] = %d \n", py, i);
     }
