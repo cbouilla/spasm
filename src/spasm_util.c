@@ -2,6 +2,8 @@
 #include <assert.h>
 #include "spasm.h"
 
+size_t mem_alloc; 
+
 
 double spasm_wtime() {
   struct timeval ts;
@@ -143,7 +145,7 @@ void spasm_csr_free(spasm *A) {
 }
 
 void super_spasm_free(super_spasm *A){
-  if(A == NULL) {
+  if (A == NULL) {
     return;
   }
   spasm_csr_free(A->M);

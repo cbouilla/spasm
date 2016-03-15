@@ -11,9 +11,6 @@
 #include <stdio.h>
 #include <stddef.h>
 
-size_t mem_alloc; 
-
-
 /* --- primary SpaSM routines and data structures --- */
 
 typedef int spasm_GFp;

@@ -345,7 +345,7 @@ void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B,
   for(pb = Bp[l]; pb < Bp[l+1]; pb++){
     k = Bj[pb]; // column interval
     //nzmax = 4 * spasm_min(n, Cm[k]); //educated gess
-    printf("l : %d, pm : %d, mem_alloc : %zu\n", l, pm, mem_alloc);
+    // printf("l : %d, pm : %d, mem_alloc : %zu\n", l, pm, mem_alloc);
     //printf("n : %d, nzmax : %d\n", n, nzmax);
     new[pm] = spasm_csr_alloc(n, Cm[k], nzmax, A->prime, (Ax != NULL));
     mat[k] = pm;

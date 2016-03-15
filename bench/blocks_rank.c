@@ -1343,7 +1343,7 @@ int main() {
   /* charge la matrice depuis l'entrée standard */
 
   T = spasm_load_sms(stdin, 42013);
-  mem_alloc = 0;  
+  // mem_alloc = 0;  
 A = spasm_compress(T);
 
   spasm_triplet_free(T);
