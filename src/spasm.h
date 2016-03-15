@@ -169,7 +169,7 @@ spasm *spasm_transpose(const spasm *C, int keep_values);
 /* spasm_submatrix.c */
 spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int with_values);
 spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, int *py, int with_values);
-void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, int *n_rows, super_spasm **B, int with_values);
+super_spasm ** super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, int with_values);
 spasm * spasm_rows_submatrix(const spasm *A, int i0, int i1, int with_values);
 void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B, int *Q, int *Cm, int *Cjstart, spasm_list **C);
 spasm_list * spasm_list_free(spasm_list *C);
@@ -196,6 +196,7 @@ int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xi, const i
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
 int super_sparse_gax(const super_spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi);
+void super_sparse_gaxpy_dense(const super_spasm * super_M, const spasm_GFp * x, spasm_GFp * y);
 
 /* spasm_triangular.c */
 int spasm_is_upper_triangular(const spasm *A);

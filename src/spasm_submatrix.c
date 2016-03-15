@@ -111,12 +111,17 @@ spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, i
  * of the interval of columns of j, and a table T, such that 
  * T[k] is the first columns of interval J_k. return a table
  * of matrices B, such that B[k] = A[,J_k]; 
+ * N = number of diagonal blocks
+ * 
  */
-void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, int *n_rows, super_spasm **B, int with_values){
+ super_spasm ** super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, int with_values){
   int k, i, j, px, An, Mm, prime;
   int *Aj, *Ap, *Mnz, *w;
   int **Mj, **Mp, **Bp;
+  int *n_rows;
   spasm **M;
+  super_spasm **B;
+
   spasm_GFp *Ax;
   spasm_GFp **Mx;
 
@@ -130,92 +135,95 @@ void super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T,
   Ap = A->p;
   prime = A->prime;
 
-  // Get workspace
-  M = spasm_malloc(N * sizeof(spasm*));
+  Mnz = spasm_malloc(N * sizeof(int));
+  n_rows = spasm_malloc(N * sizeof(int));
+  w = spasm_malloc(N * sizeof(int));
+  for(k = 0; k < N; k++){
+    Mnz[k] = 0;
+    n_rows[k] = 0;
+    w[k] = -1;
+  }
+
+  // parcourt la matrice A une première fois :
+  // compte le nombre de NZ et de lignes non-vide de chaque tranche de colonnes.
+  for(i = 0; i < An; i++){
+    for(px = Ap[i]; px < Ap[i+1]; px++){
+      j = Aj[px];
+      k = Q[j];  // <-- index of the interval where j is.
+      if(w[k] != i) {
+	// nous découvrons une nouvelle ligne : 1ère entrée de la i-ème ligne dans la k-ème tranche de cols.
+	n_rows[k]++;
+	w[k] = i;
+      }
+      Mnz[k]++;
+    }
+  }
+
+  // n_rows et Mnz sont maintenant corrects.
+
+  B = spasm_malloc(N * sizeof(super_spasm*));
   Mj = spasm_malloc(N * sizeof(int*));
   Mp = spasm_malloc(N * sizeof(int*));
   Bp = spasm_malloc(N * sizeof(int*));
   Mx = spasm_malloc(N * sizeof(spasm_GFp*));
-  Mnz = spasm_malloc(N * sizeof(int));
-  w = spasm_malloc(N * sizeof(int));
- 
 
   // Initialize matrices.
-  for(k = 0; k< N; k++){
+  for(k = 0; k< N; k++) {
+    // nombre de colonnes de la k-ème tranche.
     Mm = T[k+1] - T[k]; // <--- T[N+1] = A->m.
 
     assert(Mm >= 0);
-
-    Mnz[k] = Mm + k; // <--- educated gess.
+    
     B[k] = super_spasm_alloc(An, n_rows[k], Mm, Mnz[k], prime, (Ax != NULL) && with_values);
 
-    //printf("k : %d, mem_alloc : %zu\n", k, mem_alloc);
-
-
-    M[k] = B[k]->M;
     Bp[k] = B[k]->p;
+    Mj[k] = B[k]->M->j;
+    Mp[k] = B[k]->M->p;
+    Mx[k] = B[k]->M->x;
 
-    Mj[k] = M[k]->j;
-    Mp[k] = M[k]->p;
-    Mx[k] = M[k]->x;
-
-    Mnz[k] = 0;
-    // Mn[k] = 0;
     w[k] = -1;
-    n_rows[k] = 0;
- 
+    Mnz[k] = 0;    // indique le nombre d'entrées non-nulles actuellement ajoutées à B[k]
+    n_rows[k] = 0; // indique le nombre de lignes non-vides  actuellement ajoutées à B[k]
   }
  
+  // parcourt la matrice A une deuxième fois, pour dispatcher ses entrées dans les tranches de cols.
   for(i = 0; i < An; i++){
 
-    //Initialise Bp :
-    for(k = 0; k < N; k++){
-      Mp[k][n_rows[k]] = Mnz[k];
-    }
-
-    for(px = Ap[i]; px < Ap[i+1]; px++){
+    for(px = Ap[i]; px < Ap[i+1]; px++) {
       j = Aj[px];
       k = Q[j]; // <-- index of the interval where j is.
-      if(w[k] != i){
+      if (w[k] != i) {
+	// première entrée sur la ligne i dans la k-ème tranche de colonnes.
+	// indiquer la position du début de la nouvelle ligne.
+	Mp[k][n_rows[k]] = Mnz[k];
 	Bp[k][n_rows[k]] = i; // row n_rows[k] of M[k] is row i of A.
 	n_rows[k]++;
 	w[k] = i; // at least 1 entrie on this row on interval k.
       }
       // update matrix M[k] :
 
-      //reallocate memory if needed :
-      if(Mnz[k] + 1 > M[k]->nzmax){
-	spasm_csr_realloc(M[k], 2 * (Mnz[k] + 1) );
-	Mj[k] = M[k]->j;
-	Mx[k] = (Ax != NULL) ? M[k]->x : NULL;
-      }
-
       Mj[k][Mnz[k]] = j - T[k]; // corresponding column in B[k]
-      if(Ax != NULL){
+      if (Ax != NULL) {
 	Mx[k][Mnz[k]] = Ax[px];
       }
       Mnz[k]++;
-      
     }
-
-
   }
 
-  //Finalise B :
-
+  // Finalize B
   for(k = 0; k < N; k++){
     Mp[k][n_rows[k]] = Mnz[k];
-    spasm_csr_realloc(M[k], -1);
   }
 
-  free(M);
   free(Mj);
   free(Mx);
   free(Mp);
   free(Bp);
   free(Mnz);
   free(w);
+  free(n_rows);
 
+  return B;
 }
 
 

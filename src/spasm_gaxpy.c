@@ -152,3 +152,30 @@ int super_sparse_gax(const super_spasm * M, const spasm_GFp * x, const int *xi, 
     free(wi);
     return nz;
 }
+
+
+
+/*
+ * (dense vector) * (sparse) Matrix Compute y = x * M, where x and y are DENSE.
+ */
+void super_sparse_gaxpy_dense(const super_spasm * super_M, const spasm_GFp * x, spasm_GFp * y) {
+  int i, compressed_n, prime, *Ap, *Aj, *Mp;
+  spasm_GFp *Ax;
+ const spasm *A;
+
+    /* check inputs */
+    A = super_M->M;
+    assert(x != NULL);
+    
+    compressed_n = A->n;
+    
+    Mp = super_M->p;
+    Ap = A->p;
+    Aj = A->j;
+    Ax = A->x;
+    prime = A->prime;
+
+    for (i = 0; i < compressed_n; i++) {
+      spasm_scatter(Aj, Ax, Ap[i], Ap[i + 1], x[Mp[i]], y, prime);
+    }    
+}

@@ -26,5 +26,7 @@ int main() {
   }
 
   spasm_csr_free(C);
+  free(x);
+  free(y);
   return 0;
 }
