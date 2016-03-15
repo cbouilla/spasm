@@ -1156,6 +1156,32 @@ int main() {
 
   free(x);
 
+  int64_t total = 0;
+  /* expérience : alloue des matrices L */
+  spasm_GFp **dense_L = spasm_malloc(n_blocks * sizeof (spasm_GFp *));
+  for(i = 0; i < n_blocks; i++) {
+    int64_t d = blocks[i].i1 - blocks[i].i0;
+    //printf("%d : %d\n", i, d);
+    total += d*d * sizeof(spasm_GFp);
+    dense_L[i] = spasm_malloc(d * d * sizeof (spasm_GFp));
+  }
+
+  printf("TOTAL : %" PRId64 " bytes (%.1f Go)\n", total, (1.0 * total) / 1024 / 1024 / 1024);
+
+  for(i = 0; i < n_blocks; i++) {
+    int d = blocks[i].i1 - blocks[i].i0;
+    printf("\rfilling L[%d] -- size %d", i, d);
+    fflush(stdout);
+    
+    for(int j = 0; j < d; j++) {
+      for(int k = 0; k < d; k++) {
+        dense_L[i][j*d + k] =  (i ^ j) + k;
+      }
+    }
+  }
+  sleep();
+  exit(0);
+
   int *Q, fill, start, last_diag, entries;
   blk_t *where;
    
