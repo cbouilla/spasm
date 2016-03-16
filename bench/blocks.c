@@ -570,44 +570,49 @@ int count_filled_blocks(const spasm *M, const block_t *blocks, int n_blocks, con
 }
 
 /*
- * Détermine la liste des emplacements des blocs non vides si ils sont "intéressants"
- * la valeur renoyée est le nombre de blocs "intéressants" à regarder
+ * Détermine la liste des emplacements des blocs non vides.
  */
-int filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, blk_t *where) {
-  int i, l, p, j, *Mp, *Mj, n, c, k, fill, *D, count;
+blk_t * filled_blocks_list(const spasm *M, const block_t *blocks, int n_blocks, const int *Q, int fill) {
+  int i, l, p, j, *Mp, *Mj, n, c, k, *D, count;
+  blk_t * where;
 
   Mp = M->p;
   Mj = M->j;
   n = M->n;
   l = 0; // <--- numéro du bloc de ligne qu'on regarde.
-  fill = 0;
-  count = 0;
+  count = 0; // <--- nombre de blocs qu'on a ajouté à la liste
 
+  // Initialisation de la liste de blocs. 
+  where = spasm_malloc(fill * sizeof(blk_t));
+  for(i = 0; i < n_blocks; i++) {
+    where[i].c = -1;
+    where[i].r = -1;
+  }
+
+  // D[i] =  numéro du dernier intervalle de ligne rencontré sur la diagonale D
   D = spasm_malloc(n_blocks * sizeof(int));
   for (i = 0; i < n_blocks; i++) {
     D[i] = -1;
   }
 
   for (i = 0; i < n; i++) {
-    while (blocks[l].i1 <= i) l++;
+    while (blocks[l].i1 <= i) l++; // l = numéro de l'intervalle de lignes auquel i appartient. 
 
     for (p = Mp[i]; p < Mp[i+1]; p++) {
       j = Mj[p];
       c = Q[j]; 
       k = c - l; // <--- numéro de la diagonale à laquelle appartient l'entrée.
-      if (D[k] != l) {
-        fill++;
+      if (D[k] != l) { 
+	// j est la première entrée observée sur le bloc (l, c).
         D[k] = l; // <--- l remplace la valeur précédente de D[k].
-        if ((k == 0) || (blocks[c].r < blocks[c].j1 - blocks[c].j0)) {
-          where[count].c = c;
-          where[count].r = l;
-          count++;
-        }
+	where[count].c = c;
+	where[count].r = l;
+	count++;
       }
     }
   }
   free(D);
-  return count;
+  return where;
 }
 
 
@@ -669,6 +674,7 @@ uptri_t * position_uptri(const blk_t *w, int n_blocks, int count) {
 /*
  * Donne la transposée de la matrice de positions des blocs, à partir de la liste "where"
  * du nombre de blocs "count" et du nombres de blocs diagonaux "n_blocks".
+ * CHARLES THINKS : est-ce qu'on ne pourrait pas simplement utiliser la fonction qui convertit une matrice triplet en CSR ?
  */
 spasm * blocks_spasm(const blk_t *w, int n_blocks, int count, int prime, int transpose) {
   int k, *Tp, *Tj, *tmp, sum, p;
@@ -1112,6 +1118,7 @@ uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
 /* } */
 
 
+
 /**************** Fonction main *********************/
 
 int main() {
@@ -1145,87 +1152,41 @@ int main() {
   //spasm_save_csr(stdout, B);
 
  
-  // calcule la liste des blocs
+  // calcule la liste des blocs diagonaux
   n_blocks = block_list(B, x, &blocks, &LU);
-  // rank = 0;
-  L_size = 0;
+  rank = 0;
+  // L_size = 0;
   for(i = 0; i < n_blocks; i++) {
     printf("%d : (%d, %d) -- (%d, %d), rank %d\n", i, blocks[i].i0, blocks[i].j0, blocks[i].i1, blocks[i].j1, blocks[i].r);
-    //    rank += blocks[i].r;
-    L_size += (LU[i]->L->n * LU[i]->L->n);
+    rank += blocks[i].r;
+    // L_size += (LU[i]->L->n * LU[i]->L->n);
   }
   printf("blocs diagonaux : %d\n", n_blocks);
-  printf("taille de L dense : %u\n", L_size*(sizeof(int)));
+  //printf("taille de L dense : %u\n", L_size*(sizeof(int)));
 
-  free(x);
-
-  int64_t total = 0;
-  /* expérience : alloue des matrices L */
-  spasm_GFp **dense_L = spasm_malloc(n_blocks * sizeof (spasm_GFp *));
-  for(i = 0; i < n_blocks; i++) {
-    int64_t d = blocks[i].i1 - blocks[i].i0;
-    //printf("%d : %d\n", i, d);
-    total += d*d * sizeof(spasm_GFp);
-    dense_L[i] = spasm_malloc(d * d * sizeof (spasm_GFp));
-  }
-
-  printf("TOTAL : %" PRId64 " bytes (%.1f Go)\n", total, (1.0 * total) / 1024 / 1024 / 1024);
-
-  for(i = 0; i < n_blocks; i++) {
-    int d = blocks[i].i1 - blocks[i].i0;
-    printf("\rfilling L[%d] -- size %d", i, d);
-    fflush(stdout);
-    
-    for(int j = 0; j < d; j++) {
-      for(int k = 0; k < d; k++) {
-        dense_L[i][j*d + k] =  (i ^ j) + k;
-      }
-    }
-  }
-  sleep();
-  exit(0);
+  free(x); // le vieil objet DM : exit
 
   int *Q, fill, start, last_diag, entries;
   blk_t *where;
    
 
-  // allocation mémoire de not_empty et Q
-  //not_empty = malloc(n_blocks * sizeof(int));
-   Q = malloc(B->m * sizeof(int));
+  /* obtention de la structure par blocs de la matrice de départ */
 
   // trouver le numéro de l'intervalle auquel appartient une colonne.
+  // Q[j] = numéro de l'intervalle auquel appartient la colonne j.
+  Q = malloc(B->m * sizeof(int));
   column_diag_number(B, blocks, Q);
-  printf("-------------------------\n");
-
-  // trouver le nombre de diagonales ayant au moins un bloc non vide.
-  // n_diags = diag_count(B, blocks1, Q, not_empty);
-
-  //printf("%d\n", n_diags);
-
 
   fill = count_filled_blocks(B, blocks, n_blocks, Q); // <--- nombre total de blocs non vide.
+  printf("nombre total de blocs non-vide dans la structure initiale : %d\n", fill);
 
-  printf("nombre total de blocks non-vide : %d\n", fill);
+  // remplit where en donnant l'intervalle de ligne (where.r) et l'intervalle de colonne (where. c) de tous les blocs non vides.
+  where = filled_blocks_list(B, blocks, n_blocks, Q, fill); 
 
-  //allocation de mémoire de where.
-  where = malloc(fill * sizeof(blk_t));
-  for (i = 0; i < fill; i++) {
-    where[i].c = -1;
-    where[i].r = -1;
-  }
-    
-  count = filled_blocks_list(B, blocks, n_blocks, Q, where);
-  printf("nombre de blocs structure initiale %d\n", count);
+  // calcule la matrice des blocks
+  Tr = blocks_spasm(where, n_blocks, fill, B->prime, 1);
 
-  Tr = blocks_spasm(where, n_blocks, count, B->prime, 1);
-  //#else
-  // for debugging purposes
-  //Tr = spasm_transpose(A, 0);
-  //#endif
-
- printf("----------------------\n");
-
- /* remplissage : on oublie dans un premier temps */
+  /* remplissage : on oublie dans un premier temps */
 
   /* spasm_row_entries_sort(Tr, 0); */
   /* rows = spasm_malloc((spasm_nnz(Tr) - n_blocks) * sizeof(edge_t)); */
@@ -1235,9 +1196,7 @@ int main() {
   /* spasm * blocks_mat = blocks_spasm(where, n_blocks, count, B->prime, 0); */
   /* uptri_t *FS; */
 
-  
-
-  /* printf("nombre d'arêtes graphe d'adjacence : %d\n", spasm_nnz(row_inter)); */
+    /* printf("nombre d'arêtes graphe d'adjacence : %d\n", spasm_nnz(row_inter)); */
   /*  G = filled_structure(blocks_mat, row_inter); */
   
   /* printf("nombre de blocs dus au remplissage : %d\n", G->nzmax); */
@@ -1250,6 +1209,19 @@ int main() {
   /* printf("nombre de blocs intéressants au total : %d\n", FS->nzmax + n_blocks); */
 
   /* libération de la mémoire, fin du programme. */
+
+  /* DÉCOUPAGE EN TRANCHES DE COLONNES */
+  int *first_col = spasm_malloc((n_blocks + 1) * sizeof(int));
+  for(i = 0; i < n_blocks; i++){
+    first_col[i] = blocks[i].j0;
+  }
+  first_col[n_blocks] = B->m;
+
+  super_spasm **column_slices = super_spasm_columns_submatrices(B, Q, first_col, n_blocks, 1);
+
+  // initialiser une matrice U (vide) par tranche de colonnes
+  // initialiser une liste de matrices L, vide, par tranche de lignes
+
 
   for(i = 0; i < n_blocks; i++){
     spasm_free_LU(LU[i]);
