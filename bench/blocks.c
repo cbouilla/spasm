@@ -966,6 +966,7 @@ uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
     nnz += Bp[i+1] - Bp[i] - 1;  
   }
 
+  // printf("nnz : %d\n", nnz);
   /*Allocate result*/
   T = uptri_alloc(nnz, n_blocks, 1, 0);
   Td = T->d;
@@ -1151,7 +1152,8 @@ int main() {
   free(qinv);
   //spasm_save_csr(stdout, B);
 
- 
+ spasm_csr_free(A);
+
   // calcule la liste des blocs diagonaux
   n_blocks = block_list(B, x, &blocks, &LU);
   rank = 0;
@@ -1186,29 +1188,35 @@ int main() {
   // calcule la matrice des blocks
   Tr = blocks_spasm(where, n_blocks, fill, B->prime, 1);
 
-  /* remplissage : on oublie dans un premier temps */
+  /* REMPLISSAGE */
 
-  /* spasm_row_entries_sort(Tr, 0); */
-  /* rows = spasm_malloc((spasm_nnz(Tr) - n_blocks) * sizeof(edge_t)); */
+  spasm_row_entries_sort(Tr, 0);
+
+  rows = spasm_malloc((spasm_nnz(Tr) - n_blocks) * sizeof(edge_t));
+  
+  spasm *row_inter = row_intersection_graph(Tr, rows, n_blocks);
+  spasm * blocks_mat = blocks_spasm(where, n_blocks, fill, B->prime, 0);
+
+  free(where);
+  uptri_t *FS;
+
+    printf("nombre d'arêtes graphe d'adjacence : %d\n", spasm_nnz(row_inter));
+   G = filled_structure(blocks_mat, row_inter);
 
   
-  /* spasm *row_inter = row_intersection_graph(Tr, rows, n_blocks); */
-  /* spasm * blocks_mat = blocks_spasm(where, n_blocks, count, B->prime, 0); */
-  /* uptri_t *FS; */
+  printf("nombre de blocs dus au remplissage : %d\n", G->nzmax);
 
-    /* printf("nombre d'arêtes graphe d'adjacence : %d\n", spasm_nnz(row_inter)); */
-  /*  G = filled_structure(blocks_mat, row_inter); */
-  
-  /* printf("nombre de blocs dus au remplissage : %d\n", G->nzmax); */
+  r_tab = spasm_malloc(n_blocks *sizeof(int));
 
-  /* r_tab = spasm_malloc(n_blocks *sizeof(int));   */
+  n_rows = rows_to_watch(blocks, r_tab, n_blocks);
+  FS = final_structure_uptri(G, r_tab, n_rows);
 
-  /* n_rows = rows_to_watch(blocks, r_tab, n_blocks); */
-  /* FS = final_structure_uptri(G, r_tab, n_rows); */
-
-  /* printf("nombre de blocs intéressants au total : %d\n", FS->nzmax + n_blocks); */
-
-  /* libération de la mémoire, fin du programme. */
+  spasm_csr_free(G);
+  spasm_csr_free(Tr);
+  spasm_csr_free(row_inter);
+  spasm_csr_free(blocks_mat);
+ 
+  printf("nombre de blocs intéressants au total : %d\n", FS->nzmax + n_blocks);
 
   /* DÉCOUPAGE EN TRANCHES DE COLONNES */
   int *first_col = spasm_malloc((n_blocks + 1) * sizeof(int));
@@ -1219,25 +1227,26 @@ int main() {
 
   super_spasm **column_slices = super_spasm_columns_submatrices(B, Q, first_col, n_blocks, 1);
 
+  free(first_col);
+  spasm_csr_free(B);
   // initialiser une matrice U (vide) par tranche de colonnes
   // initialiser une liste de matrices L, vide, par tranche de lignes
 
+  /* libération de la mémoire */
 
   for(i = 0; i < n_blocks; i++){
     spasm_free_LU(LU[i]);
+    super_spasm_free(column_slices[i]);
   }
 
+  uptri_free(FS);
+  free(column_slices);
   free(Q);
   free(LU);
   //free(rows);
-  //free(r_tab);
+  free(r_tab);
   free(blocks);
-  spasm_csr_free(B);
-  spasm_csr_free(A);
-  spasm_csr_free(Tr);
-  // spasm_csr_free(G);
-  //spasm_csr_free(row_inter);
-  // spasm_csr_free(blocks_mat);
+ 
   // uptri_free(FS);
   return 0;
 }
