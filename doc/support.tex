@@ -76,6 +76,18 @@ droit. En effet, il y a un risque que les opérations précédentes
 dominent l'ensemble du processus de résolution de $x \cdot M = y$ dans
 certains cas ($y$ très très très creux).
 
+Le seul moyen que je vois de contourner ce problème consiste à
+déterminer quelles matrices $L_k$ ``rencontrent'' le support du membre
+droit $y$, et de ne ``dispatcher'' QUE ces matrices-là dans les
+vecteurs \verb|T| et \verb|rinv|. 
+
+Et pour déterminer quelles matrices $L_k$ rencontrent le support de
+$y$ ? Il faudrait disperser les indices $k$ qui sont présents dans un
+tableau, puis itérer sur le support de $y$ (on a des indices de
+lignes). Déterminer pour chacun à quel intervalle de lignes il
+appartient, et si on tombe sur un des $k$ répertoriés, on traite
+$L_k$, et on la marque comme traitée (pour ne pas la traiter deux fois).
+
 \subsection{Algorithme "de base" :}
 
 \begin{algorithmic}
