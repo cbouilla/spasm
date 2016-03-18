@@ -1246,7 +1246,6 @@ int main() {
   //free(rows);
   free(r_tab);
   free(blocks);
- 
-  // uptri_free(FS);
+
   return 0;
 }
