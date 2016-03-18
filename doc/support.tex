@@ -19,11 +19,62 @@
 
 
 \section{Résolution d'un système $y \cdot M = x$}
-On dispose d'une suite de matrices $L_0, L_1, /ldots, L_N$ trapézoidales inférieures permutées qui représentent la matrice $M$. On rappelle que $M$ est carrée de taille $n \times n$. (attention, certains de ces $L_k$ peuvent être vides, dans ce cas, les matrices ne sont pas stockées). On suppose que pour chacune de ses matrices $L_k$, on dispose d'une permutation \verb$q_k$ telle que pour toute colonne \verb$j$ de $L_k$, \verb$q_k[j]$ est l'indice de la colonne correspondante dans $M$.
+On dispose d'une suite de matrices $L_0, L_1, \ldots, L_N$
+trapézoidales inférieures permutées qui représentent la matrice
+$M$. On rappelle que $M$ est carrée de taille $n \times n$.
+(attention, certains de ces $L_k$ peuvent être vides, dans ce cas, les
+matrices ne sont pas stockées). On suppose que pour chacune de ses
+matrices $L_k$, on dispose d'une permutation \verb$q_k$ telle que pour
+toute colonne \verb$j$ de $L_k$, \verb$q_k[j]$ est l'indice de la
+colonne correspondante dans $M$.
 
-De plus on dispose d'un tableau \verb$T$ tel que pour tout \verb$i$, $0 /leq \verb|i| < n$, $\verb|T[i]| = k$ implique que la ligne \verb$i$ de $M$ est représenté dans la matrice $L_k$ (il n'y en a qu'une seule). Si $k = -1$ alors \verb$i$ appartient à un "bloc d'identité". On dispose également d'une permutation \verb$rinv$ telle que \verb$rinv[i] = i_new$ implique que l'indice de la ligne \verb$i$ dans la matrice $L_k$ est \verb$i_new$, si $\verb|T[i]| = k \not= -1$. On ne regardera jamais la valeur de \verb$rinv[i]$ dans le cas où \verb$T[i]$ sera négatif.
+De plus on dispose d'un tableau \verb$T$ tel que pour tout \verb$i$,
+$0 \leq \verb|i| < n$, $\verb|T[i]| = k$ implique que la ligne
+\verb$i$ de $M$ est représenté dans la matrice $L_k$ (il n'y en a
+qu'une seule). Si $k = -1$ alors \verb$i$ appartient à un "bloc
+d'identité". On dispose également d'une permutation \verb$rinv$ telle
+que \verb$rinv[i] = i_new$ implique que l'indice de la ligne \verb$i$
+dans la matrice $L_k$ est \verb$i_new$, si $\verb|T[i]| = k \not= -1$.
+On ne regardera jamais la valeur de \verb$rinv[i]$ dans le cas où
+\verb$T[i]$ sera négatif.
 
-Ceci étant dit, on peut écrire l'ébauche d'un algorithme qui recherche le support de $y$ :
+Ceci étant dit, on peut écrire l'ébauche d'un algorithme qui recherche
+le support de $y$ :
+
+\subsection{Problèmes autour de \verb|T| et \verb|rinv|}
+
+On possède, pour chaque matrice $M$ (donc chaque diagonale), une liste
+des matrices $L_k$ qui sont présentes. Chaque matrice $L_k$ est munie
+d'un tableau \verb|r| tel que \verb|r[i]| donne l'indice dans la
+matrice $M$ de la ligne qui correspond à la $i$-ème ligne de $L_k$.
+
+On ne peut pas stocker les vecteurs  \verb|T| et \verb|rinv| pour
+chaque diagonale, car cela pourrait nécessiter l'espace de
+$\mathcal{O}(n)$ vecteurs denses.
+
+Je propose la technique suivante : au début du calcul on alloue
+\emph{un} vecteur  \verb|T|, \emph{un} vecteur \verb|rinv|. Ces
+tableaux sont initialement initalisés avec des $-1$.
+
+Au début du traitement de chaque matrice $M$, on met dedans les
+valeurs adaptées à cette matrice $M$. Une fois que le traitement de
+$M$ est fini, on restaure les deux vecteurs dans l'état d'origine.
+
+Ceci se fait de la façon suivante.  Pour chacune des matrices $L_k$
+présente dans la diagonale, on itère sur la permutation \verb|r|
+associée à la matrice. On sait donc que la $i$-ème ligne de $L_k$ est
+la $j$-ème ligne de $M$. On fixe \verb|T[j] = k| et \verb|rinv[j] = i|.
+
+Une fois que les calculs avec $M$ sont finis, on refait le même
+cirque que précédement, mais en mettant des $-1$ dans les cases des
+tableaux. Du coup, une fois le processus terminé, les tableaux sont
+revenus dans l'état initial.
+
+Ceci est peut-être optimisable, en considérant qu'il suffit de
+s'occuper des indices $i$ qui apparaissent dans le support du membre
+droit. En effet, il y a un risque que les opérations précédentes
+dominent l'ensemble du processus de résolution de $x \cdot M = y$ dans
+certains cas ($y$ très très très creux).
 
 \subsection{Algorithme "de base" :}
 
