@@ -562,7 +562,7 @@ int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, super_spasm
   /* --- Find pivot and dispatch coeffs ----------------------------------- */
   ipiv = -1; //<--- no pivot found so far.
 
-  if(L != NULL){
+ if(L != NULL){
     p[li] = i; //current row in compressed L is i. 
   }
 
@@ -572,6 +572,7 @@ int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, super_spasm
     //if x[j] = 0 (numerical cancelation) we ignore it
     if(x[j] == 0) continue;
 
+   
     if(qinv[j] < 0) {
       // no pivot on column j yet.
       
