@@ -7,10 +7,9 @@ int main(){
   spasm *A, *U;
   super_spasm *L;
   spasm_triplet *T1, *T2;
-  spasm_lu *LU;
   int r, n, m, i, j, unz, lnz, prime, li, ui, top, npiv, found;
-  int *xi, *yi, *qinv, *R, *Lp, *Up, *w;
-  spasm_GFp *x, *y;
+  int *xi, *qinv, *R, *Lp, *Up;
+  spasm_GFp *x, *y, *u, *v;
 
 
   /*loading matrix */
@@ -111,43 +110,42 @@ int main(){
   spasm_csr_resize(L->M, li, n);
   spasm_csr_realloc(L->M, -1);
 
-  //free(x);
-  //free(xi);
+  free(x);
 
   /* Check result */
-  LU = spasm_LU(A, NULL, 1);
+  // LU = spasm_LU(A, NULL, 1);
 
-  assert(npiv == LU->U->n);
+  // assert(npiv == LU->U->n);
   r = npiv;
 
-  // check qinv :
-  for(i = 0; i < m; i++){
-    if(qinv[i] != LU->qinv[i]){
-      printf("Not ok qinv column %d \n", i);
-      exit(0);
-    }
-  }
+  /*get workspace */
+  x = malloc(n * sizeof(spasm_GFp));
+  y = malloc(m * sizeof(spasm_GFp));
+  u = malloc(n * sizeof(spasm_GFp));
+  v = malloc(m * sizeof(spasm_GFp));
 
-  // check U :
-for (i = 0; i < npiv; i++){
-    if(U->p[i+1] != LU->U->p[i+1]){
-      printf("Not ok U row %d\n", i);
-      exit(0);
+for(i = 0; i < n; i++) {
+    for(j = 0; j < n; j++) {
+      x[j] = 0;
+      u[j] = 0;
     }
-    for(j = U->p[i]; j < U->p[i+1]; j++){
-      if(U->j[j] != LU->U->j[j]){
-	printf("Not ok U row %d colums \n", i);
+    for(j = 0; j < m; j++) {
+      y[j] = 0;
+      v[j] = 0;
+    }
+    x[i] = 1;
+
+    spasm_gaxpy(A, x, y);     // y <- x*A
+    super_sparse_gaxpy_dense(L, x, u); // u <- x*L
+    spasm_gaxpy(U, u, v); // v <- (x*L)*U
+
+    for(j = 0; j < m; j++) {
+      if (y[j] != v[j]) {
+	printf("not ok %d - L*U == A (col %d)\n", j);
 	exit(0);
       }
-      if(U->x[j] != LU->U->x[j]){
-	printf("Not ok U row %d entries \n", i);
-	exit(0);
-	}
     }
   }
-
-
-/* check L */
 
 
  printf("ok super_find_pivot \n");
@@ -156,9 +154,11 @@ for (i = 0; i < npiv; i++){
   spasm_csr_free(U);
   spasm_csr_free(A);
   super_spasm_free(L);
-  spasm_free_LU(LU);
   free(x);
   free(xi);
+  free(y);
+  free(v);
+  free(u);
   free(qinv);
   free(R);
   //  free(w);
