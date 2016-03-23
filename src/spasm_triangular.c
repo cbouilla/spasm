@@ -379,3 +379,85 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
 }
 
 
+/*
+ * Solve a system x*L = y with L "almost triangular" 
+ * with (implicit) pivots on its diagonal.
+ *
+ * L : super_spasm "triangular" system.
+ * y : right-hand side scattered in a dense vector of size L->n
+ * yi : y pattern
+ * start : begining of yi
+ * x : solution (vector size L->n)
+ * xi : x pattern
+ *
+ * retrun value top : begining of xi
+ */
+int super_spasm_sparse_solve(super_spasm *L, int *y, int *yi, int start, int *x, int *xi){
+  int top, *pinv, n_big, *Lperm, i, n_small, p, i_new, *Lj, prime, *Lp;
+  spasm_GFp *Lx;
+
+  /* check inputs */
+  assert(L != NULL);
+  assert(L->M != NULL);
+  assert(y != NULL);
+  assert(yi != NULL);
+  assert(x != NULL);
+  assert(xi != NULL);
+
+  Lperm = L->p;
+  n_big = L->n;
+  n_small = L->M->n;
+  Lj = L->M->j;
+  Lp = L->M->p;
+  Lx = L->M->x;
+  prime = L->M->prime;
+
+  assert(start < n_small); //yi not empty.
+
+  /* get workspace */
+  // pinv[i] : corresponding row in L->M.
+  pinv = spasm_malloc(n_big * sizeof(int)); 
+
+  /* initialize pinv */
+  for(i = 0; i < n_big; i++){
+    pinv[i] = -1;
+  }
+  for(i = 0; i < n_small; i++){
+    pinv[Lperm[i]] = i;
+  }
+
+  /* find x pattern xi */
+  // xi[top : m] = Reach( L, y )
+  top = spasm_scat_reach(L->M, yi, start, n_big, n_big, xi, pinv);
+
+  /* initialize x */
+  for (p = top; p < n_big; p++) {
+    // clear x
+    x[ xi[p] ] = 0;
+  }
+
+  /* scatter y into x */
+  for (p = start; p < n_big; p++) {
+    x[ yi[p] ] = y[yi[p]];
+  }
+
+   /* iterate over the (precomputed) pattern of x (= the solution) */
+  for(p = top; p < n_big; p++){
+    i = xi[p]; // x[i] non zero.
+    i_new = pinv[i]; // corresponding row in L->M
+    
+    if(i_new == -1){
+      // implicit identity row
+      continue;
+    }
+
+    //update x
+    spasm_scatter(Lj, Lx, Lp[i_new], Lp[i_new+1], prime - x[i], x, prime);
+
+  }
+
+  /* free workspace */
+  free(pinv);
+
+  return top;
+}

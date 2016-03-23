@@ -192,6 +192,7 @@ void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_G
 /* spasm_reach.c */
 int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
 int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xi, const int *pinv);
+int spasm_scat_reach(spasm *G, int *yi, int start, int end, int l, int *xj, int *pinv);
 
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
@@ -206,6 +207,7 @@ void spasm_dense_back_solve(const spasm * L, spasm_GFp *b, spasm_GFp * x, const 
 int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, const int *q);
 int spasm_sparse_backward_solve(const spasm * L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv, int r_bound);
 int spasm_sparse_forward_solve(const spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
+int super_spasm_sparse_solve(super_spasm *L, int *y, int *yi, int start, int *x, int *xi);
 
 /* spasm_lu.c */
 spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L);

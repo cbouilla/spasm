@@ -172,3 +172,59 @@ int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xj, const i
 
     return top;
 }
+
+
+/*
+ * Compute the set of nodes from G reachable from any node in B[k] (used to
+ * determine the pattern of a sparse triangular solve)
+ *
+ * G : graph to search
+ *
+ * yi : rhs pattern.
+ *
+ * start : begining of yi. end : end of yi.
+ *
+ * l : upper-bound on both dimensions of the matrix
+ *
+ * xj: size 3l. Used as workspace. Output in xj[top:l]
+ *
+ * pinv: mapping of rows to columns of G.
+ *
+ * return value : top
+ *
+ * xj [top...l-1] = nodes reachable from graph of G*P' via nodes in B(:,k).
+ *
+ * xj [l...3l-1] used as workspace
+ */
+int spasm_scat_reach(spasm *G, int *yj, int start, int end, int l, int *xj, int *pinv){
+int p, top, *pstack, *marks;
+
+    /* check inputs */
+    assert(G != NULL);
+    assert(yj != NULL);
+    assert(xj != NULL);
+
+    top = l;
+
+    pstack = xj + l;
+    marks = pstack + l;
+
+    /*
+     * iterates over y.  For each column index j
+     * present in yi, check if j is in the pattern (i.e. if it is
+     * marked). If not, start a DFS from j and add to the pattern all
+     * columns reachable from j.
+     */
+    for (p = start; p < end; p++) {
+	if (!marks[yj[p]]) {
+	    top = spasm_dfs(yj[p], G, top, xj, pstack, marks, pinv);
+	}
+    }
+
+    /* unmark all marked nodes. */
+    for (p = top; p < l; p++) {
+      marks[ xj[p] ] = 0;
+    }
+
+    return top;
+}
