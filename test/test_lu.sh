@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..15
+echo 1..17
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/small.sms
@@ -61,3 +61,11 @@ INPUT_MATRIX=$srcdir/Matrix/rectangular_h.sms
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/rectangular_l.sms
 ./lu_find_pivot 15 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/BIOMD0000000525.int.mpl.sms
+./super_find_pivot 16 < $INPUT_MATRIX
+
+#########################################
+INPUT_MATRIX=$srcdir/Matrix/BIOMD0000000424.int.mpl.sms
+./super_find_pivot 17 < $INPUT_MATRIX

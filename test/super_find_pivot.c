@@ -2,15 +2,17 @@
 #include <assert.h>
 #include "spasm.h"
 
-int main(){
+int main(int argc, char **argv){
 
   spasm *A, *U;
   super_spasm *L;
   spasm_triplet *T1, *T2;
-  int r, n, m, i, j, unz, lnz, prime, li, ui, top, npiv, found;
+  int r, n, m, i, j, unz, lnz, prime, li, ui, top, npiv, found, test;
   int *xi, *qinv, *R, *Lp, *Up;
   spasm_GFp *x, *y, *u, *v;
 
+  assert(argc > 1);
+  test = atoi(argv[1]);
 
   /*loading matrix */
   T1 = spasm_load_sms(stdin, 42013);
@@ -141,14 +143,14 @@ for(i = 0; i < n; i++) {
 
     for(j = 0; j < m; j++) {
       if (y[j] != v[j]) {
-	printf("not ok %d - L*U == A (col %d)\n", j);
+	printf("not ok %d - L*U == A (col %d)\n", test, j);
 	exit(0);
       }
     }
   }
 
 
- printf("ok super_find_pivot \n");
+ printf("ok %d super_find_pivot \n", test);
 
   /* free memory */
   spasm_csr_free(U);
