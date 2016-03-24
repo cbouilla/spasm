@@ -2,13 +2,16 @@
 #include <assert.h>
 #include "spasm.h"
 
-int main(){
+int main(int argc, char **argv){
   spasm *A;
   spasm_triplet *T1, *T2;
   super_spasm *L, *U;
-  int r, n, m, i, j, unz, lnz, prime, li, ui, top, npiv, found;
+  int r, n, m, i, j, unz, lnz, prime, li, ui, top, npiv, found, test;
   int *xi, *yi, *qinv, *Lp, *Up;
   spasm_GFp *x, *y, *u;
+
+  assert(argc > 1);
+  test = argv[0];
 
   /* ---------- creat matrix L --------------*/
   /* Given a matrix A, we compute it's LU
@@ -157,11 +160,11 @@ int main(){
   for(i = 0; i < n ; i++){
     if(u[i] != y[i]){
       //printf("u[%d] = %d : y[%d] = %d\n", i, u[i], i, y[i]);
-       printf("not ok col %d \n", i);
+      printf("not ok %d super triangular solve col %d \n", test, i);
     }
   }
 
-  printf("ok super triangular solve \n");
+  printf("ok %d super triangular solve \n", test);
 
   /* free workspace */
   spasm_csr_free(A);
