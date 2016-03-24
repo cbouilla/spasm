@@ -149,16 +149,15 @@ int main(){
   top = super_spasm_sparse_solve(L, y, yi, 0, x, xi);
 
   /* --- check result -------- */
-  super_sparse_padded_gax_dense(L, x, u); // u <- x*L
-
+  super_sparse_gaxpy_dense(L, x, u); // u <- x*(L-I)
   for(i = 0; i < n; i++){
-    printf("x[%d] = %d\n", i, x[i]);
+    u[i] = (u[i] + x[i]) % prime;
   }
 
   for(i = 0; i < n ; i++){
     if(u[i] != y[i]){
-      // printf("u[%d] = %d : y[%d] = %d\n", i, u[i], i, y[i]);
-      // printf("not ok col %d \n", i);
+      //printf("u[%d] = %d : y[%d] = %d\n", i, u[i], i, y[i]);
+       printf("not ok col %d \n", i);
     }
   }
 

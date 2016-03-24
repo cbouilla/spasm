@@ -188,7 +188,6 @@ spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 
 /* spasm_scatter.c */
 void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime);
-void spasm_padded_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime);
 
 /* spasm_reach.c */
 int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
@@ -199,7 +198,6 @@ int spasm_scat_reach(spasm *G, int *yj, int start, int end, int l, int *xj, int 
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
 int super_sparse_gax(const super_spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi);
 void super_sparse_gaxpy_dense(const super_spasm * super_M, const spasm_GFp * x, spasm_GFp * y);
-void super_sparse_padded_gax_dense(const super_spasm * super_M, const spasm_GFp * x, spasm_GFp * y);
 
 /* spasm_triangular.c */
 int spasm_is_upper_triangular(const spasm *A);
