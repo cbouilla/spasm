@@ -2,19 +2,21 @@
 #include <assert.h>
 #include "spasm.h"
 
-int main(int argc, char **argv){
-
+int main(){
   spasm *A;
-  super_spasm *L, *U;
   spasm_triplet *T1, *T2;
-  int r, n, m, i, j, unz, lnz, prime, li, ui, top, npiv, found, test;
-  int *xi, *qinv, *Lp, *Up;
-  spasm_GFp *x, *y, *w, *v;
+  super_spasm *L, *U;
+  int r, n, m, i, j, unz, lnz, prime, li, ui, top, npiv, found;
+  int *xi, *yi, *qinv, *Lp, *Up;
+  spasm_GFp *x, *y, *u;
 
-  assert(argc > 1);
-  test = atoi(argv[1]);
+  /* ---------- creat matrix L --------------*/
+  /* Given a matrix A, we compute it's LU
+   * decomposition using super_spasm_find_pivot
+   * function, in order to get L super_spasm.
+   */
 
-  /*loading matrix */
+ /*loading matrix A */
   T1 = spasm_load_sms(stdin, 42013);
   T2 = spasm_triplet_alloc(T1->n, T1->m, T1->nzmax, T1->prime, 1);
   j = 0;
@@ -27,12 +29,12 @@ int main(int argc, char **argv){
     }
   }
   T2->nz = j;
-  T2->nzmax = j;
-
   spasm_triplet_free(T1);
   A = spasm_compress(T2);
   spasm_triplet_free(T2);
 
+
+  /* super sparse decomposition LU of A */
   n = A->n;
   m = A->m;
 
@@ -55,8 +57,8 @@ int main(int argc, char **argv){
   spasm_vector_zero(xi, 3*m);
   spasm_vector_zero(x, m);
   qinv = spasm_malloc(m * sizeof(int));
-  w = spasm_malloc(n * sizeof(int));
-  spasm_vector_zero(w, n);
+  // w = spasm_malloc(n * sizeof(int));
+  //spasm_vector_zero(w, n);
 
   /* initialize workspace */
   for(i = 0; i < m; i++){
@@ -101,78 +103,74 @@ int main(int argc, char **argv){
     li++;
     ui += found;
     npiv += found;
-    w[i] = found; // w[i] : nombre de pivots sur la ligne i.
+    // w[i] = found; // w[i] : nombre de pivots sur la ligne i.
 
   }
 
-/* Finalize L and U */
-
-  Up[ui] = unz;
-  spasm_csr_resize(U->M, ui, m);
-  spasm_csr_realloc(U->M, -1);
+/* Finalize L and free U */
+  super_spasm_free(U);
 
   Lp[li] = lnz;
   spasm_csr_resize(L->M, li, n);
   spasm_csr_realloc(L->M, -1);
-  Lp = L->M->p;
+  Lp = L->p;
 
   free(x);
+  free(xi);
 
-  /* Check result */
-  // LU = spasm_LU(A, NULL, 1);
-
-  // assert(npiv == LU->U->n);
-  r = npiv;
+  /* -------- Solve a system x*L = y --------- */
   
-  /*get workspace */
-  x = malloc(n * sizeof(spasm_GFp));
-  y = malloc(m * sizeof(spasm_GFp));
-  v = malloc(m * sizeof(spasm_GFp));
- 
+  /* get workspace */
+  x = spasm_malloc(n * sizeof(spasm_GFp));
+  xi = spasm_malloc(3 * n * sizeof(int));
+  y = spasm_malloc(n * sizeof(spasm_GFp));
+  yi = spasm_malloc(n * sizeof(int));
+  u = spasm_malloc(n * sizeof(spasm_GFp));
 
-for(i = 0; i < L->M->n; i++) {
-    for(j = 0; j < n; j++) {
-      x[j] = 0; // clear workspace.
-      //      u[j] = 0;
-    }
-    for(j = 0; j < m; j++) {
-      y[j] = 0;
-      v[j] = 0;
-    }
-    for(j = Lp[i]; j < Lp[i+1]; j++){
-      //scatter L[i:] in x:
-      x[L->M->j[j]] = L->M->x[j];
-    }
-    x[L->p[i]] = (w[L->p[i]] == 1)? 1 : 0; //rajoute un 1 sur l'entrée diag si pivot
-    for(j = A->p[L->p[i]]; j < A->p[L->p[i] + 1]; j++){
-      //scatter same row of A in y
-      y[A->j[j]] = A->x[j];
-    }
+  /* initialize workspace */
+  for(i = 0; i < n; i++){
+    yi[i] = 0;
+    y[i] = 0;
+    x[i] = 0; // clear workspace.
+    u[i] = 0;
+  }
 
-    super_sparse_gaxpy_dense(U, x, v); // v <- x*U
+  // rhs pattern :
+  yi[0] = 0;
+  yi[1] = n/2;
+  yi[2] = yi[1] + 1;
+  yi[3] = n - 1;
 
-    for(j = 0; j < m; j++) {
-      if (y[j] != v[j]) {
-	printf("not ok %d - L*U == A (col %d) row %d \n", test, j, i);
-	//printf("y : %d, v : %d\n", y[j], v[j]);
-	exit(0);
-      }
+  // rhs values :
+  for(i = 0; i < 4; i++){
+    y[yi[i]] = i+1;
+  }
+
+  top = super_spasm_sparse_solve(L, y, yi, 0, x, xi);
+
+  /* --- check result -------- */
+  super_sparse_padded_gax_dense(L, x, u); // u <- x*L
+
+  for(i = 0; i < n; i++){
+    printf("x[%d] = %d\n", i, x[i]);
+  }
+
+  for(i = 0; i < n ; i++){
+    if(u[i] != y[i]){
+      // printf("u[%d] = %d : y[%d] = %d\n", i, u[i], i, y[i]);
+      // printf("not ok col %d \n", i);
     }
   }
 
+  printf("ok super triangular solve \n");
 
- printf("ok %d super_find_pivot \n", test);
-
-  /* free memory */
-  super_spasm_free(U);
+  /* free workspace */
   spasm_csr_free(A);
   super_spasm_free(L);
   free(x);
   free(xi);
   free(y);
-  free(v);
-  free(w);
+  free(yi);
+  free(u);
   free(qinv);
-  //  free(w);
-
 }

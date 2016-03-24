@@ -529,7 +529,7 @@ int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *un
 
 
 /*
- * Dispatch x entries in U (and L super_spasm), find pivot if there is one.
+ * Dispatch x entries in U (and L) super_spasm, find pivot if there is one.
  *
  * xi : x pattern.
  * top : first index in xi.
@@ -537,21 +537,23 @@ int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *un
  * li : current row in compressed L, ui : current row in U.
  * i : row where we search pivot in initial matrix A ("true" current row in L).
  * qinv : inverse of columns permutation.
- * R : R[i] is the row where pivot of row i of U has been found.
+ *
  *
  * return value is 1 if a pivot has been found, and 0 otherwise.
  */
-int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, super_spasm *L, int *unz_ptr, int *lnz_ptr, int li, int ui, int i, int *qinv, int *R) {
+int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super_spasm *L, int *unz_ptr, int *lnz_ptr, int li, int ui, int i, int *qinv) {
   int unz, lnz, m, ipiv, j, px;
-  int *Uj, *Lj, *p;
+  int *Uj, *Lj, *p, *R;
   spasm_GFp *Ux, *Lx;
 
   assert(U != NULL);
 
-  m = U->m;
+  m = U->M->m;
 
-  Uj = U->j;
-  Ux = U->x;
+  R = U->p;
+
+  Uj = U->M->j;
+  Ux = U->M->x;
   Lj = (L != NULL) ? L->M->j : NULL;
   Lx = (L != NULL) ? L->M->x : NULL;
   p = (L != NULL) ? L->p : NULL;

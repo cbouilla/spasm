@@ -18,3 +18,17 @@ void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_G
     }
     
 }
+
+/*
+ * spam_scatter, where A[j,j] is implicitely 1.
+ */
+void spasm_padded_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime) {
+  int j, p;
+
+    for (p = from; p < to; p++) {
+      j = Aj[p];
+      // axpy-inplace
+      x[j] = (x[j] + ((beta * Ax[p]))) % prime /* ultra-naive */;
+    }
+    x[p] = (x[p] + beta)%prime;
+}

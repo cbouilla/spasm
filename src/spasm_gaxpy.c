@@ -179,3 +179,29 @@ void super_sparse_gaxpy_dense(const super_spasm * super_M, const spasm_GFp * x, 
       spasm_scatter(Aj, Ax, Ap[i], Ap[i + 1], x[Mp[i]], y, prime);
     }    
 }
+
+/*
+ *  (dense) * (super_sparse) : y = x * M, x, y dense, M[i,i] implicit identity.
+ */
+void super_sparse_padded_gax_dense(const super_spasm * super_M, const spasm_GFp * x, spasm_GFp * y) {
+  int i, compressed_n, prime, *Ap, *Aj, *Mp;
+  spasm_GFp *Ax;
+ const spasm *A;
+
+    /* check inputs */
+    A = super_M->M;
+    assert(x != NULL);
+    
+    compressed_n = A->n;
+    
+    Mp = super_M->p;
+    Ap = A->p;
+    Aj = A->j;
+    Ax = A->x;
+    prime = A->prime;
+
+    for (i = 0; i < compressed_n; i++) {
+      spasm_padded_scatter(Aj, Ax, Ap[i], Ap[i + 1], x[Mp[i]], y, prime);
+    }    
+}
+
