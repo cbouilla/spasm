@@ -943,8 +943,7 @@ spasm * filled_structure(const spasm *A, const spasm *adjacency_graph) {
 
 /*
  * réécrit la matrice de tous les blocs qui sont ou peuvent apparaître sous forme uptri_t
- * (vision diagonale par diagonale). Ne prend en compte que les blocs à partir de la première
- * diagonale supérieure et sur des intervalles de lignes et de colonnes "non complet".
+ * (vision diagonale par diagonale).
  */
 uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
   int i, k, d, n_blocks, sum, px, py, *Bp, *Bj, *w, *Td, *Ti, nnz;
@@ -983,7 +982,7 @@ uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
       w[d]++;
     }
   }        
-  w[0] = 0; // on supprime les entrées sur la diagonale principale.
+  //w[0] = 0; // on supprime les entrées sur la diagonale principale.
 
   /* compute diagonal pointers */
   sum = 0;
@@ -1000,11 +999,11 @@ uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
     for(px = Bp[i]; px < Bp[i+1]; px++) {
       d = Bj[px] - i;
       // si on n'est pas sur la diagonale principale ajouter l'entrée
-      if(d != 0) {
+      //if(d != 0) {
   py = w[d];
   Ti[py] = i;
   w[d]++;
-      }
+  // }
       //printf("Ti[%d] = %d \n", py, i);
     }
   }
@@ -1020,104 +1019,108 @@ uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
 
 /****************** Traite les blocs sur les diag supérieures ********************/
 
-/* /\* */
-/*  * met à jour les tables des pivots à chercher pour la diagonale diag. */
-/*  *\/ */
-/* void update_remaining_pivots(int diag, const spasm *M, const uptri_t *B, int *R, int *C, const block_t *blocks) { */
-/*   int k, i, j, *Bd, *Bi, nbl, l; */
-/*   block_t *current; */
+/*
+ * fonction qui prend en entrée un intervalle de n lignes, 
+ * un nombre de pivot déjà trouvé sur
+ * cet interval n_piv, une permutation p qui met les lignes avec
+ * les pivots en "haut" de l'intervalle.
+ *
+ * Pour chaque ligne sur lesquelles il reste des pivots à trouver,
+ * effectue les calculs paresseux, et "fait entrer" la ligne dans la
+ * décomposition LU de la bonne matrice U.
+ * Met à jour n_piv et la permutation p.
+ *
+ * Met à jour ln_ptr pointeurs sur le nombre 
+ * de ligne actuel de L
+ *
+ * renvoie n_piv.
+ */
+int upper_block_research(super_spasm *CS, super_list *List, block_t block, int *p, super_spasm *L, super_spasm *U, int *qinv, int *ln_ptr, int *un_ptr, int *lnz, int *unz){
+  int i, i_new, m, ynz, top, n, *xi, *yi, ln, un, found, deff, n_piv, *tmp;
+  spasm_GFp *x, *y;
 
-/*   Bd = B->d; */
-/*   Bi = B->i; */
+  //check inputs :
+  assert(U != NULL);
+  assert(L != NULL);
+  assert(p != NULL);
+  assert(qinv != NULL);
 
-/*   nbl = Bd[diag+1] - Bd[diag]; // <--- nombre d'entrée sur la diagonale k. */
+  m = CS->M->m;
+  assert(U->M->m == m);
 
-/*   current = spasm_calloc(nbl, sizeof(block_t)); */
-/*   l = 0; */
+  un = *un_ptr;
+  ln = *ln_ptr;
+  deff = 0;
+  n_piv = block.r;
+  n = block.i1 - block.i0;
 
-/*   // Parcours des entrées de la diagonale diag : */
-/*   for(k = Bd[diag]; k < Bd[diag +1]; k++) { */
-/*     i = Bi[k]; */
-/*     j = i + diag; */
-   
-/*     //remplissage des données des blocks rencontrés sur la diagonales. */
-/*     if(R[i] > 0 && C[j] > 0) { */
-/*       current[l].i0 = blocks[i].i0; */
-/*       current[l].i1 = blocks[i].i1; */
-/*       current[l].j0 = blocks[j].j0; */
-/*       current[l].j1 = blocks[j].j1; */
-/*       current[l].r = submatrix_rank(M, current[l].i0, current[l].j0, current[l].i1, current[l].j1); */
-    
-/*       //mise à jour des tables R et C du nombre de pivots restants en ligne et en colonne. */
-/*       R[i] = row_pivot_update(R[i], current[l]); */
-/*       C[j] = col_pivot_update(C[j], current[l]); */
+  /* get worspace */
+  y = spasm_malloc(m * sizeof(spasm_GFp));
+  yi = spasm_malloc(m * sizeof(int));
+  x = spasm_malloc(m * sizeof(spasm_GFp));
+  xi = spasm_malloc(3 * m * sizeof(int));
+  tmp = spasm_malloc(n * sizeof(int));
 
-/*     } */
-/*     l++; */
-/*   } */
-/*   free(current); */
-/* } */
+  /* clear workspace */
+  for(i = 0; i < m; i++){
+    y[i] = 0;
+    yi[i] = 0;
+    x[i] = 0;
+  }
+  for(i = 0; i < 3*m; i++){
+    xi[i] = 0;
+  }
 
-/* /\* */
-/*  * Parcourt la matrice diagonale par diagonale et compte le nombre de pivot */
-/*  * qu'il faut encore trouver par intervalle de lignes et de colonnes sur les diagonales */
-/*  * supérieures. */
-/*  * Le programme s'arrête quand on a trouvé tous les pivots. */
-/*  * La valeur renvoyée est le numéro de la diagonale où le programme s'est arrêté. */
-/*  *\/ */
-/* int last_diag_estimation(const spasm *M, const uptri_t *B, const block_t *blocks, int n_blocks) { */
-/*   int k, diag, *R, *C, Mn, Mm, nbl, start; */
-/*   char matrix_type; */
+  /* main loop : search pivots */
+  for(i = block.i0 + block.r; i < block.i1; i++){
+    i_new = p[i]; //<-- "good" row.
 
-/*   Mn = M->n; */
-/*   Mm = M->m; */
+    //Lazy computation :
+    ynz = super_spasm_lazy(CS, List, i_new, y, yi); 
 
-/*   diag = 0; */
+    /* continue LU */
+    // not enough room : realloc
+    if ((*lnz) + m > L->M->nzmax) {
+      spasm_csr_realloc(L->M, 2 * L->M->nzmax + m);
+    }
+    if ((*unz) + m > U->M->nzmax) {
+      spasm_csr_realloc(U->M, 2 * U->M->nzmax + m);
+    }
+    // solve system x * L = y :
+    top = spasm_sparse_forward_solve_scat(U->M, y, yi, ynz, xi, x, qinv);
+    // find pivot (if there is one) and dispatch x :
+    found = super_spasm_find_pivot(xi, x, top, U, L, unz, lnz, ln, un, i, qinv);
+    // update npiv, ln, un tmp:
+    n_piv += found;
+    ln++;
+    un += found;
+    deff = (found) ? 0 : 1;
+    if(found){
+      tmp[i - block.i0 - deff] = i_new;
+    }
+    else{
+      tmp[n - block.i0 - deff] = i_new;
+    }
 
-/*   matrix_type = (Mn > Mm) ? 'V' : 'H'; // regarde si la matrice est verticale ou horizontale. */
+  }
 
-/*   //Allocation mémoire des tables R et C du nombre de pivots qu'il reste à trouver. */
-/*   R = spasm_malloc(n_blocks * sizeof(int)); */
-/*   C = spasm_malloc(n_blocks * sizeof(int)); */
+  for(i = block.i0 + block.r; i < block.i1; i++){
+    p[i] = tmp[i - block.i0];
+  }
 
-/*   // Initialisations des tables R et C. */
-/*   remaining_pivots_init(R, C, blocks, n_blocks); */
+  /*free workspace */
+  free(tmp);
+  free(x);
+  free(y);
+  free(xi);
+  free(yi);
 
-/*   switch (matrix_type) { */
-/*   case 'H' : */
-/*     k = 0;// indicateur qui parcours les intervalles de lignes */
-/*     nbl = n_blocks- 1; */
+  /* update ln_ptr and un_ptr */
+  *ln_ptr = ln;
+  *un_ptr = un;
 
-/*     while(k < nbl) { */
-/*       for ( ; k < nbl && R[k] == 0; k++); // parcourt R jusqu'à ce qu'on trouve une entrée non nulle. */
-/*       diag++; */
-/*       update_remaining_pivots(diag, M, B, R, C, blocks); */
-/*       nbl--; */
-/*     } */
-/*     break; */
-/*   case 'V' : */
-/*     k = n_blocks - 1; */
-/*     start = 0; */
-
-/*     while(k > start) { */
-/*       for( ; k > start && C[k] == 0; k--); // parcourt C à l'enver jusqu'à ce qu'on trouve une entrée non nulle. */
-/*       diag++; */
-/*       update_remaining_pivots(diag, M, B, R, C, blocks); */
-/*       start++; */
-/*     } */
-/*     break; */
-/*   default : */
-/*     printf("Matrix error. \n"); */
-/*     diag = -1; */
-/*     break; */
-/*   } */
-
-/*   free(R); */
-/*   free(C); */
-/*   return diag; */
-  
-/* } */
-
+  return n_piv;
+}
 
 
 /**************** Fonction main *********************/
@@ -1125,9 +1128,11 @@ uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
 int main() {
   spasm_triplet *T;
   spasm *A, *B;
+  super_spasm **CS, **U;
+  super_list **L_list; 
   spasm_dm *x;
   spasm_lu **LU;
-  int n_blocks, i, *qinv, rank;
+  int n_blocks, i, k, *qinv, rank, prime, **Qinv, **P, n_big, m, nzmax, *npiv;
   unsigned int L_size;
   block_t *blocks;
   spasm *Tr, *G;
@@ -1225,27 +1230,84 @@ int main() {
   }
   first_col[n_blocks] = B->m;
 
-  super_spasm **column_slices = super_spasm_columns_submatrices(B, Q, first_col, n_blocks, 1);
+  CS = super_spasm_column_slices(B, Q, first_col, n_blocks, 1);
+  n_big = B->n;
+  m = B->m;
+  nzmax = B->nzmax;
+  prime = B->prime;
 
   free(first_col);
   spasm_csr_free(B);
-  // initialiser une matrice U (vide) par tranche de colonnes
-  // initialiser une liste de matrices L, vide, par tranche de lignes
+  
+  /* Get LU workspace */
+  int *unz, *un, lnz, ln;
+  U = spasm_malloc(n_blocks * sizeof(super_spasm*));
+  L_list = NULL; //<-- initialement la liste des L est vide.
+  Qinv = spasm_malloc(n_blocks * sizeof(int*));
+  P = spasm_malloc(n_big * sizeof(int));
+  unz = spasm_malloc(n_blocks * sizeof(int));
+  un = spasm_malloc(n_blocks * sizeof(int));
 
+  int block_n, block_m, block_r;
+  for(k = 0; k < n_blocks; k++){
+    block_n = blocks[k].i1 - blocks[k].i0; // nombre de ligne de blocks[k]
+    block_m = CS[k]->M->m; // nombre de colonne de blocks[k]
+    block_r = spasm_min(block_n, block_m); // borne sup sur le rang de blocks[k]
+    Qinv[k] = spasm_malloc(block_m * sizeof(int));
+    U[k] = super_spasm_alloc(n_big, block_r, block_m, 2 * (block_n + block_m), prime, 1);
+  }
+
+  /* Initialize LU workspace */
+  for(k = 0; k < n_blocks; k++){
+    unz[k] = 0; // U initialement vide. 
+    un[k] = 0; // On se place sur la ligne 0 de U->M
+    blocks[k].r = 0; // on remet r à zéro pour traiter la diag principale. (provisoire)
+    for(i = 0; i < CS[k]->M->m; i++){
+      Qinv[k][i] = -1; // pas encore de pivots trouvés.
+    }
+  }
+  for(i = 0; i < n_big; i++){
+    P[i] = i; // pas encore de pivots trouvés.
+  }
+
+  /* main loop : chercher pivots en remontant les diagonale.*/
+  // On regarde déjà la diagonale principale.
+  int diag = 0, pt;
+  super_list *L;
+
+  /* allouer le L de la diagonale */
+  L = spasm_malloc(sizeof(super_list));
+  L->S = super_spasm_alloc(n_big, n_big, m, nzmax, prime, 1);
+  /* initialisation */
+  ln = 0; // On se place sur la ligne 0 de L
+  lnz = 0; // L est pour l'instant vide.
+  /* boucle sur tous les blocks (k, k+d) à regarder */
+  for(pt = FS->d[diag]; pt < FS->d[diag + 1]; pt ++){
+    k = FS->i[pt];
+
+    //traitement du block k:
+    blocks[k].r = upper_block_research(CS[k+diag], L_list, blocks[k], P, U[k+ diag], L->S, Qinv[k + diag], &ln, &un[k + diag], &lnz, &unz[k+diag]);
+
+  }
   /* libération de la mémoire */
 
   for(i = 0; i < n_blocks; i++){
     spasm_free_LU(LU[i]);
-    super_spasm_free(column_slices[i]);
+    super_spasm_free(CS[i]);
+    super_spasm_free(U[k]);
+    free(Qinv[k]);
   }
 
   uptri_free(FS);
-  free(column_slices);
+  free(CS);
   free(Q);
   free(LU);
   //free(rows);
   free(r_tab);
   free(blocks);
+  free(Qinv);
+  free(P);
+  free(U);
 
   return 0;
 }

@@ -278,6 +278,93 @@ int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xi, s
     return top;
 }
 
+/*************** Triangular solving with sparse RHS
+ *
+ * solve x * U = y, where U is (permuted) upper triangular.
+ *
+ * x has size m (number of columns of U, paradoxically).
+ *
+ * when this function returns, the solution is scattered in x, and its pattern
+ * is given in xi[top : m].
+ *
+ * top is the return value.
+ *
+ */
+int spasm_sparse_forward_solve_scat(const spasm *U, int *y, int *yi, int ynz, int *xi, spasm_GFp *x, const int *pinv) {
+  int i, I, p, px, top, m, prime, *Up, *Uj;
+  spasm_GFp *Ux;
+
+#ifdef SPASM_TIMING
+    uint64_t start;
+#endif
+
+    assert(U != NULL);
+    assert(y != NULL);
+    assert(yi != NULL);
+    assert(xi != NULL);
+    assert(x != NULL);
+
+    m = U->m;
+    Up = U->p;
+    Uj = U->j;
+    Ux = U->x;
+    prime = U->prime;
+
+#ifdef SPASM_TIMING
+    start = spasm_ticks();
+#endif
+
+    /* xi[top : n] = Reach( U, B[k] ) */
+    top = spasm_scat_reach(U, yi, 0, ynz, m, xi, pinv);
+
+#ifdef SPASM_TIMING
+    reach += spasm_ticks() - start;
+#endif
+
+    /* clear x */
+    for (p = top; p < m; p++) {
+      x[ xi[p] ] = 0;
+    }
+
+    /* scatter y into x */
+    for (p = 0; p < ynz; p++) {
+        x[ yi[p] ] = y[yi[p]];
+    }
+
+    /* iterate over the (precomputed) pattern of x (= the solution) */
+#ifdef SPASM_TIMING
+    start = spasm_ticks();
+#endif
+
+    for (px = top; px < m; px++) {
+      /* x[i] is nonzero */
+      i = xi[px];
+
+      /* i maps to row I of U */
+      I = (pinv != NULL) ? (pinv[i]) : i;
+
+      if (I < 0) {
+	/* row I is empty */
+            continue;
+      }
+
+      /* get U[i,i] */
+      const spasm_GFp diagonal_entry = Ux[ Up[I] ];
+      assert( diagonal_entry != 0 );
+      // axpy-in-place
+      x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+
+      spasm_scatter(Uj, Ux, Up[I] + 1, Up[I + 1], prime - x[i], x, prime);
+    }
+
+#ifdef SPASM_TIMING
+    scatter += spasm_ticks() - start;
+#endif
+
+    return top;
+}
+
+
 
 /*************** Triangular solving with sparse RHS
  *
@@ -392,11 +479,11 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
  *
  * retrun value top : begining of xi
  */
-int super_spasm_sparse_solve(super_spasm *L, int *y, int *yi, int start, int *x, int *xi){
+int super_spasm_sparse_solve(super_spasm *L, int *y, int *yi, int end, int *x, int *xi){
   int top, *pinv, n_big, *Lperm, i, n_small, p, i_new, *Lj, prime, *Lp;
   spasm_GFp *Lx;
 
-  /* check inputs */
+  /* check inputs */  
   assert(L != NULL);
   assert(L->M != NULL);
   assert(y != NULL);
@@ -412,7 +499,7 @@ int super_spasm_sparse_solve(super_spasm *L, int *y, int *yi, int start, int *x,
   Lx = L->M->x;
   prime = L->M->prime;
 
-  assert(start < n_small); //yi not empty.
+  assert(end > 0); //yi not empty.
 
   /* get workspace */
   // pinv[i] : corresponding row in L->M.
@@ -428,7 +515,7 @@ int super_spasm_sparse_solve(super_spasm *L, int *y, int *yi, int start, int *x,
 
   /* find x pattern xi */
   // xi[top : m] = Reach( L, y )
-  top = spasm_scat_reach(L->M, yi, start, n_big, n_big, xi, pinv);
+  top = spasm_scat_reach(L->M, yi, 0, end, n_big, xi, pinv);
 
   /* initialize x */
   for (p = top; p < n_big; p++) {
@@ -437,7 +524,7 @@ int super_spasm_sparse_solve(super_spasm *L, int *y, int *yi, int start, int *x,
   }
 
   /* scatter y into x */
-  for (p = start; p < n_big; p++) {
+  for (p = 0; p < end; p++) {
     x[ yi[p] ] = y[yi[p]];
   }
 

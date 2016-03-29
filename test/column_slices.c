@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     Q[i] = 2;
   }
   
-  super_spasm **column_slices = super_spasm_columns_submatrices(A, Q, first_col, n_blocks, 1);
+  super_spasm **column_slices = super_spasm_column_slices(A, Q, first_col, n_blocks, 1);
 
   assert(n < A->prime);
   x = malloc(n * sizeof(spasm_GFp));

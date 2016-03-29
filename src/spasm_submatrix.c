@@ -114,12 +114,11 @@ spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, i
  * N = number of diagonal blocks
  * 
  */
- super_spasm ** super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, int with_values){
+ super_spasm ** super_spasm_column_slices(const spasm *A, const int *Q, const int *T, int N, int with_values){
   int k, i, j, px, An, Mm, prime;
   int *Aj, *Ap, *Mnz, *w;
   int **Mj, **Mp, **Bp;
   int *n_rows;
-  spasm **M;
   super_spasm **B;
 
   spasm_GFp *Ax;

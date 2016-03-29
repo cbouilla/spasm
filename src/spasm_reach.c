@@ -196,7 +196,7 @@ int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xj, const i
  *
  * xj [l...3l-1] used as workspace
  */
-int spasm_scat_reach(spasm *G, int *yj, int start, int end, int l, int *xj, int *pinv){
+int spasm_scat_reach(const spasm *G, int *yj, int start, int end, int l, int *xj, const int *pinv){
 int p, top, *pstack, *marks;
 
     /* check inputs */

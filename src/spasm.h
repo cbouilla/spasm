@@ -31,6 +31,11 @@ typedef struct {   /* matrix in compressed-row with no empty rows */
     int *p;
 } super_spasm;
 
+typedef struct super_list {
+  super_spasm *S; 
+  struct super_list *next;
+} super_list;
+
 
 typedef struct  {   /* matrix in compressed-column or triplet form */
     int nzmax;      /* maximum number of entries */
@@ -169,7 +174,7 @@ spasm *spasm_transpose(const spasm *C, int keep_values);
 /* spasm_submatrix.c */
 spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int with_values);
 spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, int *py, int with_values);
-super_spasm ** super_spasm_columns_submatrices(const spasm *A, const int *Q, const int *T, int N, int with_values);
+super_spasm ** super_spasm_column_slices(const spasm *A, const int *Q, const int *T, int N, int with_values);
 spasm * spasm_rows_submatrix(const spasm *A, int i0, int i1, int with_values);
 void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B, int *Q, int *Cm, int *Cjstart, spasm_list **C);
 spasm_list * spasm_list_free(spasm_list *C);
@@ -192,7 +197,7 @@ void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_G
 /* spasm_reach.c */
 int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
 int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xi, const int *pinv);
-int spasm_scat_reach(spasm *G, int *yj, int start, int end, int l, int *xj, int *pinv);
+int spasm_scat_reach(const spasm *G, int *yj, int start, int end, int l, int *xj, const int *pinv);
 
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
@@ -207,6 +212,7 @@ void spasm_dense_back_solve(const spasm * L, spasm_GFp *b, spasm_GFp * x, const 
 int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, const int *q);
 int spasm_sparse_backward_solve(const spasm * L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv, int r_bound);
 int spasm_sparse_forward_solve(const spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
+int spasm_sparse_forward_solve_scat(const spasm *U, int *y, int *yi, int ynz, int *xi, spasm_GFp *x, const int *pinv);
 int super_spasm_sparse_solve(super_spasm *L, int *y, int *yi, int start, int *x, int *xi);
 
 /* spasm_lu.c */
@@ -256,15 +262,7 @@ int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *
 int spasm_solve_and_product(const spasm *L, const spasm *M, const spasm *A, int k, spasm_GFp *y, int *yi, const int *pinv);
 
 /* spasm_lazy.c */
-int spasm_add_vectors(spasm_GFp *u, int *ui, int unz, spasm_GFp *v, int *vi, int vnz, int size);
-void spasm_system_right_hand_init(spasm_system *L, int nnz);
-void spasm_lazy_right_hand_update(int d, int k, spasm_system *L0, spasm_system *L1, int bound, int *xi, int *x, int top, int stop, int **p);
-void spasm_new_lazy_permutation(int bound, const int *Lperm, int *p_new, int vec_size);
-int spasm_next_left_system(spasm_system **L, int k, int d);
-void spasm_lazy_system(spasm_system **L, int k, int l, int d, int **p);
-spasm_system * spasm_system_update(spasm_system *L, spasm *M, int *p, int rect, int left, int diag);
-spasm_system * spasm_system_clear(spasm_system *L);
-int spasm_lazy_computation(int d, int k, int i, spasm_system **S, spasm_GFp *u, int *ui, int usize, spasm_list *A, int **p);
+int super_spasm_lazy(super_spasm *A, super_list *L, int i, spasm_GFp *u, int *ui);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {

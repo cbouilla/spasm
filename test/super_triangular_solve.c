@@ -11,7 +11,7 @@ int main(int argc, char **argv){
   spasm_GFp *x, *y, *u;
 
   assert(argc > 1);
-  test = argv[0];
+  test = atoi(argv[1]);
 
   /* ---------- creat matrix L --------------*/
   /* Given a matrix A, we compute it's LU
@@ -149,7 +149,7 @@ int main(int argc, char **argv){
     y[yi[i]] = i+1;
   }
 
-  top = super_spasm_sparse_solve(L, y, yi, 0, x, xi);
+  top = super_spasm_sparse_solve(L, y, yi, 4, x, xi);
 
   /* --- check result -------- */
   super_sparse_gaxpy_dense(L, x, u); // u <- x*(L-I)
