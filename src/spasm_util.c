@@ -297,3 +297,22 @@ spasm * spasm_duplicate(const spasm * A) {
   return B;
 
 }
+
+super_list *super_list_update(super_list *L, super_spasm *S){
+  super_list *L_new;
+  assert(S != NULL);
+  L_new = spasm_malloc(sizeof(super_list));
+  L_new->S = S;
+  L_new->next = L;
+  return L_new;
+}
+
+void super_list_clear(super_list **L){
+  super_list *tmp;
+  while(*L){
+    tmp = (*L)->next;
+    super_spasm_free((*L)->S);
+    free(*L);
+    (*L) = tmp;
+  }
+}

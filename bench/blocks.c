@@ -945,24 +945,21 @@ spasm * filled_structure(const spasm *A, const spasm *adjacency_graph) {
  * réécrit la matrice de tous les blocs qui sont ou peuvent apparaître sous forme uptri_t
  * (vision diagonale par diagonale).
  */
-uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
-  int i, k, d, n_blocks, sum, px, py, *Bp, *Bj, *w, *Td, *Ti, nnz;
+uptri_t * final_structure_uptri(const spasm *B) {
+  int k, d, n_blocks, sum, px, py, *Bp, *Bj, *w, *Td, *Ti, nnz;
   uptri_t *T;
 
   n_blocks = B->n;
   Bp = B->p;
   Bj = B->j;
 
-  assert(n_blocks >= n_rows);
-
   /* compute nnz, the number of entries in T*/
 
   nnz = 0;
 
-  // Pour chaque intervalle de ligne "non complet" compter le nombre d'entrées moins celle sur la diagonale principale.
-  for(k = 0; k < n_rows; k++) {
-    i = r_tab[k];
-    nnz += Bp[i+1] - Bp[i] - 1;  
+  // Pour chaque intervalle de ligne "non complet" compter le nombre d'entrées.
+  for(k = 0; k < n_blocks; k++) {
+    nnz += Bp[k+1] - Bp[k];  
   }
 
   // printf("nnz : %d\n", nnz);
@@ -975,14 +972,12 @@ uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
   w = spasm_calloc(n_blocks, sizeof(int));
 
   /* compute diagonal counts */
-  for (k = 0; k < n_rows; k++) {
-    i = r_tab[k];
-    for(px = Bp[i]; px < Bp[i+1]; px++) {
-      d = Bj[px] - i;
+  for (k = 0; k < n_blocks; k++) {
+    for(px = Bp[k]; px < Bp[k+1]; px++) {
+      d = Bj[px] - k;
       w[d]++;
     }
   }        
-  //w[0] = 0; // on supprime les entrées sur la diagonale principale.
 
   /* compute diagonal pointers */
   sum = 0;
@@ -994,14 +989,13 @@ uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
   Td[n_blocks] = sum;
 
   /* dispatch entries */
-  for(k = 0; k < n_rows; k++) {
-    i = r_tab[k];
-    for(px = Bp[i]; px < Bp[i+1]; px++) {
-      d = Bj[px] - i;
+  for(k = 0; k < n_blocks; k++) {
+    for(px = Bp[k]; px < Bp[k+1]; px++) {
+      d = Bj[px] - k;
       // si on n'est pas sur la diagonale principale ajouter l'entrée
       //if(d != 0) {
   py = w[d];
-  Ti[py] = i;
+  Ti[py] = k;
   w[d]++;
   // }
       //printf("Ti[%d] = %d \n", py, i);
@@ -1035,8 +1029,8 @@ uptri_t * final_structure_uptri(const spasm *B, int *r_tab, int n_rows) {
  *
  * renvoie n_piv.
  */
-int upper_block_research(super_spasm *CS, super_list *List, block_t block, int *p, super_spasm *L, super_spasm *U, int *qinv, int *ln_ptr, int *un_ptr, int *lnz, int *unz){
-  int i, i_new, m, ynz, top, n, *xi, *yi, ln, un, found, deff, n_piv, *tmp;
+int upper_block_research(super_spasm *CS, super_list *List, block_t block, super_spasm *L, super_spasm *U, int *p, int *qinv, int *ln_ptr, int *un_ptr, int *lnz, int *unz){
+  int i, i_new, m, ynz, top, n, *xi, *yi, ln, un, found, deff, n_piv, *tmp, *Up, *Lp;
   spasm_GFp *x, *y;
 
   //check inputs :
@@ -1046,7 +1040,10 @@ int upper_block_research(super_spasm *CS, super_list *List, block_t block, int *
   assert(qinv != NULL);
 
   m = CS->M->m;
+  // printf("m : %d et %d\n", U->M->m, m);
   assert(U->M->m == m);
+  Up = U->M->p;
+  Lp = L->M->p;
 
   un = *un_ptr;
   ln = *ln_ptr;
@@ -1075,6 +1072,9 @@ int upper_block_research(super_spasm *CS, super_list *List, block_t block, int *
   for(i = block.i0 + block.r; i < block.i1; i++){
     i_new = p[i]; //<-- "good" row.
 
+    Up[un] = (*unz);
+    Lp[ln] = (*lnz);
+
     //Lazy computation :
     ynz = super_spasm_lazy(CS, List, i_new, y, yi); 
 
@@ -1086,10 +1086,12 @@ int upper_block_research(super_spasm *CS, super_list *List, block_t block, int *
     if ((*unz) + m > U->M->nzmax) {
       spasm_csr_realloc(U->M, 2 * U->M->nzmax + m);
     }
+   
     // solve system x * L = y :
+
     top = spasm_sparse_forward_solve_scat(U->M, y, yi, ynz, xi, x, qinv);
     // find pivot (if there is one) and dispatch x :
-    found = super_spasm_find_pivot(xi, x, top, U, L, unz, lnz, ln, un, i, qinv);
+    found = super_spasm_find_pivot(xi, x, top, U, L, unz, lnz, ln, un, i_new, qinv);
     // update npiv, ln, un tmp:
     n_piv += found;
     ln++;
@@ -1099,7 +1101,7 @@ int upper_block_research(super_spasm *CS, super_list *List, block_t block, int *
       tmp[i - block.i0 - deff] = i_new;
     }
     else{
-      tmp[n - block.i0 - deff] = i_new;
+      tmp[n - deff] = i_new;
     }
 
   }
@@ -1129,14 +1131,12 @@ int main() {
   spasm_triplet *T;
   spasm *A, *B;
   super_spasm **CS, **U;
-  super_list **L_list; 
+  super_list *L_list = NULL; 
   spasm_dm *x;
   spasm_lu **LU;
-  int n_blocks, i, k, *qinv, rank, prime, **Qinv, **P, n_big, m, nzmax, *npiv;
-  unsigned int L_size;
+  int n_blocks, i, k, *qinv, rank, prime, **Qinv, *P, n_big, m, nzmax;
   block_t *blocks;
   spasm *Tr, *G;
-  int count, n_rows, *r_tab;
   edge_t *rows;
 
   //interval_t *R, *C;
@@ -1173,7 +1173,7 @@ int main() {
 
   free(x); // le vieil objet DM : exit
 
-  int *Q, fill, start, last_diag, entries;
+  int *Q, fill;
   blk_t *where;
    
 
@@ -1207,14 +1207,10 @@ int main() {
 
     printf("nombre d'arêtes graphe d'adjacence : %d\n", spasm_nnz(row_inter));
    G = filled_structure(blocks_mat, row_inter);
-
   
   printf("nombre de blocs dus au remplissage : %d\n", G->nzmax);
 
-  r_tab = spasm_malloc(n_blocks *sizeof(int));
-
-  n_rows = rows_to_watch(blocks, r_tab, n_blocks);
-  FS = final_structure_uptri(G, r_tab, n_rows);
+  FS = final_structure_uptri(G);
 
   spasm_csr_free(G);
   spasm_csr_free(Tr);
@@ -1222,6 +1218,7 @@ int main() {
   spasm_csr_free(blocks_mat);
  
   printf("nombre de blocs intéressants au total : %d\n", FS->nzmax + n_blocks);
+
 
   /* DÉCOUPAGE EN TRANCHES DE COLONNES */
   int *first_col = spasm_malloc((n_blocks + 1) * sizeof(int));
@@ -1238,8 +1235,10 @@ int main() {
 
   free(first_col);
   spasm_csr_free(B);
+
+
   
-  /* Get LU workspace */
+  /* GET LU WORKSPACE */
   int *unz, *un, lnz, ln;
   U = spasm_malloc(n_blocks * sizeof(super_spasm*));
   L_list = NULL; //<-- initialement la liste des L est vide.
@@ -1248,16 +1247,17 @@ int main() {
   unz = spasm_malloc(n_blocks * sizeof(int));
   un = spasm_malloc(n_blocks * sizeof(int));
 
-  int block_n, block_m, block_r;
+  int U_nmax;
   for(k = 0; k < n_blocks; k++){
-    block_n = blocks[k].i1 - blocks[k].i0; // nombre de ligne de blocks[k]
-    block_m = CS[k]->M->m; // nombre de colonne de blocks[k]
-    block_r = spasm_min(block_n, block_m); // borne sup sur le rang de blocks[k]
-    Qinv[k] = spasm_malloc(block_m * sizeof(int));
-    U[k] = super_spasm_alloc(n_big, block_r, block_m, 2 * (block_n + block_m), prime, 1);
+    U_nmax = spasm_min(CS[k]->M->m, n_big); // borne sup sur le nombre de pivots qu'on peut trouver dans l'intervalle de cols J_k.
+    Qinv[k] = spasm_malloc(CS[k]->M->m * sizeof(int));
+    U[k] = super_spasm_alloc(n_big, U_nmax, CS[k]->M->m, 2 * (U_nmax + CS[k]->M->m), prime, 1);
   }
 
+
+
   /* Initialize LU workspace */
+
   for(k = 0; k < n_blocks; k++){
     unz[k] = 0; // U initialement vide. 
     un[k] = 0; // On se place sur la ligne 0 de U->M
@@ -1270,14 +1270,14 @@ int main() {
     P[i] = i; // pas encore de pivots trouvés.
   }
 
-  /* main loop : chercher pivots en remontant les diagonale.*/
+
+  /* MAIN LOOP : chercher pivots en remontant les diagonale.*/
+ 
   // On regarde déjà la diagonale principale.
   int diag = 0, pt;
-  super_list *L;
 
   /* allouer le L de la diagonale */
-  L = spasm_malloc(sizeof(super_list));
-  L->S = super_spasm_alloc(n_big, n_big, m, nzmax, prime, 1);
+  super_spasm *L = super_spasm_alloc(n_big, n_big, m, nzmax, prime, 1);
   /* initialisation */
   ln = 0; // On se place sur la ligne 0 de L
   lnz = 0; // L est pour l'instant vide.
@@ -1286,24 +1286,37 @@ int main() {
     k = FS->i[pt];
 
     //traitement du block k:
-    blocks[k].r = upper_block_research(CS[k+diag], L_list, blocks[k], P, U[k+ diag], L->S, Qinv[k + diag], &ln, &un[k + diag], &lnz, &unz[k+diag]);
+    blocks[k].r = upper_block_research(CS[k+diag], L_list, blocks[k], L, U[k+ diag], P, Qinv[k + diag], &ln, &un[k + diag], &lnz, &unz[k + diag]);
 
+      
   }
+  // mettre à jour la liste chainée L :
+  L_list = super_list_update(L_list, L);
+
+
+  /* tester diag principale */
+  for(k = 0; k < n_blocks; k++){
+    printf("rang du block %d : %d\n", k, blocks[k].r);
+  }
+
+
   /* libération de la mémoire */
 
   for(i = 0; i < n_blocks; i++){
     spasm_free_LU(LU[i]);
     super_spasm_free(CS[i]);
-    super_spasm_free(U[k]);
-    free(Qinv[k]);
+    super_spasm_free(U[i]);
+    free(Qinv[i]);
   }
 
+  super_list_clear(&L_list);
   uptri_free(FS);
   free(CS);
   free(Q);
   free(LU);
-  //free(rows);
-  free(r_tab);
+  free(unz);
+  free(un);
+  free(rows);
   free(blocks);
   free(Qinv);
   free(P);

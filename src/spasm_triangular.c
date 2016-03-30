@@ -343,12 +343,14 @@ int spasm_sparse_forward_solve_scat(const spasm *U, int *y, int *yi, int ynz, in
       /* i maps to row I of U */
       I = (pinv != NULL) ? (pinv[i]) : i;
 
+
       if (I < 0) {
 	/* row I is empty */
             continue;
       }
 
       /* get U[i,i] */
+    
       const spasm_GFp diagonal_entry = Ux[ Up[I] ];
       assert( diagonal_entry != 0 );
       // axpy-in-place
