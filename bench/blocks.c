@@ -1030,7 +1030,7 @@ uptri_t * final_structure_uptri(const spasm *B) {
  * renvoie n_piv.
  */
 int upper_block_research(super_spasm *CS, super_list *List, block_t block, super_spasm *L, super_spasm *U, int *p, int *qinv, int *ln_ptr, int *un_ptr, int *lnz, int *unz){
-  int i, i_new, m, ynz, top, n, *xi, *yi, ln, un, found, deff, n_piv, *tmp, *Up, *Lp;
+  int i, j, i_new, m, ynz, top, n, *xi, *yi, ln, un, found, deff, n_piv, *tmp, *Up, *Lp;
   spasm_GFp *x, *y;
 
   //check inputs :
@@ -1058,20 +1058,20 @@ int upper_block_research(super_spasm *CS, super_list *List, block_t block, super
   xi = spasm_malloc(3 * m * sizeof(int));
   tmp = spasm_malloc(n * sizeof(int));
 
-  /* clear workspace */
-  for(i = 0; i < m; i++){
-    y[i] = 0;
-    yi[i] = 0;
-    x[i] = 0;
-  }
-  for(i = 0; i < 3*m; i++){
-    xi[i] = 0;
-  }
-
   /* main loop : search pivots */
   for(i = block.i0 + block.r; i < block.i1; i++){
     i_new = p[i]; //<-- "good" row.
 
+    /* clear workspace */
+    for(j = 0; j < m; j++){
+      y[j] = 0;
+      yi[j] = 0;
+      x[j] = 0;
+    }
+    for(j = 0; j < 3*m; j++){
+      xi[j] = 0;
+    }
+  
     Up[un] = (*unz);
     Lp[ln] = (*lnz);
 
@@ -1103,7 +1103,6 @@ int upper_block_research(super_spasm *CS, super_list *List, block_t block, super
     else{
       tmp[n - deff] = i_new;
     }
-
   }
 
   for(i = block.i0 + block.r; i < block.i1; i++){
@@ -1237,6 +1236,7 @@ int main() {
   spasm_csr_free(B);
 
 
+  int *good_rank = spasm_malloc(n_blocks * sizeof(int));
   
   /* GET LU WORKSPACE */
   int *unz, *un, lnz, ln;
@@ -1261,6 +1261,7 @@ int main() {
   for(k = 0; k < n_blocks; k++){
     unz[k] = 0; // U initialement vide. 
     un[k] = 0; // On se place sur la ligne 0 de U->M
+    good_rank[k] = blocks[k].r;
     blocks[k].r = 0; // on remet r à zéro pour traiter la diag principale. (provisoire)
     for(i = 0; i < CS[k]->M->m; i++){
       Qinv[k][i] = -1; // pas encore de pivots trouvés.
@@ -1293,12 +1294,16 @@ int main() {
   // mettre à jour la liste chainée L :
   L_list = super_list_update(L_list, L);
 
-
+ 
   /* tester diag principale */
   for(k = 0; k < n_blocks; k++){
-    printf("rang du block %d : %d\n", k, blocks[k].r);
+    if(blocks[k].r != good_rank[k]){
+      printf("faux %d : r = %d vs %d\n", k, blocks[k].r, good_rank[k]);
+      exit(0);
+    }
   }
-
+  printf("diagonale principale ok\n");
+ 
 
   /* libération de la mémoire */
 
