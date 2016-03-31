@@ -1040,7 +1040,7 @@ int upper_block_research(super_spasm *CS, super_list *List, block_t block, super
   un = *un_ptr;
   ln = *ln_ptr;
   deff = 0;
-  n_piv = block.r;
+  n_piv = 0;
   tmp_start = block.i0 + block.r;
   n = block.i1 - (tmp_start);
 
@@ -1157,7 +1157,10 @@ int main() {
   free(qinv);
   //spasm_save_csr(stdout, B);
 
- spasm_csr_free(A);
+  /* Vrai rang méthode LU pour vérifier les résultats */
+  spasm_lu *LU = spasm_LU(A, NULL, 0);
+  printf("vrai rang : %d\n", LU->U->n);
+  spasm_csr_free(A);
 
   // calcule la liste des blocs diagonaux
   n_blocks = block_list(B, x, &blocks);
@@ -1268,14 +1271,15 @@ int main() {
   }
 
   /* -------------------------------------------*/
-  int piv_I = n_blocks; // nombre d'intervalle de lignes sur lesquels il reste des pivot.
+  int piv_i = n_big; // nombre de lignes sur lesquels il reste (potentiellement) des pivot.
   diag = 0;
+  int n_piv, last_block_rows;
 
   /* MAIN LOOP : RECHERCHER LES PIVOTS EN REMONTANT LES DIAGONALES */
  
-  while(piv_I > 0){ //<--- tant qu'il reste des pivots potentiels
+  while(piv_i > 0){ //<--- tant qu'il reste des pivots potentiels
     /* allouer le L de la diagonale */
-    L[diag] = super_spasm_alloc(n_big, n_big, m, nzmax, prime, 1);
+    L[diag] = super_spasm_alloc(n_big, piv_i, m, nzmax, prime, 1);
     /* initialisation */
     ln = 0; // On se place sur la ligne 0 de L
     lnz = 0; // L est pour l'instant vide.
@@ -1289,25 +1293,50 @@ int main() {
       }
 
       //traitement du block k:
-      blocks[k].r = upper_block_research(CS[k+diag], L_list, blocks[k], L[diag], U[k+ diag], P, Qinv[k + diag], &ln, &un[k + diag], &lnz, &unz[k + diag]);
+      n_piv = upper_block_research(CS[k+diag], L_list, blocks[k], L[diag], U[k+ diag], P, Qinv[k + diag], &ln, &un[k + diag], &lnz, &unz[k + diag]);
 
-      //mise à jour de piv_I :
-      if(blocks[k].i0 + blocks[k].r == blocks[k].i1){
-	piv_I--; // plus de pivots sur l'intervalle de ligne I_k.
+      blocks[k].r += n_piv;
+      piv_i = piv_i - n_piv;
+
+      // Vérifier que le nombre de pivot trouvé est possible :
+      assert(blocks[k].i0 + blocks[k].r <= blocks[k].i1);
+      assert(un[k + diag] <= U[k+diag]->M->n);
+
+      //Si U[k + diag] est terminé le finaliser :
+      if(un[k + diag] == U[k + diag]->M->n){
+	U[k + diag]->M->p[un[k + diag]] = unz[k + diag];
+	spasm_csr_resize(U[k + diag]->M, un[k + diag], U[k + diag]->M->m);
+	spasm_csr_realloc(U[k + diag]->M, -1);
       }
 
     }
-    //Finaliser L:
+    //Finaliser L[diag]:
     L[diag]->M->p[ln] = lnz;
     spasm_csr_resize(L[diag]->M, ln, n_big);
     spasm_csr_realloc(L[diag]->M, -1);
 
-    // mettre à jour la liste chainée L et piv_I et diag :
+    //Si U[diag] pas encore finalisée, finaliser U[diag]:
+    if(U[diag]->M->p[un[diag]] != unz[diag]){
+	U[diag]->M->p[un[diag]] = unz[diag];
+	spasm_csr_resize(U[diag]->M, un[diag], U[diag]->M->m);
+	spasm_csr_realloc(U[diag]->M, -1);
+    }
+
+    // mettre à jour la liste chainée L et diag :
     L_list = super_list_update(L_list, L[diag]);
-    piv_I--;
     diag++;
+
+    // mettre à jour piv_i
+    last_block_rows = blocks[n_blocks - diag].i1 - (blocks[n_blocks - diag].i0 + blocks[n_blocks - diag].r);
+
+    piv_i = piv_i - last_block_rows; // on ne recherche plus de pivot sur ces lignes.
+
   }
 
+
+  /* -------- FINALISATION DU PROGRAMME -------------------*/
+
+  printf("diagonales parcourues : %d sur %d\n", diag, n_blocks);
   /* calculer le rang = somme des pivots trouvés et afficher le résultat */
   rank = 0;
   for(k = 0; k < n_blocks; k++){
@@ -1315,6 +1344,7 @@ int main() {
   }
 
   printf("rang : %d\n", rank);
+
 
   /* --------- LIBÉRATION DE LA MÉMOIRE, FIN DU PROGRAMME ---------- */
 
