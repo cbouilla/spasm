@@ -10,7 +10,7 @@
  */
 int super_spasm_lazy(super_spasm *A, super_list *L, int i, spasm_GFp *u, int *ui){
   int n_big, top, end, j, k, tmpi, tmpy, unz;
-  int *xi, *yi, *Aperm;
+  int *xi, *yi;
   spasm_GFp *x, *y;
   super_list *Ltmp;
 
@@ -21,8 +21,7 @@ int super_spasm_lazy(super_spasm *A, super_list *L, int i, spasm_GFp *u, int *ui
   if(Ltmp != NULL){
     assert(Ltmp->S->n = n_big); // check size compatibility.
   }
- 
-  Aperm = A->p;
+
 
   /* get workspace */
   x = (Ltmp != NULL) ? spasm_malloc(n_big * sizeof(spasm_GFp)) : NULL;
@@ -54,7 +53,7 @@ int super_spasm_lazy(super_spasm *A, super_list *L, int i, spasm_GFp *u, int *ui
   while(Ltmp != NULL){
     //solve system x * L = y 
     top = super_spasm_sparse_solve(Ltmp->S, y, yi, end, x, xi);
-    
+
     //clear workspace :
     for(j = 0; j < n_big; j++){
       y[j] = 0;
@@ -64,8 +63,13 @@ int super_spasm_lazy(super_spasm *A, super_list *L, int i, spasm_GFp *u, int *ui
     for(j = top; j < n_big; j++){
       yi[j - top] = xi[j];
       y[yi[j - top]] = x[xi[j]];
-      //clear x and xi :
-      x[xi[j]] = 0;
+    }
+
+    //clear x and xi :
+    for(j = 0; j < n_big; j++){
+      x[j] = 0;
+    }
+    for(j = 0; j < 3 * n_big; j++){
       xi[j] = 0;
     }
     end = n_big - top;

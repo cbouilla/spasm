@@ -1022,7 +1022,7 @@ uptri_t * final_structure_uptri(const spasm *B) {
  * renvoie n_piv.
  */
 int upper_block_research(super_spasm *CS, super_list *List, block_t block, super_spasm *L, super_spasm *U, int *p, int *qinv, int *ln_ptr, int *un_ptr, int *lnz, int *unz){
-  int i, j, i_new, tmp_start, m, ynz, top, n, *xi, *yi, ln, un, found, deff, n_piv, *tmp, *Up, *Lp;
+  int i, j, i_new, tmp_start, m, ynz, top, n, *xi, *yi, ln, un, found, deff, n_piv, *tmp, *Up, *Lp, re_ord;
   spasm_GFp *x, *y;
 
   //check inputs :
@@ -1099,6 +1099,7 @@ int upper_block_research(super_spasm *CS, super_list *List, block_t block, super
     un += found;
     if(found){
       tmp[i - tmp_start - deff] = i_new;
+     
     }
     else{
       deff++;
@@ -1106,8 +1107,17 @@ int upper_block_research(super_spasm *CS, super_list *List, block_t block, super
     }
   }
 
-  for(i = block.i0 + block.r; i < block.i1; i++){
-    p[i] = tmp[i - tmp_start];
+  // vérifier qu'il n'y a pas d'incohérence.
+  assert(tmp_start + n_piv <= block.i1);
+
+  // mettre à jour la permutation p en la réordonnant :
+  for(i = tmp_start; i < tmp_start + n_piv; i++){
+    p[i] = tmp[i - tmp_start]; // mettre les nouveaux pivots à la suite des autres.
+  }
+  re_ord = (block.i1 - tmp_start) - 1;
+  for(i = tmp_start + n_piv; i < block.i1; i++){
+    p[i] = tmp[re_ord];
+    re_ord--;
   }
 
   /*free workspace */
@@ -1230,6 +1240,7 @@ int main() {
   spasm_csr_free(B);
 
 
+
   /* -------------------------------------------------------- */
   
 
@@ -1273,40 +1284,45 @@ int main() {
   /* -------------------------------------------*/
   int piv_i = n_big; // nombre de lignes sur lesquels il reste (potentiellement) des pivot.
   diag = 0;
-  int n_piv, last_block_rows;
+  int n_piv, last_block_rows, piv_on_diag = 0;
+  int J_good = n_blocks; // nombre d'intervalle de colonnes sur lesquels il reste (potentiellement) des pivots. 
 
   /* MAIN LOOP : RECHERCHER LES PIVOTS EN REMONTANT LES DIAGONALES */
  
-  while(piv_i > 0){ //<--- tant qu'il reste des pivots potentiels
+  while(piv_i > 0 && J_good >0){ //<--- tant qu'il reste des pivots potentiels
     /* allouer le L de la diagonale */
     L[diag] = super_spasm_alloc(n_big, piv_i, m, nzmax, prime, 1);
     /* initialisation */
     ln = 0; // On se place sur la ligne 0 de L
     lnz = 0; // L est pour l'instant vide.
+
     /* boucle sur tous les blocks (k, k+d) à regarder */
     for(pt = FS->d[diag]; pt < FS->d[diag + 1]; pt ++){
       k = FS->i[pt];
 
       // Si tous les pivots de l'intervalle de ligne I_k on déjà été trouvé on passe au suivant.
       if(blocks[k].i0 + blocks[k].r == blocks[k].i1){
-	continue;
+      	continue;
       }
 
       //traitement du block k:
       n_piv = upper_block_research(CS[k+diag], L_list, blocks[k], L[diag], U[k+ diag], P, Qinv[k + diag], &ln, &un[k + diag], &lnz, &unz[k + diag]);
 
+
       blocks[k].r += n_piv;
       piv_i = piv_i - n_piv;
+      piv_on_diag += n_piv;
 
       // Vérifier que le nombre de pivot trouvé est possible :
       assert(blocks[k].i0 + blocks[k].r <= blocks[k].i1);
       assert(un[k + diag] <= U[k+diag]->M->n);
 
-      //Si U[k + diag] est terminé le finaliser :
+      //Si U[k + diag] est terminé le finaliser et mettre à jour J_good:
       if(un[k + diag] == U[k + diag]->M->n){
 	U[k + diag]->M->p[un[k + diag]] = unz[k + diag];
 	spasm_csr_resize(U[k + diag]->M, un[k + diag], U[k + diag]->M->m);
 	spasm_csr_realloc(U[k + diag]->M, -1);
+	J_good--; //plus de pivots à chercher sur cet intervalle de colonnes.
       }
 
     }
@@ -1315,11 +1331,12 @@ int main() {
     spasm_csr_resize(L[diag]->M, ln, n_big);
     spasm_csr_realloc(L[diag]->M, -1);
 
-    //Si U[diag] pas encore finalisée, finaliser U[diag]:
-    if(U[diag]->M->p[un[diag]] != unz[diag]){
+    //Si U[diag] pas encore finalisée, finaliser U[diag], mettre à jour J_good:
+    if(un[diag] != U[diag]->M->n){
 	U[diag]->M->p[un[diag]] = unz[diag];
 	spasm_csr_resize(U[diag]->M, un[diag], U[diag]->M->m);
 	spasm_csr_realloc(U[diag]->M, -1);
+	J_good--; // on ne regarde plus l'intervalle de colonne le plus à gauche.
     }
 
     // mettre à jour la liste chainée L et diag :
@@ -1335,6 +1352,25 @@ int main() {
 
 
   /* -------- FINALISATION DU PROGRAMME -------------------*/
+
+  /* printf("U :\n"); */
+  /* for(k = 0; k < n_blocks; k++){ */
+  /*   spasm_save_csr(stdout, U[k]->M); */
+  /*   for(i = 0; i< U[k]->M->n; i++){ */
+  /*     printf("%d ", U[k]->p[i]); */
+  /*     } */
+  /*   printf("\n-----------------\n"); */
+  /* } */
+
+  /* printf("-----------------\n"); */
+  /* printf("L :\n"); */
+  /* for(k = 0; k < diag; k++){ */
+  /*   spasm_save_csr(stdout, L[k]->M); */
+  /*   for(i = 0; i < L[k]->M->n; i++){ */
+  /*     printf("%d ", L[k]->p[i]); */
+  /*   } */
+  /*   printf("\n----------------\n"); */
+  /* } */
 
   printf("diagonales parcourues : %d sur %d\n", diag, n_blocks);
   /* calculer le rang = somme des pivots trouvés et afficher le résultat */

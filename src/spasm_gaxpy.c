@@ -113,7 +113,11 @@ int super_sparse_gax(const super_spasm * M, const spasm_GFp * x, const int *xi, 
 
     /* get workspace, initializing w, wi */
     w = spasm_calloc(m, sizeof(int));
-    wi = spasm_calloc(xnz, sizeof(int));
+    wi = spasm_malloc(xnz * sizeof(int));
+
+    for(i = 0; i < xnz; i++){
+      wi[i] = -1;
+    }
 
     /* primo, trouver support du résultat */
     nz = 0;
@@ -142,6 +146,10 @@ int super_sparse_gax(const super_spasm * M, const spasm_GFp * x, const int *xi, 
     /* deuxio : scatter y */
     for (k = 0; k < xnz; k++) {
         l = wi[k];
+	if(l == -1){
+	  // la ligne n'existe pas dans A.
+	  continue; 
+	}
 	i = xi[k];
 
         spasm_scatter(Aj, Ax, Ap[l], Ap[l + 1], x[i], y, prime);
