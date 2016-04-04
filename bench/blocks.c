@@ -819,7 +819,6 @@ spasm * filled_structure(const spasm *A, const spasm *adjacency_graph) {
   /* allocate result */
   B = spasm_csr_alloc(n, n, 0, A->prime, 0);
   
-
   for (i = 0; i < n; i++) {
     /* clear workspace */
     x[i] = 0;
@@ -834,12 +833,14 @@ spasm * filled_structure(const spasm *A, const spasm *adjacency_graph) {
   agp = adjacency_graph->p;
   agx = adjacency_graph->x;
 
-
  
   // pour chaque ligne i en partant de la fin
 
   bnz = 0;
   for(i = n - 1; i >= 0; i--) {
+    // Initialiser Bp :
+    Bp[i + 1] = 0;
+
     // invariant : pour toutes les lignes d'indice supérieur à i,
     //    * le début des indices de colonne est à tmp_p[i]
     //    * la taille de le k-ème ligne est dans Bp[k+1]
@@ -878,29 +879,31 @@ spasm * filled_structure(const spasm *A, const spasm *adjacency_graph) {
   }
       }
 
-    //    si B n'est pas assez gros pour recevoir x, réallouer B 2x plus gros
-    if (bnz + x_size > tmp_size) {
-      //printf("tmp_size : %d ; %d\n", tmp_size, 2*tmp_size +n);
-      tmp_size = 2 * tmp_size + n;
-      tmp_j = realloc(tmp_j, tmp_size *(sizeof(int)));
-      assert(tmp_j != NULL);
-    }
+      // si i correspond à un intervalle de ligne intéressant :
+	// si B n'est pas assez gros pour recevoir x, réallouer B 2x plus gros
+	if (bnz + x_size > tmp_size) {
+	  //printf("tmp_size : %d ; %d\n", tmp_size, 2*tmp_size +n);
+	  tmp_size = 2 * tmp_size + n;
+	  tmp_j = realloc(tmp_j, tmp_size *(sizeof(int)));
+	  assert(tmp_j != NULL);
+	}
 
-    //    B[i] <-- x (copier les entrées ET ajuster pointeurs de ligne)
-    //    Parcourir B[i] pour remettre w à zéro
-    Bp[i+1] = x_size;
-    tmp_p[i] = bnz;
-    for(k = 0; k < x_size; k++) {
-      j = x[k];
-      tmp_j[bnz] = j;
-      w[j] = 0;
-      bnz++;
-    }
+   
+	//    B[i] <-- x (copier les entrées ET ajuster pointeurs de ligne)
+	//    Parcourir B[i] pour remettre w à zéro
+	Bp[i+1] = x_size;
+	tmp_p[i] = bnz;
+	for(k = 0; k < x_size; k++) {
+	  j = x[k];
+	  tmp_j[bnz] = j;
+	  w[j] = 0;
+	  bnz++;
+	}
+      
   }
-
   //printf("nombre de blocs à alouer : %d\n", bnz);
   // printf("nombre de blocs initialement : %d\n", A->nzmax);
-  assert(bnz >= A->nzmax);
+  // assert(bnz >= A->nzmax);
   // Bp[i+1] = taille de la i-ème ligne
   // tmp_p[i] = position du début de la ième ligne dans tmp_j
   
@@ -1195,33 +1198,8 @@ int main() {
 
   // calcule la matrice des blocks
   Tr = blocks_spasm(where, n_blocks, fill, B->prime, 1);
-  
-  /*-------------------------------------------------*/
 
-  /* Remplissage potentiel de la matrice de départ */
-
-  spasm_row_entries_sort(Tr, 0);
-
-  rows = spasm_malloc((spasm_nnz(Tr) - n_blocks) * sizeof(edge_t));
-  
-  spasm *row_inter = row_intersection_graph(Tr, rows, n_blocks);
-  spasm * blocks_mat = blocks_spasm(where, n_blocks, fill, B->prime, 0);
-
-  free(where);
-  uptri_t *FS;
-
-  G = filled_structure(blocks_mat, row_inter); // matrice "spasm" du remplissage
-  
-
-  FS = final_structure_uptri(G); // matrice "diag par diag" du remplissage.
-
-  spasm_csr_free(G);
-  spasm_csr_free(Tr);
-  spasm_csr_free(row_inter);
-  spasm_csr_free(blocks_mat);
- 
   /* --------------------------------------------------- */
-
 
   /* Découpage de B en tranche de colonnes */
   int *first_col = spasm_malloc((n_blocks + 1) * sizeof(int));
@@ -1238,16 +1216,13 @@ int main() {
 
   free(first_col);
   spasm_csr_free(B);
+  free(J);
 
+ /* --------------------------------------------------*/
 
-
-  /* -------------------------------------------------------- */
-  
-
-  /* ----------- INTIALISATTION  -------------- */
+ /* ----------- INTIALISATTION de LU -------------- */
 
   /* Get workspace */
-
   int *unz, *un, lnz, ln;
   U = spasm_malloc(n_blocks * sizeof(super_spasm*));
   L = spasm_malloc(n_blocks * sizeof(super_spasm*));
@@ -1257,12 +1232,12 @@ int main() {
   unz = spasm_malloc(n_blocks * sizeof(int));
   un = spasm_malloc(n_blocks * sizeof(int));
 
-
   int U_nmax;
   for(k = 0; k < n_blocks; k++){
     U_nmax = spasm_min(CS[k]->M->m, n_big); // borne sup sur le nombre de pivots qu'on peut trouver dans l'intervalle de cols J_k.
     Qinv[k] = spasm_malloc(CS[k]->M->m * sizeof(int));
     U[k] = super_spasm_alloc(n_big, U_nmax, CS[k]->M->m, 2 * (U_nmax + CS[k]->M->m), prime, 1);
+
   }
 
   /* ------------------------------------------ */
@@ -1284,9 +1259,37 @@ int main() {
     P[i] = i; // pas encore de pivots trouvés.
   }
 
+  /*-------------------------------------------------------*/
+ 
+
+
+  /* -------------------------------------------------------- */
+   
+   /* Remplissage potentiel de la matrice de départ */
+
+  spasm_row_entries_sort(Tr, 0);
+
+  rows = spasm_malloc((spasm_nnz(Tr) - n_blocks) * sizeof(edge_t));
+  
+  spasm *row_inter = row_intersection_graph(Tr, rows, n_blocks);
+  free(rows);
+  spasm_csr_free(Tr);
+
+  spasm * blocks_mat = blocks_spasm(where, n_blocks, fill, prime, 0);
+  free(where);
+  
+  uptri_t *FS;
+
+  G = filled_structure(blocks_mat, row_inter); // matrice "spasm" du remplissage
+  spasm_csr_free(row_inter);
+  spasm_csr_free(blocks_mat); 
+
+  FS = final_structure_uptri(G); // matrice "diag par diag" du remplissage.
+  spasm_csr_free(G);
+
   /* -------------------------------------------*/
   int piv_i = n_big; // nombre de lignes sur lesquels il reste (potentiellement) des pivot.
-  diag = 0;
+  diag = 0, rank = 0;
   int n_piv, last_block_rows, piv_on_diag = 0;
   int J_good = n_blocks; // nombre d'intervalle de colonnes sur lesquels il reste (potentiellement) des pivots. 
 
@@ -1300,7 +1303,7 @@ int main() {
     lnz = 0; // L est pour l'instant vide.
 
     /* boucle sur tous les blocks (k, k+d) à regarder */
-    for(pt = FS->d[diag]; pt < FS->d[diag + 1]; pt ++){
+    for(pt = FS->d[diag]; pt < FS->d[diag + 1]; pt++){
       k = FS->i[pt];
 
       // Si tous les pivots de l'intervalle de ligne I_k on déjà été trouvé on passe au suivant.
@@ -1315,6 +1318,7 @@ int main() {
       blocks[k].r += n_piv;
       piv_i = piv_i - n_piv;
       piv_on_diag += n_piv;
+      rank += n_piv;
 
       // Vérifier que le nombre de pivot trouvé est possible :
       assert(blocks[k].i0 + blocks[k].r <= blocks[k].i1);
@@ -1350,6 +1354,7 @@ int main() {
     last_block_rows = blocks[n_blocks - diag].i1 - (blocks[n_blocks - diag].i0 + blocks[n_blocks - diag].r);
 
     piv_i = piv_i - last_block_rows; // on ne recherche plus de pivot sur ces lignes.
+    printf("diagonales regardées : %d , pivots trouvés : %d\n", diag, rank);
 
   }
 
@@ -1377,10 +1382,6 @@ int main() {
 
   printf("diagonales parcourues : %d sur %d\n", diag, n_blocks);
   /* calculer le rang = somme des pivots trouvés et afficher le résultat */
-  rank = 0;
-  for(k = 0; k < n_blocks; k++){
-    rank += blocks[k].r;
-  }
 
   printf("rang : %d\n", rank);
 
@@ -1397,10 +1398,8 @@ int main() {
   free(L);
   uptri_free(FS);
   free(CS);
-  free(J);
   free(unz);
   free(un);
-  free(rows);
   free(blocks);
   free(Qinv);
   free(P);
