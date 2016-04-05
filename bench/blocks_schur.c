@@ -45,10 +45,18 @@ spasm_lu * submatrix_LU(const spasm *M, int a, int b, int c, int d) {
   }
 
   // calcule la décomposition LU. 
-  // p = spasm_cheap_pivots(C); 
-  LU = spasm_LU(C, SPASM_IDENTITY_PERMUTATION, SPASM_KEEP_L); // on garde L
-  // free(p);
+  int *cheap_p = spasm_cheap_pivots(C); 
+  LU = spasm_LU(C, cheap_p, SPASM_DISCARD_L); // on garde L
 
+  // L*U = P*A
+  // donc il faudrait que la permutation LU->P soit en réalité P-cheap[LU->P]
+
+  int *P = LU->p;
+  for(int i=0; i < C->n; i++) {
+    P[i] = cheap_p[P[i]];
+  }
+
+  free(cheap_p);
 
   // libère la sous-matrice et la mémoire dont on n'a plus besoin.
   spasm_csr_free(C);
@@ -208,6 +216,8 @@ int main() {
   }
   
   assert(pivots == non_pivots+1);
+
+  printf("Go\n");
 
   spasm_lu *BIG = spasm_LU(B, P, SPASM_DISCARD_L);
   spasm *U = BIG->U;
