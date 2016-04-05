@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include "spasm.h"
 
+#ifdef SPASM_TIMING
+extern int64 reach, scatter, data_shuffling;
+#endif
+
 /*
  * Dans toute la suite, X[i:j] désigne les élements de X d'indice i <= ... < j,
  * C'est-à-dire de i inclus à j exclus. Il s'ensuit que i:j désigne l'intervalle [i; j[
@@ -171,6 +175,9 @@ int main() {
   spasm_triplet * T = spasm_load_sms(stdin, prime);
   printf("A : %d x %d with %d nnz (density = %.3f %%) -- loaded modulo %d\n", T->n, T->m, T->nz, 100.0 * T->nz / (1.0 * T->n * T->m), prime);
 
+  double start_time, end_time;
+  start_time = spasm_wtime();
+
   spasm * A = spasm_compress(T);
   spasm_triplet_free(T);
 
@@ -196,8 +203,9 @@ int main() {
   /* Réassemble les petites matrices L, pour obtenir une grande matrice L */
   int n = B->n;
   int *P = spasm_calloc(n, sizeof(int));
+  int *N = spasm_calloc(n, sizeof(int));
   int pivots = 0;
-  int non_pivots = n - 1;
+  int non_pivots = 0;
 
   for(int k = 0; k < n_blocks; k++) {
 
@@ -211,17 +219,43 @@ int main() {
       P[pivots++] = a + LU[k]->p[i];
     }
     for(int i = r; i < block_n; i++) {
-      P[non_pivots--] = a + LU[k]->p[i];
+      N[non_pivots++] = a + LU[k]->p[i];
     }
   }
   
-  assert(pivots == non_pivots+1);
+  for(int i=0; i<non_pivots; i++) {
+    P[n - 1 - i] = N[i];
+  }
 
+  assert(pivots + non_pivots == n);
+  
   printf("Go\n");
+
+  /* reset timers */
+  reach = 0;
+  scatter = 0;
+  data_shuffling = 0;
 
   spasm_lu *BIG = spasm_LU(B, P, SPASM_DISCARD_L);
   spasm *U = BIG->U;
-  printf("rank : %d, |U| = %d (density = %.3f)\n", U->n, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0 * U->n * U->m));
 
+  end_time = spasm_wtime();
+  printf("\n");
+
+  int r = U->n;
+  int m = B->m;
+
+  printf("LU factorisation (+ everything) took %.2f s\n", end_time - start_time);
+  printf("U :  %d x %d with %d nnz (density = %.3f %%)\n", r, m, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0*r*m - r*r/2.0));
+  
+#ifdef SPASM_TIMING
+  printf("----------------------------------------\n");
+  printf("reach   : %12" PRId64 "\n", reach);
+  printf("scatter : %12" PRId64 "\n", scatter);
+  printf("misc    : %12" PRId64 "\n", data_shuffling);
+#endif
+  printf("----------------------------------------\n");
+  printf("rank of A = %d\n", U->n);
+  
   return 0;
 }
