@@ -77,6 +77,11 @@ int super_spasm_lazy(super_spasm *A, super_list *L, int i, spasm_GFp *u, int *ui
     Ltmp = Ltmp->next;
   }
 
+  // si y est vide, on quite la fonction :
+  if(end == 0){
+    return 0;
+  }
+
   /* compute the product u = y * A */
   // first sort entries in y : insertion sort.
   for(j = 1; j < end; j++){

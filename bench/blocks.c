@@ -1081,7 +1081,14 @@ int upper_block_research(super_spasm *CS, super_list *List, block_t block, super
     //Lazy computation :
 
     ynz = super_spasm_lazy(CS, List, i_new, y, yi); 
-
+    
+    // si le vecteur obtenu est vide :
+    if(ynz == 0){
+      //ln++;
+      deff++;
+      tmp[n - deff] = i_new;
+      continue;
+    }
     /* continue LU */
     // not enough room : realloc
     if ((*lnz) + m > L->M->nzmax) {
@@ -1251,7 +1258,7 @@ int main() {
     for(i = 0; i < CS[k]->M->m; i++){
       Qinv[k][i] = -1; // pas encore de pivots trouvés.
     }
-    for(i = 0; i < U[k]->M->n; i++){
+    for(i = 0; i < U[k]->M->n + 1; i++){
       U[k]->M->p[i] = 0;
     }
   }
