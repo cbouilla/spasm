@@ -159,10 +159,12 @@ int block_list(const spasm *M, const spasm_dm *DM, block_t **blocks_ptr, spasm_l
 
 int main() {
   // charge la matrice depuis l'entrée standard
-  spasm_triplet * T = spasm_load_sms(stdin, 42013);
+  int prime = 42013;
+  spasm_triplet * T = spasm_load_sms(stdin, prime);
+  printf("A : %d x %d with %d nnz (density = %.3f %%) -- loaded modulo %d\n", T->n, T->m, T->nz, 100.0 * T->nz / (1.0 * T->n * T->m), prime);
+
   spasm * A = spasm_compress(T);
   spasm_triplet_free(T);
-
 
   // calcule la décomposition de A
   spasm_dm * x = spasm_dulmage_mendelsohn(A);
@@ -171,8 +173,6 @@ int main() {
   int * qinv = spasm_pinv(x->DM->q, A->m);
   spasm * B = spasm_permute(A, x->DM->p, qinv, SPASM_WITH_NUMERICAL_VALUES);
   free(qinv);
-
-  printf("input matrix : %d x %d with %d NNZ\n", A->n, A->m, spasm_nnz(A));
 
   spasm_csr_free(A);
 
@@ -186,103 +186,32 @@ int main() {
   printf("blocs diagonaux : %d\n", n_blocks);
 
   /* Réassemble les petites matrices L, pour obtenir une grande matrice L */
-  
-  int *P = spasm_calloc(B->n, sizeof(int));
-  int *Qinv = spasm_calloc(B->m, sizeof(int));
+  int n = B->n;
+  int *P = spasm_calloc(n, sizeof(int));
   int pivots = 0;
-  int non_pivots = B->n - 1;
-  spasm *L = spasm_csr_alloc(B->n, B->n, B->nzmax, B->prime, SPASM_WITH_NUMERICAL_VALUES);
-  int *Lj = L->j;
-  int *Lp = L->p;
-  int lnz = 0;
-  spasm_GFp *Lx = L->x;
-  Lp[0] = 0;
-  int plop = 0;
-
-  // a priori, aucun pivot trouvé
-  for(int j = 0; j < A->m; j++) {
-    Qinv[j] = -1;
-  }
-
+  int non_pivots = n - 1;
 
   for(int k = 0; k < n_blocks; k++) {
 
     int r = blocks[k].r;
-    int block_n = blocks[k].i1 - blocks[k].i0;
-    int block_m = blocks[k].j1 - blocks[k].j0;
     int a = blocks[k].i0;
-    int b = blocks[k].j0;
-
-    plop += block_n;
-
-    printf("%d : (%d, %d) -- (%d, %d) {%d x %d} [rang %d]...\n", k, a, b, blocks[k].i1, blocks[k].j1, block_n, block_m, r);
-
-
-    /* locate the pivots in the diagonal block */
-    assert(r > 0);
+    int block_n = blocks[k].i1 - blocks[k].i0;
+    //printf("%d : (%d, %d) -- (%d, %d) {%d x %d} [rang %d]...\n", k, a, b, blocks[k].i1, blocks[k].j1, block_n, block_m, r);
 
     /* le seul truc sûr, c'est que ceci marque les colonnes qui contiennent des pivots. Mais sur quelles lignes seront-ils ? */
-    for(int j = 0; j < block_m; j++) {
-      if (LU[k]->qinv[j] >= 0) {
-        Qinv[b + j] = a + LU[k]->qinv[j];
-      }      
-    }
-
     for(int i = 0; i < r; i++) {
-      /* les lignes d'indices p[i] de C contiennent un pivot */
-      P[pivots] = a + LU[k]->p[i];
-      //printf("row %d is pivot\n", a + LU[k]->p[i]);
-      pivots++;
+      P[pivots++] = a + LU[k]->p[i];
     }
     for(int i = r; i < block_n; i++) {
-      /* les lignes d'indices p[i] de C ne contiennent pas de pivot */
-      P[non_pivots] = a + LU[k]->p[i];
-      //printf("row %d is non-pivot\n", a + LU[k]->p[i]);
-      non_pivots--;
-    }
-
-    /* copier les petites lignes de L trouvées dans le grand L */
-    int *small_p = LU[k]->L->p;
-    int *small_j = LU[k]->L->j;
-    spasm_GFp *small_x = LU[k]->L->x;
-
-    // attention, il se peut que L ne soit pas assez gros
-    if (lnz + spasm_nnz(LU[k]->L) > L->nzmax) {
-      spasm_csr_realloc(L, 2 * L->nzmax + spasm_nnz(LU[k]->L));
-      Lj = L->j;
-      Lx = L->x;
-    }
-    
-    for(int i = 0; i < block_n; i++) {
-      int big_t = Lp[a + i];
-      for(int small_t = small_p[i]; small_t < small_p[i+1]; small_t++) {
-        Lj[big_t] = small_j[small_t];
-        Lx[big_t] = small_x[small_t];
-        big_t++;
-      }
-      Lp[a + i + 1] = big_t;
+      P[non_pivots--] = a + LU[k]->p[i];
     }
   }
-
+  
   assert(pivots == non_pivots+1);
 
-  printf("le complément de Schur est de taille %d x %d et de rang <= %d\n", B->n - pivots, B->m - pivots, spasm_min(B->n, B->m) - pivots);
-
-  x = e_k * L.I
-  x*L = e_k
-
-  /* détermine U.  U[k] = e_k * (L.I) Ak
-  x = malloc(Mn * sizeof(spasm_GFp));
-  xi = malloc(3*Mn * sizeof(int));
-  spasm_vector_zero(xi, 3*Mn);
-  spasm_vector_zero(x, Mn);
-
-  I = spasm_identity(Mn, prime); // <--- Identity matrix
-
-  top = spasm_sparse_backward_solve(L, I, k, xi, x, pinv,0);
-
-
-
+  spasm_lu *BIG = spasm_LU(B, P, SPASM_DISCARD_L);
+  spasm *U = BIG->U;
+  printf("rank : %d, |U| = %d (density = %.3f)\n", U->n, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0 * U->n * U->m));
 
   return 0;
 }
