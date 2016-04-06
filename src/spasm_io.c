@@ -11,12 +11,12 @@ spasm_triplet * spasm_load_sms(FILE *f, int prime) {
 
     if (fscanf(f, "%d %d %c\n", &i, &j, &type) != 3) {
       fprintf(stderr, "[spasm_load_sms] bad SMS file (header)\n");
-      exit(0);
+      exit(1);
     }
 
     if (prime != -1 && type != 'M') {
       fprintf(stderr, "[spasm_load_sms] only ``Modular'' type supported\n");
-      exit(0);
+      exit(1);
     }
 
     /* allocate result */
