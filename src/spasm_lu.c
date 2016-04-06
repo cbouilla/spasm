@@ -63,6 +63,8 @@ spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation, int keep_L) {
  * L n * r
  * U is r * m
  *
+ * L*U == row_permutation*A
+ *
  * qinv[j] = i if the pivot on column j is on row i. -1 if no pivot (yet) found
  * on column j.
  *
@@ -76,11 +78,6 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 
 #ifdef SPASM_TIMING
     uint64_t start;
-#endif
-
-#ifdef SPASM_COL_WEIGHT_PIVOT_SELECTION
-    int piv_weight;
-    int *col_weights, *Ap, *Aj;
 #endif
 
     /* check inputs */
@@ -121,20 +118,6 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
       qinv[i] = -1;
     }
 
-#ifdef SPASM_COL_WEIGHT_PIVOT_SELECTION
-    col_weights = spasm_malloc(m * sizeof(int));
-    Ap = A->p;
-    Aj = A->j;
-    for (i = 0; i < m; i++) {
-      col_weights[i] = 0;
-    }
-    for (i = 0; i < n; i++) {
-      for(px = Ap[i]; px < Ap[i + 1]; px++) {
-	col_weights[ Aj[px] ]++;
-      }
-    }
-#endif
-
     for (i = 0; i < n; i++) {
       /* no rows exchange yet */
       p[i] = i;
@@ -149,125 +132,107 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     /* --- Main loop : compute L[i] and U[i] ------------------- */
     for (i = 0; i < n; i++) {
       if (!keep_L && i - defficiency == r) {
-	fprintf(stderr, "\n[LU] full rank reached ; early abort\n");
-	break;
+        fprintf(stderr, "\n[LU] full rank reached ; early abort\n");
+        break;
       }
  
         /* --- Triangular solve: x * U = A[i] ---------------------------------------- */
       if (keep_L) {
-	Lp[i] = lnz;                          /* L[i] starts here */
+        Lp[i] = lnz;                          /* L[i] starts here */
       }
       Up[i - defficiency] = unz;            /* U[i] starts here */
 
-        /* not enough room in L/U ? realloc twice the size */
-        if (keep_L && lnz + m > L->nzmax) {
-            spasm_csr_realloc(L, 2 * L->nzmax + m);
-        }
-        if (unz + m > U->nzmax) {
-            spasm_csr_realloc(U, 2 * U->nzmax + m);
-        }
-        Lj = (keep_L) ? L->j : NULL;
-        Lx = (keep_L) ? L->x : NULL;
-        Uj = U->j;
-        Ux = U->x;
+      /* not enough room in L/U ? realloc twice the size */
+      if (keep_L && lnz + m > L->nzmax) {
+          spasm_csr_realloc(L, 2 * L->nzmax + m);
+      }
+      if (unz + m > U->nzmax) {
+          spasm_csr_realloc(U, 2 * U->nzmax + m);
+      }
+      Lj = (keep_L) ? L->j : NULL;
+      Lx = (keep_L) ? L->x : NULL;
+      Uj = U->j;
+      Ux = U->x;
 
-	inew = (row_permutation != NULL) ? row_permutation[i] : i;
-        top = spasm_sparse_forward_solve(U, A, inew, xi, x, qinv);
+      inew = (row_permutation != NULL) ? row_permutation[i] : i;
+      top = spasm_sparse_forward_solve(U, A, inew, xi, x, qinv);
 
 
-        /* --- Find pivot and dispatch coeffs into L and U -------------------------- */
+      /* --- Find pivot and dispatch coeffs into L and U -------------------------- */
 #ifdef SPASM_TIMING
       start = spasm_ticks();
 #endif
-        ipiv = -1;
-        /* index of best pivot so far.*/
+      ipiv = -1;
+      /* index of best pivot so far.*/
 
-	for (px = top; px < m; px++) {
-            /* x[j] is (generically) nonzero */
-            j = xi[px];
+      for (px = top; px < m; px++) {
+        /* x[j] is (generically) nonzero */
+        j = xi[px];
 
-            /* if x[j] == 0 (numerical cancelation), we just ignore it */
-            if (x[j] == 0) {
-                continue;
-            }
-
-            if (qinv[j] < 0) {
-                /* column j is not yet pivotal ? */
-
-                /* have found the pivot on row i yet ? */
-#ifdef SPASM_COL_WEIGHT_PIVOT_SELECTION
-                if (ipiv == -1 || col_weights[j] < piv_weight ) {
-                    ipiv = j;
-		    piv_weight = col_weights[j];
-                }
-#else
-                if (ipiv == -1 || j < ipiv) {
-                    ipiv = j;
-                }
-#endif
-            } else if (keep_L) {
-                /* column j is pivotal */
-                /* x[j] is the entry L[i, qinv[j] ] */
-                Lj[lnz] = qinv[j];
-                Lx[lnz] = x[j];
-                lnz++;
-            }
+        /* if x[j] == 0 (numerical cancelation), we just ignore it */
+        if (x[j] == 0) {
+            continue;
         }
 
-        /* pivot found */
-        if (ipiv != -1) {
-	  old_unz = unz;
-	  //	  printf("\n pivot found on row %d of A at column %d\n", inew, ipiv);
+        if (qinv[j] < 0) {
+          /* column j is not yet pivotal ? */
 
-	  /* L[i,i] <--- 1. Last entry of the row ! */
-	  if (keep_L) {
-	    Lj[lnz] = i - defficiency;
-	    Lx[lnz] = 1;
-	    lnz++;
-	  }
+          /* have found the pivot on row i yet ? */
+          if (ipiv == -1 || j < ipiv) {
+            ipiv = j;
+          }
+        } else if (keep_L) {
+          /* column j is pivotal */
+          /* x[j] is the entry L[i, qinv[j] ] */
+          Lj[lnz] = qinv[j];
+          Lx[lnz] = x[j];
+          lnz++;
+        }
+      }
 
-	  qinv[ ipiv ] = i - defficiency;
-	  p[i - defficiency] = i;
+      /* pivot found ? */
+      if (ipiv != -1) {
+        old_unz = unz;
+        //    printf("\n pivot found on row %d of A at column %d\n", inew, ipiv);
 
-	  /* pivot must be the first entry in U[i] */
-	  Uj[unz] = ipiv;
-	  Ux[unz] = x[ ipiv ];
-	  unz++;
+        /* L[i,i] <--- 1. Last entry of the row ! */
+        if (keep_L) {
+          Lj[lnz] = i - defficiency;
+          Lx[lnz] = 1;
+          lnz++;
+        }
 
-	  /* send remaining non-pivot coefficients into U */
-	  for (px = top; px < m; px++) {
-	    j = xi[px];
+        qinv[ ipiv ] = i - defficiency;
+        p[i - defficiency] = i;
 
-	    if (qinv[j] < 0) {
-	      Uj[unz] = j;
-	      Ux[unz] = x[j];
-	      unz++;
-	    }
-	  }
+        /* pivot must be the first entry in U[i] */
+        Uj[unz] = ipiv;
+        Ux[unz] = x[ ipiv ];
+        unz++;
 
-	} else {
-	  defficiency++;
-	  p[n - defficiency] = i;
-	}
+        /* send remaining non-pivot coefficients into U */
+        for (px = top; px < m; px++) {
+          j = xi[px];
 
-
-#ifdef SPASM_COL_WEIGHT_PIVOT_SELECTION
-	/* update remaining col weights */
-	for(px = Ap[inew]; px < Ap[inew + 1]; px++) {
-	  col_weights[ Aj[px] ]--;
-	}
-#endif
-
+          if (qinv[j] < 0) {
+            Uj[unz] = j;
+            Ux[unz] = x[j];
+            unz++;
+          }
+        }
+      } else {
+        defficiency++;
+        p[n - defficiency] = i;
+      }
 
 #ifdef SPASM_TIMING
       data_shuffling += spasm_ticks() - start;
 #endif
 
       if ((i % verbose_step) == 0) {
-	fprintf(stderr, "\rLU : %d / %d [|L| = %d / |U| = %d] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, lnz, unz, 1.0 * (m-top) / (m), 1.0 * (unz-old_unz) / m, i - defficiency);
-	fflush(stderr);
+        fprintf(stderr, "\rLU : %d / %d [|L| = %d / |U| = %d] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, lnz, unz, 1.0 * (m-top) / (m), 1.0 * (unz-old_unz) / m, i - defficiency);
+        fflush(stderr);
       }
-
     }
     
     /* --- Finalize L and U ------------------------------------------------- */
@@ -457,7 +422,7 @@ int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *un
       // no pivot on column j yet.
       
       if(ipiv == -1 || j < ipiv) {
-	ipiv = j; // <--- best pivot so far is on column j.
+  ipiv = j; // <--- best pivot so far is on column j.
       }
 
     }
@@ -498,10 +463,10 @@ int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *un
       //if(x[j] == 0) continue; //<-- if numerical cancelation, we ignore it.
 
       if(qinv[j] < 0) {
-	// no pivot in column j yet
-	Uj[unz] = j;
-	Ux[unz] = x[j];
-	unz++;
+  // no pivot in column j yet
+  Uj[unz] = j;
+  Ux[unz] = x[j];
+  unz++;
       }
     }
 
@@ -579,7 +544,7 @@ int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super
       // no pivot on column j yet.
       
       if(ipiv == -1 || j < ipiv) {
-	ipiv = j; // <--- best pivot so far is on column j.
+  ipiv = j; // <--- best pivot so far is on column j.
       }
 
     }
@@ -620,10 +585,10 @@ int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super
       //if(x[j] == 0) continue; //<-- if numerical cancelation, we ignore it.
 
       if(qinv[j] < 0) {
-	// no pivot in column j yet
-	Uj[unz] = j;
-	Ux[unz] = x[j];
-	unz++;
+  // no pivot in column j yet
+  Uj[unz] = j;
+  Ux[unz] = x[j];
+  unz++;
       }
     }
 
