@@ -1,4 +1,4 @@
-AC_INIT([spasm],[0.1],[charles.bouillaguet@lifl.fr])
+AC_INIT([spasm],[0.1],[charles.bouillaguet@univ-lille1.fr])
 AC_PREREQ([2.69])
 #AC_CANONICAL_HOST
 AC_CONFIG_AUX_DIR([build-aux])
@@ -35,7 +35,7 @@ DEFAULT_CHECKING_PATH="/usr /usr/local "
 SPASM_CHECK_METIS
 SPASM_CHECK_LINBOX
 
-CFLAGS="$CFLAGS -Wall -Wextra -g -fPIC"
+CFLAGS="$CFLAGS -Wall -Wextra -fPIC"
 
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)

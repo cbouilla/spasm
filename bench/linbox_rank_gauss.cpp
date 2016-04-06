@@ -72,7 +72,7 @@ int main (int argc, char **argv)
 
         if (setjmp(Env) != 0) {
           fprintf(stderr, "\nTimeout after %d seconds\n", timer);
-          exit(1);
+          exit(2);
         }
     }
 
@@ -82,9 +82,9 @@ int main (int argc, char **argv)
 
 
     /* Output */
-    std::cout << "====== RESULT =====" << std::endl << std::endl;
-    std::cout << "Time: " << chrono << std::endl;
-    std::cout << "Rank: " << rank << std::endl;
+    // std::cout << "====== RESULT =====" << std::endl << std::endl;
+    std::cout << chrono << std::endl;
+    // std::cout << "Rank: " << rank << std::endl;
     return 0;
 }
 
