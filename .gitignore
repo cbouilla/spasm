@@ -13,3 +13,13 @@ libtool
 autom4te.cache/
 build-aux/
 aclocal.m4
+test/column_slices
+test/inverse_and_prod
+test/lu_find_pivot
+test/row_concatenation
+test/sorted_submatrix
+test/sparse_permuted_lsolve
+test/super_find_pivot
+test/super_sparse_gax
+test/super_spasm_lu
+test/super_triangular_solve
