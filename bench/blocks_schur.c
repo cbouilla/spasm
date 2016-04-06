@@ -231,10 +231,12 @@ int main() {
   
   printf("Go\n");
 
+#ifdef SPASM_TIMING
   /* reset timers */
   reach = 0;
   scatter = 0;
   data_shuffling = 0;
+#endif
 
   spasm_lu *BIG = spasm_LU(B, P, SPASM_DISCARD_L);
   spasm *U = BIG->U;
