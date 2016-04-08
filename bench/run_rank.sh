@@ -2,7 +2,7 @@
 # usage : find Matrices/alex -name "*.sms" -print0 | xargs -0 -n1  ./run_dm.sh | grep "Dulmage"
 
 printf "%s --- " $1
-if zcat $1 | ./rank --max-time 10 &> /dev/null; then
+if zcat $1 | ./rank --max-time 10 2> /dev/null; then
     printf "OK\n"
 else
     printf "FAIL\n"
