@@ -1,1587 +1,628 @@
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b1.105x15.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b4.20058x5970.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b9.306x1470.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b4.2852x1350.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-8.b1.1176x56.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b15.60x920.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/D6-6.sms.gz --- 0.04
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b11.69235x132402.sms.gz --- 0.16
+/usr/share/hpac.imag.fr/Matrices/Homology/ch8-8.b2.18816x1568.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b6.104115x51813.sms.gz --- 0.15
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-7.b5.35280x52920.sms.gz --- FAIL
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-9.b3.105840x17640.sms.gz --- 0.08
+/usr/share/hpac.imag.fr/Matrices/Homology/ch4-4.b2.96x72.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk9.b2.1260x378.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b12.25605x69235.sms.gz --- 0.06
+/usr/share/hpac.imag.fr/Matrices/Homology/ch6-6.b1.450x36.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b9.630x1895.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk10.b3.4725x3150.sms.gz --- 0.02
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-6.b4.15120x12600.sms.gz --- 0.11
+/usr/share/hpac.imag.fr/Matrices/Homology/mk12.b5.10395x62370.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/mk12.b1.1485x66.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch5-5.b2.600x200.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b10.132402x186558.sms.gz --- 0.31
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b7.30x120.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b1.210x21.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b1.105x15.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b3.5970x1330.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-8.b5.141120x141120.sms.gz --- FAIL
+/usr/share/hpac.imag.fr/Matrices/Homology/klein.b1.30x10.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk11.b3.17325x6930.sms.gz --- 0.02
+/usr/share/hpac.imag.fr/Matrices/Homology/ch8-8.b4.376320x117600.sms.gz --- 0.71
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c4.b3.15x20.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b4.3003x1365.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk11.b1.990x55.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk12.b4.62370x51975.sms.gz --- FAIL
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-9.b4.317520x105840.sms.gz --- 0.63
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b3.1365x455.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch8-8.b5.564480x376320.sms.gz --- FAIL
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b5.51813x20058.sms.gz --- 0.05
+/usr/share/hpac.imag.fr/Matrices/Homology/shar_te2.b3.200200x200200.sms.gz --- FAIL
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b11.60x675.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c4.b4.6x15.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c4.b1.15x6.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b3.1350x455.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-9.b5.423360x317520.sms.gz --- FAIL
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b10.120x630.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b11.10x120.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/m133.b3.200200x200200.sms.gz --- FAIL
+/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b2.455x105.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk12.b2.13860x1485.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-6.b5.5040x15120.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b4.252x210.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch8-8.b3.117600x18816.sms.gz --- 0.09
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b5.4340x2852.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/mk10.b4.945x4725.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b5.210x252.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch3-3.b2.6x18.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b6.120x210.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk11.b4.9450x17325.sms.gz --- 1.17
+/usr/share/hpac.imag.fr/Matrices/Homology/ch5-5.b3.600x600.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk13.b5.135135x270270.sms.gz --- FAIL
+/usr/share/hpac.imag.fr/Matrices/Homology/mk10.b1.630x45.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-9.b2.17640x1512.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-6.b1.630x42.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-6.b3.12600x4200.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b14.920x6300.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b3.210x120.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b7.3990x5715.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-7.b2.7350x882.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b5.4945x3003.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-7.b1.882x49.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-9.b1.1512x63.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk10.b2.3150x630.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch4-4.b1.72x16.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk9.b1.378x36.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch5-5.b4.120x600.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b1.210x21.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch6-6.b3.5400x2400.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b7.3635x4735.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-8.b3.58800x11760.sms.gz --- 0.04
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b6.6435x5005.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b10.675x2511.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b6.5715x4945.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b7.6435x6435.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-8.b2.11760x1176.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk12.b3.51975x13860.sms.gz --- 0.05
+/usr/share/hpac.imag.fr/Matrices/Homology/ch6-6.b5.720x4320.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b9.2511x4935.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b10.30x306.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b6.4735x4340.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b3.5970x1330.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk9.b3.945x1260.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-8.b4.141120x58800.sms.gz --- 0.28
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b1.45x10.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch6-6.b4.4320x5400.sms.gz --- 0.12
+/usr/share/hpac.imag.fr/Matrices/Homology/ch3-3.b1.18x9.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b4.20058x5970.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/ch5-5.b1.200x25.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch6-6.b2.2400x450.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b2.1330x210.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b8.1470x3990.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b3.1365x455.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b5.5005x3003.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/shar_te2.b1.17160x286.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/shar_te2.b2.200200x17160.sms.gz --- 3.97
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b8.1895x3635.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b7.163215x104115.sms.gz --- 0.32
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b2.455x105.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b2.120x45.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/ch7-6.b2.4200x630.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b13.6300x25605.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/ch8-8.b1.1568x64.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b1.105x15.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk11.b2.6930x990.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b4.3003x1365.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b8.198895x163215.sms.gz --- 0.55
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b8.4935x6435.sms.gz --- 0.01
+/usr/share/hpac.imag.fr/Matrices/Homology/klein.b2.20x30.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b9.186558x198895.sms.gz --- 0.37
+/usr/share/hpac.imag.fr/Matrices/Homology/ch4-4.b3.24x96.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b2.1330x210.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b14.920x6300.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n3c4.b2.20x15.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/lutz30-23.b6.1716x3003.sms.gz --- 0.20
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b2.455x105.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/mk11.b4.10395x17325.sms.gz --- 4.69
+/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b15.60x920.sms.gz --- 0.00
+/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b13.6300x25605.sms.gz --- 0.01
 /usr/share/hpac.imag.fr/Matrices/Franz/6784x5252.sms.gz --- 2.47
-OK
 /usr/share/hpac.imag.fr/Matrices/Franz/big2sparse.sms.gz --- 3.86
-OK
 /usr/share/hpac.imag.fr/Matrices/Franz/10164x1740.sms.gz --- 0.27
-OK
 /usr/share/hpac.imag.fr/Matrices/Franz/1280x2800.sms.gz --- 0.13
-OK
 /usr/share/hpac.imag.fr/Matrices/Franz/7382x2882.sms.gz --- 4.12
-OK
 /usr/share/hpac.imag.fr/Matrices/Franz/7576x3016.sms.gz --- 5.50
-OK
 /usr/share/hpac.imag.fr/Matrices/Franz/19588x4164.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Franz/big1sparse.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/Franz/47104x30144bis.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Franz/19588x4164bis.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Franz/16728x7176.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Margulies/wheel_3_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/kneser_10_4_1.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Margulies/wheel_7_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/cat_ears_3_4.sms.gz --- 0.11
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/kneser_6_2_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/cat_ears_3_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/cat_ears_4_4.sms.gz --- 9.35
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/flower_4_4.sms.gz --- 0.20
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/flower_4_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/wheel_6_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/wheel_601.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Margulies/flower_8_4.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Margulies/flower_7_4.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Margulies/wheel_5_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/kneser_8_3_1.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Margulies/flower_5_4.sms.gz --- 3.03
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/cat_ears_4_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/cat_ears_2_4.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/cat_ears_2_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/flower_8_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/flower_7_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/flower_5_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Margulies/wheel_4_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Forest/TF18.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Forest/TF14.sms.gz --- 1.76
-OK
 /usr/share/hpac.imag.fr/Matrices/Forest/TF11.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Forest/TF16.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Forest/TF19.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Forest/TF15.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Forest/TF10.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Forest/TF17.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Forest/TF13.sms.gz --- 0.15
-OK
 /usr/share/hpac.imag.fr/Matrices/Forest/TF12.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd.9.3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_14_7_91x3432.sms.gz --- 0.04
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_20_10_190x184756.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd.15.3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd.11.5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_12_5_66x792.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_13_6_78x1716.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd.9.5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_19_9_171x92378.sms.gz --- 4.12
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_81_3_3240x85320.sms.gz --- 0.32
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_17_4_136x2380.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_49_3_1176x18424.sms.gz --- 0.04
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_81_2_3240x3240.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/BIBD_22_8_231x319770.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_18_9_153x48620.sms.gz --- 1.87
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_15_7_105x6435.sms.gz --- 0.09
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd.17.4.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd.12.4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_17_8_136x24310.sms.gz --- 0.62
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd_16_8_120x12870.sms.gz --- 0.28
-OK
 /usr/share/hpac.imag.fr/Matrices/BIBD/bibd.17.3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/SPG/EX4.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/SPG/EX2.sms.gz --- 0.16
-OK
 /usr/share/hpac.imag.fr/Matrices/SPG/EX3.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/SPG/EX6.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/SPG/EX1.sms.gz --- 0.16
-OK
 /usr/share/hpac.imag.fr/Matrices/SPG/EX5.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/SPG/08blocks.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Grobner/c8_mat11.sms.gz --- 5.78
-OK
 /usr/share/hpac.imag.fr/Matrices/Grobner/f855_mat9.I.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/Grobner/robot24c1_mat5.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Grobner/f855_mat9.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/Grobner/c8_mat11.I.sms.gz --- 5.22
-OK
 /usr/share/hpac.imag.fr/Matrices/Grobner/HFE18_96.in.sms.sms.gz --- 1.78
-OK
 /usr/share/hpac.imag.fr/Matrices/Grobner/robot24c1_mat5.J.sms.gz --- 0.03
-OK
 /usr/share/hpac.imag.fr/Matrices/Grobner/rkat7_mat5.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/Smooshed/olivermatrix.1.sms.gz --- 4.44
-OK
 /usr/share/hpac.imag.fr/Matrices/Smooshed/olivermatrix.2.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D11.sms.gz --- 3.05
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D10.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D5.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D9.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D7.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D6.sms.gz --- 0.12
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D8.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,5.data/M0,5-D1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,5.data/M0,5-D5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,5.data/M0,5-D7.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,5.data/M0,5-D8.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,5.data/M0,5-D6.sms.gz --- 0.85
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,5.data/M0,5-D2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,5.data/M0,5-D3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,5.data/M0,5-D4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,1.data/M1,1-D1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,1.data/M1,1-D2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,3.data/M1,3-D7.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,3.data/M1,3-D8.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,3.data/M1,3-D3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,3.data/M1,3-D1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,3.data/M1,3-D6.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,3.data/M1,3-D2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,3.data/M1,3-D5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,3.data/M1,3-D4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M1,3-D7.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,4-D4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M1,3-D8.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,5-D5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M1,3-D6.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,5-D7.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,6-D11.sms.gz --- 1.77
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,4-D5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,5-D8.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,5-D6.sms.gz --- 1.31
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,6-D10.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,6-D5.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M1,3-D5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,4-D3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,6-D9.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M1,2-D4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M1,2-D3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M1,2-D5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,6-D7.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,6-D6.sms.gz --- 0.13
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,6-D8.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M1,3-D4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/PPAM2011/M0,5-D4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,4.data/M0,4-D4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,4.data/M0,4-D5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,4.data/M0,4-D3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,4.data/M0,4-D1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,4.data/M0,4-D2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,2.data/M1,2-D4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,2.data/M1,2-D3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,2.data/M1,2-D2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,2.data/M1,2-D5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M1,2.data/M1,2-D1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M2,1.data/M2,1-D7.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M2,1.data/M2,1-D6.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M2,1.data/M2,1-D3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M2,1.data/M2,1-D2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M2,1.data/M2,1-D5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M2,1.data/M2,1-D8.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M2,1.data/M2,1-D4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M2,1.data/M2,1-D1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,3.data/M0,3-D1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Mgn/M0,3.data/M0,3-D2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Taha/mat2_abtaha.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Taha/mat_abtaha.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b1.105x15.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b4.20058x5970.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b9.306x1470.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b4.2852x1350.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-8.b1.1176x56.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b15.60x920.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/D6-6.sms.gz --- 0.04
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b11.69235x132402.sms.gz --- 0.16
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch8-8.b2.18816x1568.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b6.104115x51813.sms.gz --- 0.15
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-7.b5.35280x52920.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-9.b3.105840x17640.sms.gz --- 0.08
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch4-4.b2.96x72.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk9.b2.1260x378.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b12.25605x69235.sms.gz --- 0.06
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch6-6.b1.450x36.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b9.630x1895.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk10.b3.4725x3150.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-6.b4.15120x12600.sms.gz --- 0.11
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk12.b5.10395x62370.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk12.b1.1485x66.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch5-5.b2.600x200.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b10.132402x186558.sms.gz --- 0.31
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b7.30x120.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b1.210x21.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b1.105x15.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b3.5970x1330.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-8.b5.141120x141120.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/Homology/klein.b1.30x10.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk11.b3.17325x6930.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch8-8.b4.376320x117600.sms.gz --- 0.71
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c4.b3.15x20.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b4.3003x1365.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk11.b1.990x55.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk12.b4.62370x51975.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-9.b4.317520x105840.sms.gz --- 0.63
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b3.1365x455.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch8-8.b5.564480x376320.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b5.51813x20058.sms.gz --- 0.05
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/shar_te2.b3.200200x200200.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b11.60x675.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c4.b4.6x15.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c4.b1.15x6.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b3.1350x455.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-9.b5.423360x317520.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b10.120x630.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b11.10x120.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/m133.b3.200200x200200.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b2.455x105.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk12.b2.13860x1485.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-6.b5.5040x15120.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b4.252x210.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch8-8.b3.117600x18816.sms.gz --- 0.09
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b5.4340x2852.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk10.b4.945x4725.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b5.210x252.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch3-3.b2.6x18.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b6.120x210.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk11.b4.9450x17325.sms.gz --- 1.17
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch5-5.b3.600x600.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk13.b5.135135x270270.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/Homology/mk10.b1.630x45.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-9.b2.17640x1512.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-6.b1.630x42.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-6.b3.12600x4200.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b14.920x6300.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b3.210x120.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b7.3990x5715.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-7.b2.7350x882.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b5.4945x3003.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-7.b1.882x49.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-9.b1.1512x63.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk10.b2.3150x630.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch4-4.b1.72x16.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk9.b1.378x36.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch5-5.b4.120x600.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b1.210x21.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch6-6.b3.5400x2400.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b7.3635x4735.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-8.b3.58800x11760.sms.gz --- 0.04
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b6.6435x5005.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b10.675x2511.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b6.5715x4945.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b7.6435x6435.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-8.b2.11760x1176.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk12.b3.51975x13860.sms.gz --- 0.05
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch6-6.b5.720x4320.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b9.2511x4935.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b10.30x306.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b6.4735x4340.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b3.5970x1330.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk9.b3.945x1260.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-8.b4.141120x58800.sms.gz --- 0.28
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b1.45x10.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch6-6.b4.4320x5400.sms.gz --- 0.12
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch3-3.b1.18x9.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b4.20058x5970.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch5-5.b1.200x25.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch6-6.b2.2400x450.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b2.1330x210.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b8.1470x3990.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b3.1365x455.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b5.5005x3003.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/shar_te2.b1.17160x286.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/shar_te2.b2.200200x17160.sms.gz --- 3.97
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b8.1895x3635.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b7.163215x104115.sms.gz --- 0.32
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b2.455x105.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c5.b2.120x45.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch7-6.b2.4200x630.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b13.6300x25605.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch8-8.b1.1568x64.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b1.105x15.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk11.b2.6930x990.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n2c6.b4.3003x1365.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b8.198895x163215.sms.gz --- 0.55
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c6.b8.4935x6435.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/klein.b2.20x30.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b9.186558x198895.sms.gz --- 0.37
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/ch4-4.b3.24x96.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b2.1330x210.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b14.920x6300.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n3c4.b2.20x15.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/lutz30-23.b6.1716x3003.sms.gz --- 0.20
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c5.b2.455x105.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/mk11.b4.10395x17325.sms.gz --- 4.69
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/cis.n4c6.b15.60x920.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/Homology/n4c6.b13.6300x25605.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/relat3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/relat8.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Relat/rel5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/rel8.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Relat/rel7.sms.gz --- 0.71
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/relat7b.sms.gz --- 1.40
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/relat5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/rel9.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Relat/relat4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/rel6.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/relat6.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/rel3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/relat7.sms.gz --- 1.40
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/rel4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Relat/relat9.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/CAG/mat72.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/CAG/mat1916.sms.gz --- 7.65
-OK
 /usr/share/hpac.imag.fr/Matrices/CAG/mat364.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-9.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-8.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-16.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/G5/IG5-19.sms.gz --- 
-gzip: /usr/share/hpac.imag.fr/Matrices/G5/IG5-19.sms.gz: unexpected end of file
-FAIL
+/usr/share/hpac.imag.fr/Matrices/G5/IG5-19.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-14.sms.gz --- 2.45
-OK
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-10.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-18.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-15.sms.gz --- 8.17
-OK
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-11.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-13.sms.gz --- 0.69
-OK
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-12.sms.gz --- 0.18
-OK
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-6.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/G5/IG5-20.sms.gz --- 
-gzip: /usr/share/hpac.imag.fr/Matrices/G5/IG5-20.sms.gz: unexpected end of file
-FAIL
+/usr/share/hpac.imag.fr/Matrices/G5/IG5-20.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-7.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/G5/IG5-17.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Tsuchioka/S23.1255x1255.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Tsuchioka/gram5_4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Tsuchioka/S22.1002x1002.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Tsuchioka/S16.231x231.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Tsuchioka/gram9_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Tsuchioka/M.8320x4160.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Tsuchioka/S24.1575x1575.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dbic1.sms.gz --- 1.86
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/world.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/bas1lp.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/aa03.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rentacar.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dano3mip.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/route.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/aa01.sms.gz --- 0.05
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/l9.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/grow22.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dg012142.sms.gz --- 0.05
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/neos11.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/ds.sms.gz --- 0.05
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/25fv47.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/msc98-ip.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rail4284.sms.gz --- 1.60
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/p19.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2r-4.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/disctom.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rat7a.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/gen2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/maros-r7.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/car4.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/neos.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scagr7-2r-864.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pds-50.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/newman2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/neos823206.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/mod2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/qap10.sms.gz --- 0.85
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/p05.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/grow15.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/slptsk.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/capri.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scrs8-2r-512.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stocfor3.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pp08aCUTS.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dbir2.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/co9.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/30_70_4.5_0.95_98.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/orna1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nug15.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/fome12.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/bg512142.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2r-16.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/bnl2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/model4.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scrs8-2r-32.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2r-96.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pldd000b.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/gen1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/d18512.sms.gz --- 0.05
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/momentum2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/de080285.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pla8_sig185.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2b-4.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/model5.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/momentum1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/protfold.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scrs8-2r-64.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2b-16.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/d2q06c.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pilot87.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/gen4.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/woodw.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2r-27.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/qap12.sms.gz --- 5.88
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/l30.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/manna81.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/watson_1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/mitre.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/newman3.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/self.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/t0331-4l.sms.gz --- 0.12
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/bienst1.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/gesa2_o.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pds-80.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/sp97ar.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pilotnov.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nug06.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nug20.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/neos.pre.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stair.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dano3mip.pre.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/fome20.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dfl001.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/ch.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stat96v3.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dfl001.pre.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pcb3038.sms.gz --- 0.97
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2r-32.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/baxter.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/de063157.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pds-100.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/watson_1.pre.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pilot.we.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/mzzv11.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dsbmip.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm3.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pilot4i.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/r05.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/cycle.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/danoint.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2r-128.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pds-70.sms.gz --- 0.03
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/model3.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pcb1000.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/30_70_4.5_0.5_100.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/watson_2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/baxter.pre.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/cq5.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/mkc.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/l30.pre.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/ganges.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/van.sms.gz --- 0.93
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stormg2-8.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nug05.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nug08.sms.gz --- 0.10
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/df2177.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/jendrec1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/sc205.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nl.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stp3d.sms.gz --- 1.81
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/complex.sms.gz --- 0.04
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pla33810.sms.gz --- 7.42
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scrs8-2r-128.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/neos6.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/ceria3d.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/lpl3.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/delf000.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/fome21.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/qiulp.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nemswrld.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dc1l.sms.gz --- 0.12
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/fome11.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rail582.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dolom1.sms.gz --- 0.07
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/model9.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pds-40.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nug07.sms.gz --- 0.03
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/UMTS.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/boeing1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rosen8.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/model10.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/crew1.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scrs8-2r-256.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nemspmm1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rosen7.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pds-60.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rat1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/cont4.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2r-64.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/mkc1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/air04.sms.gz --- 0.06
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pilot87.pre.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/gosh.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/lp22.sms.gz --- 0.97
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nesm.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pds-20.pre.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/fast0507.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/d15112.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stormg2_1000.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nsct1.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stocfor2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/gesa3.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/perold.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stormg2_1000.pre.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/large000.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/trento1.sms.gz --- 0.32
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stormg2-125.pre.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nemsemm2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dcmulti.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/arki001.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/model6.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/80bau3b.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/neos4.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/blp-ar98.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nsct2.pre.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/maros.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/siena1.sms.gz --- 0.62
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2c-4.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/co5.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/mzzv42z.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rl5915.sms.gz --- 0.04
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/mod2.pre.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rosen2.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/degen3.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stat96v4.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2b-64.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pds-30.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/model11.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nemspmm2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/cont1_l.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/gran.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pilot.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pf2177.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dbir2.pre.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rl11849.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/gen4.pre.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pla85900.nov21.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stat96v1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/p010.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/gesa3_o.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/iiasa.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nug12.sms.gz --- 4.22
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/10teams.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rail507.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/progas.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/sgpf5y6.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rail516.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/ulevimin.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nsct2.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/cont11_l.sms.gz --- 0.05
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stormg2-27.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pds-90.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/roll3000.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rosen1.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/air06.sms.gz --- 0.03
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pilot.ja.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2r-8.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/greenbeb.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/nug30.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/model2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/lpl1.sms.gz --- 0.06
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/lp22.pre.sms.gz --- 0.94
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rat5.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/sp98ar.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/ge.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/t1717.sms.gz --- 0.05
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rl5934.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/cq9.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/30_70_4.5_0.95_100.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/seymour.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/small000.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/neos1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/south31.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scfxm1-2r-256.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pilot4.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stormg2-125.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pla7397.sms.gz --- 0.48
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/qiu.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/sgpf5y6.pre.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scrs8.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dbir1.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/NSR8K.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/de063155.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/newman.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/air05.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/neos7.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/cr42.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/greenbea.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/d6cube.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/momentum3.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/pcb3000.sms.gz --- 0.05
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/fome13.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/dc1c.sms.gz --- 0.07
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/biella1.sms.gz --- 0.06
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stat96v2.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rosen10.sms.gz --- 0.02
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/rd-rplusc-21.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/neos19.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/grow7.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scrs8-2c-64.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/model7.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/neos818918.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/usa13509.sms.gz --- 0.01
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/bandm.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/brd14051.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/degen2.sms.gz --- 0.00
-OK
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/bnl1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scorpion.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/stat96v5.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/scsd8.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/modszk1.rat.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/BasisLIB/rational/fnl4461.sms.gz --- 0.75
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dbic1.sms.gz --- 1.94
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/bas1lp.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/aa03.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/gesa3_o.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pilotnov.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stat96v5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/aa01.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/boeing1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/mkc1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/orna1.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scrs8-2c-64.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dg012142.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/neos11.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/ds.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/model3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/newman2.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dano3mip.pre.sms.gz --- 0.08
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/fome13.sms.gz --- 2.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rail4284.sms.gz --- 1.60
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/iiasa.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/grow22.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2b-16.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/disctom.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/msc98-ip.sms.gz --- 0.53
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/neos.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pilot87.pre.sms.gz --- 0.33
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pds-50.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/capri.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/model2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/mod2.pre.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/neos823206.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/l9.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/qap10.sms.gz --- 0.85
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/co5.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rentacar.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rd-rplusc-21.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scrs8-2r-512.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/fome11.sms.gz --- 0.54
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pp08aCUTS.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dbir2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/gesa2_o.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/30_70_4.5_0.95_98.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/mod2.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nug15.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/UMTS.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/bg512142.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/maros-r7.sms.gz --- 0.07
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pilot4i.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scrs8-2r-128.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/model10.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/d18512.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/neos1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pla8_sig185.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/mkc.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/small000.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/protfold.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/r05.sms.gz --- 0.21
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/p19.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/progas.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/watson_1.pre.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2r-96.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/qap12.sms.gz --- 5.82
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/cr42.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/manna81.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/mitre.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/bandm.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/neos7.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/t0331-4l.sms.gz --- 0.12
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/greenbea.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/bienst1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rat1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/bnl2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pds-80.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dfl001.pre.sms.gz --- 0.13
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/car4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/ganges.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/gen4.sms.gz --- 0.08
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2r-256.sms.gz --- 0.10
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/sp97ar.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/gen2.sms.gz --- 0.06
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/greenbeb.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nug06.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/ulevimin.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nesm.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nug20.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/neos.pre.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nemspmm2.sms.gz --- 0.06
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/fome20.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pldd000b.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/model9.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nl.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pcb3038.sms.gz --- 0.97
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2r-8.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/ch.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dfl001.sms.gz --- 0.28
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/cont4.sms.gz --- 0.34
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pds-100.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stat96v3.sms.gz --- 0.11
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/cycle.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/mzzv11.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stat96v1.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/d15112.sms.gz --- 0.03
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stocfor3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pds-70.sms.gz --- 0.03
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pcb1000.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pilot4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/model6.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/30_70_4.5_0.5_100.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/van.sms.gz --- 0.93
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stormg2-8.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nug05.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scsd8.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/sc205.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nug08.sms.gz --- 0.10
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/df2177.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pilot.ja.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stp3d.sms.gz --- 1.81
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/complex.sms.gz --- 0.04
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pla33810.sms.gz --- 7.43
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/route.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2r-16.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/l30.sms.gz --- 0.25
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rat7a.sms.gz --- 0.04
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/watson_1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/baxter.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/neos6.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scrs8.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/ceria3d.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/lpl3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/ge.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/fome21.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/large000.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/modszk1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pilot87.sms.gz --- 0.40
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stat96v4.sms.gz --- 0.18
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dc1l.sms.gz --- 0.12
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rail582.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/qiulp.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dolom1.sms.gz --- 0.07
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/d2q06c.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pds-40.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nug07.sms.gz --- 0.03
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scagr7-2r-864.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scorpion.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pilot.sms.gz --- 0.32
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rosen8.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/crew1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/p010.sms.gz --- 0.21
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rosen7.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/gran.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pds-60.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stocfor2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/momentum1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dano3mip.sms.gz --- 0.11
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/air04.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/co9.sms.gz --- 0.12
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/lp22.sms.gz --- 0.97
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scrs8-2r-256.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pds-20.pre.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/arki001.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/fast0507.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2r-27.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2r-64.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stormg2_1000.sms.gz --- 0.03
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nsct1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/80bau3b.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stormg2_1000.pre.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/woodw.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/de063155.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pilot.we.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/trento1.sms.gz --- 0.32
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/cq5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stormg2-125.pre.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/25fv47.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/qiu.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nemspmm1.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/danoint.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dcmulti.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/neos4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/blp-ar98.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nsct2.pre.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/siena1.sms.gz --- 0.62
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dsbmip.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/fome12.sms.gz --- 1.04
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2b-4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/mzzv42z.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rl5915.sms.gz --- 0.04
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/model7.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rosen2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/gosh.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/degen3.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/newman.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/model11.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pds-30.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scrs8-2r-64.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/cont1_l.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pf2177.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dbir2.pre.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/perold.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/newman3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rl11849.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pla85900.nov21.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/grow7.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rat5.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/cq9.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/de063157.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/self.sms.gz --- 0.69
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nug12.sms.gz --- 4.22
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/10teams.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/l30.pre.sms.gz --- 0.04
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/gen4.pre.sms.gz --- 0.07
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rail507.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/sgpf5y6.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rail516.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2c-4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nsct2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/cont11_l.sms.gz --- 0.06
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stormg2-27.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/gen1.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pds-90.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/gesa3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rosen1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/jendrec1.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/air06.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/bnl1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/p05.sms.gz --- 0.21
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nug30.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/lpl1.sms.gz --- 0.06
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/lp22.pre.sms.gz --- 0.94
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/baxter.pre.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/momentum3.sms.gz --- 0.04
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/sp98ar.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/world.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/maros.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2r-4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/t1717.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rl5934.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/30_70_4.5_0.95_100.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scrs8-2r-32.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2b-64.sms.gz --- 0.04
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/momentum2.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/seymour.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/watson_2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/grow15.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2r-32.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stormg2-125.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pla7397.sms.gz --- 0.48
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/sgpf5y6.pre.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dbir1.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stair.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/NSR8K.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/air05.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nemsemm2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/d6cube.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/pcb3000.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/scfxm1-2r-128.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/nemswrld.sms.gz --- 0.32
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/dc1c.sms.gz --- 0.07
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/slptsk.sms.gz --- 0.04
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/biella1.sms.gz --- 0.06
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/rosen10.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/model4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/neos19.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/roll3000.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/neos818918.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/stat96v2.sms.gz --- 0.07
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/usa13509.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/brd14051.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/degen2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/delf000.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/model5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/south31.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/de080285.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/BasisLIB/problems/fnl4461.sms.gz --- 0.75
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec6.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec3.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec12.sms.gz --- 0.79
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec4.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec10.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec2.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec14.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec8.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec13.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec7.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec9.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Kocay/Trec11.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffSL6/D_7.sms.gz --- 0.77
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffSL6/D_6.sms.gz --- 0.11
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffSL6/D_8.sms.gz --- 0.76
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffSL6/D_5.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffSL6/D_10.sms.gz --- 0.07
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffSL6/D_11.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffSL6/D_9.sms.gz --- 0.32
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffGL6/D_7.sms.gz --- 0.08
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffGL6/D_6.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffGL6/D_8.sms.gz --- 0.07
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffGL6/D_10.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Cellules/diffGL6/D_9.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/Prym-can/g8.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Prym-can/g10.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Prym-can/g16.sms.gz --- FAIL
@@ -1590,102 +631,30 @@ OK
 /usr/share/hpac.imag.fr/Matrices/QX/petite.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/QX/Gramm-3.1.1-deg7.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_200.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_20__19_minor.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_150.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_20.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_200__199_minor.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_500.sms.gz --- 0.05
-OK
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_700.sms.gz --- 0.23
-OK
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_2000.sms.gz --- 2.73
-OK
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_300.sms.gz --- 0.02
-OK
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_20000.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/Trefethen/trefethen_20000__19999_minor.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/Toy/AC.A_C.-15-AC.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/Toy/AC.A_C.-10-AC.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/Toy/AC.A_C.-15-AC.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/Toy/AC.A_C.-2-AC.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/Toy/AC.A_C.-10-AC.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/Toy/AC.A_C.-5-AC.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/Toy/AC.A_C.-2-AC.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/Toy/AC.A_C.-0-AC.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/Toy/AC.A_C.-5-AC.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/Toy/AC.A_C.-0-AC.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/SUGAR_TRANSPORT_2.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/THIOLASE_1.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/EFACTOR_GTP.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/EFACTOR_GTP.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/SUGAR_TRANSPORT_2.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/SIGMA54_INTERACT_2.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/PILI_CHAPERONE.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/PTS_EIIA_TYPE_2_HIS.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/ALDEHYDE_DEHYDR_CYS.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/ALDEHYDE_DEHYDR_CYS.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/ADH_ZINC.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/PTS_EIIA_TYPE_2_HIS.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/FGGY_KINASES_2.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/ADH_ZINC.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/SUGAR_TRANSPORT_1.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/SIGMA54_INTERACT_2.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/THIOLASE_1.m0.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/SUGAR_TRANSPORT_1.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/PILI_CHAPERONE.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/PROSITE/FGGY_KINASES_2.m0.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/.C_T.CC.A_C_G_T..C_T.T.A_C_G_T..A_G.-2-CCG.A_C_G_T..m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/AAAAAAAAAAAAAAAAAAAAAAAA.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/CGCACCC.m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/GCGC.A_C_G_T.-15-GCGC.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/GCGC.A_C_G_T.-6-GCGC.m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/GCGC.A_C_G_T.-10-GCGC.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/CGG.A_C_G_T.-8-CGG.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/GCGC.A_C_G_T.-10-GCGC.m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/TCCGTGGA.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/TA.A_T.-4-TAG.A_C..m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/TCCGTGGA.m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/TTGACA.A_C_G_T.-16,18-ATATAAT.m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/.A_T.-3-TTTGCTC.A_G..m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/TA.A_T.-4-TAG.A_C..m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/.A_T.-3-TTTGCTC.A_G..m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/GCGC.A_C_G_T.-15-GCGC.m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/.C_T.CC.A_C_G_T..C_T.T.A_C_G_T..A_G.-2-CCG.A_C_G_T..m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/GCGC.A_C_G_T.-6-GCGC.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/TTGACA.A_C_G_T.-17-TATAAT.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/TTGACA.A_C_G_T.-16,18-ATATAAT.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/AACAACAAC.m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/.A_C.TAAA.C_T.AA.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/CGCACCC.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/TTGACA.A_C_G_T.-17-TATAAT.m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/CGG.A_C_G_T.-8-CGG.m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/AACAACAAC.m2.Q.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/.A_C.TAAA.C_T.AA.m2.P.sms.gz --- FAIL
-/usr/share/hpac.imag.fr/Matrices/DFA/CHR10/AAAAAAAAAAAAAAAAAAAAAAAA.m2.P.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d23.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d13.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d21.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d12.sms.gz --- 0.01
-OK
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d20.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d15.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d17.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d18.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d24.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d25.sms.gz --- 2.43
-OK
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d26.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d19.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d16.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d14.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d11.sms.gz --- 0.00
-OK
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d22.sms.gz --- FAIL
 /usr/share/hpac.imag.fr/Matrices/GL7d/GL7d10.sms.gz --- 0.00
-OK
