@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 
   T = spasm_load_sms(stdin, prime);
   fprintf(stderr, "A : %d x %d with %d nnz (density = %.3f %%) -- loaded modulo %d\n", T->n, T->m, T->nz, 100.0 * T->nz / (1.0 * T->n * T->m), prime);
-  if (allow_transpose && (T->m < T->n)) {
+  if (allow_transpose && (T->n < T->m)) {
     fprintf(stderr, "[rank] transposing matrix : ");
     fflush(stderr);
     start_time = spasm_wtime();
