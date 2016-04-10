@@ -182,8 +182,8 @@ int main(int argc, char **argv) {
     spasm_csr_free(B);
     spasm_csr_free(A);
 
-    printf("non trivial diagonal blocks size : %d\n", nontrivial_diag_size);
-    printf("non trivial diagonal blocks rank : %d\n", nontrivial_diag_rank);
-    printf("trivial diagonal blocks : %d\n", trivial_diag_rank);
+//    printf("non trivial diagonal blocks size : %d\n", nontrivial_diag_size);
+//    printf("non trivial diagonal blocks rank : %d\n", nontrivial_diag_rank);
+//    printf("trivial diagonal blocks : %d\n", trivial_diag_rank);
     return 0;
 }
