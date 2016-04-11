@@ -674,3 +674,168 @@ int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super
   return (ipiv != -1);
 }
 
+/*
+ * A : matrice de départ.
+ * p : permutation sur les lignes de A telles que les premières lignes de p
+ *     contiennent des pivots.
+ * stop : on calcule le complément de schur de A à partir de p[stop].
+ * S : Schur complement of A
+ * U : U de la décomposition LU de A sur les ligne jusqu'à p[stop].
+ * qinv : permutation liée à U.
+ */
+
+spasm *spasm_schur(const spasm *A, const int *p, int stop){
+  spasm *S, *U;
+  int *Sp, *Sj, *Up, *Uj, Sn, Sm, m, n, snz, unz, ipiv, px, *xi, i, inew, top, j, *qinv;
+  spasm_GFp *Sx, *Ux, *x;
+
+  // check inputs
+  assert(A != NULL);
+
+  // Get Workspace
+  n = A->n;
+  m = A->m;
+  assert(n > stop);
+  assert(m > stop);
+  Sn = n - stop;
+  Sm = m - stop;
+  snz = 4 * (Sn + Sm); //educated guess
+  unz = 2 * (stop + m); //educated guess
+
+  S = spasm_csr_alloc(Sn, Sm, snz, A->prime, 1);
+  U = spasm_csr_alloc(stop, m, unz, A->prime, 1);
+
+  Sp = S->p;
+  Up = U->p;
+  Uj = U->j;
+  Ux = U->x;
+  Sj = S->j;
+  Sx = S->x;
+  unz = snz = 0;
+  Sn = 0;
+
+  /* get GFp workspace */
+  x = spasm_malloc(m * sizeof(spasm_GFp));
+
+  /* get int workspace */
+  xi = spasm_malloc(3 * m * sizeof(int));
+  spasm_vector_zero(xi, 3*m);
+
+  qinv = spasm_malloc(m * sizeof(int));
+
+  // Initialize workspace :
+  for(i = 0; i < m; i++){
+    qinv[i] = -1; // no pivot found yet.
+  }
+
+  for(i = 0; i < stop; i++){
+    Up[i] = 0;
+  }
+
+  /*------ first part : LU decomposition -------*/
+  for(i = 0; i < stop; i++){
+    /* triangular solve */
+    Up[i] = unz;            /* U[i] starts here */
+
+    /* not enough room in U ? realloc twice the size */
+    if (unz + m > U->nzmax) {
+      spasm_csr_realloc(U, 2 * U->nzmax + m);
+    }
+    Uj = U->j;
+    Ux = U->x;
+
+    inew = p[i];
+    top = spasm_sparse_forward_solve(U, A, inew, xi, x, qinv);
+
+    /* find pivot */
+    ipiv = -1;
+      /* index of best pivot so far.*/
+    for (px = top; px < m; px++) {
+      /* x[j] is (generically) nonzero */
+      j = xi[px];
+
+      /* if x[j] == 0 (numerical cancelation), we just ignore it */
+      if (x[j] == 0) {
+	continue;
+      }
+     
+      if (qinv[j] < 0) {
+	/* column j is not yet pivotal ? */
+	
+	/* have found the pivot on row i yet ? */
+	if ((ipiv == -1) || (j < ipiv)) {
+	  ipiv = j;
+	}
+      }
+    }
+      /* pivot found ? */
+      assert(ipiv != -1); // pivot on p[i].
+      //      old_unz = unz;
+
+      qinv[ ipiv ] = i;
+
+      /* pivot must be the first entry in U[i] */
+      Uj[unz] = ipiv;
+      Ux[unz] = x[ ipiv ];
+      unz++;
+
+      /* send remaining non-pivot coefficients into U */
+      for (px = top; px < m; px++) {
+	j = xi[px];
+
+	if (qinv[j] < 0) {
+	  Uj[unz] = j;
+	  Ux[unz] = x[j];
+	  unz++;
+	}
+      }
+  }
+  /* finalize U */
+  Up[stop] = unz;
+  spasm_csr_realloc(U, -1);
+
+  /* ---- second part : compute Schur complement -----*/
+  for(i = stop; i < m; i++){
+    /* triangular solve */
+    Sp[Sn] = snz;            /* S[i] starts here */
+    
+    /* not enough room in U ? realloc twice the size */
+    if (snz + Sm > S->nzmax) {
+      spasm_csr_realloc(S, 2 * S->nzmax + Sm);
+    }
+    Sj = S->j;
+    Sx = S->x;
+
+    inew = p[i];
+    top = spasm_sparse_forward_solve(U, A, inew, xi, x, qinv);
+
+    /* dispatch x in S */
+    for (px = top; px < m; px++) {
+      /* x[j] is (generically) nonzero */
+      j = xi[px];
+
+      /* if x[j] == 0 (numerical cancelation), we just ignore it */
+      if (x[j] == 0) {
+	continue;
+      }
+      /* send non-pivot coefficients into S */
+      if (qinv[j] < 0) {
+	Sj[snz] = j;
+	Sx[snz] = x[j];
+	snz++;
+      }
+    }
+    Sn++;
+  }
+  /*finalize S*/
+  Sp[S->n] = snz;
+  spasm_csr_realloc(S, -1);
+
+  /* free extra workspace*/
+  free(qinv);
+  spasm_csr_free(U);
+  free(x);
+  free(xi);
+
+  return S;
+}

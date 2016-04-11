@@ -9,21 +9,21 @@ int nontrivial_diag_size = 0;
 int nontrivial_diag_rank = 0;
 int trivial_diag_rank = 0;
 
-
 int subrank(const spasm * M, int a, int b, int c, int d) {
     spasm *C;
     int *p;
     spasm_lu *LU;
-    int r;
+    int r, n_cheap;
 
     C = spasm_submatrix(M, a, c, b, d, SPASM_WITH_NUMERICAL_VALUES);
-    p = spasm_cheap_pivots(C);
+    p = spasm_cheap_pivots(C, &n_cheap);
     LU = spasm_LU(C, p, SPASM_DISCARD_L);
     free(p);
     r = LU->U->n;
     spasm_free_LU(LU);
     spasm_csr_free(C);
     return r;
+
 }
 
 void show(const spasm * M, spasm_cc * Y) {

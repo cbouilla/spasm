@@ -224,6 +224,7 @@ void spasm_free_LU(spasm_lu *X);
 spasm_lu *super_spasm_LU(super_spasm *A, int start, int keep_L);
 int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n);
 int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super_spasm *L, int *unz_ptr, int *lnz_ptr, int li, int ui, int i, int *qinv);
+spasm *spasm_schur(const spasm *A, const int *p, int stop);
 
 /* spasm_solutions.c */
 int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
@@ -231,7 +232,7 @@ int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
 
 /* spasm_sort.c */
 int * spasm_row_sort (const spasm *A);
-int * spasm_cheap_pivots(const spasm *A);
+int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr);
 
 /* spasm_csr.c */
 void spasm_row_entries_sort(spasm *M, int with_value);
