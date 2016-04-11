@@ -92,14 +92,12 @@ int main(int argc, char **argv) {
   case 1:
     fprintf(stderr, "[rank] finding cheap pivots : ");
     fflush(stderr);
-    start_time = spasm_wtime();
     p = spasm_cheap_pivots(A);
     fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
     break;
   case 2:
     fprintf(stderr, "[rank] sorting rows : ");
     fflush(stderr);
-    start_time = spasm_wtime();
     p = spasm_row_sort(A);
     fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
     break;

@@ -167,20 +167,20 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, cons
     for (i = 0; i < n; i++) {
       j = (q != SPASM_IDENTITY_PERMUTATION) ? q[i] : i;
       if (b[j] != 0) {
-	/* check diagonal entry */
-	const  spasm_GFp diagonal_entry = Ux[ Up[i] ];
-	assert( diagonal_entry != 0 );
+      	/* check diagonal entry */
+      	const  spasm_GFp diagonal_entry = Ux[ Up[i] ];
+      	assert( diagonal_entry != 0 );
 
-	// axpy - inplace
-	x[i] = (b[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-	spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[i], b, prime);
-	b[j] = 0;
+      	// axpy - inplace
+      	x[i] = (b[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+      	spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[i], b, prime);
+      	b[j] = 0;
       }
     }
 
     for(i = 0; i < m; i++) {
       if (b[i] != 0) {
-	return SPASM_NO_SOLUTION;
+	      return SPASM_NO_SOLUTION;
       }
     }
 
