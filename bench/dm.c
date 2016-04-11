@@ -141,16 +141,16 @@ int main(int argc, char **argv) {
         i = -1;  /* with home-made improvement */
         j = -1;  /* without home-made improvement */
         if (x->H != NULL) {
-            i = spasm_max(i, largest_diagonal_block(x->H, TRUE));
-            j = spasm_max(j, largest_diagonal_block(x->H, FALSE));
+            i = spasm_max(i, largest_diagonal_block(x->H, 1));
+            j = spasm_max(j, largest_diagonal_block(x->H, 0));
         }
         if (x->S != NULL) {
-            i = spasm_max(i, largest_diagonal_block(x->S, TRUE));
-            j = spasm_max(j, largest_diagonal_block(x->S, TRUE));
+            i = spasm_max(i, largest_diagonal_block(x->S, 1));
+            j = spasm_max(j, largest_diagonal_block(x->S, 1));
         }
         if (x->V != NULL) {
-            i = spasm_max(i, largest_diagonal_block(x->V, TRUE));
-            j = spasm_max(j, largest_diagonal_block(x->V, FALSE));
+            i = spasm_max(i, largest_diagonal_block(x->V, 1));
+            j = spasm_max(j, largest_diagonal_block(x->V, 0));
         }
         printf("%5d \t %5d \t %6d \t %6d \t %.1f \t %6d \t %.1f\n", n, m, spasm_nnz(A), i, 100.0 * i / spasm_min(n, m), j, 1.0 * i / j);
     }
