@@ -197,10 +197,14 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
       }
  
       if (!keep_L && !early_abort_done && rows_since_last_pivot > 10 && (rows_since_last_pivot > (n/100))) {
-          fprintf(stderr, "\n[LU] testing for early abort\n");
+          fprintf(stderr, "\n[LU] testing for early abort...");
+          fflush(stderr);
           if (spasm_early_abort(A, row_permutation, i+1, U, i-defficiency)) {
-            fprintf(stderr, "\n[LU] full rank reached ; probabilistic early abort\n");
+            fprintf(stderr, "SUCCESS\n");
             break;
+          } else {
+            fprintf(stderr, "FAILED\n");
+            fflush(stderr);
           }
           early_abort_done = 1;
       }
