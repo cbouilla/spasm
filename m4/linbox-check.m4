@@ -39,12 +39,12 @@ for LINBOX_HOME in ${LINBOX_HOME_PATH}
   do
     if test -r "$LINBOX_HOME/bin/linbox-config"; then
            linbox_found="yes"
-           LINBOX_CXXFLAGS=`$LINBOX_HOME/bin/linbox-config --cflags`
+           LINBOX_CXXFLAGS=`$LINBOX_HOME/bin/linbox-config --cflags-full`
            LINBOX_LIBS=`$LINBOX_HOME/bin/linbox-config --libs`
 	   break
     elif test -r "$LINBOX_HOME/linbox-config"; then
            linbox_found="yes"
-           LINBOX_CXXFLAGS=`$LINBOX_HOME/linbox-config --cflags`
+           LINBOX_CXXFLAGS=`$LINBOX_HOME/linbox-config --cflags-full`
            LINBOX_LIBS=`$LINBOX_HOME/linbox-config --libs`
 	   break
     else
