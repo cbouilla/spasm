@@ -47,9 +47,9 @@ spasm_lu * submatrix_LU(const spasm *M, int a, int b, int c, int d) {
     spasm_csr_free(C);
     return NULL;
   }
-
+  int n_cheap;
   // calcule la décomposition LU. 
-  int *cheap_p = spasm_cheap_pivots(C); 
+  int *cheap_p = spasm_cheap_pivots(C, &n_cheap); 
   LU = spasm_LU(C, cheap_p, SPASM_DISCARD_L); // on garde L
 
   // L*U = P*A
