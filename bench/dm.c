@@ -12,11 +12,11 @@ int subrank(const spasm *M, int a, int b, int c, int d) {
   spasm *C;
   int *p;
   spasm_lu *LU;
-  int r;
+  int r, n_cheap;
 
   C = spasm_submatrix(M, a, c, b, d, SPASM_WITH_NUMERICAL_VALUES);
   //  printf("M : %d, C : %d nnz, dim %d x %d\n", spasm_nnz(M), spasm_nnz(C), C->n, C->m);
-  p = spasm_cheap_pivots(C);
+  p = spasm_cheap_pivots(C, &n_cheap);
   LU = spasm_LU(C, p, SPASM_DISCARD_L);
   free(p);
   r = LU->U->n;

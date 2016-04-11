@@ -684,14 +684,13 @@ int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super
  * qinv : permutation liée à U.
  */
 
-spasm *spasm_schur(const spasm *A, const int *p, int stop, spasm **U_ptr, int *qinv){
+spasm *spasm_schur(const spasm *A, const int *p, int stop){
   spasm *S, *U;
-  int *Sp, *Sj, *Up, *Uj, Sn, Sm, m, n, snz, unz, ipiv, px, *xi, i, inew, top, j;
+  int *Sp, *Sj, *Up, *Uj, Sn, Sm, m, n, snz, unz, ipiv, px, *xi, i, inew, top, j, *qinv;
   spasm_GFp *Sx, *Ux, *x;
 
   // check inputs
   assert(A != NULL);
-  assert(U != NULL);
 
   // Get Workspace
   n = A->n;
@@ -705,7 +704,6 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop, spasm **U_ptr, int *q
 
   S = spasm_csr_alloc(Sn, Sm, snz, A->prime, 1);
   U = spasm_csr_alloc(stop, m, unz, A->prime, 1);
-  *U_ptr = U;
 
   Sp = S->p;
   Up = U->p;
@@ -723,9 +721,15 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop, spasm **U_ptr, int *q
   xi = spasm_malloc(3 * m * sizeof(int));
   spasm_vector_zero(xi, 3*m);
 
+  qinv = spasm_malloc(m * sizeof(int));
+
   // Initialize workspace :
   for(i = 0; i < m; i++){
-    qinv[i] = -1; // no pivot founded yet.
+    qinv[i] = -1; // no pivot found yet.
+  }
+
+  for(i = 0; i < stop; i++){
+    Up[i] = 0;
   }
 
   /*------ first part : LU decomposition -------*/
@@ -746,7 +750,6 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop, spasm **U_ptr, int *q
     /* find pivot */
     ipiv = -1;
       /* index of best pivot so far.*/
-
     for (px = top; px < m; px++) {
       /* x[j] is (generically) nonzero */
       j = xi[px];
@@ -755,16 +758,16 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop, spasm **U_ptr, int *q
       if (x[j] == 0) {
 	continue;
       }
-
+     
       if (qinv[j] < 0) {
 	/* column j is not yet pivotal ? */
 	
 	/* have found the pivot on row i yet ? */
-	if (ipiv == -1 || j < ipiv) {
+	if ((ipiv == -1) || (j < ipiv)) {
 	  ipiv = j;
 	}
       }
-
+    }
       /* pivot found ? */
       assert(ipiv != -1); // pivot on p[i].
       //      old_unz = unz;
@@ -786,7 +789,6 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop, spasm **U_ptr, int *q
 	  unz++;
 	}
       }
-    }
   }
   /* finalize U */
   Up[stop] = unz;
@@ -795,7 +797,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop, spasm **U_ptr, int *q
   /* ---- second part : compute Schur complement -----*/
   for(i = stop; i < m; i++){
     /* triangular solve */
-    Sp[Sn] = unz;            /* S[i] starts here */
+    Sp[Sn] = snz;            /* S[i] starts here */
     
     /* not enough room in U ? realloc twice the size */
     if (snz + Sm > S->nzmax) {
@@ -826,9 +828,12 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop, spasm **U_ptr, int *q
     Sn++;
   }
   /*finalize S*/
-  Sp[Sn] = snz++;
+  Sp[S->n] = snz;
+  spasm_csr_realloc(S, -1);
 
   /* free extra workspace*/
+  free(qinv);
+  spasm_csr_free(U);
   free(x);
   free(xi);
 

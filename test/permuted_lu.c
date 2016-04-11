@@ -24,8 +24,8 @@ int main(int argc, char **argv) {
   y = malloc(m * sizeof(spasm_GFp));
   u = malloc(n * sizeof(spasm_GFp));
   v = malloc(m * sizeof(spasm_GFp));
-
-  row_permutation = spasm_cheap_pivots(A);
+  int n_cheap;
+  row_permutation = spasm_cheap_pivots(A, &n_cheap);
   LU = spasm_LU(A, row_permutation, SPASM_KEEP_L);
 
   for(i = 0; i < n; i++) {

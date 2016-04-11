@@ -256,7 +256,7 @@ int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xi, s
 
       /* i maps to row I of U */
       I = (pinv != NULL) ? (pinv[i]) : i;
-
+      //printf("pinv[%d] = %d\n", i, I);
       if (I < 0) {
 	/* row I is empty */
             continue;

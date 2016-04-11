@@ -109,7 +109,7 @@ int * spasm_row_sort (const spasm *A) {
   return p;
 }
 
-int * spasm_cheap_pivots(const spasm *A) {
+int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
   int n, m, i, j, idx_j, k, px, n_cheap;
   int *q, *p, *Ap, *Aj;
   spasm_GFp *Ax;
@@ -164,6 +164,7 @@ int * spasm_cheap_pivots(const spasm *A) {
   }
 
   n_cheap = k;
+ *cheap_ptr = n_cheap;
   fprintf(stderr, "[LU] found %d cheap pivots\n", n_cheap);
 
   /* put other (non-empty) rows afterwards */
@@ -187,7 +188,6 @@ int * spasm_cheap_pivots(const spasm *A) {
   // sort remaining rows
   //
   // spasm_quicksort(A, p, n_cheap, n);
-
   free(q);
   return p;
 }

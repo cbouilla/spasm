@@ -92,7 +92,8 @@ int main(int argc, char **argv) {
   case 1:
     fprintf(stderr, "[rank] finding cheap pivots : ");
     fflush(stderr);
-    p = spasm_cheap_pivots(A);
+    int n_cheap;
+    p = spasm_cheap_pivots(A, &n_cheap);
     fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
     break;
   case 2:
