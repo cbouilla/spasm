@@ -689,9 +689,6 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
   int *Sp, *Sj, *Up, *Uj, Sn, Sm, m, n, snz, unz, ipiv, px, *xi, i, inew, top, j, *qinv, verbose_step;
   spasm_GFp *Sx, *Ux, *x;
 
-  verbose_step = spasm_max(1, n / 1000);
-
-
   // check inputs
   assert(A != NULL);
 
@@ -707,6 +704,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
 
   S = spasm_csr_alloc(Sn, Sm, snz, A->prime, 1);
   U = spasm_csr_alloc(stop, m, unz, A->prime, 1);
+  verbose_step = spasm_max(1, n / 1000);
 
   Sp = S->p;
   Up = U->p;
