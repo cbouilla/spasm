@@ -18,4 +18,8 @@ int main(){
   spasm *S = spasm_schur(A, p, n_cheap);
   printf("Schur : (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S)/(S->n * S->m));
 
+  spasm_save_csr(stdout, S);
+
+  spasm_csr_free(S);
+  spasm_csr_free(A);
 }
