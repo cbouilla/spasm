@@ -804,7 +804,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
     min = spasm_min(min, spasm_row_weight(U, i));
     max = spasm_max(max, spasm_row_weight(U, i));
   }
-  printf("U, row density : %d / %.1f / %d\n", min, avg, max);
+  fprintf(stderr, "U, row density : %d / %.1f / %d\n", min, avg, max);
 
   i = 0;
   for(j=0; j<m; j++) {
