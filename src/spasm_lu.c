@@ -686,7 +686,7 @@ int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super
 
 spasm *spasm_schur(const spasm *A, const int *p, int stop){
   spasm *S, *U;
-  int *Sp, *Sj, *Up, *Uj, Sn, Sm, m, n, snz, unz, ipiv, px, *xi, i, inew, top, j, *qinv, verbose_step;
+  int *Sp, *Sj, *Up, *Uj, Sn, Sm, m, n, snz, unz, ipiv, px, *xi, i, inew, top, j, *qinv, *q, verbose_step;
   spasm_GFp *Sx, *Ux, *x;
 
   // check inputs
@@ -723,6 +723,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
   spasm_vector_zero(xi, 3*m);
 
   qinv = spasm_malloc(m * sizeof(int));
+  q = spasm_malloc(m * sizeof(int));
 
   // Initialize workspace :
   for(i = 0; i < m; i++){
@@ -799,10 +800,10 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
   i = 0;
   for(j=0; j<m; j++) {
     if (qinv[j] < 0) {
-      qinv[j] = i;
+      q[j] = i;
       i++;
     } else {
-      qinv[j] = -1;
+      q[j] = -1;
     }
   }
 
@@ -833,7 +834,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
       }
       /* send non-pivot coefficients into S */
       if (qinv[j] >= 0) {
-	      Sj[snz] = qinv[j];
+	      Sj[snz] = q[j];
 	      Sx[snz] = x[j];
 	      snz++;
       }
