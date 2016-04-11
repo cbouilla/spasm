@@ -160,11 +160,11 @@ int main(int argc, char **argv){
   for(i = 0; i < n ; i++){
     if(u[i] != y[i]){
       //printf("u[%d] = %d : y[%d] = %d\n", i, u[i], i, y[i]);
-      printf("not ok %d super triangular solve col %d \n", test, i);
+      printf("not ok %d - super triangular solve col %d \n", test, i);
     }
   }
 
-  printf("ok %d super triangular solve \n", test);
+  printf("ok %d - super triangular solve \n", test);
 
   /* free workspace */
   spasm_csr_free(A);
