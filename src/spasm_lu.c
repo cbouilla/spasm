@@ -799,7 +799,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
 
   /* ---- second part : compute Schur complement -----*/
   fprintf(stderr, "Starting Schur complement computation...\n");
-  for(i = stop; i < m; i++){
+  for(i = stop; i < n; i++){
     /* triangular solve */
     Sp[Sn] = snz;            /* S[i] starts here */
     
@@ -832,11 +832,12 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
     Sn++;
 
     if ((i % verbose_step) == 0) {
-        fprintf(stderr, "\rSchur : %d / %d [S=%d rows, %d NNZ] -- current density= (%.3f)", i, n, Sn, snz, 1.0*snz / (Sm*Sn));
+        fprintf(stderr, "\rSchur : %d / %d [S=%d * %d, %d NNZ] -- current density= (%.3f)", i, n, Sn, Sm, snz, 1.0*snz / (1.0*Sm*Sn));
         fflush(stderr);
       }
   }
   /*finalize S*/
+  fprintf(stderr, "\n");
   Sp[S->n] = snz;
   spasm_csr_realloc(S, -1);
 
