@@ -60,7 +60,7 @@ spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation, int keep_L) {
  *   returns TRUE iff it belongs to the row-space of U.
  *   This means that with proba >= 1-1/p, all pivots have been found.
  */
-int spasm_early_abort(const spasm *A, const int *row_permutation, int k, const spasm *U) {
+int spasm_early_abort(const spasm *A, const int *row_permutation, int k, const spasm *U, int nu) {
   int *Aj, *Ap, *Uj, *Up;
   int i, j, inew, n, m, ok;
   spasm_GFp prime, *y, *Ax, *Ux;
@@ -88,7 +88,7 @@ int spasm_early_abort(const spasm *A, const int *row_permutation, int k, const s
   }
 
 
-  for(i = 0; i < U->n; i++) {
+  for(i = 0; i < nu; i++) {
     j = Uj[ Up[i] ];
     const spasm_GFp diagonal_entry = Ux[ Up[i] ];
     if (y[j] == 0) {
@@ -196,12 +196,20 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
         break;
       }
  
+      if (!keep_L && !early_abort_done && rows_since_last_pivot > 10 && (rows_since_last_pivot > (n/100))) {
+          fprintf(stderr, "\n[LU] testing for early abort\n");
+          if (spasm_early_abort(A, row_permutation, i+1, U, i-defficiency)) {
+            fprintf(stderr, "\n[LU] full rank reached ; probabilistic early abort\n");
+            break;
+          }
+          early_abort_done = 1;
+      }
+
         /* --- Triangular solve: x * U = A[i] ---------------------------------------- */
       if (keep_L) {
         Lp[i] = lnz;                          /* L[i] starts here */
       }
       Up[i - defficiency] = unz;            /* U[i] starts here */
-      U->n = i - defficiency;
 
       /* not enough room in L/U ? realloc twice the size */
       if (keep_L && lnz + m > L->nzmax) {
@@ -294,17 +302,6 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 #ifdef SPASM_TIMING
       data_shuffling += spasm_ticks() - start;
 #endif
-
-      if (!early_abort_done && (rows_since_last_pivot > (n/100))) {
-        fprintf(stderr, "\n[LU] testing for early abort\n");
-        if (spasm_early_abort(A, row_permutation, i+1, U)) {
-          fprintf(stderr, "\n[LU] full rank reached ; probabilistic early abort\n");
-          break;
-        }
-        early_abort_done = 1;
-      }
-
-
 
       if ((i % verbose_step) == 0) {
         fprintf(stderr, "\rLU : %d / %d [|L| = %d / |U| = %d] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, lnz, unz, 1.0 * (m-top) / (m), 1.0 * (unz-old_unz) / m, i - defficiency);
