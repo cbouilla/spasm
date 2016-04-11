@@ -704,7 +704,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
 
   S = spasm_csr_alloc(Sn, Sm, snz, A->prime, 1);
   U = spasm_csr_alloc(stop, m, unz, A->prime, 1);
-  verbose_step = spasm_max(1, n / 10);
+  verbose_step = spasm_max(1, n / 1000);
 
   Sp = S->p;
   Up = U->p;
@@ -796,6 +796,15 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
   Up[stop] = unz;
   spasm_csr_realloc(U, -1);
 
+  i = 0;
+  for(j=0; j<m; j++) {
+    if (qinv[j] < 0) {
+      qinv[j] = i;
+      i++;
+    } else {
+      qinv[j] = -1;
+    }
+  }
 
   /* ---- second part : compute Schur complement -----*/
   fprintf(stderr, "Starting Schur complement computation...\n");
@@ -823,8 +832,8 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
 	      continue;
       }
       /* send non-pivot coefficients into S */
-      if (qinv[j] < 0) {
-	      Sj[snz] = j;
+      if (qinv[j] >= 0) {
+	      Sj[snz] = qinv[j];
 	      Sx[snz] = x[j];
 	      snz++;
       }
