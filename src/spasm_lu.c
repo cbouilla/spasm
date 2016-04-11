@@ -686,8 +686,11 @@ int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super
 
 spasm *spasm_schur(const spasm *A, const int *p, int stop){
   spasm *S, *U;
-  int *Sp, *Sj, *Up, *Uj, Sn, Sm, m, n, snz, unz, ipiv, px, *xi, i, inew, top, j, *qinv;
+  int *Sp, *Sj, *Up, *Uj, Sn, Sm, m, n, snz, unz, ipiv, px, *xi, i, inew, top, j, *qinv, verbose_step;
   spasm_GFp *Sx, *Ux, *x;
+
+  verbose_step = spasm_max(1, n / 1000);
+
 
   // check inputs
   assert(A != NULL);
@@ -733,6 +736,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
   }
 
   /*------ first part : LU decomposition -------*/
+  fprintf(stderr, "Starting LU computation...\n");
   for(i = 0; i < stop; i++){
     /* triangular solve */
     Up[i] = unz;            /* U[i] starts here */
@@ -756,50 +760,52 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
 
       /* if x[j] == 0 (numerical cancelation), we just ignore it */
       if (x[j] == 0) {
-	continue;
+	      continue;
       }
      
       if (qinv[j] < 0) {
-	/* column j is not yet pivotal ? */
+	      /* column j is not yet pivotal ? */
 	
-	/* have found the pivot on row i yet ? */
-	if ((ipiv == -1) || (j < ipiv)) {
-	  ipiv = j;
-	}
+	      /* have found the pivot on row i yet ? */
+	      if ((ipiv == -1) || (j < ipiv)) {
+	        ipiv = j;
+	      }
       }
     }
-      /* pivot found ? */
-      assert(ipiv != -1); // pivot on p[i].
-      //      old_unz = unz;
+    /* pivot found ? */
+    assert(ipiv != -1); // pivot on p[i].
+    //      old_unz = unz;
 
-      qinv[ ipiv ] = i;
+    qinv[ ipiv ] = i;
 
-      /* pivot must be the first entry in U[i] */
-      Uj[unz] = ipiv;
-      Ux[unz] = x[ ipiv ];
-      unz++;
+    /* pivot must be the first entry in U[i] */
+    Uj[unz] = ipiv;
+    Ux[unz] = x[ ipiv ];
+    unz++;
 
-      /* send remaining non-pivot coefficients into U */
-      for (px = top; px < m; px++) {
-	j = xi[px];
+    /* send remaining non-pivot coefficients into U */
+    for (px = top; px < m; px++) {
+    	j = xi[px];
 
-	if (qinv[j] < 0) {
-	  Uj[unz] = j;
-	  Ux[unz] = x[j];
-	  unz++;
-	}
+    	if (qinv[j] < 0) {
+    	  Uj[unz] = j;
+    	  Ux[unz] = x[j];
+    	  unz++;
+    	}
       }
   }
   /* finalize U */
   Up[stop] = unz;
   spasm_csr_realloc(U, -1);
 
+
   /* ---- second part : compute Schur complement -----*/
+  fprintf(stderr, "Starting Schur complement computation...\n");
   for(i = stop; i < m; i++){
     /* triangular solve */
     Sp[Sn] = snz;            /* S[i] starts here */
     
-    /* not enough room in U ? realloc twice the size */
+    /* not enough room in S ? realloc twice the size */
     if (snz + Sm > S->nzmax) {
       spasm_csr_realloc(S, 2 * S->nzmax + Sm);
     }
@@ -816,16 +822,21 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
 
       /* if x[j] == 0 (numerical cancelation), we just ignore it */
       if (x[j] == 0) {
-	continue;
+	      continue;
       }
       /* send non-pivot coefficients into S */
       if (qinv[j] < 0) {
-	Sj[snz] = j;
-	Sx[snz] = x[j];
-	snz++;
+	      Sj[snz] = j;
+	      Sx[snz] = x[j];
+	      snz++;
       }
     }
     Sn++;
+
+    if ((i % verbose_step) == 0) {
+        fprintf(stderr, "\rSchur : %d / %d [|S| = %d] -- current density= (%.3f)", i, n, snz, 1.0*snz / (Sm*Sn));
+        fflush(stderr);
+      }
   }
   /*finalize S*/
   Sp[S->n] = snz;
