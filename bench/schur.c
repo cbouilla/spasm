@@ -16,7 +16,7 @@ int main(){
 
   // calculer le complément de schur après n_cheap.
   spasm *S = spasm_schur(A, p, n_cheap);
-  fprintf(stderr, "Schur : (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S)/(S->n * S->m));
+  fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S)/(1.*S->n * S->m));
 
   spasm_save_csr(stdout, S);
 
