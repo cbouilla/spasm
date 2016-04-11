@@ -55,6 +55,61 @@ spasm_lu * spasm_PLUQ(const spasm *A, const int *row_permutation, int keep_L) {
   return N;
 }
 
+/**
+ *   Computes a random linear combination of A[k:].
+ *   returns TRUE iff it belongs to the row-space of U.
+ *   This means that with proba >= 1-1/p, all pivots have been found.
+ */
+int spasm_early_abort(const spasm *A, const int *row_permutation, int k, const spasm *U, int nu) {
+  int *Aj, *Ap, *Uj, *Up;
+  int i, j, inew, n, m, ok;
+  spasm_GFp prime, *y, *Ax, *Ux;
+
+  n = A->n;
+  m = A->m;
+  prime = A->prime;
+  Aj = A->j;
+  Ap = A->p;
+  Ax = A->x;
+  Uj = U->j;
+  Up = U->p;
+  Ux = U->x;
+
+  y = spasm_malloc(m * sizeof(spasm_GFp));
+  for(j = 0; j < m; j++) {
+    y[j] = 0;
+  }
+
+  for(i = k; i < n; i++) {
+    inew = (row_permutation != NULL) ? row_permutation[i] : i;
+    //if (inew == n-1)
+    //printf("%d --> %d\n", i, inew);
+    spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, y, prime);
+  }
+
+
+  for(i = 0; i < nu; i++) {
+    j = Uj[ Up[i] ];
+    const spasm_GFp diagonal_entry = Ux[ Up[i] ];
+    if (y[j] == 0) {
+      continue;
+    }
+    const spasm_GFp d = (y[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+    spasm_scatter(Uj, Ux, Up[i], Up[i + 1], prime - d, y, prime);
+  }
+
+  ok = 1;
+  for(j = 0; j < m; j++) {
+      //printf("%d : %d\n", j, y[j]);
+      if (y[j] != 0) {
+        ok = 0;
+        break;
+      }
+  }
+  free(y);
+  return ok; //0; //ok;
+}
+
 /*
  * compute a (somewhat) LU decomposition.
  *
@@ -75,6 +130,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     spasm_GFp *Lx, *Ux, *x;
     int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xi;
     int n, m, r, ipiv, i, inew, j, top, px, lnz, unz, old_unz, prime, defficiency, verbose_step;
+    int rows_since_last_pivot, early_abort_done;
 
 #ifdef SPASM_TIMING
     uint64_t start;
@@ -129,6 +185,10 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     }
     old_unz = lnz = unz = 0;
 
+    /* initialize early abort */
+    rows_since_last_pivot = 0;
+    early_abort_done = 0;
+
     /* --- Main loop : compute L[i] and U[i] ------------------- */
     for (i = 0; i < n; i++) {
       if (!keep_L && i - defficiency == r) {
@@ -136,6 +196,15 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
         break;
       }
  
+      if (!keep_L && !early_abort_done && rows_since_last_pivot > 10 && (rows_since_last_pivot > (n/100))) {
+          fprintf(stderr, "\n[LU] testing for early abort\n");
+          if (spasm_early_abort(A, row_permutation, i+1, U, i-defficiency)) {
+            fprintf(stderr, "\n[LU] full rank reached ; probabilistic early abort\n");
+            break;
+          }
+          early_abort_done = 1;
+      }
+
         /* --- Triangular solve: x * U = A[i] ---------------------------------------- */
       if (keep_L) {
         Lp[i] = lnz;                          /* L[i] starts here */
@@ -220,9 +289,14 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
             unz++;
           }
         }
+
+        /* reset early abort */
+        rows_since_last_pivot = 0;
+        early_abort_done = 0;
       } else {
         defficiency++;
         p[n - defficiency] = i;
+        rows_since_last_pivot++;
       }
 
 #ifdef SPASM_TIMING
@@ -251,12 +325,6 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 
     free(x);
     free(xi);
-
-#ifdef SPASM_COL_WEIGHT_PIVOT_SELECTION
-    free(col_weights);
-#endif
-
-    
     return N;
 }
 
