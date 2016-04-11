@@ -228,7 +228,8 @@ int main() {
   }
 
   assert(pivots + non_pivots == n);
-  
+
+  printf("%d pivots found on the diagonal blocks\n", pivots);  
   printf("Go\n");
 
 #ifdef SPASM_TIMING
