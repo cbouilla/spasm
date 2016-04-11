@@ -17,3 +17,6 @@ transpose
 permute
 linbox_rank_gauss
 linbox_rank_wm
+metis
+dm_rank
+schur

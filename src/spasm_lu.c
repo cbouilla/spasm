@@ -704,7 +704,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
 
   S = spasm_csr_alloc(Sn, Sm, snz, A->prime, 1);
   U = spasm_csr_alloc(stop, m, unz, A->prime, 1);
-  verbose_step = spasm_max(1, n / 1000);
+  verbose_step = spasm_max(1, n / 10);
 
   Sp = S->p;
   Up = U->p;
@@ -790,7 +790,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
     	  Ux[unz] = x[j];
     	  unz++;
     	}
-      }
+    }
   }
   /* finalize U */
   Up[stop] = unz;
