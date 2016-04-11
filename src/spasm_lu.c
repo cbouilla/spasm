@@ -833,7 +833,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
 	      continue;
       }
       /* send non-pivot coefficients into S */
-      if (qinv[j] >= 0) {
+      if (q[j] >= 0) {
 	      Sj[snz] = q[j];
 	      Sx[snz] = x[j];
 	      snz++;
