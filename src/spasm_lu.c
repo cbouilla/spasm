@@ -832,7 +832,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
     Sn++;
 
     if ((i % verbose_step) == 0) {
-        fprintf(stderr, "\rSchur : %d / %d [|S| = %d] -- current density= (%.3f)", i, n, snz, 1.0*snz / (Sm*Sn));
+        fprintf(stderr, "\rSchur : %d / %d [S=%d rows, %d NNZ] -- current density= (%.3f)", i, n, Sn, snz, 1.0*snz / (Sm*Sn));
         fflush(stderr);
       }
   }
