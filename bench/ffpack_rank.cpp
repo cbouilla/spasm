@@ -36,52 +36,32 @@ extern "C" {
 using namespace FFLAS;
 
 int main(int argc, char** argv) {
-	spasm_triplet *T;
 	typedef Givaro::Modular<int> Ring;
-	int prime = 42013;
+	int prime, i, j, k, n, m, nz, rank, *Ti, *Tj, *Tx;
+	
+	prime = 42013;
 	Ring F(prime);
-
-	Ring::Element * A, * B, * C;
+	spasm_triplet *T;
+	Ring::Element * A;
 
 	T = spasm_load_sms(stdin, prime);
-	std::cout << sizeof(Ring::Element) << std::endl;
+	A = fflas_new(F, T->n, T->m);
 
-	A = fflas_new(F, 2, 3);
-	B = fflas_new(F, 3, 2);
-	C = fflas_new(F, 2, 2);  
+	m = T->m;
+    n = T->n;
+    Ti = T->i;
+    Tj = T->j;
+    Tx = T->x;
+    nz = T->nz;
 
-	F.assign(*(A+0),F.one);
-	F.init(*(A+1),2);
-	F.init(*(A+2),3);
-	F.init(*(A+3),5);
-	F.init(*(A+4),7);
-	F.init(*(A+5),11);
+    for(k=0; k<nz; k++) {
+    	F.init(*(A + Ti[k]*n + Tj[k]), Tx[k]);
+    }
 
-        Ring::Element t,u,v; 
-        F.init(t, 2); F.init(u, 4); F.init(v);
+    rank = FFPACK::Rank(F, n, m, A, n);
+	std::cout << rank << std::endl;
 
-	F.assign(*(B+0),F.zero);		// B[0] <- 0
-	F.assign(*(B+1),t);			// B[1] <- 2
-	F.assign(*(B+2),u);			// B[2] <- 4 
-        F.add(v,t,u); F.assign(*(B+3),v);	// B[3] <- 2+4
-	F.mul(*(B+4),t,u);			// B[4] <- 2*4
-	F.add(*(B+5),u,v);			// B[5] <- 4+6
-	
-	write_field(F, std::cout << "A:=", A, 2, 3, 3,true) << std::endl;
-	write_field(F, std::cout << "B:=", B, 3, 2, 2,true) << std::endl;
-
-	fgemm (F, FflasNoTrans, FflasNoTrans, 2,2,3, F.one, A, 3, B, 2, F.zero, C, 2 );
-
-	write_field(F, std::cout << "C:=", C, 2, 2, 2,true) << std::endl;
-	
-	std::cout << FFPACK::Rank(F, 2, 2, C, 2)  << std::endl;
-
-	fflas_delete( A);
-	fflas_delete( B);
-	fflas_delete( C);
-	
-	
-
-  return 0;
+	fflas_delete(A);
+    return 0;
 }
 
