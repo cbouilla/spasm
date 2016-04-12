@@ -678,6 +678,255 @@ int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super
   return (ipiv != -1);
 }
 
+
+/*
+ * Calcul du U de la décomposition LU sur cheap pivots uniquement.
+ * A : matrice de départ.
+ * p : permutation qui "tasse" les cheap pivots en haut.
+ * qinv : permutation liée à U.
+ * stop : nombre de cheap pivots.
+ */
+spasm *spasm_cheap_U(const spasm *A, const int *p, int stop, int *qinv){
+  spasm *U;
+  int *Up, *Uj, m, n, unz, ipiv, px, *xi, i, inew, top, j;
+  spasm_GFp *Ux, *x;
+
+  // check inputs
+  assert(A != NULL);
+
+  // Get Workspace
+  n = A->n;
+  m = A->m;
+  assert(n > stop);
+  assert(m > stop);
+  unz = 2 * (stop + m); //educated guess
+
+  U = spasm_csr_alloc(stop, m, unz, A->prime, 1);
+  //verbose_step = spasm_max(1, n / 1000);
+
+  Up = U->p;
+  Uj = U->j;
+  Ux = U->x;
+  unz = 0;
+
+  /* get GFp workspace */
+  x = spasm_malloc(m * sizeof(spasm_GFp));
+
+  /* get int workspace */
+  xi = spasm_malloc(3 * m * sizeof(int));
+  spasm_vector_zero(xi, 3*m);
+ 
+
+  // Initialize workspace :
+  for(i = 0; i < m; i++){
+    qinv[i] = -1; // no pivot found yet.
+  }
+
+  for(i = 0; i < stop; i++){
+    Up[i] = 0;
+  }
+
+  /*------ first part : LU decomposition -------*/
+  fprintf(stderr, "Starting LU computation...\n");
+  for(i = 0; i < stop; i++){
+    /* triangular solve */
+    Up[i] = unz;            /* U[i] starts here */
+
+    /* not enough room in U ? realloc twice the size */
+    if (unz + m > U->nzmax) {
+      spasm_csr_realloc(U, 2 * U->nzmax + m);
+    }
+    Uj = U->j;
+    Ux = U->x;
+
+    inew = p[i];
+    top = spasm_sparse_forward_solve(U, A, inew, xi, x, qinv);
+
+    /* find pivot */
+    ipiv = -1;
+      /* index of best pivot so far.*/
+    for (px = top; px < m; px++) {
+      /* x[j] is (generically) nonzero */
+      j = xi[px];
+
+      /* if x[j] == 0 (numerical cancelation), we just ignore it */
+      if (x[j] == 0) {
+	      continue;
+      }
+     
+      if (qinv[j] < 0) {
+	      /* column j is not yet pivotal ? */
+	
+	      /* have found the pivot on row i yet ? */
+	      if ((ipiv == -1) || (j < ipiv)) {
+	        ipiv = j;
+	      }
+      }
+    }
+    /* pivot found ? */
+    assert(ipiv != -1); // pivot on p[i].
+    //      old_unz = unz;
+
+    qinv[ ipiv ] = i;
+
+    /* pivot must be the first entry in U[i] */
+    Uj[unz] = ipiv;
+    Ux[unz] = x[ ipiv ];
+    unz++;
+
+    /* send remaining non-pivot coefficients into U */
+    for (px = top; px < m; px++) {
+    	j = xi[px];
+
+    	if (qinv[j] < 0) {
+    	  Uj[unz] = j;
+    	  Ux[unz] = x[j];
+    	  unz++;
+    	}
+    }
+  }
+  /* finalize U */
+  Up[stop] = unz;
+  spasm_csr_realloc(U, -1);
+
+  return U;
+}
+
+/*
+ * Narrow Schur complement.
+ */
+int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
+  spasm *U;
+  int *qinv, i, i_rand, n, m, *yi, *xi, ynz, stop, k, px, j, ipiv, unz, *Uj, *Up, top, un, *Ap, *Aj;
+  spasm_GFp *y, *x, *Ux, *Ax;
+
+  // check inputs
+  assert(A != NULL);
+  n = A->n;
+  m = A->m;
+  assert(m - n_cheap > 0);
+  stop = 2 * (m - n_cheap);
+  Ap = A->p;
+  Aj = A->j;
+  Ax = A->x;
+
+  // get U and qinv
+  qinv = spasm_malloc(m * sizeof(int));
+  U = spasm_cheap_U(A, p, n_cheap, qinv);
+  unz = U->nzmax;
+  un = n_cheap;
+  Up = U->p;
+  Uj = U->j;
+  Ux = U->x;
+
+  spasm_csr_realloc(U, 2*U->nzmax + m);
+  spasm_csr_resize(U, m, m); // number of rows > number of cols
+  // get workspace
+  y = spasm_malloc(m * sizeof(spasm_GFp));
+  yi = spasm_malloc(m * sizeof(int));
+  x = spasm_malloc(m * sizeof(spasm_GFp));
+  xi = spasm_malloc(m * sizeof(int));
+
+  /* main loop : compute random combinaison of rows of A and search pivot */
+  while(stop > 0){
+
+    // initialise workspace
+    for(i = 0; i < m; i++){
+      y[i] = 0;
+    }
+
+    //random sum of 10 rows
+    k = 0;
+    while(k < 10){
+      i_rand = rand()%(n - n_cheap);
+      i_rand = p[i_rand + n_cheap]; // random non yet pivotal row.
+      for(px = Ap[i_rand]; px < Ap[i_rand + 1]; px++){
+	y[Aj[px]] += Ax[px];
+      }
+      k++;
+    }
+
+    // find yi
+    ynz = 0;
+    for(i = 0; i < m; i++){
+      if (y[i] != 0){
+	yi[ynz] = i;
+	ynz++;
+	fprintf(stderr, "ynz : %d, dens : %.5f", ynz, 1.*ynz/(1.*m));
+	fflush(stderr);
+      }
+    }
+    /* search pivot in y */
+    // triangular solve
+    Up[un] = unz;            /* U[un] starts here */
+
+    /* not enough room in U ? realloc twice the size */
+    if (unz + m > U->nzmax) {
+      spasm_csr_realloc(U, 2 * U->nzmax + m);
+    }
+    Uj = U->j;
+    Ux = U->x;
+
+    top = spasm_sparse_forward_solve_scat(U, y, yi, ynz, xi, x, qinv);
+
+    /* find pivot */
+    ipiv = -1;
+    /* index of best pivot so far.*/
+    for (px = top; px < m; px++) {
+      /* x[j] is (generically) nonzero */
+      j = xi[px];
+
+      /* if x[j] == 0 (numerical cancelation), we just ignore it */
+      if (x[j] == 0) {
+	continue;
+      }
+      
+      if (qinv[j] < 0) {
+	/* column j is not yet pivotal ? */
+	
+	/* have found the pivot on row i yet ? */
+	if ((ipiv == -1) || (j < ipiv)) {
+	  ipiv = j;
+	}
+      }
+    }
+    
+    if(ipiv != -1){ // pivot has been found.
+      fprintf(stderr, "new pivot found\n");
+      qinv[ ipiv ] = un;
+
+      /* pivot must be the first entry in U[i] */
+      Uj[unz] = ipiv;
+      Ux[unz] = x[ ipiv ];
+      unz++;
+      
+      /* send remaining non-pivot coefficients into U */
+      for (px = top; px < m; px++) {
+    	j = xi[px];
+	
+    	if (qinv[j] < 0) {
+    	  Uj[unz] = j;
+    	  Ux[unz] = x[j];
+    	  unz++;
+    	}
+      }
+      fprintf(stderr, "new pivots : %d : U->nzmax : %d, density : %.5f\n", un+1-n_cheap, unz, 1.*unz/(1.*un * m));
+      fflush(stderr);
+      un++;
+    }  
+    stop--;
+  }
+
+  //free workspace
+  spasm_csr_free(U);
+  free(x);
+  free(y);
+  free(xi);
+  free(yi);
+  
+  return un;
+}
+
 /*
  * A : matrice de départ.
  * p : permutation sur les lignes de A telles que les premières lignes de p
@@ -863,3 +1112,5 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
 
   return S;
 }
+
+
