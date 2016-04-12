@@ -854,7 +854,7 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
 	ynz++;
       }
     }
-    fprintf(stderr, "ynz : %d, dens : %.5f\n", ynz, 1.*ynz/(1.*m));
+
     /* search pivot in y */
     // triangular solve
     Up[un] = unz;            /* U[un] starts here */
@@ -868,7 +868,6 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
 
     top = spasm_sparse_forward_solve_scat(U, y, yi, ynz, xi, x, qinv);
 
-    fprintf(stderr, "search pivot\n");
     /* find pivot */
     ipiv = -1;
     /* index of best pivot so far.*/
@@ -892,7 +891,6 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
     }
     
     if(ipiv != -1){ // pivot has been found.
-      fprintf(stderr, "new pivot found\n");
       qinv[ ipiv ] = un;
 
       /* pivot must be the first entry in U[i] */
