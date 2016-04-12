@@ -914,7 +914,7 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
     	  unz++;
     	}
       }
-      fprintf(stderr, "new pivots : %d : U->nzmax : %d, density : %.5f\n", un+1-n_cheap, unz, 1.*unz/(1.*un * m));
+      fprintf(stderr, "\rnew pivots : %d : U->nzmax : %d, density : %.5f", un+1-n_cheap, unz, 1.*unz/(1.*un * m));
       fflush(stderr);
       un++;
     }  
