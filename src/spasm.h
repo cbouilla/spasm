@@ -225,6 +225,7 @@ spasm_lu *super_spasm_LU(super_spasm *A, int start, int keep_L);
 int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n);
 int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super_spasm *L, int *unz_ptr, int *lnz_ptr, int li, int ui, int i, int *qinv);
 spasm *spasm_schur(const spasm *A, const int *p, int stop);
+int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap);
 
 /* spasm_solutions.c */
 int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
