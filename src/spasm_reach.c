@@ -215,6 +215,7 @@ int p, top, *pstack, *marks;
      * marked). If not, start a DFS from j and add to the pattern all
      * columns reachable from j.
      */
+    
     for (p = start; p < end; p++) {
 	if (!marks[yj[p]]) {
 	    top = spasm_dfs(yj[p], G, top, xj, pstack, marks, pinv);

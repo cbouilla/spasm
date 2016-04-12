@@ -815,17 +815,22 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
   U = spasm_cheap_U(A, p, n_cheap, qinv);
   unz = U->nzmax;
   un = n_cheap;
+
+  assert(n >m);
+  assert(U->n == n_cheap);
+
+  spasm_csr_realloc(U, 2*U->nzmax + m);
+  spasm_csr_resize(U, m, m); // number of rows > number of cols
   Up = U->p;
   Uj = U->j;
   Ux = U->x;
 
-  spasm_csr_realloc(U, 2*U->nzmax + m);
-  spasm_csr_resize(U, m, m); // number of rows > number of cols
   // get workspace
   y = spasm_malloc(m * sizeof(spasm_GFp));
   yi = spasm_malloc(m * sizeof(int));
   x = spasm_malloc(m * sizeof(spasm_GFp));
-  xi = spasm_malloc(m * sizeof(int));
+  xi = spasm_malloc(3 * m * sizeof(int));
+  spasm_vector_zero(xi, 3*m);
 
   /* main loop : compute random combinaison of rows of A and search pivot */
   while(stop > 0){
@@ -854,6 +859,7 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
 	ynz++;
       }
     }
+    assert(ynz <= m);
 
     /* search pivot in y */
     // triangular solve
@@ -865,7 +871,7 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
     }
     Uj = U->j;
     Ux = U->x;
-
+    
     top = spasm_sparse_forward_solve_scat(U, y, yi, ynz, xi, x, qinv);
 
     /* find pivot */
