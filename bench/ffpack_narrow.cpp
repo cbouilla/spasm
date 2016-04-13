@@ -88,52 +88,45 @@ int main(int argc, char** argv) {
 
   int progress = 0;
 
- #pragma omp parallel
- {
-    spasm_GFp *y = (spasm_GFp *) spasm_malloc(schur_m * sizeof(spasm_GFp));
+  spasm_GFp *y = (spasm_GFp *) spasm_malloc(schur_m * sizeof(spasm_GFp));
 
-    #pragma omp for
-    for(int k=0; k<schur_n; k++) {
+  for(int k=0; k<schur_n; k++) {
 
-      /* compute a random linear combination of the non-pivotal rows */
-      for(int j = 0; j < m; j++) {
-        y[j] = 0;
-      }
-      for(int i = n_cheap; i < n; i++) {
-        int inew = p[i];
-        spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, y, prime);
-      }
+    /* compute a random linear combination of the non-pivotal rows */
+    for(int j = 0; j < m; j++) {
+      y[j] = 0;
+    }
+    for(int i = n_cheap; i < n; i++) {
+      int inew = p[i];
+      spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, y, prime);
+    }
 
-      /* eliminate everything in y */
-      for(int i = 0; i < n_cheap; i++) {
-        int inew = p[i];
-        int j = Aj[ Ap[inew] ];
-        const spasm_GFp diagonal_entry = Ax[ Ap[inew] ];
-        assert (diagonal_entry != 0);
-        if (y[j] == 0) {
-          continue;
-        }
-        const spasm_GFp d = (y[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-        spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], prime - d, y, prime);
+    /* eliminate everything in y */
+    for(int i = 0; i < n_cheap; i++) {
+      int inew = p[i];
+      int j = Aj[ Ap[inew] ];
+      const spasm_GFp diagonal_entry = Ax[ Ap[inew] ];
+      assert (diagonal_entry != 0);
+      if (y[j] == 0) {
+        continue;
       }
+      const spasm_GFp d = (y[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+      spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], prime - d, y, prime);
+    }
 
-      /* copy y into A[k,:] */
-      for(int j=0; j<m; j++) {    /* ceci est améliorable (pas besoin de scanner tout le vecteur, juste les cols non-pivot) */
-        if (q[j] >= 0) {
-          F.init(*(S + k*schur_m + q[j]), y[j]);
-        }
-      }
-     
-      progress++;
-      #pragma omp master
-      {
-        fprintf(stderr, "\rBuilding S: %d / %d", progress, schur_n);
-        fflush(stderr);
+    /* copy y into A[k,:] */
+    for(int j=0; j<m; j++) {    /* ceci est améliorable (pas besoin de scanner tout le vecteur, juste les cols non-pivot) */
+      if (q[j] >= 0) {
+        F.init(*(S + k*schur_m + q[j]), y[j]);
       }
     }
-  
-    free(y);
-  } /* end parallel region */
+   
+    progress++;
+    fprintf(stderr, "\rBuilding S: %d / %d", progress, schur_n);
+    fflush(stderr);
+  }
+
+  free(y);
 
   free(p);
   free(q);
