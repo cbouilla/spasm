@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
 
   int progress = 0;
 
-  spasm_GFp *y = (spasm_GFp *) spasm_malloc(schur_m * sizeof(spasm_GFp));
+  spasm_GFp *y = (spasm_GFp *) spasm_malloc(m * sizeof(spasm_GFp));
 
   for(int k=0; k<schur_n; k++) {
 
