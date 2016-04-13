@@ -797,7 +797,7 @@ spasm *spasm_cheap_U(const spasm *A, const int *p, int stop, int *qinv){
  */
 int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
   spasm *U;
-  int *qinv, i, i_rand, n, m, *yi, *xi, ynz, stop, k, px, j, ipiv, unz, *Uj, *Up, top, un, *Ap, *Aj;
+  int *qinv, i, i_rand, n, m, *yi, *xi, ynz, stop, k, px, j, ipiv, unz, *Uj, *Up, top, un, *Ap, *Aj, prime;
   spasm_GFp *y, *x, *Ux, *Ax;
 
   // check inputs
@@ -809,6 +809,7 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
   Ap = A->p;
   Aj = A->j;
   Ax = A->x;
+  prime = A->prime;
 
   // get U and qinv
   qinv = spasm_malloc(m * sizeof(int));
@@ -840,29 +841,25 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
       y[i] = 0;
     }
 
-    //random sum of 10 rows
-    k = 0;
-    while(k < 10){
-      i_rand = rand()%(n - n_cheap);
-      i_rand = p[i_rand + n_cheap]; // random non yet pivotal row.
-      for(px = Ap[i_rand]; px < Ap[i_rand + 1]; px++){
-	y[Aj[px]] += Ax[px];
-      }
-      k++;
+    /* random sum of 10 rows */
+    for(k = 0; k<100; k++) {
+      /* choose a random unprocessed row */
+      i_rand = rand() % (n - n_cheap);
+      i_rand = p[i_rand + n_cheap];   
+      spasm_scatter(Aj, Ax, Ap[i_rand], Ap[i_rand+ 1], rand() % prime, y, prime);
     }
 
-    // find yi
+    /* determine the sparsity pattern of yi (this is suboptimal if y is sparse, and useless if y is dense) */
     ynz = 0;
     for(i = 0; i < m; i++){
       if (y[i] != 0){
-	yi[ynz] = i;
-	ynz++;
+	      yi[ynz] = i;
+	      ynz++;
       }
     }
     assert(ynz <= m);
 
     /* search pivot in y */
-    // triangular solve
     Up[un] = unz;            /* U[un] starts here */
 
     /* not enough room in U ? realloc twice the size */
@@ -883,16 +880,16 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
 
       /* if x[j] == 0 (numerical cancelation), we just ignore it */
       if (x[j] == 0) {
-	continue;
+	      continue;
       }
       
       if (qinv[j] < 0) {
-	/* column j is not yet pivotal ? */
+	      /* column j is not yet pivotal ? */
 	
-	/* have found the pivot on row i yet ? */
-	if ((ipiv == -1) || (j < ipiv)) {
-	  ipiv = j;
-	}
+      	/* have found the pivot on row i yet ? */
+      	if ((ipiv == -1) || (j < ipiv)) {
+      	  ipiv = j;
+      	}
       }
     }
     

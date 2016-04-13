@@ -47,7 +47,7 @@ int main(){
 
   /* narrow schur trick */
 
- int r = spasm_narrow_schur_trick(A, filtered, n_filtered);
+  int r = spasm_narrow_schur_trick(A, filtered, n_filtered);
   printf("rank : %d\n", r);
 
   free(filtered);
