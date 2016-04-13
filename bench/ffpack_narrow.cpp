@@ -37,9 +37,9 @@ using namespace FFLAS;
 
 int main(int argc, char** argv) {
 
-  int prime, i, j, k, n, m, n_cheap, inew, schur_m, schur_n, rank;
+  int prime, n, m, n_cheap, schur_m, schur_n, rank;
   int *Aj, *Ap, *p, *q;
-  spasm_GFp *Ax, *y;
+  spasm_GFp *Ax;
   spasm_triplet * T;
   spasm *A;
   typedef Givaro::Modular<int> Ring;
@@ -65,17 +65,17 @@ int main(int argc, char** argv) {
   schur_n = schur_m + 10;
 
   /* mark non-pivotal columns */
-  for(j=0; j<m; j++) {
+  for(int j=0; j<m; j++) {
     q[j] = 0;
   }
-  for(i = 0; i < n_cheap; i++) {
-    inew = p[i];
-    j = Aj[ Ap[inew] ]; /* the pivot is the first entry of each pivotal row */
+  for(int i = 0; i < n_cheap; i++) {
+    int inew = p[i];
+    int j = Aj[ Ap[inew] ]; /* the pivot is the first entry of each pivotal row */
     assert(j < m);
     q[j] = -1;
   }
-  k = 0;
-  for(j=0; j<m; j++) {
+  int k = 0;
+  for(int j=0; j<m; j++) {
     if (q[j] == 0) {
       q[j] = k++;
     }
@@ -86,46 +86,55 @@ int main(int argc, char** argv) {
   Ring F(prime);
   S = fflas_new(F, schur_n, schur_m);
 
-  /* narrow schur trick */
+  int progress = 0;
+
+ #pragma omp parallel
+ {
+    spasm_GFp *y = (spasm_GFp *) spasm_malloc(schur_m * sizeof(spasm_GFp));
+
+    #pragma omp for
+    for(int k=0; k<schur_n; k++) {
+
+      /* compute a random linear combination of the non-pivotal rows */
+      for(int j = 0; j < m; j++) {
+        y[j] = 0;
+      }
+      for(int i = n_cheap; i < n; i++) {
+        int inew = p[i];
+        spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, y, prime);
+      }
+
+      /* eliminate everything in y */
+      for(int i = 0; i < n_cheap; i++) {
+        int inew = p[i];
+        int j = Aj[ Ap[inew] ];
+        const spasm_GFp diagonal_entry = Ax[ Ap[inew] ];
+        assert (diagonal_entry != 0);
+        if (y[j] == 0) {
+          continue;
+        }
+        const spasm_GFp d = (y[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+        spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], prime - d, y, prime);
+      }
+
+      /* copy y into A[k,:] */
+      for(int j=0; j<m; j++) {    /* ceci est améliorable (pas besoin de scanner tout le vecteur, juste les cols non-pivot) */
+        if (q[j] >= 0) {
+          F.init(*(S + k*schur_m + q[j]), y[j]);
+        }
+      }
+     
+      progress++;
+      #pragma omp master
+      {
+        fprintf(stderr, "\rBuilding S: %d / %d", progress, schur_n);
+        fflush(stderr);
+      }
+    }
   
-  y = (spasm_GFp *) spasm_malloc(m * sizeof(spasm_GFp));
+    free(y);
+  } /* end parallel region */
 
-  for(k=0; k<schur_n; k++) {
-
-    /* compute a random linear combination of the non-pivotal rows */
-    for(j = 0; j < m; j++) {
-      y[j] = 0;
-    }
-    for(i = n_cheap; i < n; i++) {
-      inew = p[i];
-      spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, y, prime);
-    }
-
-    /* eliminate everything in y */
-    for(i = 0; i < n_cheap; i++) {
-      inew = p[i];
-      j = Aj[ Ap[inew] ];
-      const spasm_GFp diagonal_entry = Ax[ Ap[inew] ];
-      assert (diagonal_entry != 0);
-      if (y[j] == 0) {
-        continue;
-      }
-      const spasm_GFp d = (y[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-      spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], prime - d, y, prime);
-    }
-
-    /* copy y into A[k,:] */
-    for(j=0; j<m; j++) {    /* ceci est améliorable (pas besoin de scanner tout le vecteur, juste les cols non-pivot) */
-      if (q[j] >= 0) {
-        F.init(*(S + k*schur_m + q[j]), y[j]);
-      }
-    }
-
-    fprintf(stderr, "\rBuilding S: %d / %d", k, schur_n);
-    fflush(stderr);
-  }
-
-  free(y);
   free(p);
   free(q);
   spasm_csr_free(A);

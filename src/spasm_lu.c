@@ -805,7 +805,7 @@ int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap){
   n = A->n;
   m = A->m;
   assert(m - n_cheap > 0);
-  stop = 2 * (m - n_cheap);
+  stop = m - n_cheap + 10;
   Ap = A->p;
   Aj = A->j;
   Ax = A->x;
