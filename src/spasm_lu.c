@@ -702,10 +702,9 @@ spasm *spasm_cheap_U(const spasm *A, const int *p, int n_cheap, int *qinv){
   m = A->m;
   assert(n > n_cheap);
   assert(m > n_cheap);
-  unz = 2 * (n + m); // educated gess
+  unz = spasm_nnz(A);
 
   U = spasm_csr_alloc(n_cheap, m, unz, A->prime, 1);
-  //verbose_step = spasm_max(1, n / 1000);
 
   Up = U->p;
   Uj = U->j;
