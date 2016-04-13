@@ -987,6 +987,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int stop){
 
   /* free extra workspace*/
   free(qinv);
+  free(q);
   spasm_csr_free(U);
   free(x);
   free(xi);
