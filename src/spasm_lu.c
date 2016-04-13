@@ -688,17 +688,20 @@ int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super
  */
 spasm *spasm_cheap_U(const spasm *A, const int *p, int n_cheap, int *qinv){
   spasm *U;
-  int *Up, *Uj, *Ap, *Aj, m, n, unz, jpiv, px, i, inew, j;
+  int *Up, *Uj, *Ap, *Aj, m, n, unz, jpiv, px, i, inew;
   spasm_GFp *Ux, *Ax;
 
   // check inputs
   assert(A != NULL);
+  Ap = A->p;
+  Aj = A->j;
+  Ax = A->x;
 
   // Get Workspace
   n = A->n;
   m = A->m;
-  assert(n > stop);
-  assert(m > stop);
+  assert(n > n_cheap);
+  assert(m > n_cheap);
   unz = 2 * (n + m); // educated gess
 
   U = spasm_csr_alloc(n_cheap, m, unz, A->prime, 1);
