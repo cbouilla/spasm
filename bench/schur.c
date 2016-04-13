@@ -79,7 +79,7 @@ int main(int argc, char **argv){
   spasm_lu *LU = spasm_LU(A, p, 0);
 
   end_time = spasm_wtime();
-  fprintf(stderr,"done in %.5f s rank = %d\n", end_time - start_time, rank + LU->U->n);
+  fprintf(stderr,"done in %.3f s rank = %d\n", end_time - start_time, rank + LU->U->n);
 
   free(p);
   spasm_free_LU(LU);
