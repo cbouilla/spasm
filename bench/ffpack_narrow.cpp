@@ -93,6 +93,7 @@ int main(int argc, char** argv) {
     spasm_GFp y[m]; // = (spasm_GFp *) spasm_malloc(m * sizeof(spasm_GFp));
     unsigned int seed = rand();
 
+    #pragma omp for
     for(int k=0; k<schur_n; k++) {
 
       /* compute a random linear combination of the non-pivotal rows */
