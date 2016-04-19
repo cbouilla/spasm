@@ -12,6 +12,8 @@ int main(){
   spasm_triplet_free(T);
 
   /* find free pivots. */
+  double start_time = spasm_wtime();
+
   int *p = spasm_cheap_pivots(A, &n_cheap);
   int *filtered = malloc(A->n * sizeof(int));
 
@@ -48,7 +50,10 @@ int main(){
   /* narrow schur trick */
 
   int r = spasm_narrow_schur_trick(A, filtered, n_filtered);
+  double end_time = spasm_wtime();
+
   printf("rank : %d\n", r);
+  fprintf(stderr, "time: %.1fs\n", end_time - start_time);
 
   free(filtered);
   spasm_csr_free(A);
