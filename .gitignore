@@ -23,3 +23,10 @@ test/super_find_pivot
 test/super_sparse_gax
 test/super_spasm_lu
 test/super_triangular_solve
+bench/blocks_rank
+bench/schur_rank
+bench/structural_rank
+test/scripts/random_matrix_A.sage.py
+test/scripts/random_matrix_B.sage.py
+test/scripts/random_matrix_C.sage.py
+test/scripts/random_matrix_D.sage.py

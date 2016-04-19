@@ -43,7 +43,7 @@ spasm * filtered_schur(spasm *A, int *npiv){
   /* schur complement */
   spasm *S = spasm_schur(A, filtered, n_filtered);
 
- fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S)/(1.*S->n * S->m));
+  fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S)/(1.*S->n * S->m));
 
   free(filtered);
   spasm_csr_free(A);
@@ -59,6 +59,7 @@ int main(int argc, char **argv){
   double start_time, end_time;
   spasm_triplet * T = spasm_load_sms(stdin, prime);
   spasm * A = spasm_compress(T);
+  spasm *B;
   spasm_triplet_free(T);
 
   n_times = 3; //default.
