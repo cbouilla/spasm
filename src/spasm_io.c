@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include "spasm.h"
 
 // set prime = -1 to avoid loading values
@@ -108,10 +109,10 @@ int * spasm_load_permutation(FILE *f, int n) {
 }
 
 
-/* Saves a PBM (bitmap) file with one pixel per entry of A */
-void spasm_save_pbm(FILE *f, const spasm *A) {
-  int i, j, n, m, p;
-  int *Aj, *Ap, *x;
+/* Saves a PBM (bitmap) of specified dimensions of A */
+void spasm_save_pbm(FILE *f, int x, int y, const spasm *A) {
+  int i, j, k, n, m, t, p;
+  int *Aj, *Ap, *w;
 
   assert(f != NULL);
   assert(A != NULL);
@@ -120,35 +121,42 @@ void spasm_save_pbm(FILE *f, const spasm *A) {
   Ap = A->p;
   n  = A->n;
   m  = A->m;
-  x = spasm_malloc(m * sizeof(int));
-  for(j = 0; j < m; j++) {
-    x[j] = 0;
+  x = spasm_min(x, m);
+  y = spasm_min(y, n);
+
+  w = spasm_malloc(x * y * sizeof(int));
+  for(j = 0; j < x*y; j++) {
+    w[j] = 0;
   }
 
   fprintf(f, "P1\n");
-  fprintf(f, "%d %d\n", m, n);
-  for(i = 0; i < n; i++) {
-
-    // scatters row i to x
-    for(p = Ap[i]; p < Ap[i + 1]; p++) {
-      x[ Aj[p] ] = 1;
+  fprintf(f, "%d %d\n", x, y);
+  
+  for(k = 0; k < y; k++) { 
+    int *ww = w + k*x;
+    for(i = k*(n/y); i < (k+1)*(n/y); i++) {
+      for(p = Ap[i]; p < Ap[i + 1]; p++) {
+       ww[ (Aj[p] * x) / m ] = 1;
+      }
     }
-
-    // print row i
-    for(j = 0; j < m; j++) {
-      fprintf(f, "%d ", x[j]);
-    }
-
-    // reset x
-    for(p = Ap[i]; p < Ap[i + 1]; p++) {
-      x[ Aj[p] ] = 0;
+  }
+  
+  /* print row */
+  t = 0;
+  for(k = 0; k < y; k++) {
+    for(j = 0; j < x; j++) {
+      fprintf(f, "%d ", w[k*x + j]);
+      t++;
+      if ((t & 40) == 0) {
+        fprintf(f, "\n");
+      }
     }
   }
 
-  free(x);
+  free(w);
 }
 
-/* Saves a PBM (graymap) of specified dimensions of A */
+/* Saves a PGM (graymap) of specified dimensions of A */
 void spasm_save_pgm(FILE *f, int x, int y, const spasm *A) {
   int i, j, k, n, m, t, p;
   int *Aj, *Ap, *w;
@@ -164,42 +172,43 @@ void spasm_save_pgm(FILE *f, int x, int y, const spasm *A) {
   x = spasm_min(x, m);
   y = spasm_min(y, n);
 
-  w = spasm_malloc(x * sizeof(int));
-  for(j = 0; j < x; j++) {
+  w = spasm_malloc(x * y * sizeof(int));
+  for(j = 0; j < x*y; j++) {
     w[j] = 0;
   }
 
   fprintf(f, "P2\n");
   fprintf(f, "%d %d\n", x, y);
   fprintf(f, "255\n");
-
-  max = (1.0 * m / x) * (1.0 * n / y);
-  t = 0;
-  i = 0;
-  while(i < n) {
-    for(k = 0; k < spasm_max(1, n / y) && i < n; k++) {
-
-      // scatters row i to x
+  
+  for(k = 0; k < y; k++) { 
+    int *ww = w + k*x;
+    for(i = k*(n/y); i < (k+1)*(n/y); i++) {
       for(p = Ap[i]; p < Ap[i + 1]; p++) {
-	w[ (Aj[p] * x) / m ]++;
+	     ww[ (Aj[p] * x) / m ]++;
       }
-      i++;
     }
+  }
+  
+  /* scan for max */
+  max = 0;
+  for(j = 0; j < x*y; j++) {
+    if (w[j] > max) {
+      max = w[j];
+    }
+  }
 
-    // print row
+  /* print row */
+  t = 0;
+  for(k = 0; k < y; k++) {
     for(j = 0; j < x; j++) {
-      double intensity = 1.0 - w[j] / max;
+      double intensity = 1.0 - exp(0.1 * log(w[k*x + j] / max));
       assert( 0 <= intensity && intensity <= 1.0 );
       fprintf(f, "%.0f ", 255.0 * intensity);
       t++;
       if ((t & 31) == 0) {
-	fprintf(f, "\n");
+	      fprintf(f, "\n");
       }
-    }
-
-    // reset x
-    for(j = 0; j < x; j++) {
-      w[j] = 0;
     }
   }
 
