@@ -84,6 +84,8 @@ int main (int argc, char **argv)
     /* Output */
     // std::cout << "====== RESULT =====" << std::endl << std::endl;
     std::cout << chrono << std::endl;
+    std::cerr << "Rank:" << rank << std::endl;
+
     // std::cout << "Rank: " << rank << std::endl;
     return 0;
 }
