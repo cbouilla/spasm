@@ -112,6 +112,9 @@ int main(int argc, char **argv) {
   if (PLUQ->L != NULL) {
     L = PLUQ->L;
     printf("L :  %d x %d with %d nnz (density =%.1f %%)\n", L->n, r, spasm_nnz(L), 100.0 * spasm_nnz(L) / (1.0*r*n - r*r/2.0));
+    FILE *f = fopen("L.sms", "w");
+    spasm_save_csr(f, L);
+    fclose(f);
   }
 
 #ifdef SPASM_TIMING

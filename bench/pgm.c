@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
   int x, y;
 
   if (argc < 3) {
-    printf("USAGE: %s 1024 768 < matrix.sms > file.pgm\n", argv[0]);
+    printf("USAGE: %s xdim ydim < matrix.sms > file.pgm\n", argv[0]);
     exit(1);
   }
 
