@@ -165,7 +165,7 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
   fprintf(stderr, "[LU] found %d cheap pivots (stage1)\n", k);
 
   /* --- find less-cheap pivots ----------------------------------- */  
-
+#if 1
   n_cheap = k;
   /* workspace initialization */
   for(j=0; j<m; j++) {
@@ -263,25 +263,39 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
       spasm_swap(Ax, Ap[i], idx_j);
       n_cheap++;
     }
-
-
-
   }
-
+#endif
 
   /* --- build corresponding row permutation ---------------------- */
 
-  /* put cheap pivot rows in increasing column order */
-  k = 0;
+  int *xj = spasm_malloc(m * sizeof(int));
+  int *marks = spasm_malloc(m * sizeof(int));
+  int *pstack = spasm_malloc(n * sizeof(int));
+  
   for(j = 0; j < m; j++) {
-    if (q[j] != -1) {
-      assert (k<n);
-      p[k] = q[j];
-      assert(q[j] >= 0);
-      assert(q[j] < n);
-      k++;
+    marks[j] = 0;
+  }
+
+  /* DFS */
+  int top = m;
+  for(j = 0; j < m; j++) {
+    if (q[j] != -1 && !marks[j]) {
+      top = spasm_dfs(j, A, top, xj, pstack, marks, q); 
     }
   }
+
+  /* reorders the first n_cheap rows of p */
+  k = 0;
+  for(j = top; j<m; j++) {
+    if (q[ xj[j] ] != -1) {
+      p[k++] = q[ xj[j] ];
+    }
+  }
+  assert(k == n_cheap);
+  
+  free(xj);
+  free(pstack);
+  free(marks);
 
   n_cheap = k;
   *cheap_ptr = n_cheap;
