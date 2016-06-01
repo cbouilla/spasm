@@ -2,7 +2,7 @@ AUTOMAKE_OPTIONS = gnu
 AM_CPPFLAGS = -I$(top_builddir)/src
 LDADD = $(top_builddir)/src/libspasm.la
 
-bin_PROGRAMS = rank dm pbm pgm pluq kernel transpose permute blocks stack blocks_rank \
+bin_PROGRAMS = rank dm bitmap pluq kernel transpose permute blocks stack blocks_rank \
                dm_rank schur narrow schur_rank structural_rank vertical_swap demo_cheap
 
 if SPASM_HAVE_METIS

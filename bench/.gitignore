@@ -5,6 +5,7 @@ dm
 pbm
 pgm
 ppm
+bitmap
 pluq
 *.png
 *.ppm
@@ -20,3 +21,4 @@ linbox_rank_wm
 metis
 dm_rank
 schur
+demo_cheap

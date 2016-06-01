@@ -132,12 +132,11 @@ void spasm_save_pbm(FILE *f, int x, int y, const spasm *A) {
   fprintf(f, "P1\n");
   fprintf(f, "%d %d\n", x, y);
   
-  for(k = 0; k < y; k++) { 
+  for(i = 0; i < n; i++) { 
+    k = i*y / n;
     int *ww = w + k*x;
-    for(i = k*(n/y); i < (k+1)*(n/y); i++) {
-      for(p = Ap[i]; p < Ap[i + 1]; p++) {
-       ww[ (Aj[p] * x) / m ] = 1;
-      }
+    for(p = Ap[i]; p < Ap[i + 1]; p++) {
+      ww[ (Aj[p] * x) / m ] = 1;
     }
   }
   
@@ -181,12 +180,11 @@ void spasm_save_pgm(FILE *f, int x, int y, const spasm *A) {
   fprintf(f, "%d %d\n", x, y);
   fprintf(f, "255\n");
   
-  for(k = 0; k < y; k++) { 
+  for(i = 0; i < n; i++) { 
+    k = i * y / n;
     int *ww = w + k*x;
-    for(i = k*(n/y); i < (k+1)*(n/y); i++) {
-      for(p = Ap[i]; p < Ap[i + 1]; p++) {
-	     ww[ (Aj[p] * x) / m ]++;
-      }
+    for(p = Ap[i]; p < Ap[i + 1]; p++) {
+	    ww[ (Aj[p] * x) / m ]++;
     }
   }
   
