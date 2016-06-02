@@ -155,17 +155,100 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
     }
   }
   
+  /* count the Faugère-Lachartre pivots, and store their rows in p */
   k = 0;
   for(j = 0; j < m; j++) {
     if (q[j] != -1) {
-      // printf("selected (%d, %d)\n", q[j], j);
-      k++;
+      p[k++] = q[j];
     }
   }
   fprintf(stderr, "[LU] found %d cheap pivots (stage1)\n", k);
 
-  /* --- find less-cheap pivots ----------------------------------- */  
 #if 1
+  /* --- transitive reduction ------------------------------------- */
+  fprintf(stderr, "starting transitive reduction...\n");
+  spasm * T = spasm_csr_alloc(k, m, A->nzmax, -1, SPASM_IGNORE_VALUES);
+  int *Tp = T->p;
+  int *Tj = T->j;
+  int *qinv_red = spasm_malloc(m * sizeof(int));
+  int tnz = 0, anz = 0;
+
+  /* workspace initialization. 
+     Marking scheme : -1 = unmarked 
+                       0 = marked by original row (=kept in transitive reduction)
+                       1 = marked by other, reachable, rows (=removed in transitive reduction)
+  */
+  for(j=0; j<m; j++) {
+    w[j] = -1;
+    qinv_red[j] = -1;
+  }
+
+  for(i = 0; i < k; i++) { 
+    /* perform reduction of row A[I], store result in T[i]*/
+    I = p[k - 1 - i];
+
+    /* initialize BFS in T with A[I] */
+    Tp[i] = tnz;
+
+    head = 0;
+    tail = 0;
+    for(px = Ap[I]; px < Ap[I + 1]; px++) {
+      j = Aj[px];
+      queue[tail] = j;
+      tail++;
+      w[j] = 0;
+    }
+    anz += spasm_row_weight(A, I);
+
+    /* start BFS */
+    while (head < tail) {
+      j = queue[head];
+      head++;
+
+      int Ired = qinv_red[j];
+      if (Ired == -1) {
+        continue;
+      }
+
+      /* trick: the first entry is the pivot, we know it is already marked, so we skip it */
+      for (pxI = Tp[Ired] + 1; pxI < Tp[Ired + 1]; pxI++) {
+        j = Tj[pxI];
+        if (w[j] < 0) { /* not marked : mark and add to queue */
+          queue[tail] = j;
+          tail++;  
+        }
+        w[j] = 1;
+      }
+    }
+  
+    /* scan w for surviving entries, add them to T */
+    for(px = Ap[I]; px < Ap[I + 1]; px++) {
+      j = Aj[px];
+      if (w[j] == 0) { /* entry has not been "superseded", so we add it to T */
+        Tj[tnz] = j;
+        tnz++;
+      }
+    }
+
+    /* reset w */
+    for(px = 0; px < tail; px++) {
+      j = queue[px];
+      w[j] = -1;
+    }
+
+    qinv_red[ Aj[ Ap[ I ]] ] = i;
+  fprintf(stderr, "\r%d / %d | %d vs %d", i, k, tnz, anz);
+  fflush(stderr);
+  }
+  fprintf(stderr, "\r                                             \r");
+  /* finalize the last row of T */
+  Tp[k] = tnz;
+  n_cheap = k;
+  fprintf(stderr, "done. |A| = %d, |T| = %d\n", anz, tnz);
+#endif
+
+  /* --- find less-cheap pivots ----------------------------------- */  
+#if 0
   n_cheap = k;
   /* workspace initialization */
   for(j=0; j<m; j++) {
@@ -183,7 +266,7 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
     }
     // printf("------------------------ %d\n", i);
 
-    /* scatters non-pivotal columns A[i] into w */
+    /* scatters non-pivotal columns of A[i] into w */
     for(px = Ap[i]; px < Ap[i + 1]; px++) {
       j = Aj[px];
       if (w[j] != 0) {
