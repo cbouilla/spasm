@@ -30,3 +30,5 @@ test/scripts/random_matrix_A.sage.py
 test/scripts/random_matrix_B.sage.py
 test/scripts/random_matrix_C.sage.py
 test/scripts/random_matrix_D.sage.py
+bench/demo_cheap
+bench/vertical_swap

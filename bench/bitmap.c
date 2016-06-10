@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
     double alpha = sqrt((mpix * 1e6) / (n * m));
     w = alpha * m;
     h = alpha * n;
-    fprintf(stderr, "targeting %.1f Mpixels ; w=%d, h=%d\n", mpix, w, h);
+    fprintf(stderr, "[bitmap] targeting %.1f Mpixels ; w=%d, h=%d\n", mpix, w, h);
   }
 
   if (mpix < 0 && w < 0 & h > 0) {

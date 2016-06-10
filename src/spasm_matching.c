@@ -82,6 +82,9 @@ static int spasm_augmenting_path(const spasm *A, int k, int *row_stack, int *col
 
 /* returns the size of the matching.
 
+  imatch[j] indicates the row    matched to column j
+  jmatch[i] indicates the column matched to row    i
+
    If the matrix is rectangular, it is a big advantage to transpose it so that n << m
  */
 int spasm_maximum_matching(const spasm *A, int *jmatch, int *imatch) {

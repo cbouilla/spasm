@@ -164,7 +164,7 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
   }
   fprintf(stderr, "[LU] found %d cheap pivots (stage1)\n", k);
 
-#if 1
+#if 0
   /* --- transitive reduction ------------------------------------- */
   fprintf(stderr, "starting transitive reduction...\n");
   spasm * T = spasm_csr_alloc(k, m, A->nzmax, -1, SPASM_IGNORE_VALUES);
@@ -248,8 +248,10 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
 #endif
 
   /* --- find less-cheap pivots ----------------------------------- */  
-#if 0
+#if 1
   n_cheap = k;
+  int n_cheap1 = k;
+  int processed = 0;
   /* workspace initialization */
   for(j=0; j<m; j++) {
     w[j] = 0;
@@ -261,18 +263,15 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
     }
     
     if (i % (n/100) == 0) {
-      fprintf(stderr, "\rcheap : %d / %d --- rank >= %d", i, n, n_cheap);
+      fprintf(stderr, "\rcheap : %d / %d --- found %d new", processed, n-n_cheap1, n_cheap - n_cheap1);
       fflush(stderr);
     }
+    processed++;
     // printf("------------------------ %d\n", i);
 
     /* scatters non-pivotal columns of A[i] into w */
     for(px = Ap[i]; px < Ap[i + 1]; px++) {
       j = Aj[px];
-      if (w[j] != 0) {
-        printf("w[%d] == %d\n", j, w[j]);
-        exit(1);
-      }
       if (q[j] != -1) { /* column is pivotal: skip */
         continue;
       }
@@ -298,7 +297,7 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
       /* BFS */
       while (head < tail) {
         j = queue[head];
-        assert(w[j] < 0);
+        // assert(w[j] < 0);
         head++;
 
         I = q[j];
@@ -314,7 +313,7 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
           queue[tail] = j;
           tail++;
           w[j] = -1;
-          // printf("marquage en %d\n", j);
+          // ne peut-on éviter d'empiler des trucs qui déclenchent le "continue" ci-dessus ?
         }
       }
     }
@@ -327,7 +326,7 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
         k = j;
         idx_j = px;
       }
-      w[j] = 0;
+      w[j] = 0; // utile ?
     }
      
     /* reset w */
@@ -337,7 +336,7 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
     }
 
     if (k != -1) {
-      assert(q[k] == -1);
+      //assert(q[k] == -1);
       // fprintf(stderr, "Also possible: %d / %d\n", i, k);
       q[k] = i;
     
