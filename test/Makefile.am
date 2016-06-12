@@ -8,18 +8,19 @@ TESTS = test_io.sh GFp vec_perm test_perm.sh test_gaxpy.sh test_reach.sh \
 	test_column_slices.sh
 
 check_PROGRAMS = io GFp gaxpy reach dense_usolve dense_lsolve \
-	         sparse_usolve sparse_lsolve lu permuted_lu  \
-	         pluq permuted_pluq lu_solve pluq_solve sort \
-                 vec_perm mat_perm transpose dm submatrix cc scc \
-		 sparse_utsolve sparse_lsolve_big kernel sparse_vect_matrix_prod \
-		 inverse_and_prod sorted_submatrix row_concatenation sparse_permuted_lsolve \
-		 lu_find_pivot super_sparse_gax super_spasm_lu column_slices super_find_pivot super_triangular_solve
+        sparse_usolve sparse_lsolve lu permuted_lu  \
+        pluq permuted_pluq lu_solve pluq_solve sort \
+        vec_perm mat_perm transpose dm submatrix cc scc \
+		sparse_utsolve sparse_lsolve_big kernel sparse_vect_matrix_prod \
+		inverse_and_prod sorted_submatrix row_concatenation \
+		sparse_permuted_lsolve lu_find_pivot super_sparse_gax \
+		super_spasm_lu column_slices super_find_pivot super_triangular_solve \
+		gbla_in_old gbla_in_new
 
-AM_TESTS_ENVIRONMENT = \
-	env AM_TAP_AWK='$(AWK)'
+
+AM_TESTS_ENVIRONMENT = env AM_TAP_AWK='$(AWK)'
 LOG_DRIVER = $(SHELL) $(top_srcdir)/build-aux/tap-driver.sh
 EXTRA_DIST = $(TESTS) Expected
-
 
 clean-local:
 	rm -rf Output/*
