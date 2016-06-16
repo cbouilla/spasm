@@ -1,4 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src
+AM_LDFLAGS = -lm
 LDADD = $(top_builddir)/src/libspasm.la
 
 TESTS = test_io.sh GFp vec_perm test_perm.sh test_gaxpy.sh test_reach.sh \

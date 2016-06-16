@@ -1,5 +1,6 @@
 AUTOMAKE_OPTIONS = gnu
 AM_CPPFLAGS = -I$(top_builddir)/src
+AM_LDFLAGS = -lm
 LDADD = $(top_builddir)/src/libspasm.la
 
 bin_PROGRAMS = rank dm bitmap pluq kernel transpose permute blocks stack blocks_rank \
