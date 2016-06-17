@@ -14,6 +14,7 @@ extern int64 reach, scatter, data_shuffling;
 jmp_buf Env;
 
 void alarm_handler(int dummy) {
+  dummy++;
   longjmp(Env, 1);
 }
 
@@ -82,6 +83,9 @@ int main(int argc, char **argv) {
   }
   A = spasm_compress(T);
   spasm_triplet_free(T);
+  n = A->n;
+  m = A->m;
+
 
   start_time = spasm_wtime();
 
@@ -89,13 +93,43 @@ int main(int argc, char **argv) {
   case 0:
     p = NULL;
     break;
+
   case 1:
     fprintf(stderr, "[rank] finding cheap pivots : ");
     fflush(stderr);
-    int n_cheap;
+    int n_cheap, i, j, k;
+    int *Ap = A->p;
+    int *Aj = A->j;
     p = spasm_cheap_pivots(A, &n_cheap);
+
+    /* build qinv to reflect the changes in p */
+    int * qinv = spasm_malloc(m * sizeof(int));
+    for(j = 0; j < m; j++) {
+      qinv[j] = -1;
+    }
+  
+    /* pivotal column first, in row-order */
+    k = 0;
+    for(i = 0; i < n_cheap; i++) {
+      j = Aj[ Ap[ p[i] ] ];   /* the pivot is the first entry of each row */
+      qinv[j] = k++;
+    }
+
+    /* put remaining non-pivotal columns afterwards, in any order */
+    for(j = 0; j < m; j++) {
+      if (qinv[j] == -1) {
+        qinv[j] = k++;
+      }
+    }
+  
+    spasm * B = spasm_permute(A, p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+    p = NULL;
+    spasm_csr_free(A);
+    A = B;
+
     fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
     break;
+
   case 2:
     fprintf(stderr, "[rank] sorting rows : ");
     fflush(stderr);
@@ -119,9 +153,7 @@ int main(int argc, char **argv) {
 
   U = LU->U;
   r = U->n;
-  n = A->n;
-  m = A->m;
-
+  
   printf("%.2f\n", end_time - start_time);
   fprintf(stderr, "U :  %d x %d with %d nnz (density = %.1f %%)\n", r, m, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0*r*m - r*r/2.0));
   if (LU->L != NULL) {

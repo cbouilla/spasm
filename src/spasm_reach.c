@@ -25,7 +25,7 @@
  * @param xj : size m. Used both as workspace and to return the result. At the end, the
  * list of traversed nodes is in xj[top:m]
  *
- * @param pstack 	size-n workspace. Used to count the neighbors already traversed.
+ * @param pstack size-n workspace. Used to count the neighbors already traversed.
  *
  * @marks : size-m workspace. Indicates which column nodes have been dealt with.
  *
@@ -160,12 +160,13 @@ int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xj, const i
      * columns reachable from j.
      */
     for (p = Bp[k]; p < Bp[k + 1]; p++) {
-	if (!marks[Bj[p]]) {
+	  if (!marks[Bj[p]]) {
 	    top = spasm_dfs(Bj[p], G, top, xj, pstack, marks, pinv);
-	}
+	  }
     }
 
     /* unmark all marked nodes. */
+    /* TODO : possible optimization : if stuff is marked "k", and initialized with -1, then this is not necessary */
     for (p = top; p < l; p++) {
       marks[ xj[p] ] = 0;
     }
