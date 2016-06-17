@@ -9,10 +9,11 @@
 #include <signal.h>
 #include <unistd.h>
 
-
 #define STOR_T SparseMatrixFormat::SparseSeq
 
 using namespace LinBox;
+
+/** Computes the rank using LinBox's Right-looking sparse elimination */
 
 jmp_buf Env;
 
@@ -54,7 +55,7 @@ int main (int argc, char **argv)
 
     Field F(q);
 
-    MatrixStream<Field> ms(F, std::cin); // read matrix on standard input
+    MatrixStream<Field> ms(F, std::cin); /* read matrix on standard input */
     Blackbox A(ms);
     size_t m, n;
     ms.getDimensions(m, n);
@@ -82,11 +83,8 @@ int main (int argc, char **argv)
 
 
     /* Output */
-    // std::cout << "====== RESULT =====" << std::endl << std::endl;
     std::cout << chrono << std::endl;
     std::cerr << "Rank:" << rank << std::endl;
 
-    // std::cout << "Rank: " << rank << std::endl;
     return 0;
 }
-

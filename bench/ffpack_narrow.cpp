@@ -1,23 +1,3 @@
-/* Copyright (c) FFLAS-FFPACK
-* Written by Jean-Guillaume Dumas <Jean-Guillaume.Dumas@imag.fr>
-* ========LICENCE========
-* This file is part of the library FFLAS-FFPACK.
-*
-* FFLAS-FFPACK is free software: you can redistribute it and/or modify
-* it under the terms of the  GNU Lesser General Public
-* License as published by the Free Software Foundation; either
-* version 2.1 of the License, or (at your option) any later version.
-*
-* This library is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this library; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-* ========LICENCE========
-*/
 #include <fflas-ffpack/fflas-ffpack-config.h>
 #include <givaro/modular-balanced.h>
 #include <fflas-ffpack/fflas/fflas.h>
@@ -25,8 +5,6 @@
 #include <fflas-ffpack/utils/Matio.h>
 #include <fflas-ffpack/utils/args-parser.h>
 #include <fflas-ffpack/ffpack/ffpack.h>
-
-
 #include <iostream>
 
 extern "C" {
@@ -34,6 +12,9 @@ extern "C" {
 }
 
 using namespace FFLAS;
+
+/** Finds cheap pivots, computes random dense linear combination of rows of the Schur complement, 
+    then finish with a dense rank computation */
 
 int main(int argc, char** argv) {
 

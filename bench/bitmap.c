@@ -3,6 +3,8 @@
 #include <math.h>
 #include "spasm.h"
 
+/* generate .pbm or .pgm (=netlib) images */
+
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A;

@@ -46,23 +46,26 @@ spasm * filtered_schur(spasm *A, int *npiv){
   fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S)/(1.*S->n * S->m));
 
   free(filtered);
-  spasm_csr_free(A);
   *npiv = n_filtered;
 
   return S;
 }
 
-int main(int argc, char **argv){
+
+int main(int argc, char **argv) {
   
   /* charge la matrice depuis l'entrée standard */
   int prime = 42013, n_times, i, n_cheap, rank, npiv;
   double start_time, end_time;
-  spasm_triplet * T = spasm_load_sms(stdin, prime);
-  spasm * A = spasm_compress(T);
-  spasm *B;
+  spasm_triplet * T;
+  spasm *A, *B;
+
+  T = spasm_load_sms(stdin, prime);
+  A = spasm_compress(T);
   spasm_triplet_free(T);
 
-  n_times = 3; //default.
+  /* 3 iterations of Schur complement, by default */
+  n_times = 3;
   if(argc > 1){
     n_times = atoi(argv[1]);
   }
@@ -72,17 +75,20 @@ int main(int argc, char **argv){
   rank = 0;
   for(i = 0; i < n_times; i++){
     fprintf(stderr, "%d : A : (%d x %d) nnz %d\n", i, A->n, A->m, A->nzmax);
-    A = filtered_schur(A, &npiv);
+    B = filtered_schur(A, &npiv);
+    spasm_csr_free(A);
+    A = B;
     rank += npiv;
   }
 
+  /* finish the job with GPLU */
   int *p = spasm_cheap_pivots(A, &n_cheap);
   spasm_lu *LU = spasm_LU(A, p, 0);
+  free(p);
 
   end_time = spasm_wtime();
   fprintf(stderr,"done in %.3f s rank = %d\n", end_time - start_time, rank + LU->U->n);
 
-  free(p);
   spasm_free_LU(LU);
   spasm_csr_free(A);
 }

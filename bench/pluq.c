@@ -8,6 +8,8 @@
 extern int64 reach, scatter, data_shuffling;
 #endif
 
+/** computes a PLUQ decomposition. U is always saved in a file named U.sms.
+ *  If the keep-L option is provided, then L is also saved in L.sms */
 
 int main(int argc, char **argv) {
   spasm_triplet *T;
@@ -17,8 +19,8 @@ int main(int argc, char **argv) {
   double start_time, end_time;
 
   prime = 42013;
-  sort_strategy = 1; // cheap pivots by default
-  allow_transpose = 1;
+  sort_strategy = 1; /* cheap pivots by default */
+  allow_transpose = 1; /* transpose if more columns than rows by default */
   keep_L = 0;
 
   /* options descriptor */
@@ -69,10 +71,6 @@ int main(int argc, char **argv) {
   }
   A = spasm_compress(T);
   spasm_triplet_free(T);
-
-  start_time = spasm_wtime();
-  printf("structural rank : %d", spasm_structural_rank(A));
-  printf(" [%.1f s]\n", spasm_wtime() - start_time);
 
   start_time = spasm_wtime();
 

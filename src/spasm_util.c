@@ -53,7 +53,10 @@ void * spasm_realloc(void *ptr, size_t size) {
 spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
   spasm *A;
 
-  //assert(prime <= 46337); /* to avoid arithmetic overflow */
+  if (prime > 46337) {
+    prime = 46337;
+    fprintf(stderr, "WARNING: modulus has been set to 46337.\n");
+  }
 
     A = spasm_malloc(sizeof(spasm)); /* allocate the cs struct */
     A->m = m;                        /* define dimensions and nzmax */
@@ -65,18 +68,6 @@ spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
     A->x = (with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL);
     return A;
 
-}
-
-super_spasm *super_spasm_alloc(int ntot, int n_mat, int m, int nzmax, int prime, int with_values){
-  super_spasm *A;
-
-  assert(n_mat <= ntot);
-
-  A = spasm_malloc(sizeof(super_spasm));
-  A->M = spasm_csr_alloc(n_mat, m, nzmax, prime, with_values);
-  A->n = ntot;
-  A->p = spasm_malloc(n_mat * sizeof(int));
-  return A;
 }
 
 
@@ -140,16 +131,7 @@ void spasm_csr_free(spasm *A) {
   }
   free(A->p);
   free(A->j);
-  free(A->x); // trick : free does nothing on NULL pointer
-  free(A);
-}
-
-void super_spasm_free(super_spasm *A){
-  if (A == NULL) {
-    return;
-  }
-  spasm_csr_free(A->M);
-  free(A->p);
+  free(A->x); /* trick : free does nothing on NULL pointer */
   free(A);
 }
 
@@ -157,7 +139,7 @@ void spasm_triplet_free(spasm_triplet *A) {
   assert(A != NULL);
   free(A->i);
   free(A->j);
-  free(A->x); // trick : free does nothing on NULL pointer
+  free(A->x); /* trick : free does nothing on NULL pointer */
   free(A);
 }
 
@@ -166,7 +148,7 @@ void spasm_csr_resize(spasm *A, int n, int m) {
   assert(A != NULL);
 
   A->m = m;
-  // in case of column shrink, check that no entries are left outside
+  /* in case of a column shrink, check that no entries are left outside */
   A->p = spasm_realloc(A->p, (n+1) * sizeof(int));
 
   if (A->n < n) {
@@ -295,24 +277,4 @@ spasm * spasm_duplicate(const spasm * A) {
   }
 
   return B;
-
-}
-
-super_list *super_list_update(super_list *L, super_spasm *S){
-  super_list *L_new;
-  assert(S != NULL);
-  L_new = spasm_malloc(sizeof(super_list));
-  L_new->S = S;
-  L_new->next = L;
-  return L_new;
-}
-
-void super_list_clear(super_list **L){
-  super_list *tmp;
-  while(*L){
-    tmp = (*L)->next;
-    super_spasm_free((*L)->S);
-    free(*L);
-    (*L) = tmp;
-  }
 }

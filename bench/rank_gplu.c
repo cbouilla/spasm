@@ -28,8 +28,8 @@ int main(int argc, char **argv) {
   double start_time, end_time;
 
   prime = 42013;
-  sort_strategy = 1; // cheap pivots by default
-  allow_transpose = 1;
+  sort_strategy = 1; /* cheap pivots ON by default */
+  allow_transpose = 1; /* transpose ON by default */
   keep_L = 0;
   timer = -1;
 
@@ -168,10 +168,9 @@ int main(int argc, char **argv) {
   fprintf(stderr, "misc    : %12" PRId64 "\n", data_shuffling);
   fprintf(stderr, "----------------------------------------\n");
 #endif
-  // printf("rank of A = %d\n", U->n);
+  
+  printf("rank of A = %d\n", U->n);
   spasm_free_LU(LU);
-
-
   spasm_csr_free(A);
   return 0;
 }

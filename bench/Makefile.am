@@ -3,9 +3,8 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 AM_LDFLAGS = -lm
 LDADD = $(top_builddir)/src/libspasm.la
 
-bin_PROGRAMS = rank dm bitmap pluq kernel transpose permute blocks stack blocks_rank \
-               dm_rank schur narrow schur_rank structural_rank vertical_swap demo_cheap \
-               maximum_matching
+bin_PROGRAMS = rank_gplu dm bitmap pluq kernel transpose stack \
+               schur_complement rank_hybrid vertical_swap maximum_matching
 
 if SPASM_HAVE_METIS
 bin_PROGRAMS += metis

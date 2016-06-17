@@ -51,7 +51,6 @@ spasm *spasm_transpose(const spasm *C, int keep_values) {
     }
   }
 
-  /* success; free w and return R */
   free(w);
   return T;
 }

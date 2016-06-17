@@ -3,13 +3,6 @@
 #include <assert.h>
 #include "spasm.h"
 
-/* bad models :
-332
-175
-205
-457
-*/
-
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *A_t, *K, *A_clean;
@@ -96,7 +89,7 @@ int main(int argc, char **argv) {
     printf("heaviest row NNZ = %d   / density = %.2f %%\n", h, 100.0 * h / n);
     break;
   case 1:
-    /* output the kernel basis matrix */
+    /* output some stats in machine-readable form */
     printf("%d \t %d \t %d\n", K->n,  spasm_nnz(K), h);
     break;
 

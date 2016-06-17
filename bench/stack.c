@@ -3,9 +3,7 @@
 #include <assert.h>
 #include "spasm.h"
 
-/** permute a matrix so that all empty rows are removed. Also generate
-    the permutation that reproduces the original.
- */
+/** permute a matrix so that all empty rows and columns are removed. */
 
 int main() {
   spasm_triplet *A;

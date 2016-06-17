@@ -50,7 +50,6 @@ void spasm_triplet_transpose(spasm_triplet *T) {
 }
 
 
-
 /* C = compressed-row form of a triplet matrix T */
 spasm * spasm_compress(const spasm_triplet *T) {
   int m, n, nz, sum, p, k, *Cp, *Cj, *w, *Ti, *Tj;

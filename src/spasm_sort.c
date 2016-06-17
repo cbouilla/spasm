@@ -1,7 +1,7 @@
 #include <assert.h>
 #include "spasm.h"
 
-#define INSERT_SORT_THRESHOLD 42 // TODO : tune this value
+#define INSERT_SORT_THRESHOLD 42 /* TODO : tune this value */
 
 
 /* sort up to index right, excluded */
@@ -248,7 +248,7 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
 #endif
 
   /* --- find less-cheap pivots ----------------------------------- */  
-#if 1
+#if 0
   n_cheap = k;
   int n_cheap1 = k;
   int processed = 0;

@@ -3,6 +3,8 @@
 #include <assert.h>
 #include "spasm.h"
 
+/** finds a maximum maching between the rows and columns and output the permuted matrix */
+
 int main() {
   spasm_triplet *T;
   spasm *A, *B;

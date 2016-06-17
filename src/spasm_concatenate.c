@@ -35,7 +35,7 @@ spasm * spasm_row_concatenation(spasm *A, spasm *B, int with_values) {
 
   anz = A->nzmax;
   bnz = B->nzmax;
-  nzmax = anz + bnz; // number of entries in C = number of entries in A + number of entries in B
+  nzmax = anz + bnz; /* number of entries in C = number of entries in A + number of entries in B */
 
   /* Allocate result */
 
@@ -57,9 +57,9 @@ spasm * spasm_row_concatenation(spasm *A, spasm *B, int with_values) {
 
   /* compute lower part of C */
   for(i = 0; i < nb; i++) {
-    Cp[i + na] = Ap[na] + Bp[i]; // <--- row pointers
+    Cp[i + na] = Ap[na] + Bp[i]; /* <--- row pointers */
 
-    //compute entries
+    /* compute entries */
     for(px = Bp[i]; px < Bp[i+1]; px++) {
       Cj[px + anz] = Bj[px];
       if(with_values) Cx[px + anz] = Bx[px];

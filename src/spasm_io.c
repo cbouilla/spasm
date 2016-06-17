@@ -62,8 +62,8 @@ spasm * spasm_load_gbla_old(FILE *f, int with_values) {
     err(1, "error reading nnz");
   }
 
-  if (nnz >> 29ull) {
-    errx(2, "more than 2^29 NNZ. You are going to hit limitations of spasm... Sorry\n");
+  if (nnz >> 31ull) {
+    errx(2, "more than 2^31 NNZ. You are going to hit limitations of spasm... Sorry\n");
   }
 
   M = spasm_csr_alloc(n, m, nnz, p, with_values);

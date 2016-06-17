@@ -3,7 +3,6 @@
 
 #ifdef SPASM_TIMING
 #include "cycleclock.h"
-
 uint64_t reach = 0, scatter = 0;
 #endif
 
@@ -265,95 +264,7 @@ int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xi, s
       /* get U[i,i] */
       const spasm_GFp diagonal_entry = Ux[ Up[I] ];
       assert( diagonal_entry != 0 );
-      // axpy-in-place
-      x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-
-      spasm_scatter(Uj, Ux, Up[I] + 1, Up[I + 1], prime - x[i], x, prime);
-    }
-
-#ifdef SPASM_TIMING
-    scatter += spasm_ticks() - start;
-#endif
-
-    return top;
-}
-
-/*************** Triangular solving with sparse RHS
- *
- * solve x * U = y, where U is (permuted) upper triangular.
- *
- * x has size m (number of columns of U, paradoxically).
- *
- * when this function returns, the solution is scattered in x, and its pattern
- * is given in xi[top : m].
- *
- * top is the return value.
- *
- */
-int spasm_sparse_forward_solve_scat(const spasm *U, int *y, int *yi, int ynz, int *xi, spasm_GFp *x, const int *pinv) {
-  int i, I, p, px, top, m, prime, *Up, *Uj;
-  spasm_GFp *Ux;
-
-#ifdef SPASM_TIMING
-    uint64_t start;
-#endif
-
-    assert(U != NULL);
-    assert(y != NULL);
-    assert(yi != NULL);
-    assert(xi != NULL);
-    assert(x != NULL);
-
-    m = U->m;
-    Up = U->p;
-    Uj = U->j;
-    Ux = U->x;
-    prime = U->prime;
-
-#ifdef SPASM_TIMING
-    start = spasm_ticks();
-#endif
-
-    /* xi[top : n] = Reach( U, B[k] ) */
-    top = spasm_scat_reach(U, yi, 0, ynz, m, xi, pinv);
-
-#ifdef SPASM_TIMING
-    reach += spasm_ticks() - start;
-#endif
-
-    /* clear x */
-    for (p = top; p < m; p++) {
-      x[ xi[p] ] = 0;
-    }
-
-    /* scatter y into x */
-    for (p = 0; p < ynz; p++) {
-        x[ yi[p] ] = y[yi[p]];
-    }
-
-    /* iterate over the (precomputed) pattern of x (= the solution) */
-#ifdef SPASM_TIMING
-    start = spasm_ticks();
-#endif
-
-    for (px = top; px < m; px++) {
-      /* x[i] is nonzero */
-      i = xi[px];
-
-      /* i maps to row I of U */
-      I = (pinv != NULL) ? (pinv[i]) : i;
-
-
-      if (I < 0) {
-	/* row I is empty */
-            continue;
-      }
-
-      /* get U[i,i] */
-    
-      const spasm_GFp diagonal_entry = Ux[ Up[I] ];
-      assert( diagonal_entry != 0 );
-      // axpy-in-place
+      /* axpy-in-place */
       x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
 
       spasm_scatter(Uj, Ux, Up[I] + 1, Up[I + 1], prime - x[i], x, prime);
@@ -445,7 +356,7 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
 	/* get L[i,i] */
 	const spasm_GFp diagonal_entry = Lx[ Lp[I + 1] - 1];
 	assert( diagonal_entry != 0 );
-	// axpy-in-place
+	/* axpy-in-place */
 	x[i] = (x[I] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
 	spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1] - 1, prime - x[i], x, prime);
       }
@@ -457,96 +368,9 @@ int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xi, 
 
     }
 
-
-
-
 #ifdef SPASM_TIMING
     scatter += spasm_ticks() - start;
 #endif
 
     return top;
-}
-
-
-/*
- * Solve a system x*L = y with L "almost triangular" 
- * with (implicit) pivots on its diagonal.
- *
- * L : super_spasm "triangular" system.
- * y : right-hand side scattered in a dense vector of size L->n
- * yi : y pattern
- * start : begining of yi
- * x : solution (vector size L->n)
- * xi : x pattern
- *
- * retrun value top : begining of xi
- */
-int super_spasm_sparse_solve(super_spasm *L, int *y, int *yi, int end, int *x, int *xi){
-  int top, *pinv, n_big, *Lperm, i, n_small, p, i_new, *Lj, prime, *Lp;
-  spasm_GFp *Lx;
-
-  /* check inputs */  
-  assert(L != NULL);
-  assert(L->M != NULL);
-  assert(y != NULL);
-  assert(yi != NULL);
-  assert(x != NULL);
-  assert(xi != NULL);
-
-  Lperm = L->p;
-  n_big = L->n;
-  n_small = L->M->n;
-  Lj = L->M->j;
-  Lp = L->M->p;
-  Lx = L->M->x;
-  prime = L->M->prime;
-
-  assert(end > 0); //yi not empty.
-
-  /* get workspace */
-  // pinv[i] : corresponding row in L->M.
-  pinv = spasm_malloc(n_big * sizeof(int)); 
-
-  /* initialize pinv */
-  for(i = 0; i < n_big; i++){
-    pinv[i] = -1;
-  }
-  for(i = 0; i < n_small; i++){
-    pinv[Lperm[i]] = i;
-  }
-
-  /* find x pattern xi */
-  // xi[top : m] = Reach( L, y )
-  top = spasm_scat_reach(L->M, yi, 0, end, n_big, xi, pinv);
-
-  /* initialize x */
-  for (p = top; p < n_big; p++) {
-    // clear x
-    x[ xi[p] ] = 0;
-  }
-
-  /* scatter y into x */
-  for (p = 0; p < end; p++) {
-    x[ yi[p] ] = y[yi[p]];
-  }
-
-   /* iterate over the (precomputed) pattern of x (= the solution) */
-  for(p = top; p < n_big; p++){
-    i = xi[p]; // x[i] non zero.
-    i_new = pinv[i]; // corresponding row in L->M
-    
-    if(i_new == -1){
-      // implicit identity row
-      continue;
-    }
-
-    //update x
-    spasm_scatter(Lj, Lx, Lp[i_new], Lp[i_new+1], prime - x[i], x, prime);
-
-  }
-
-  /* free workspace */
-  free(pinv);
-
-  return top;
 }

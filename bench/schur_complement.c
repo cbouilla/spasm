@@ -2,18 +2,13 @@
 #include <stdio.h>
 #include "spasm.h"
 
-int main(){
-  
-  /* charge la matrice depuis l'entrée standard */
-  int prime = 42013, i, n_cheap, n_filtered, free_nnz, min, max, h;
+/** Finds "cheap pivots" (i.e. Faugère-Lachartre pivots) and computes the Schur complement w.r.t. these pivots */
+
+spasm * filtered_schur(spasm *A, int *npiv){
+  int n_cheap, n_filtered, free_nnz, min, max, h, i;
   float avg;
-  spasm_triplet * T = spasm_load_sms(stdin, prime);
-  spasm * A = spasm_compress(T);
-  spasm_triplet_free(T);
 
-  /* find free pivots. */
-  double start_time = spasm_wtime();
-
+ /* find free pivots. */
   int *p = spasm_cheap_pivots(A, &n_cheap);
   int *filtered = malloc(A->n * sizeof(int));
 
@@ -47,16 +42,30 @@ int main(){
   fprintf(stderr, "[schur] %d free pivots after filtering\n", n_filtered);
   free(p);
 
-  /* narrow schur trick */
+  /* schur complement */
+  spasm *S = spasm_schur(A, filtered, n_filtered);
 
-  int r = spasm_narrow_schur_trick(A, filtered, n_filtered);
-  double end_time = spasm_wtime();
-
-  printf("rank : %d\n", r);
-  fprintf(stderr, "time: %.1fs\n", end_time - start_time);
+ fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S)/(1.*S->n * S->m));
 
   free(filtered);
   spasm_csr_free(A);
+  *npiv = n_filtered;
 
+  return S;
+}
 
+int main(){
+  int n_piv, prime = 42013;
+  spasm_triplet *T; 
+  spasm *A, *S;
+
+  T = spasm_load_sms(stdin, prime);
+  A = spasm_compress(T);
+  spasm_triplet_free(T);
+
+  S = filtered_schur(A, &n_piv);
+  spasm_save_csr(stdout, S);
+  spasm_csr_free(S);
+  spasm_csr_free(A);
+  return 0;
 }

@@ -7,7 +7,6 @@ libspasm_la_SOURCES = spasm_util.c spasm_io.c spasm_triplet.c spasm_GFp.c \
 	spasm_scatter.c spasm_gaxpy.c spasm_permutation.c spasm_reach.c \
 	spasm_triangular.c spasm_lu.c spasm_solutions.c spasm_sort.c \
 	spasm_matching.c spasm_dm.c spasm_cc.c spasm_scc.c spasm_kernel.c \
-	cycleclock.h arm_instruction_set_select.h spasm_inverse.c spasm_csr.c \
-	spasm_concatenate.c spasm_lazy.c
+	cycleclock.h arm_instruction_set_select.h spasm_concatenate.c
 
 include_HEADERS = spasm.h

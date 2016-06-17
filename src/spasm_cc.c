@@ -52,7 +52,7 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
       continue;
     }
 
-    // skip row if it is empty
+    /* skip row if it is empty */
     if (Ap[root] == Ap[root + 1]) {
       continue;
     }
@@ -144,7 +144,7 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
       rcopy[k]++;
 
       j = jmatch[i];
-      cmark[j] = -2; // do not add this column a second time later on
+      cmark[j] = -2; /* do not add this column a second time later on */
       q[ ccopy[k] ] = j;
       ccopy[k]++;
     }

@@ -9,6 +9,8 @@
 
 using namespace LinBox;
 
+/** Computes the rank using LinBox's Wiedemann algorithm */
+
 int main (int argc, char **argv)
 {
     typedef Givaro::Modular<uint32_t> Field;
@@ -20,7 +22,7 @@ int main (int argc, char **argv)
 
     Field F(q);
 
-    MatrixStream<Field> ms(F, std::cin); // read matrix on standard input
+    MatrixStream<Field> ms(F, std::cin); /* read matrix on standard input */
     Blackbox A(ms);
     size_t m, n;
     ms.getDimensions(m, n);
@@ -36,7 +38,6 @@ int main (int argc, char **argv)
     LinBox::rank(rank, A, MB);
 
     chrono.stop();
-
 
     /* Output */
     std::cout << "====== RESULT =====" << std::endl << std::endl;

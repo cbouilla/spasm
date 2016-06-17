@@ -1,10 +1,13 @@
 #include <assert.h>
 #include "spasm.h"
+
 /* Solves x.A = b where A is not necessarily square;
  *
  * b has size m, solution has size n.
  *
  * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
+ *
+ * Uses a PLUQ factorization
  */
 int spasm_PLUQ_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
   spasm_GFp *u, *v, *w, *s;
@@ -102,7 +105,6 @@ int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x) {
     ok = spasm_dense_forward_solve(U, y, z, q);
 
     if (ok == SPASM_SUCCESS) {
-
       /* y.LU = b */
       spasm_dense_back_solve(L, z, w, LU->p);
       spasm_ipvec(row_permutation, w, x, n);

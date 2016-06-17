@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..16
+echo 1..13
 
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/l1.sms
@@ -53,15 +53,3 @@ INPUT_MATRIX=$srcdir/Matrix/singular2.sms
 #########################################
 INPUT_MATRIX=$srcdir/Matrix/singular3.sms
 ./sparse_permuted_lsolve 13 < $INPUT_MATRIX
-
-#########################################
-INPUT_MATRIX=$srcdir/Matrix/BIOMD0000000525.int.mpl.sms
-./super_triangular_solve 14 < $INPUT_MATRIX
-
-#########################################
-INPUT_MATRIX=$srcdir/Matrix/BIOMD0000000424.int.mpl.sms
-./super_triangular_solve 15 < $INPUT_MATRIX
-
-#########################################
-INPUT_MATRIX=$srcdir/Matrix/medium.sms
-./super_triangular_solve 16 < $INPUT_MATRIX

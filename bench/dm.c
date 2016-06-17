@@ -3,6 +3,8 @@
 #include <getopt.h>
 #include "spasm.h"
 
+/** computes a Dulmage-Mendelson decomposition */
+
 /* indent -nfbs -i4 -nip -npsl -di0 -nut dm.c  */
 
 int nontrivial_diag_size = 0;

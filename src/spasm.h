@@ -3,7 +3,6 @@
 #define _SPASM_H
 
 #define SPASM_TIMING
-//#define SPASM_COL_WEIGHT_PIVOT_SELECTION
 
 #include <stdlib.h>
 #include <limits.h>
@@ -15,7 +14,7 @@
 
 typedef int spasm_GFp;
 
-typedef struct {   /* matrix in compressed-row */
+typedef struct {   /* matrix in compressed-sparse row format */
     int nzmax;     /* maximum number of entries */
     int n;         /* number of rows */
     int m;         /* number of columns */
@@ -25,19 +24,7 @@ typedef struct {   /* matrix in compressed-row */
     int prime;
 } spasm;
 
-typedef struct {   /* matrix in compressed-row with no empty rows */
-    spasm *M;
-    int n;         /* number of non-empty rows */
-    int *p;
-} super_spasm;
-
-typedef struct super_list {
-  super_spasm *S; 
-  struct super_list *next;
-} super_list;
-
-
-typedef struct  {   /* matrix in compressed-column or triplet form */
+typedef struct  {   /* matrix in triplet form */
     int nzmax;      /* maximum number of entries */
     int nz;         /* # entries */
     int n;          /* number of rows */
@@ -47,52 +34,6 @@ typedef struct  {   /* matrix in compressed-column or triplet form */
     spasm_GFp *x;   /* numerical values, size nzmax (optional) */
     int prime;
 } spasm_triplet;
-
-typedef struct  {
-  spasm *L;
-  spasm *U;
-  int   *qinv;
-  int   *p;
-} spasm_lu;
-
-typedef struct {
-  int *p;    /* size m, row permutation */
-  int *q;    /* size n, column permutation */
-  int nr;    /* # of row blocks */
-  int nc;    /* # of row blocks */
-  int *rr;   /* row decomposition (i-th block between rr[i] and rr[i+1]) */
-  int *cc;   /* column decomposition */
-} spasm_partition;
-
-typedef struct {
-  spasm_partition *CC;
-  spasm_partition **SCC;
-} spasm_cc;
-
-
-typedef struct {
-  spasm_partition *DM;
-  spasm_cc *H, *S, *V;
-} spasm_dm;
-
-
-typedef struct system {
-  spasm *M; // Matrix
-  spasm *B; // Right-hand side (NULL by deflaut, must be updated at each step)
-  int Bnz; // number of non-zero entries in B (initialized at 0);
-  int *p; // Permution over the matrix rows
-  int rect; // size of the rectangular part of M
-  int left; // difference of index between the current system and the system corresponding to the left part of the solution.
-  int diag; // diagonal number.
-  struct system *next;
-}spasm_system;
-
-typedef struct matrix_list {
-  spasm *M; // Matrix
-  int row; // Index of the row interval
-  struct matrix_list *up; // pointer on the matrix just above.
-}spasm_list;
-
 
 /* example (this is Matrix/t1)
 
@@ -117,8 +58,46 @@ x = { 4.5, 3.1, 3.5, 2.9, 1.7, 0.4, 3.2, 3.0, 0.9, 1.0 }
 
 In particular, the actual number of nnz is p[n].
 
-The numerical values are optional (useful for storing a sparse graph, or the pattern of a matrix).
-*/
+The numerical values are optional (useful for storing a sparse graph, or the pattern of a matrix). */
+
+typedef struct  {   /* a PLUQ factorisation */
+  spasm *L;
+  spasm *U;
+  int   *qinv;      /* the inverse Q is stored */
+  int   *p;
+} spasm_lu;
+
+typedef struct {    /* Partition of the rows / columns */
+  int *p;           /* size m, row permutation */
+  int *q;           /* size n, column permutation */
+  int nr;           /* # of row blocks */
+  int nc;           /* # of row blocks */
+  int *rr;          /* row decomposition (i-th block between rr[i] and rr[i+1]) */
+  int *cc;          /* column decomposition */
+} spasm_partition;
+
+typedef struct {          /* a connected component holding strongly connected components */
+  spasm_partition *CC;
+  spasm_partition **SCC;
+} spasm_cc;
+
+
+typedef struct {           /* a Dulmage-Mendelson decomposition */
+  spasm_partition *DM;
+  spasm_cc *H, *S, *V;
+} spasm_dm;
+
+
+typedef struct system {
+  spasm *M; // Matrix
+  spasm *B; // Right-hand side (NULL by deflaut, must be updated at each step)
+  int Bnz; // number of non-zero entries in B (initialized at 0);
+  int *p; // Permution over the matrix rows
+  int rect; // size of the rectangular part of M
+  int left; // difference of index between the current system and the system corresponding to the left part of the solution.
+  int diag; // diagonal number.
+  struct system *next;
+}spasm_system;
 
 #define SPASM_IDENTITY_PERMUTATION NULL
 #define SPASM_IGNORE NULL
@@ -137,11 +116,9 @@ void * spasm_malloc(size_t size);
 void * spasm_calloc(size_t count, size_t size);
 void * spasm_realloc(void *ptr, size_t size);
 spasm * spasm_csr_alloc(int m, int n, int nzmax, int prime, int with_values);
-super_spasm *super_spasm_alloc(int ntot, int n_mat, int m, int nzmax, int prime, int with_values);
 void spasm_csr_realloc(spasm *A, int nzmax);
 void spasm_csr_free(spasm *A);
-void super_spasm_free(super_spasm *A);
-spasm_triplet *spasm_triplet_alloc(int m, int n, int nzmax, int prime, int with_values);
+spasm_triplet * spasm_triplet_alloc(int m, int n, int nzmax, int prime, int with_values);
 void spasm_triplet_realloc(spasm_triplet *A, int nzmax);
 void spasm_triplet_free(spasm_triplet *A);
 void spasm_csr_resize(spasm *A, int n, int m);
@@ -151,9 +128,6 @@ void spasm_partition_tighten(spasm_partition *P);
 void spasm_vector_zero(spasm_GFp *x, int n);
 void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha);
 spasm * spasm_identity(int n, int prime);
-super_list *super_list_update(super_list *L, super_spasm *S);
-void super_list_clear(super_list **L);
-
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x);
@@ -178,11 +152,7 @@ spasm *spasm_transpose(const spasm *C, int keep_values);
 /* spasm_submatrix.c */
 spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int with_values);
 spasm * sorted_spasm_submatrix(const spasm *A, int r0, int r1, int c0, int c1, int *py, int with_values);
-super_spasm ** super_spasm_column_slices(const spasm *A, const int *Q, const int *T, int N, int with_values);
 spasm * spasm_rows_submatrix(const spasm *A, int i0, int i1, int with_values);
-void spasm_list_of_submatrices_update(spasm *A, int i0, int i1, int l, spasm *B, int *Q, int *Cm, int *Cjstart, spasm_list **C);
-spasm_list * spasm_list_free(spasm_list *C);
-spasm_list * spasm_list_delete_first_matrix(spasm_list *C);
 
 /* spasm_permutation.c */
 void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
@@ -201,31 +171,25 @@ void spasm_scatter(const int *Aj, const spasm_GFp *Ax, int from, int to, spasm_G
 /* spasm_reach.c */
 int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
 int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xi, const int *pinv);
-int spasm_scat_reach(const spasm *G, int *yj, int start, int end, int l, int *xj, const int *pinv);
 
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp *y);
-int super_sparse_gax(const super_spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi);
-void super_sparse_gaxpy_dense(const super_spasm * super_M, const spasm_GFp * x, spasm_GFp * y);
+int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi);
+
 
 /* spasm_triangular.c */
 int spasm_is_upper_triangular(const spasm *A);
 int spasm_is_lower_triangular(const spasm *A);
-
 void spasm_dense_back_solve(const spasm * L, spasm_GFp *b, spasm_GFp * x, const int *p);
 int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp * x, const int *q);
 int spasm_sparse_backward_solve(const spasm * L, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv, int r_bound);
 int spasm_sparse_forward_solve(const spasm * U, const spasm *B, int k, int *xi, spasm_GFp *x, const int *pinv);
-int spasm_sparse_forward_solve_scat(const spasm *U, int *y, int *yi, int ynz, int *xi, spasm_GFp *x, const int *pinv);
-int super_spasm_sparse_solve(super_spasm *L, int *y, int *yi, int start, int *x, int *xi);
 
 /* spasm_lu.c */
 spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L);
 spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L);
 void spasm_free_LU(spasm_lu *X);
-spasm_lu *super_spasm_LU(super_spasm *A, int start, int keep_L);
 int spasm_find_pivot(int *xi, spasm_GFp *x, int top, spasm *U, spasm *L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n);
-int super_spasm_find_pivot(int *xi, spasm_GFp *x, int top, super_spasm *U, super_spasm *L, int *unz_ptr, int *lnz_ptr, int li, int ui, int i, int *qinv);
 spasm *spasm_schur(const spasm *A, const int *p, int stop);
 int spasm_narrow_schur_trick(spasm *A, int *p, int n_cheap);
 
@@ -236,9 +200,6 @@ int spasm_LU_solve(const spasm *A, const spasm_GFp *b, spasm_GFp *x);
 /* spasm_sort.c */
 int * spasm_row_sort (const spasm *A);
 int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr);
-
-/* spasm_csr.c */
-void spasm_row_entries_sort(spasm *M, int with_value);
 
 /* spasm_concatenate.c */
 spasm * spasm_row_concatenation(spasm *A, spasm *B, int with_values);
@@ -262,14 +223,6 @@ spasm_partition * spasm_strongly_connected_components(const spasm *A);
 /* spasm_kernel.c */
 spasm * spasm_kernel(const spasm *A, const int * column_permutation);
 
-/* spasm_inverse.c */
-int spasm_sparse_vector_matrix_prod(const spasm *M, const spasm_GFp *x, const int *xi, int xnz, spasm_GFp *y, int *yi);
-int spasm_inverse_and_product(const spasm *L, const spasm *M, int k, spasm_GFp *y, int *yi, const int *pinv);
-int spasm_solve_and_product(const spasm *L, const spasm *M, const spasm *A, int k, spasm_GFp *y, int *yi, const int *pinv);
-
-/* spasm_lazy.c */
-int super_spasm_lazy(super_spasm *A, super_list *L, int i, spasm_GFp *u, int *ui);
-
 /* utilities */
 static inline int spasm_max(int a, int b) {
   return (a > b) ? a : b;
@@ -291,11 +244,7 @@ static inline int spasm_row_weight(const spasm *A, int i) {
   return Ap[i + 1] - Ap[i];
 }
 
-
 #ifdef SPASM_TIMING
 #include "cycleclock.h"
 #endif
-
-
 #endif
-

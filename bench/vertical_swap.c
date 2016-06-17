@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <getopt.h>
 #include <assert.h>
 #include "spasm.h"
+
 int main() {
   spasm_triplet *A;
   int m, nz, k;
