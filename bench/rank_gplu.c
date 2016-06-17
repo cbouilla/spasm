@@ -123,7 +123,10 @@ int main(int argc, char **argv) {
     }
   
     spasm * B = spasm_permute(A, p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+    free(p);
+    free(qinv);
     p = NULL;
+
     spasm_csr_free(A);
     A = B;
 
@@ -170,6 +173,8 @@ int main(int argc, char **argv) {
 #endif
   
   printf("rank of A = %d\n", U->n);
+  
+  free(p);
   spasm_free_LU(LU);
   spasm_csr_free(A);
   return 0;

@@ -123,8 +123,10 @@ int * spasm_cheap_pivots(const spasm *A, int *cheap_ptr) {
 
   q = spasm_malloc(m * sizeof(int));
   p = spasm_malloc(n * sizeof(int));
+#if 0
   w = spasm_malloc(m * sizeof(int));
   queue = spasm_malloc(m * sizeof(int));
+#endif
 
   /* --- Cheap pivot selection ----------------------------------- */
   for(j = 0; j < m; j++) {

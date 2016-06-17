@@ -4,6 +4,7 @@
 
 /** Finds "cheap pivots" (i.e. Faugère-Lachartre pivots) and computes the Schur complement w.r.t. these pivots */
 
+/* NOT DRY (the same function is in rank_hybrid) */
 spasm * filtered_schur(spasm *A, int *npiv){
   int n_cheap, n_filtered, free_nnz, min, max, h, i;
   float avg;
@@ -45,10 +46,9 @@ spasm * filtered_schur(spasm *A, int *npiv){
   /* schur complement */
   spasm *S = spasm_schur(A, filtered, n_filtered);
 
- fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S)/(1.*S->n * S->m));
+  fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S)/(1.*S->n * S->m));
 
   free(filtered);
-  spasm_csr_free(A);
   *npiv = n_filtered;
 
   return S;

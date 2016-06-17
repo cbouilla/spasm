@@ -99,7 +99,9 @@ int main(int argc, char **argv) {
     break;
   }
 
+  free(column_permutation);
   spasm_csr_free(A);
+  spasm_csr_free(A_t);
   spasm_csr_free(K);
   return 0;
 }

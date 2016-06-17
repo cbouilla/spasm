@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
   fclose(f);
   spasm_free_LU(PLUQ);
 
-
+  free(p);
   spasm_csr_free(A);
   return 0;
 }

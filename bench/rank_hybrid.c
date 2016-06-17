@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include "spasm.h"
 
+/** Computes the rank of the input matrix using the hybrid strategy */
+
+/* NOT DRY (the same function is in rank_hybrid) */
 spasm * filtered_schur(spasm *A, int *npiv){
   int n_cheap, n_filtered, free_nnz, min, max, h, i;
   float avg;
