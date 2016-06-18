@@ -345,6 +345,7 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
       n_cheap++;
     }
   }
+  fprintf(stderr, "[LU] found %d cheap pivots (stage2)\n", n_cheap);
 #endif
 
   /* --- build corresponding row permutation ---------------------- */
@@ -402,7 +403,6 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
   }
 
   free(q);
-  fprintf(stderr, "[LU] found %d cheap pivots (stage2)\n", n_cheap);
 
   return p;
 }
