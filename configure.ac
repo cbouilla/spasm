@@ -31,7 +31,7 @@ AC_HEADER_STDBOOL
 # Checks for typedefs, structures, and compiler characteristics.
 AC_FUNC_MALLOC
 
-DEFAULT_CHECKING_PATH="/usr /usr/local "
+DEFAULT_CHECKING_PATH="/usr /usr/local /opt/local"
 SPASM_CHECK_METIS
 SPASM_CHECK_GIVARO
 SPASM_CHECK_FFLAS_FFPACK

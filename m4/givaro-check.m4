@@ -37,12 +37,12 @@ givaro_found="no"
 
 for GIVARO_HOME in ${GIVARO_HOME_PATH}
   do
-    if test -r "$GIVARO_HOME/bin/fflas-ffpack-config"; then
+    if test -r "$GIVARO_HOME/bin/givaro-config"; then
            givaro_found="yes"
            GIVARO_CXXFLAGS=`$GIVARO_HOME/bin/givaro-config --cflags`
            GIVARO_LIBS=`$GIVARO_HOME/bin/givaro-config --libs`
 	   break
-    elif test -r "$GIVARO_HOME/fflas-ffpack-config"; then
+    elif test -r "$GIVARO_HOME/givaro-config"; then
            givaro_found="yes"
            GIVARO_CXXFLAGS=`$GIVARO_HOME/givaro-config --cflags`
            GIVARO_LIBS=`$GIVARO_HOME/givaro-config --libs`
