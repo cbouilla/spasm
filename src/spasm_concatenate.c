@@ -1,22 +1,27 @@
+/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_concatenate.c */
 #include <assert.h>
 #include "spasm.h"
 
 /*
- * Given two matrix A size na x m and B size nb x m,
- * return a matrix C size (na + nb) x m such as 
- * C[0 : na, 0 : m] = A and C[na : nb, 0 : m] = B.
+ * Given two matrix A size na x m and B size nb x m, return a matrix C size
+ * (na + nb) x m such as C[0 : na, 0 : m] = A and C[na : nb, 0 : m] = B.
  */
-spasm * spasm_row_concatenation(spasm *A, spasm *B, int with_values) {
+spasm *spasm_row_concatenation(const spasm * A, const spasm * B, int with_values) {
   spasm *C;
   int px, i, na, nb, m, n, anz, bnz, nzmax, prime;
   int *Ap, *Bp, *Cp, *Aj, *Bj, *Cj;
   spasm_GFp *Ax, *Bx, *Cx;
 
   /* Check inputs */
-  if(A == NULL && B == NULL) return NULL;
-  if(A == NULL && B != NULL) return B;
-  if(A != NULL && B == NULL) return A;
-
+  if (A == NULL && B == NULL) {
+    return NULL;
+  }
+  if (A == NULL && B != NULL) {
+    return B;
+  }
+  if (A != NULL && B == NULL) {
+    return A;
+  }
   assert(A->m == B->m);
   assert(A->prime == B->prime);
 
@@ -35,7 +40,8 @@ spasm * spasm_row_concatenation(spasm *A, spasm *B, int with_values) {
 
   anz = A->nzmax;
   bnz = B->nzmax;
-  nzmax = anz + bnz; /* number of entries in C = number of entries in A + number of entries in B */
+  nzmax = anz + bnz;            /* number of entries in C = number of entries
+                                 * in A + number of entries in B */
 
   /* Allocate result */
 
@@ -45,24 +51,29 @@ spasm * spasm_row_concatenation(spasm *A, spasm *B, int with_values) {
   Cx = C->x;
 
   /* compute upper part of C */
-  for(i = 0; i < na; i++) {
-    Cp[i] = Ap[i]; //<--- row pointers
+  for (i = 0; i < na; i++) {
+    Cp[i] = Ap[i];
+    //<---row pointers
 
-    // compute entries.
-    for(px = Ap[i]; px < Ap[i+1]; px++) {
+      // compute entries.
+      for (px = Ap[i]; px < Ap[i + 1]; px++) {
       Cj[px] = Aj[px];
-      if(with_values) Cx[px] = Ax[px];
+      if (with_values) {
+        Cx[px] = Ax[px];
+      }
     }
   }
 
   /* compute lower part of C */
-  for(i = 0; i < nb; i++) {
-    Cp[i + na] = Ap[na] + Bp[i]; /* <--- row pointers */
+  for (i = 0; i < nb; i++) {
+    Cp[i + na] = Ap[na] + Bp[i];/* <--- row pointers */
 
     /* compute entries */
-    for(px = Bp[i]; px < Bp[i+1]; px++) {
+    for (px = Bp[i]; px < Bp[i + 1]; px++) {
       Cj[px + anz] = Bj[px];
-      if(with_values) Cx[px + anz] = Bx[px];
+      if (with_values) {
+        Cx[px + anz] = Bx[px];
+      }
     }
   }
   Cp[n] = Ap[na] + Bp[nb];

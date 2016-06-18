@@ -1,10 +1,11 @@
+/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_submatrix.c */
 #include <assert.h>
 #include "spasm.h"
 
 /**
  * returns A[r_0:r_1, c_0:c_1]
  */
-spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int with_values) {
+spasm *spasm_submatrix(const spasm * A, int r_0, int r_1, int c_0, int c_1, int with_values) {
   spasm *B;
   int Bn, Bm, Bnz, i, j, px, k;
   int *Ap, *Aj, *Ax, *Bp, *Bj, *Bx;
@@ -23,16 +24,16 @@ spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int 
   Bx = B->x;
 
   k = 0;
-  for(i = r_0; i < r_1; i++) {
+  for (i = r_0; i < r_1; i++) {
     Bp[i - r_0] = k;
-    for(px = Ap[i]; px < Ap[i + 1]; px++) {
+    for (px = Ap[i]; px < Ap[i + 1]; px++) {
       j = Aj[px];
       if (c_0 <= j && j < c_1) {
-	Bj[k] = j - c_0;
-	if (Bx != NULL) {
-	  Bx[k] = Ax[px];
-	}
-	k++;
+        Bj[k] = j - c_0;
+        if (Bx != NULL) {
+          Bx[k] = Ax[px];
+        }
+        k++;
       }
     }
   }
@@ -46,10 +47,11 @@ spasm * spasm_submatrix(const spasm *A, int r_0, int r_1, int c_0, int c_1, int 
 }
 
 /*
- * Given a matrix A, two intergers i0, i1. return the submatrix A[i0 : i1 , ].
+ * Given a matrix A, two intergers i0, i1. return the submatrix A[i0 : i1 ,
+ * ].
  */
-spasm * spasm_rows_submatrix(const spasm *A, int i0, int i1, int with_values){
-spasm *B;
+spasm *spasm_rows_submatrix(const spasm * A, int i0, int i1, int with_values) {
+  spasm *B;
   int Bn, Bm, Bnz, i, j, px, k;
   int *Ap, *Aj, *Ax, *Bp, *Bj, *Bx;
 
@@ -67,16 +69,16 @@ spasm *B;
   Bx = B->x;
 
   k = 0;
-  for(i = i0; i < i1; i++) {
+  for (i = i0; i < i1; i++) {
     Bp[i - i0] = k;
-    for(px = Ap[i]; px < Ap[i + 1]; px++) {
+    for (px = Ap[i]; px < Ap[i + 1]; px++) {
       j = Aj[px];
       if (0 <= j && j < Bm) {
-	Bj[k] = j;
-	if (Bx != NULL) {
-	  Bx[k] = Ax[px];
-	}
-	k++;
+        Bj[k] = j;
+        if (Bx != NULL) {
+          Bx[k] = Ax[px];
+        }
+        k++;
       }
     }
   }

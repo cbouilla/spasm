@@ -1,22 +1,24 @@
 #include <assert.h>
 #include "spasm.h"
 
-/* returns the number of non-trivial (size > 0) connected component of A, seen as an
-   undirected bipartite graph.
-
-   if jmatch == NULL, columns are sorted in natural order.
-
-   if jmatch != NULL, unmatched rows come first. Matched columns come
-   first (in the order given by the matching), unmatched columns come
-   next (in natural order).
-
-   Empty rows / columns are last (in natural order)
-
-   If the transpose of A is not given, it will be computed.
-*/
-spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA_t, const int *jmatch) {
+/*
+ * returns the non-trivial (size > 0) connected component of A, seen as an
+ * undirected bipartite graph.
+ * 
+ * if jmatch == NULL, columns are sorted in natural order.
+ * 
+ * if jmatch != NULL, unmatched rows come first. Matched columns come first (in
+ * the order given by the matching), unmatched columns come next (in natural
+ * order).
+ * 
+ * Empty rows / columns are last (in natural order)
+ * 
+ * If the transpose of A is not given (=NULL), it will be computed.
+ */
+spasm_partition *spasm_connected_components(const spasm * A, const spasm * givenA_t, const int *jmatch) {
   int n, m, i, j, k, root, n_cc, rhead, rtail, chead, ctail, px;
-  int *Ap, *Aj, *A_tp, *A_tj, *rmark, *cmark, *p, *q, *rr, *cc, *rcopy, *ccopy;
+  int *Ap, *Aj, *A_tp, *A_tj, *rmark, *cmark, *p, *q, *rr, *cc, *rcopy,
+     *ccopy;
   spasm *A_t;
   spasm_partition *P;
 
@@ -46,17 +48,15 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
   ctail = 0;
   n_cc = 0;
 
-  for(root = 0; root < n; root++) {
+  for (root = 0; root < n; root++) {
 
     if (rmark[root] != -1) {
       continue;
     }
-
     /* skip row if it is empty */
     if (Ap[root] == Ap[root + 1]) {
       continue;
     }
-
     /* previous block stops here */
     rr[n_cc] = rhead;
     cc[n_cc] = chead;
@@ -72,111 +72,118 @@ spasm_partition * spasm_connected_components(const spasm *A, const spasm *givenA
       rhead++;
 
       for (px = Ap[i]; px < Ap[i + 1]; px++) {
-	j = Aj[px];
-	if (cmark[j] != -1) {
-	  continue;
-	}
-
-	cmark[j] = n_cc;
-	q[ctail] = j;
-	ctail++;
+        j = Aj[px];
+        if (cmark[j] != -1) {
+          continue;
+        }
+        cmark[j] = n_cc;
+        q[ctail] = j;
+        ctail++;
       }
 
       /* while col queue is not empty */
       while (chead < ctail) {
-	j = q[chead];
-	chead++;
+        j = q[chead];
+        chead++;
 
-	for (px = A_tp[j]; px < A_tp[j + 1]; px++) {
-	  i = A_tj[px];
-	  if (rmark[i] != -1) {
-	    continue;
-	  }
-
-	  rmark[i] = n_cc;
-	  p[rtail] = i;
-	  rtail++;
-	}
+        for (px = A_tp[j]; px < A_tp[j + 1]; px++) {
+          i = A_tj[px];
+          if (rmark[i] != -1) {
+            continue;
+          }
+          rmark[i] = n_cc;
+          p[rtail] = i;
+          rtail++;
+        }
       }
     }
 
     n_cc++;
   }
 
-  rr[n_cc] = rhead; // not necessarily n
-  cc[n_cc] = chead; // not necessarily m (cf. below)
-
+  rr[n_cc] = rhead;
+  //not necessarily n
+    cc[n_cc] = chead;
+  //not necessarily m(cf.below)
   /* WARNING : DO **NOT** CREATE EMPTY CC */
 
-  P->nr = n_cc;
+    P->nr = n_cc;
   P->nc = n_cc;
 
-  /* rows and column are in a somewhat random order in p and q.  put
-     them in the natural order inside each block. */
+  /*
+   * rows and column are in a somewhat random order in p and q.  put them in
+   * the natural order inside each block.
+   */
 
   rcopy = spasm_malloc((n_cc + 1) * sizeof(int));
   ccopy = spasm_malloc((n_cc + 1) * sizeof(int));
 
-  /* rcopy[k] (resp. ccopy[k]) indicates the next row (resp. column) of block k should land in p (resp. q) */
-  for(i = 0; i <= n_cc; i++) {
+  /*
+   * rcopy[k] (resp. ccopy[k]) indicates the next row (resp. column) of block
+   * k should land in p (resp. q)
+   */
+  for (i = 0; i <= n_cc; i++) {
     rcopy[i] = rr[i];
     ccopy[i] = cc[i];
   }
 
-  /* first pass, only unmatched (non-empty) rows (if jmatch != NULL, of course) */
-  for(i = 0; i < n; i++) {
+  /*
+   * first pass, only unmatched (non-empty) rows (if jmatch != NULL, of
+   * course)
+   */
+  for (i = 0; i < n; i++) {
     k = rmark[i];
     if (k == -1 || (jmatch != NULL && jmatch[i] != -1)) {
       continue;
     }
-    p[ rcopy[k] ] = i;
+    p[rcopy[k]] = i;
     rcopy[k]++;
   }
 
   /* second pass, only matched rows */
   if (jmatch != NULL) {
-    for(i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
       if (jmatch[i] == -1) {
-	continue;
+        continue;
       }
       k = rmark[i];
-      p[ rcopy[k] ] = i;
+      p[rcopy[k]] = i;
       rcopy[k]++;
 
       j = jmatch[i];
-      cmark[j] = -2; /* do not add this column a second time later on */
-      q[ ccopy[k] ] = j;
+      cmark[j] = -2;            /* do not add this column a second time later
+                                 * on */
+      q[ccopy[k]] = j;
       ccopy[k]++;
     }
   }
-
   /* add empty rows in natural order */
-  for(i = 0; i < n; i++) {
+  for (i = 0; i < n; i++) {
     k = rmark[i];
     if (k != -1) {
       continue;
     }
-    p[ rcopy[n_cc] ] = i;
+    p[rcopy[n_cc]] = i;
     rcopy[n_cc]++;
   }
 
   /* add remaining non-empty column in natural order */
-  for(j = 0; j < m; j++) {
+  for (j = 0; j < m; j++) {
     k = cmark[j];
     if (k < 0) {
       continue;
     }
-    q[ ccopy[k] ] = j;
+    q[ccopy[k]] = j;
     ccopy[k]++;
   }
 
   /* add remaining empty column in natural order */
-  for(j = 0; j < m; j++) {
+  for (j = 0; j < m; j++) {
     k = cmark[j];
     if (k != -1) {
       continue;
     }
-    q[ ccopy[n_cc] ] = j;
+    q[ccopy[n_cc]] = j;
     ccopy[n_cc]++;
   }
 

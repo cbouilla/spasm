@@ -37,11 +37,15 @@ int main(int argc, char** argv) {
     for(k=0; k<nz; k++) {
     	F.init(*(A + Ti[k]*n + Tj[k]), Tx[k]);
     }
+    spasm_triplet_free(T);
 
+    double start_time = spasm_wtime();
     rank = FFPACK::Rank(F, n, m, A, n);
-	std::cout << rank << std::endl;
+	double end_time = spasm_wtime();
+
+    std::cerr << "Time for FFLAS/FFPACK dense rank: " << end_time - start_time << "s" << std::endl;
+	std::cout << "Rank = " << rank << std::endl;
 
 	fflas_delete(A);
     return 0;
 }
-

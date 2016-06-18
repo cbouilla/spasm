@@ -1,7 +1,8 @@
+/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_transpose.c  */
 #include <assert.h>
 #include "spasm.h"
 
-spasm *spasm_transpose(const spasm *C, int keep_values) {
+spasm *spasm_transpose(const spasm * C, int keep_values) {
   int i, j, m, n, sum, px, py, *Cp, *Cj, *w, *Tp, *Tj;
   spasm_GFp *Cx, *Tx;
   spasm *T;
@@ -23,7 +24,7 @@ spasm *spasm_transpose(const spasm *C, int keep_values) {
 
   /* compute column counts */
   for (i = 0; i < n; i++) {
-    for(px = Cp[i]; px < Cp[i + 1]; px++) {
+    for (px = Cp[i]; px < Cp[i + 1]; px++) {
       j = Cj[px];
       w[j]++;
     }
@@ -31,7 +32,7 @@ spasm *spasm_transpose(const spasm *C, int keep_values) {
 
   /* compute column pointers (in both Cp and w) */
   sum = 0;
-  for(j = 0; j < m; j++) {
+  for (j = 0; j < m; j++) {
     Tp[j] = sum;
     sum += w[j];
     w[j] = Tp[j];
@@ -40,12 +41,12 @@ spasm *spasm_transpose(const spasm *C, int keep_values) {
 
   /* dispatch entries */
   for (i = 0; i < n; i++) {
-    for(px = Cp[i]; px < Cp[i + 1]; px++) {
+    for (px = Cp[i]; px < Cp[i + 1]; px++) {
       j = Cj[px];
       py = w[j];
       Tj[py] = i;
       if (Tx != NULL) {
-	Tx[py] = Cx[px];
+        Tx[py] = Cx[px];
       }
       w[j]++;
     }

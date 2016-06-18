@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 
   /* remove zero rows */
   int n_cheap;
-  row_permutation = spasm_cheap_pivots(A, & n_cheap);
+  row_permutation = spasm_cheap_pivots(A, & n_cheap); /* this stacks zero row at the bottom */
   A_clean = spasm_permute(A, row_permutation, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
   spasm_csr_free(A);
 

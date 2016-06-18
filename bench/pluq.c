@@ -1,3 +1,4 @@
+/* indent -nfbs -i2 -nip -npsl -di0 -nut pluq.c */
 #include <stdio.h>
 #include <assert.h>
 #include <getopt.h>
@@ -19,18 +20,19 @@ int main(int argc, char **argv) {
   double start_time, end_time;
 
   prime = 42013;
-  sort_strategy = 1; /* cheap pivots by default */
-  allow_transpose = 1; /* transpose if more columns than rows by default */
+  sort_strategy = 1;            /* cheap pivots by default */
+  allow_transpose = 1;          /* transpose if more columns than rows by
+                                 * default */
   keep_L = 0;
 
   /* options descriptor */
   struct option longopts[6] = {
-    { "sort-rows",    no_argument,       NULL,          's' },
-    { "keep-rows", no_argument,       NULL,             'k' },
-    { "no-transpose", no_argument,       NULL,          'a' },
-    { "modulus",      required_argument, NULL,          'p' },
-    { "keep-L" ,      no_argument,       NULL,          'l' },
-    { NULL,           0,                 NULL,           0  }
+    {"sort-rows", no_argument, NULL, 's'},
+    {"keep-rows", no_argument, NULL, 'k'},
+    {"no-transpose", no_argument, NULL, 'a'},
+    {"modulus", required_argument, NULL, 'p'},
+    {"keep-L", no_argument, NULL, 'l'},
+    {NULL, 0, NULL, 0}
   };
 
   while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
@@ -76,7 +78,7 @@ int main(int argc, char **argv) {
 
   p = NULL;
 
-  switch(sort_strategy) {
+  switch (sort_strategy) {
   case 0:
     break;
   case 1:
@@ -106,15 +108,14 @@ int main(int argc, char **argv) {
   m = A->m;
 
   printf("LU factorisation (+ sort took) %.2f s\n", end_time - start_time);
-  printf("U :  %d x %d with %d nnz (density = %.1f %%)\n", r, m, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0*r*m - r*r/2.0));
+  printf("U :  %d x %d with %d nnz (density = %.1f %%)\n", r, m, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0 * r * m - r * r / 2.0));
   if (PLUQ->L != NULL) {
     L = PLUQ->L;
-    printf("L :  %d x %d with %d nnz (density =%.1f %%)\n", L->n, r, spasm_nnz(L), 100.0 * spasm_nnz(L) / (1.0*r*n - r*r/2.0));
+    printf("L :  %d x %d with %d nnz (density =%.1f %%)\n", L->n, r, spasm_nnz(L), 100.0 * spasm_nnz(L) / (1.0 * r * n - r * r / 2.0));
     FILE *f = fopen("L.sms", "w");
     spasm_save_csr(f, L);
     fclose(f);
   }
-
 #ifdef SPASM_TIMING
   printf("----------------------------------------\n");
   printf("reach   : %12" PRId64 "\n", reach);

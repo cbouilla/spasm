@@ -1,3 +1,4 @@
+/* indent -nfbs -i2 -nip -npsl -di0 -nut rank_hybrid.c */
 #include <assert.h>
 #include <stdio.h>
 #include "spasm.h"
@@ -5,11 +6,11 @@
 /** Computes the rank of the input matrix using the hybrid strategy */
 
 /* NOT DRY (the same function is in rank_hybrid) */
-spasm * filtered_schur(spasm *A, int *npiv){
+spasm *filtered_schur(spasm * A, int *npiv) {
   int n_cheap, n_filtered, free_nnz, min, max, h, i;
   float avg;
 
- /* find free pivots. */
+  /* find free pivots. */
   int *p = spasm_cheap_pivots(A, &n_cheap);
   int *filtered = malloc(A->n * sizeof(int));
 
@@ -17,8 +18,8 @@ spasm * filtered_schur(spasm *A, int *npiv){
   free_nnz = 0;
   min = A->m;
   max = 0;
-  for(i=0; i<n_cheap; i++) {
-    h =  spasm_row_weight(A, p[i]);
+  for (i = 0; i < n_cheap; i++) {
+    h = spasm_row_weight(A, p[i]);
     free_nnz += h;
     min = spasm_min(min, h);
     max = spasm_max(max, h);
@@ -28,25 +29,25 @@ spasm * filtered_schur(spasm *A, int *npiv){
 
   /* filter rows that are too dense */
   n_filtered = 0;
-  h = n_cheap-1;
-  for(i=0; i<n_cheap; i++) {
-    if (spasm_row_weight(A, p[i]) <= 3*avg) {
+  h = n_cheap - 1;
+  for (i = 0; i < n_cheap; i++) {
+    if (spasm_row_weight(A, p[i]) <= 3 * avg) {
       filtered[n_filtered++] = p[i];
     } else {
       filtered[h--] = p[i];
     }
   }
-  for(i=n_cheap; i<A->n; i++) {
+  for (i = n_cheap; i < A->n; i++) {
     filtered[i] = p[i];
   }
-  
+
   fprintf(stderr, "[schur] %d free pivots after filtering\n", n_filtered);
   free(p);
 
   /* schur complement */
   spasm *S = spasm_schur(A, filtered, n_filtered);
 
-  fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S)/(1.*S->n * S->m));
+  fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S) / (1. * S->n * S->m));
 
   free(filtered);
   *npiv = n_filtered;
@@ -56,11 +57,11 @@ spasm * filtered_schur(spasm *A, int *npiv){
 
 
 int main(int argc, char **argv) {
-  
+
   /* charge la matrice depuis l'entrée standard */
   int prime = 42013, n_times, i, n_cheap, rank, npiv;
   double start_time, end_time;
-  spasm_triplet * T;
+  spasm_triplet *T;
   spasm *A, *B;
 
   T = spasm_load_sms(stdin, prime);
@@ -69,14 +70,13 @@ int main(int argc, char **argv) {
 
   /* 3 iterations of Schur complement, by default */
   n_times = 3;
-  if(argc > 1){
+  if (argc > 1) {
     n_times = atoi(argv[1]);
   }
-
   start_time = spasm_wtime();
 
   rank = 0;
-  for(i = 0; i < n_times; i++){
+  for (i = 0; i < n_times; i++) {
     fprintf(stderr, "%d : A : (%d x %d) nnz %d\n", i, A->n, A->m, A->nzmax);
     B = filtered_schur(A, &npiv);
     spasm_csr_free(A);
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
   free(p);
 
   end_time = spasm_wtime();
-  fprintf(stderr,"done in %.3f s rank = %d\n", end_time - start_time, rank + LU->U->n);
+  fprintf(stderr, "done in %.3f s rank = %d\n", end_time - start_time, rank + LU->U->n);
 
   spasm_free_LU(LU);
   spasm_csr_free(A);
