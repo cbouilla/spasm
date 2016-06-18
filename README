@@ -1,6 +1,0 @@
-SPASM (SPArse direct Solver Modulo p) is a rewrite of Tim Davis's CSparse.
-
-Only a subset of the routines is kept. The floating-point arithmetic
-operations are replaced with a (naive) implementation of Z/pZ.
-
-The goal is to implement the sparse LU decomposition.
