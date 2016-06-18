@@ -32,9 +32,9 @@ If you do not have the `configure` script, try:
 ```autoreconf -i```
 
 SpaSM does not rely on any third-party software, but is capable of using:
-  * (METIS)[http://glaros.dtc.umn.edu/gkhome/metis/metis/overview] to find row separators.
-  * (FFLAS-FFPACK)[https://github.com/linbox-team/fflas-ffpack] for dense rank computation.
-  * (LinBox)[https://github.com/linbox-team/linbox] for other rank algorithms.
+  * [METIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview) to find row separators.
+  * [FFLAS-FFPACK](https://github.com/linbox-team/fflas-ffpack) for dense rank computation.
+  * [LinBox](https://github.com/linbox-team/linbox) for other rank algorithms.
 
 The most commonly used option include:
 - `--with-metis=<path>` : build the METIS interface
@@ -77,3 +77,4 @@ note = {\url{http://github.com/cbouilla/spasm}}
 Contact and discussion
 ----------------------
 
+Please email <charles.bouillaguet@univ-lille1.fr> for any questions.
