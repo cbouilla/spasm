@@ -146,8 +146,10 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
     }
     /* make sure leftmost entry is the first of the row */
     spasm_swap(Aj, Ap[i], idx_j);
-    spasm_swap(Ax, Ap[i], idx_j);
-
+    if (Ax != NULL) {
+      spasm_swap(Ax, Ap[i], idx_j);
+    }
+    
     /* check if it is a sparser pivot */
     if (q[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, q[j])) {
       q[j] = i;
