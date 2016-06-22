@@ -61,11 +61,11 @@ int *spasm_pinv(int const *p, int n) {
 
 
 /*
- * C = P.A.Q where P and Q are permutations of 0..n-1 and 0..m-1
+ * C = P.A.Q^-1 where P and Q^-1 are permutations of 0..n-1 and 0..m-1
  * respectively.
  * 
  */
-spasm *spasm_permute(const spasm * A, const int *p, const int *q, int values) {
+spasm *spasm_permute(const spasm * A, const int *p, const int *qinv, int values) {
   int t, j, i, nz, m, n, *Ap, *Aj, *Cp, *Cj;
   spasm_GFp *Cx, *Ax;
   spasm *C;
@@ -91,8 +91,8 @@ spasm *spasm_permute(const spasm * A, const int *p, const int *q, int values) {
     Cp[i] = nz;
     j = (p != NULL) ? p[i] : i;
     for (t = Ap[j]; t < Ap[j + 1]; t++) {
-      /* col i of A is col pinv[i] of C */
-      Cj[nz] = (q != NULL) ? q[Aj[t]] : Aj[t];
+      /* col j of A is col qinv[j] of C */
+      Cj[nz] = (q != NULL) ? qinv[Aj[t]] : Aj[t];
       if (Cx != NULL) {
         Cx[nz] = Ax[t];
       }

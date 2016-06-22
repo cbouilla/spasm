@@ -150,7 +150,7 @@ spasm *spasm_rows_submatrix(const spasm * A, int i0, int i1, int with_values);
 void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 int *spasm_pinv(int const *p, int n);
-spasm *spasm_permute(const spasm * A, const int *pinv, const int *q, int values);
+spasm *spasm_permute(const spasm * A, const int *p, const int *qinv, int with_values);
 int *spasm_random_permutation(int n);
 void spasm_range_pvec(int *x, int a, int b, int *p);
 
