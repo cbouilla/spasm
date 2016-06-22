@@ -1,9 +1,13 @@
 /* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_io.c */
 #include <assert.h>
 #include <math.h>
+#include <err.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include "spasm.h"
-#include "err.h"
-
+#include <inttypes.h>
 /*
  * load a matrix in SMS format from f. set prime == -1 to avoid loading
  * values.
@@ -210,6 +214,79 @@ spasm *spasm_load_gbla_new(FILE * f) {
   return M;
 }
 
+/** this function takes a filename, because it uses mmap() */
+spasm * spasm_load_CADO(const char *filename) {
+  int fd;
+  uint32_t * map;
+  struct stat buffer;
+  int64_t i, k, size;
+  int u, j, n, m, nnz;
+  spasm *A;
+
+  fprintf(stderr, "loading CADO file: %s\n", filename);
+  fd = open(filename, O_RDONLY);
+  if (fd == -1) {
+    err(1, "Error opening file for reading");
+  }
+  
+  if (fstat(fd, &buffer)) {
+    err(1, "Error getting file size");
+  }
+  size = buffer.st_size / sizeof(uint32_t);
+  
+  map = (uint32_t *) mmap(0, buffer.st_size, PROT_READ, MAP_SHARED, fd, 0);
+  if (map == MAP_FAILED) {
+    close(fd);
+    err(1, "Error mmapping the file");
+  }
+
+  /* the main problem is that the number of rows is not known in advance */
+
+  n = size / map[0];      /* this is an estimate */
+  int *Ap = spasm_malloc(n * sizeof(int));
+  int *Aj = spasm_malloc(size * sizeof(int));
+
+  m = 0;
+  i = 0;
+  k = 0;
+  nnz = 0;
+  while (k < size) {
+
+    if (i >= n) {   /* Ap is too small. Realloc twice the size */
+      n *= 2; 
+      Ap = spasm_realloc(Ap, n);
+    }
+    Ap[i] = nnz;
+
+    // printf("row %" PRId64 " / size %d\n", i, map[k]);
+
+    for(u = 0; u < map[k]; u++) {
+      j = map[k+1+u];
+      m = spasm_max(m, j);
+      Aj[nnz + u] = j;
+    }
+    nnz += map[k];
+    k += map[k] + 1;
+    i++;
+  }
+
+  /* finalize */
+  assert(i < n);   /* this is a hack. It could fail, but it is very unlikely */
+  Ap = spasm_realloc(Ap, (i+1)*sizeof(int));
+  Ap[i] = nnz;
+
+  A = spasm_malloc(sizeof(spasm));
+  A->n = i;
+  A->m = m;
+  A->nzmax = size;
+  A->p = Ap;
+  A->j = Aj;
+  A->prime = 42013;
+  A->x = NULL;
+
+  fprintf(stderr, "dimensions: %" PRId64 " x %d\n", i, m);
+  return A;
+}
 
 /*
  * save a matrix in SMS format. TODO : change name to spasm_csr_save

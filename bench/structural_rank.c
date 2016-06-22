@@ -5,19 +5,24 @@
 
 /* Provide a lower-bound on the rank of the input matrix without performing any arithmetic operation */
 
-int main() {
+int main(int argc, char **argv) {
   /* charge la matrice depuis l'entrée standard */
-  int prime = 42013, n_cheap, *p;
+  int n_cheap, *p;
   double start_time, end_time;
 
-  spasm_triplet *T = spasm_load_sms(stdin, prime);
-  spasm *A = spasm_compress(T);
-  spasm_triplet_free(T);
+  assert(argc > 1);
+  spasm *A = spasm_load_CADO(argv[1]);
+  
+  for(int i=0; i<A->nzmax; i++) {
+    A->j[i] = A->m - A->j[i];
+  }
 
   start_time = spasm_wtime();
   p = spasm_cheap_pivots(A, &n_cheap);
   end_time = spasm_wtime();
-  printf("%d; %.2f\n", n_cheap, end_time - start_time);
+  // printf("%d; %.2f\n", n_cheap, end_time - start_time);
+
+  spasm_save_csr(stdout, A);
 
   free(p);
   spasm_csr_free(A);

@@ -137,6 +137,8 @@ void spasm_save_permutation(FILE * f, const int *p, int n);
 int *spasm_load_permutation(FILE * f, int n);
 spasm *spasm_load_gbla_old(FILE * f, int with_values);
 spasm *spasm_load_gbla_new(FILE * f);
+spasm *spasm_load_CADO(const char *filename);
+
 
 /* spasm_transpose.c */
 spasm *spasm_transpose(const spasm * C, int keep_values);
