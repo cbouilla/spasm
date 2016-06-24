@@ -215,8 +215,8 @@ spasm_partition *spasm_strongly_connected_components(const spasm * A);
 spasm *spasm_kernel(const spasm * A, const int *column_permutation);
 
 /*spasm_column.c */
-spasm * spasm_columns_permute(spasm *A, int *col_perm);
-spasm * spasm_sort_columns(spasm *A);
+//spasm * spasm_columns_permute(spasm *A, int *col_perm);
+spasm * spasm_sort_columns(spasm *A, int **col_perm_pt);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {

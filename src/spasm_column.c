@@ -1,53 +1,13 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_scatter.c  */
+/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_column.c  */
 #include <assert.h>
 #include "spasm.h"
-
-/* given a permutation vector col_perm, permute the columns of matrix A */
-spasm * spasm_columns_permute(spasm *A, int *col_perm){
-  spasm *B;
-  int n, m, nnz, prime, *Ap, *Aj, with_values, i, px, *Bp, *Bj;
-  spasm_GFp *Ax, *Bx;
-
-  /*check inputs*/
-  assert(A != NULL);
-  if(col_perm == NULL) return A; // no permutation.
-
-  n = A->n;
-  m = A->m;
-  nnz = A->nzmax;
-  prime = A->prime;
-  Ap = A->p;
-  Aj = A->j;
-  with_values = (A->x != NULL) ? 1 : 0;
-
-  /* allocate result*/
-  B = spasm_csr_alloc(n, m, nnz, prime, with_values);
-  Bp = B->p;
-  Bj = B->j;
-  Bx = (with_values) ? B->x : NULL;  
-
-  /* write output matrix */
-  for(i = 0; i < n; i++){
-    Bp[i] = Ap[i];
-    for(px = Ap[i]; px < Ap[i+1]; px++){
-      Bj[px] = col_perm[Aj[px]]; // new column index.
-      if(with_values){
-	Bx[px] = A->x[px];
-      }
-    }
-  }
-
-  /* finalize and return B */
-  Bp[n] = Ap[n];
-  return B;
-}
 
 /* Given a matrix A, permute the columns of A such that the leftmost columns are
  * sparsest than the right ones */
 
-spasm * spasm_sort_columns(spasm *A){
+spasm * spasm_sort_columns(spasm *A, int **col_perm_pt){
   spasm *B;
-  int i, px, m, n, cnz_max, *Ap, *Aj, j, *Hw, *w, *col_perm;
+  int i, px, m, n, cnz_max, *Ap, *Aj, *Hw, *w, *col_perm;
 
   // check inputs
   assert(A != NULL);
@@ -60,7 +20,8 @@ spasm * spasm_sort_columns(spasm *A){
   /*get and initialize workspace*/
   col_perm = spasm_malloc(m * sizeof(int)); // permutation vector
   Hw = spasm_malloc(m * sizeof(int)); // Hamming weight of each columns
-
+  *col_perm_pt = col_perm;
+  
   for(i = 0; i < m; i++){
     col_perm[i] = 0;
     Hw[i] = 0;
@@ -105,8 +66,8 @@ spasm * spasm_sort_columns(spasm *A){
   free(Hw);
 
   // permute matrix.
-  B = spasm_columns_permute(A, col_perm);
-  free(col_perm);
+  B = spasm_permute(A, NULL, col_perm, (A->x != NULL));
 
   return B;
 }
+

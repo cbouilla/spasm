@@ -349,7 +349,7 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
 #endif
 
   /* --- build corresponding row permutation ---------------------- */
-
+#if 0
   int *xj = spasm_malloc(m * sizeof(int));
   int *marks = spasm_malloc(m * sizeof(int));
   int *pstack = spasm_malloc(n * sizeof(int));
@@ -378,7 +378,8 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
   free(xj);
   free(pstack);
   free(marks);
-
+#endif
+  
   n_cheap = k;
   *cheap_ptr = n_cheap;
 

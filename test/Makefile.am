@@ -8,11 +8,11 @@ TESTS = test_io.sh GFp vec_perm test_perm.sh test_gaxpy.sh test_reach.sh \
 	test_submatrix.sh test_cc.sh test_scc.sh test_kernel.sh 
 
 check_PROGRAMS = io GFp gaxpy reach dense_usolve dense_lsolve \
-        sparse_usolve sparse_lsolve lu permuted_lu  \
+        sparse_usolve sparse_lsolve lu permuted_lu \
         pluq permuted_pluq lu_solve pluq_solve sort \
         vec_perm mat_perm transpose dm submatrix cc scc \
 		sparse_utsolve sparse_lsolve_big kernel sparse_vect_matrix_prod \
-		sparse_permuted_lsolve gbla_in_old gbla_in_new
+		sparse_permuted_lsolve gbla_in_old gbla_in_new column_sort
 
 
 AM_TESTS_ENVIRONMENT = env AM_TAP_AWK='$(AWK)'
