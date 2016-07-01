@@ -92,7 +92,7 @@ spasm *spasm_permute(const spasm * A, const int *p, const int *qinv, int values)
     j = (p != NULL) ? p[i] : i;
     for (t = Ap[j]; t < Ap[j + 1]; t++) {
       /* col j of A is col qinv[j] of C */
-      Cj[nz] = (q != NULL) ? qinv[Aj[t]] : Aj[t];
+      Cj[nz] = (qinv != NULL) ? qinv[Aj[t]] : Aj[t];
       if (Cx != NULL) {
         Cx[nz] = Ax[t];
       }
