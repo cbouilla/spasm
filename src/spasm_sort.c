@@ -121,8 +121,9 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
 
   q = spasm_malloc(m * sizeof(int));
   p = spasm_malloc(n * sizeof(int));
-#if 0
   w = spasm_malloc(m * sizeof(int));
+
+#if 1
   queue = spasm_malloc(m * sizeof(int));
 #endif
 
@@ -163,7 +164,53 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
       p[k++] = q[j];
     }
   }
-  fprintf(stderr, "[pivots] found %d cheap pivots (stage1)\n", k);
+  n_cheap = k;
+  fprintf(stderr, "[pivots] found %d Faugère-Lachartre pivots (stage 1)\n", k);
+
+
+/* --- free column pivots ----------------------------------*/
+  for (j = 0; j < m; j++) {
+    w[j] = 1;
+  }
+
+  /* scatter previous pivot rows */
+  for (i = 0; i < k; i++) {
+    I = p[i];
+    for (px = Ap[I]; px < Ap[I + 1]; px++) {
+      j = Aj[px];
+      w[j] = 0;
+    }
+  }
+
+  /* find new pivots */
+  for (i = 0; i < n; i++) {
+    if (q[Aj[Ap[i]]] == i) {    /* this row is already pivotal: skip */
+      continue;
+    }
+   
+    /* does it have an entry on a possible column? */
+    for (px = Ap[i]; px < Ap[i + 1]; px++) {
+      j = Aj[px];
+      if (w[j] == 0) {
+        continue; /* this column is closed, skip this entry */
+      }
+
+      /* check if it is a sparser pivot */
+      if (q[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, q[j])) {
+        if (q[j] == -1) {
+          k++;  
+        }
+        q[j] = i;
+        spasm_swap(Aj, Ap[i], px);
+        if (Ax != NULL) {
+          spasm_swap(Ax, Ap[i], px);
+        }
+        break;   /* this row is done */
+      }
+    } 
+  }
+  fprintf(stderr, "[pivots] %d pivots found on free columns\n", k - n_cheap);
+  n_cheap = k;
 
 #if 0
   /* --- transitive reduction ------------------------------------- */
@@ -347,7 +394,7 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
       n_cheap++;
     }
   }
-  fprintf(stderr, "[LU] found %d cheap pivots (stage2)\n", n_cheap);
+  fprintf(stderr, "\r[pivots] found %d cheap pivots (greedy search)\n", n_cheap - n_cheap1);
 #endif
 
   /* --- build corresponding row permutation ---------------------- */
@@ -360,7 +407,7 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
     marks[j] = 0;
   }
 
-  /* DFS */
+  /* DFS. Bug. It seems that this misses some pivots */
   int top = m;
   for (j = 0; j < m; j++) {
     if (q[j] != -1 && !marks[j]) {
@@ -405,6 +452,7 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
   }
 
   free(q);
+  free(w);
 
   return p;
 }
