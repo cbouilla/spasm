@@ -163,7 +163,7 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
       p[k++] = q[j];
     }
   }
-  fprintf(stderr, "[LU] found %d cheap pivots (stage1)\n", k);
+  fprintf(stderr, "[pivots] found %d cheap pivots (stage1)\n", k);
 
 #if 0
   /* --- transitive reduction ------------------------------------- */

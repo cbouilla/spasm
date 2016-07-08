@@ -4,6 +4,8 @@ refactor spasm_save_scr spasm_save_triplet
 
 refactor the whole DM mess
 
+SCC should use Tarjan's or Dijkstra's algorithm instead of Kosaraju's. It would remove the need to transpose and be 2x faster.
+
 spasm_PLUQ should return PLUQ == A (incorporate the row_permutation into P).
 
 bench/rank_hybrid should automatically transpose its input.
