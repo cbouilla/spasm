@@ -109,7 +109,7 @@ int *spasm_row_sort(const spasm * A) {
 
 
 int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
-  int n, m, i, j, k, I, idx_j, px, n_cheap, pxI, head, tail;
+  int n, m, i, j, k, I, idx_j, px, n_cheap, pxI, head, tail, old_tail;
   int *q, *p, *Ap, *Aj, *w, *queue;
   spasm_GFp *Ax;
 
@@ -121,11 +121,65 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
 
   q = spasm_malloc(m * sizeof(int));
   p = spasm_malloc(n * sizeof(int));
-#if 0
+#if 1
   w = spasm_malloc(m * sizeof(int));
   queue = spasm_malloc(m * sizeof(int));
 #endif
 
+  /* --- singleton selection ----------------------------------- */
+  
+  for (j = 0; j < m; j++) {
+    w[j] = 0;
+  }
+  for (i = 0; i < n; i++) {
+    p[i] = 0;
+  }
+  head = 0;
+  tail = 0;
+  k = 0;
+
+  /* compute initial column weight */
+  for (i = 0; i < n; i++) {
+    for (px = Ap[i]; px < Ap[i + 1]; px++) {
+        j = Aj[px];
+        w[j]++;
+    }
+  }
+
+  old_tail = -1; /* so that we enter the loop */
+  while(tail > old_tail) {  
+    /* substract singleton rows */
+    while(head < tail) {
+      i = queue[head];
+      head++;
+      for (px = Ap[i]; px < Ap[i + 1]; px++) {
+        j = Aj[px];
+        w[j]--;
+      }
+    }
+
+    /* identify singleton rows */
+    for (i = 0; i < n; i++) {
+      /* this row is already marked ; skip it */
+      if (p[i] == 1) {
+        continue;
+      } 
+
+      /* scan the row for singled columns ; this could be avoided with the transpose */
+      for (px = Ap[i]; px < Ap[i + 1]; px++) {
+          j = Aj[px];
+          if (w[j] == 1) {
+            p[i] = 1; /* mark it */
+            queue[tail] = i; /* push it to the stack */
+            tail++;
+            break;
+          }
+      }
+    }
+    fprintf(stderr, "[pivots] found %d singletons\n", tail - head);
+    old_tail = tail;
+  }
+  
   /* --- Cheap pivot selection ----------------------------------- */
   for (j = 0; j < m; j++) {
     q[j] = -1;
