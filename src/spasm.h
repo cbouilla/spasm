@@ -68,6 +68,15 @@ typedef struct {                /* a PLUQ factorisation */
   int *p;
 }      spasm_lu;
 
+typedef struct {                /* a dense LU factorization */
+  int n;                        /* number of rows */
+  int m;                        /* number of columns */
+  int prime; 
+  int nmax;                     /* number of allocated rows */
+  spasm_GFp *x;                 /* array of coefficients in C order */
+}      spasm_dense_lu;
+
+
 typedef struct {                /* Partition of the rows / columns */
   int *p;                       /* size m, row permutation */
   int *q;                       /* size n, column permutation */
@@ -183,6 +192,11 @@ void spasm_free_LU(spasm_lu * X);
 int spasm_find_pivot(int *xi, spasm_GFp * x, int top, spasm * U, spasm * L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n);
 spasm *spasm_schur(const spasm * A, const int *p, int stop);
 int spasm_narrow_schur_trick(spasm * A, int *p, int n_cheap);
+
+/* spasm_dense_lu.c */
+spasm_dense_lu *spasm_dense_LU_alloc(int m, int prime);
+void spasm_dense_LU_free(spasm_dense_lu * A);
+int spasm_dense_LU_process(spasm_dense_lu *A, spasm_GFp *y, int *q);
 
 /* spasm_solutions.c */
 int spasm_PLUQ_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
