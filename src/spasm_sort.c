@@ -108,9 +108,16 @@ int *spasm_row_sort(const spasm * A) {
 }
 
 
-int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
+/* return the number of pivots found. 
+  @param p : row permutations. Pivotal rows are first.
+  @param qinv : inverse column permutation. q[j] is the row on which
+                the pivot on column j is, or -1 if there is no pivot
+                on column j.
+  both p and qinv must be preallocated
+*/
+int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
   int n, m, i, j, k, I, idx_j, px, n_cheap, pxI, head, tail;
-  int *q, *p, *Ap, *Aj, *w, *queue;
+  int *Ap, *Aj, *w, *queue;
   spasm_GFp *Ax;
 
   n = A->n;
@@ -119,20 +126,15 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
   Aj = A->j;
   Ax = A->x;
 
-  q = spasm_malloc(m * sizeof(int));
-  p = spasm_malloc(n * sizeof(int));
   w = spasm_malloc(m * sizeof(int));
-
 #if 1
   queue = spasm_malloc(m * sizeof(int));
 #endif
 
-  /* --- Cheap pivot selection ----------------------------------- */
-  for (j = 0; j < m; j++) {
-    q[j] = -1;
-  }
+  /* --- Faugère-Lachartre pivot detection ------------------ */
+  spasm_vector_set(qinv, 0, m, -1);
+  
   for (i = 0; i < n; i++) {
-
     /* find leftmost entry */
     j = -1;
     for (px = Ap[i]; px < Ap[i + 1]; px++) {
@@ -152,27 +154,25 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
     }
     
     /* check if it is a sparser pivot */
-    if (q[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, q[j])) {
-      q[j] = i;
+    if (qinv[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, qinv[j])) {
+      qinv[j] = i;
     }
   }
 
   /* count the Faugère-Lachartre pivots, and store their rows in p */
   k = 0;
   for (j = 0; j < m; j++) {
-    if (q[j] != -1) {
-      p[k++] = q[j];
+    if (qinv[j] != -1) {
+      p[k++] = qinv[j];
     }
   }
   n_cheap = k;
-  fprintf(stderr, "[pivots] found %d Faugère-Lachartre pivots (stage 1)\n", k);
+  fprintf(stderr, "[pivots] found %d Faugère-Lachartre pivots\n", k);
 
 
 /* --- free column pivots ----------------------------------*/
-  for (j = 0; j < m; j++) {
-    w[j] = 1;
-  }
-
+  spasm_vector_set(w, 0, m, 1);
+  
   /* scatter previous pivot rows */
   for (i = 0; i < k; i++) {
     I = p[i];
@@ -184,7 +184,8 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
 
   /* find new pivots */
   for (i = 0; i < n; i++) {
-    if (q[Aj[Ap[i]]] == i) {    /* this row is already pivotal: skip */
+    j = Aj[Ap[i]];
+    if (qinv[j] == i) {  /* this row is already pivotal: skip */
       continue;
     }
    
@@ -196,11 +197,11 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
       }
 
       /* check if it is a sparser pivot */
-      if (q[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, q[j])) {
-        if (q[j] == -1) {
+      if (qinv[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, qinv[j])) {
+        if (qinv[j] == -1) {
           k++;  
         }
-        q[j] = i;
+        qinv[j] = i;
         spasm_swap(Aj, Ap[i], px);
         if (Ax != NULL) {
           spasm_swap(Ax, Ap[i], px);
@@ -402,24 +403,23 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
   int *xj = spasm_malloc(m * sizeof(int));
   int *marks = spasm_malloc(m * sizeof(int));
   int *pstack = spasm_malloc(n * sizeof(int));
-
-  for (j = 0; j < m; j++) {
-    marks[j] = 0;
-  }
-
-  /* DFS. Bug. It seems that this misses some pivots */
+  
+  /* DFS */
+  spasm_vector_set(marks, 0, m, 0);
   int top = m;
   for (j = 0; j < m; j++) {
-    if (q[j] != -1 && !marks[j]) {
-      top = spasm_dfs(j, A, top, xj, pstack, marks, q);
+    if (qinv[j] != -1 && !marks[j]) {
+      top = spasm_dfs(j, A, top, xj, pstack, marks, qinv);
     }
   }
 
   /* reorders the first n_cheap rows of p */
   k = 0;
-  for (j = top; j < m; j++) {
-    if (q[xj[j]] != -1) {
-      p[k++] = q[xj[j]];
+  for (j = m-1; j >= top; j--) {
+    i = qinv[xj[j]];
+    if (i != -1) {
+      p[k] = i;
+      k++;
     }
   }
   assert(k == n_cheap);
@@ -429,14 +429,14 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
   free(marks);
 
   n_cheap = k;
-  *cheap_ptr = n_cheap;
 
   /* put other (non-empty) rows afterwards */
   for (i = 0; i < n; i++) {
     if (Ap[i] == Ap[i + 1]) {
       continue;
     }
-    if (q[Aj[Ap[i]]] != i) {
+    j = Aj[Ap[i]];
+    if (qinv[j] != i) { /* row is non-pivotal */
       assert(k < n);
       p[k] = i;
       k++;
@@ -451,8 +451,6 @@ int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr) {
     }
   }
 
-  free(q);
   free(w);
-
-  return p;
+  return n_cheap;
 }

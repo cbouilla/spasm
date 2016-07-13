@@ -6,7 +6,7 @@
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *A_t, *K, *A_clean;
-  int ch, output, prime, i, n, m, r, h, *row_permutation, *column_permutation;
+  int ch, output, prime, i, n, m, r, h, *p, *qinv;
   double A_density, K_density;
 
   /* options descriptor */
@@ -50,9 +50,10 @@ int main(int argc, char **argv) {
   m = A->m;
 
   /* remove zero rows */
-  int n_cheap;
-  row_permutation = spasm_cheap_pivots(A, & n_cheap); /* this stacks zero row at the bottom */
-  A_clean = spasm_permute(A, row_permutation, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
+  p = spasm_malloc(n * sizeof(int));
+  qinv = spasm_malloc(m * sizeof(int));
+  spasm_find_pivots(A, p, qinv); /* this does some useless stuff, but pushes zero rows to the bottom */
+  A_clean = spasm_permute(A, p, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
   spasm_csr_free(A);
 
    A = A_clean;
@@ -64,12 +65,11 @@ int main(int argc, char **argv) {
       break;
     }
   }
-  free(row_permutation);
 
   A_t = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
-  column_permutation = spasm_cheap_pivots(A_t, &n_cheap);
+  spasm_find_pivots(A_t, qinv, p);
 
-  K = spasm_kernel(A_t, column_permutation);
+  K = spasm_kernel(A_t, qinv);
 
   r = K->n;
   K_density = 100.0 * spasm_nnz(K) / (K->n * K->m);
@@ -99,7 +99,8 @@ int main(int argc, char **argv) {
     break;
   }
 
-  free(column_permutation);
+  free(p);
+  free(qinv);
   spasm_csr_free(A);
   spasm_csr_free(A_t);
   spasm_csr_free(K);

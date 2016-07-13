@@ -16,21 +16,21 @@ int spasm_PLUQ_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x) {
   spasm_lu *PLUQ;
   spasm *L, *U;
   int n, m, r, ok;
-  int *row_permutation;
+  int *p, *qinv;
 
   /* check inputs */
   assert(A != NULL);
   assert(b != NULL);
 
-  int n_cheap;
-
-  row_permutation = spasm_cheap_pivots(A, &n_cheap);
-  PLUQ = spasm_PLUQ(A, row_permutation, SPASM_KEEP_L);
-  L = PLUQ->L;
-  U = PLUQ->U;
-
   n = A->n;
   m = A->m;
+  p = spasm_malloc(n * sizeof(int));
+  qinv = spasm_malloc(m * sizeof(int));
+
+  spasm_find_pivots(A, p, qinv);
+  PLUQ = spasm_PLUQ(A, p, SPASM_KEEP_L);
+  L = PLUQ->L;
+  U = PLUQ->U;
   r = U->n;
 
   /* get workspace */
@@ -51,12 +51,14 @@ int spasm_PLUQ_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x) {
 
     /* x.PLUQ = b */
     spasm_ipvec(PLUQ->p, w, s, n);
-    spasm_ipvec(row_permutation, s, x, n);
+    spasm_ipvec(p, s, x, n);
   }
   free(u);
   free(v);
   free(w);
   free(s);
+  free(p);
+  free(qinv);
   spasm_free_LU(PLUQ);
   return ok;
 }

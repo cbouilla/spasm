@@ -204,7 +204,7 @@ int spasm_LU_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
 
 /* spasm_sort.c */
 int *spasm_row_sort(const spasm * A);
-int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr);
+int spasm_find_pivots(const spasm * A, int *p, int *qinv);
 
 /* spasm_concatenate.c */
 spasm *spasm_row_concatenation(const spasm * A, const spasm * B, int with_values);

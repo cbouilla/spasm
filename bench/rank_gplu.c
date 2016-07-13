@@ -74,7 +74,6 @@ int main(int argc, char **argv) {
   argv += optind;
 
   T = spasm_load_sms(stdin, prime);
-  fprintf(stderr, "A : %d x %d with %d nnz (density = %.3f %%) -- loaded modulo %d\n", T->n, T->m, T->nz, 100.0 * T->nz / (1.0 * T->n * T->m), prime);
   if (allow_transpose && (T->n < T->m)) {
     fprintf(stderr, "[rank] transposing matrix : ");
     fflush(stderr);
@@ -101,10 +100,11 @@ int main(int argc, char **argv) {
     int n_cheap, i, j, k;
     int *Ap = A->p;
     int *Aj = A->j;
-    p = spasm_cheap_pivots(A, &n_cheap);
+    int *qinv = spasm_malloc(m * sizeof(int));
+    int *p = spasm_malloc(n * sizeof(int));
+    n_cheap = spasm_find_pivots(A, p, qinv);
 
     /* build qinv to reflect the changes in p */
-    int *qinv = spasm_malloc(m * sizeof(int));
     for (j = 0; j < m; j++) {
       qinv[j] = -1;
     }

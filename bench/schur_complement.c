@@ -3,69 +3,39 @@
 #include <stdio.h>
 #include "spasm.h"
 
-/** Finds "cheap pivots" (i.e. Faugère-Lachartre pivots) and computes the Schur complement w.r.t. these pivots */
-
-/* NOT DRY (the same function is in rank_hybrid) */
-spasm *filtered_schur(spasm * A, int *npiv) {
-  int n_cheap, n_filtered, free_nnz, min, max, h, i;
-  float avg;
-
-  /* find free pivots. */
-  int *p = spasm_cheap_pivots(A, &n_cheap);
-  int *filtered = malloc(A->n * sizeof(int));
-
-  /* collect stats */
-  free_nnz = 0;
-  min = A->m;
-  max = 0;
-  for (i = 0; i < n_cheap; i++) {
-    h = spasm_row_weight(A, p[i]);
-    free_nnz += h;
-    min = spasm_min(min, h);
-    max = spasm_max(max, h);
-  }
-  avg = 1.0 * free_nnz / n_cheap;
-  fprintf(stderr, "[schur] free pivots NNZ (min/avg/max): %d / %.1f / %d\n", min, avg, max);
-
-  /* filter rows that are too dense */
-  n_filtered = 0;
-  h = n_cheap - 1;
-  for (i = 0; i < n_cheap; i++) {
-    if (spasm_row_weight(A, p[i]) <= 3 * avg) {
-      filtered[n_filtered++] = p[i];
-    } else {
-      filtered[h--] = p[i];
-    }
-  }
-  for (i = n_cheap; i < A->n; i++) {
-    filtered[i] = p[i];
-  }
-
-  fprintf(stderr, "[schur] %d free pivots after filtering\n", n_filtered);
-  free(p);
-
-  /* schur complement */
-  spasm *S = spasm_schur(A, filtered, n_filtered);
-
-  fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S) / (1. * S->n * S->m));
-
-  free(filtered);
-  *npiv = n_filtered;
-
-  return S;
-}
+/* 
+* Finds pivots without performing arithmetic operations (using the 
+* Faugère-Lachartre heuristic and some other ideas) and computes the Schur 
+* complement w.r.t. these pivots. The result is sent to the standard output */
 
 int main() {
-  int n_piv, prime = 42013;
+  int npiv, n, m, prime = 42013, *p, *qinv;
   spasm_triplet *T;
   spasm *A, *S;
+  double schur_density;
 
   T = spasm_load_sms(stdin, prime);
   A = spasm_compress(T);
   spasm_triplet_free(T);
+  n = A->n;
+  m = A->m;
 
-  S = filtered_schur(A, &n_piv);
+  p = spasm_malloc(n * sizeof(int));
+  qinv = spasm_malloc(m * sizeof(int));
+
+  npiv = spasm_find_pivots(A, p, qinv);
+
+  /* estimate an upper-bound on the rank of the complement */
+  int arank = spasm_schur_probe(A, p, npiv, 100, &schur_density);
+  fprintf(stderr, "Approximate upper-bound on the remaining rank: %d (density = %.3f)\n", arank, schur_density);
+
+  /* go for it */
+  S = spasm_schur(A, p, npiv);
+  fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S) / (1. * S->n * S->m));
+
   spasm_save_csr(stdout, S);
+  free(p);
+  free(qinv);
   spasm_csr_free(S);
   spasm_csr_free(A);
   return 0;
