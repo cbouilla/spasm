@@ -20,6 +20,30 @@ int spasm_nnz(const spasm * A) {
   return A->p[A->n];
 }
 
+/* return a string representing n in 4 bytes */
+void spasm_human_format(int n, char *target) {
+  if (n < 1e3) {
+    sprintf(target, "%d", n);
+    return;
+  }
+  if (n < 1e6) {
+    sprintf(target, "%.1fk", n / 1e3);
+    return;
+  }
+  if (n < 1e9) {
+    sprintf(target, "%.1fm", n / 1e6);
+    return;
+  }
+  if (n < 1e12) {
+    sprintf(target, "%.1fg", n / 1e9);
+    return;
+  }
+  if (n < 1e16) {
+    sprintf(target, "%.1ft", n / 1e12);
+    return;
+  }
+}
+
 void *spasm_malloc(size_t size) {
   void *x = malloc(size);
   if (x == NULL) {

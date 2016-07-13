@@ -9,7 +9,8 @@ The algorithms used in SpaSM are described in [this paper](http://cristal.univ-l
 Features
 --------
 
-The core of the library is an implementation of the GPLU algorithm, heavily inspired by CSparse, and 
+The core of the library is an implementation of the GPLU algorithm, heavily inspired by 
+[Tim Davis](http://faculty.cse.tamu.edu/davis/)'s [CSparse](http://faculty.cse.tamu.edu/davis/publications_files/CSparse.zip), and 
 adapted to the context of exact computation. On top of this, we designed a hybrid left-and-right looking algorithm. 
 This allows several kind of useful operations on sparse matrices:
   * LU and PLUQ factorization
@@ -18,7 +19,8 @@ This allows several kind of useful operations on sparse matrices:
   * Kernel basis
   * Permutation to block triangular form
 
-Finally, the library does I/O of matrices in SMS format, which makes it somewhat compatible with LinBox.
+Finally, the library does I/O of matrices in [SMS format](http://hpac.imag.fr/), which makes it 
+somewhat compatible with [LinBox](http://linalg.org/).
 
 A set of demonstration programs is provided (see the `bench` folder).
 

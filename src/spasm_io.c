@@ -13,8 +13,10 @@ spasm_triplet *spasm_load_sms(FILE * f, int prime) {
   spasm_GFp x;
   spasm_triplet *T;
   char type;
+  double start;
   assert(f != NULL);
 
+  start = spasm_wtime();
   if (fscanf(f, "%d %d %c\n", &i, &j, &type) != 3) {
     fprintf(stderr, "[spasm_load_sms] bad SMS file (header)\n");
     exit(1);
@@ -23,6 +25,9 @@ spasm_triplet *spasm_load_sms(FILE * f, int prime) {
     fprintf(stderr, "[spasm_load_sms] only ``Modular'' type supported\n");
     exit(1);
   }
+  fprintf(stderr, "[IO] loading %d x %d matrix modulo %d... ", i, j, prime);
+  fflush(stderr);
+
   /* allocate result */
   T = spasm_triplet_alloc(i, j, 1, prime, prime != -1);
 
@@ -35,6 +40,9 @@ spasm_triplet *spasm_load_sms(FILE * f, int prime) {
     spasm_add_entry(T, i - 1, j - 1, x);
   }
 
+  char nnz[16];
+  spasm_human_format(T->nz, nnz);
+  fprintf(stderr, "%s NNZ [%.1fs]\n", nnz, spasm_wtime() - start);
   return T;
 }
 

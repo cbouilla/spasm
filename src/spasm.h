@@ -129,6 +129,7 @@ void spasm_partition_tighten(spasm_partition * P);
 void spasm_vector_zero(spasm_GFp * x, int n);
 void spasm_vector_set(spasm_GFp * x, int a, int b, spasm_GFp alpha);
 spasm *spasm_identity(int n, int prime);
+void spasm_human_format(int n, char *target);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x);

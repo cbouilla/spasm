@@ -200,7 +200,8 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, con
  * top is the return value.
  *
  */
-int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xi, spasm_GFp * x, const int *pinv) {
+int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xi, 
+                                               spasm_GFp * x, const int *pinv) {
   int i, I, p, px, top, m, prime, *Up, *Uj, *Bp, *Bj;
   spasm_GFp *Ux, *Bx;
 
@@ -283,13 +284,14 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xi,
  *
  * x has size m (number of columns of L).
  *
- * when this function returns, the solution scattered in x, and its pattern
+ * when this function returns, the solution is scattered in x, and its pattern
  * is given in xi[top : n].
  *
  * top is the return value.
  *
  */
-int spasm_sparse_backward_solve(const spasm * L, const spasm * B, int k, int *xi, spasm_GFp * x, const int *pinv, int r_bound) {
+int spasm_sparse_backward_solve(const spasm * L, const spasm * B, int k, int *xi,
+                                  spasm_GFp * x, const int *pinv, int r_bound) {
   int i, I, p, px, top, n, m, prime, *Lp, *Lj, *Bp, *Bj, tmp;
   spasm_GFp *Lx, *Bx;
 
