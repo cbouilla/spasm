@@ -454,3 +454,30 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
   free(w);
   return n_cheap;
 }
+
+/* returns a pemruted version of A where pivots are pushed to the top-left
+* and form an upper-triangular principal submatrix */
+spasm * spasm_permute_pivots(const spasm *A, int *p, int *qinv, int npiv) {
+  int i, j, k, n, m, *Ap, *Aj;
+
+  n = A->n;
+  m = A->m;
+  Ap = A->p;
+  Aj = A->j;
+
+  /* pivotal column first, in row-order */
+  k = 0;
+  for (i = 0; i < npiv; i++) {
+    j = Aj[Ap[p[i]]];         /* the pivot is the first entry of each row */
+    qinv[j] = k++;
+  }
+
+  /* put remaining non-pivotal columns afterwards, in any order */
+  for (j = 0; j < m; j++) {
+    if (qinv[j] == -1) {
+      qinv[j] = k++;
+    }
+  }
+
+  return spasm_permute(A, p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+}

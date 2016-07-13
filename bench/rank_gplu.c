@@ -97,38 +97,16 @@ int main(int argc, char **argv) {
   case 1:
     fprintf(stderr, "[rank] finding cheap pivots : ");
     fflush(stderr);
-    int n_cheap, i, j, k;
-    int *Ap = A->p;
-    int *Aj = A->j;
+    int npiv;
     int *qinv = spasm_malloc(m * sizeof(int));
     int *p = spasm_malloc(n * sizeof(int));
-    n_cheap = spasm_find_pivots(A, p, qinv);
-
-    /* build qinv to reflect the changes in p */
-    for (j = 0; j < m; j++) {
-      qinv[j] = -1;
-    }
-
-    /* pivotal column first, in row-order */
-    k = 0;
-    for (i = 0; i < n_cheap; i++) {
-      j = Aj[Ap[p[i]]];         /* the pivot is the first entry of each row */
-      qinv[j] = k++;
-    }
-
-    /* put remaining non-pivotal columns afterwards, in any order */
-    for (j = 0; j < m; j++) {
-      if (qinv[j] == -1) {
-        qinv[j] = k++;
-      }
-    }
-
-    spasm *B = spasm_permute(A, p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+    npiv = spasm_find_pivots(A, p, qinv);
+    spasm *B = spasm_permute_pivots(A, p, qinv, npiv);
+    
+    spasm_csr_free(A);
     free(p);
     free(qinv);
-    p = NULL;
-
-    spasm_csr_free(A);
+    p = SPASM_IDENTITY_PERMUTATION;
     A = B;
 
     fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
