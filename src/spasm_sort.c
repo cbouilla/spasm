@@ -171,6 +171,7 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
 
 
 /* --- free column pivots ----------------------------------*/
+#if 1
   spasm_vector_set(w, 0, m, 1);
   
   /* scatter previous pivot rows */
@@ -196,15 +197,18 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
         continue; /* this column is closed, skip this entry */
       }
 
-      /* check if it is a sparser pivot */
-      if (qinv[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, qinv[j])) {
-        if (qinv[j] == -1) {
-          k++;  
-        }
+      /* new pivot found! */
+      if (qinv[j] == -1) {
+        k++;
         qinv[j] = i;
         spasm_swap(Aj, Ap[i], px);
         if (Ax != NULL) {
           spasm_swap(Ax, Ap[i], px);
+        }
+        /* close more columns */     
+        for (px = Ap[i]; px < Ap[i + 1]; px++) {
+          j = Aj[px];
+          w[j] = 0;
         }
         break;   /* this row is done */
       }
@@ -212,6 +216,7 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
   }
   fprintf(stderr, "[pivots] %d pivots found on free columns\n", k - n_cheap);
   n_cheap = k;
+#endif
 
 #if 0
   /* --- transitive reduction ------------------------------------- */
@@ -300,7 +305,7 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
 #endif
 
   /* --- find less-cheap pivots ----------------------------------- */
-#if 0
+#if 1
   n_cheap = k;
   int n_cheap1 = k;
   int processed = 0;
@@ -310,7 +315,7 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
   }
 
   for (i = 0; i < n; i++) {
-    if (q[Aj[Ap[i]]] == i) {    /* this row is already pivotal: skip */
+    if (qinv[Aj[Ap[i]]] == i) {    /* this row is already pivotal: skip */
       continue;
     }
     if (i % (n / 100) == 0) {
@@ -323,7 +328,7 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
     /* scatters non-pivotal columns of A[i] into w */
     for (px = Ap[i]; px < Ap[i + 1]; px++) {
       j = Aj[px];
-      if (q[j] != -1) {         /* column is pivotal: skip */
+      if (qinv[j] != -1) {         /* column is pivotal: skip */
         continue;
       }
       w[j] = 1;
@@ -333,7 +338,7 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
     tail = 0;
     for (px = Ap[i]; px < Ap[i + 1]; px++) {
       j = Aj[px];
-      if (q[j] == -1) {         /* column is not pivotal: skip */
+      if (qinv[j] == -1) {         /* column is not pivotal: skip */
         continue;
       }
       if (w[j] < 0) {           /* already marked: skip */
@@ -349,7 +354,7 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
         //assert(w[j] < 0);
         head++;
 
-        I = q[j];
+        I = qinv[j];
         if (I == -1) {
           continue;             /* nothing to do */
         }
@@ -387,7 +392,7 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
     }
 
     if (k != -1) {
-      q[k] = i;
+      qinv[k] = i;
 
       /* make sure leftmost entry is the first of the row */
       spasm_swap(Aj, Ap[i], idx_j);
@@ -415,7 +420,7 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
 
   /* reorders the first n_cheap rows of p */
   k = 0;
-  for (j = m-1; j >= top; j--) {
+  for (j = top; j < m; j++) {
     i = qinv[xj[j]];
     if (i != -1) {
       p[k] = i;
