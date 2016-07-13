@@ -512,3 +512,123 @@ int spasm_schur_probe(const spasm * A, const int *p, const int n_pivots, const i
   return (int) (((double) k) / ((double) R) * (n - n_pivots));
 }
 
+
+/* eliminate everything in the (dense) vector x using the pivots found in A */
+void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp *x) {
+  int i, inew, j, prime, *Aj, *Ap, k;
+  spasm_GFp *Ax;
+
+  Aj = A->j;
+  Ap = A->p;
+  Ax = A->x;
+  prime = A->prime;
+
+  for(i = 0; i < npiv; i++) {
+    inew = p[i];
+    j = Aj[Ap[inew]];
+
+    const spasm_GFp diagonal_entry = Ax[ Ap[inew] ];
+    assert (diagonal_entry != 0);
+    if (x[j] == 0) {
+      continue;
+    }
+
+    /* computing this inverse here is bad. The pivots in A should be unitary */
+    const spasm_GFp d = (x[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+    spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], prime - d, x, prime);
+    assert(x[j] == 0);
+
+    for(k = 0; k < i; k++) {
+      j = Aj[Ap[inew]];
+      // assert(x[k] == 0); /* it stays eliminated */
+    }
+  }
+}
+
+
+
+
+int spasm_schur_rank(const spasm * A, const int *p, const int npiv) {
+  int Sn, Sm, m, n, i, inew, j, k, r, prime, new;
+  int *qinv, *q, *Ap, *Aj;
+  spasm_GFp *Ax, *x, *y, *Uq;
+
+  n = A->n;
+  m = A->m;
+  Ap = A->p;
+  Aj = A->j;
+  Ax = A->x;
+  prime = A->prime;
+
+  /* Get Workspace */
+  Sn = n - npiv;
+  Sm = m - npiv;
+  q = spasm_malloc(Sm * sizeof(int));
+  qinv = spasm_malloc(m * sizeof(int));
+  x = spasm_malloc(m * sizeof(spasm_GFp));
+  y = spasm_malloc(Sm * sizeof(spasm_GFp));
+  
+  /* build qinv from A and p [this sucks. qinv should be given] */
+  spasm_vector_set(qinv, 0, m, -1);
+  for (i = 0; i < npiv; i++) {
+    inew = p[i];
+    j = Aj[Ap[inew]];
+    qinv[j] = inew;             /* (inew, j) is a pivot */
+  }
+
+  /* q sends columns of S to non-pivotal columns of A */
+  k = 0;
+  for (j = 0; j < m; j++) {
+    if (qinv[j] < 0) {
+      q[k] = j;
+      k++;
+    }
+  }
+
+  spasm_dense_lu *U = spasm_dense_LU_alloc(Sm, A->prime);
+  Uq = spasm_malloc(Sm * sizeof(int));
+  for (j = 0; j < Sm; j++) {
+    Uq[j] = j;
+  }
+
+  /* ---- compute Schur complement ----- */
+  fprintf(stderr, "Starting Schur complement computation...\n");
+  r = 0;
+  int seed = rand() + 1;
+  for (k = npiv; k < n; k++) {
+    /* compute a random linear combination of the non-pivotal rows. not DRY */
+    spasm_vector_zero(x, m);
+    //for(int i = 0; i < n; i++) {
+      inew = p[k];
+      spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], 1, x, prime); //rand_r(&seed) % prime, x, prime);
+    //}
+
+    spasm_eliminate_sparse_pivots(A, npiv, p, x);
+    /*for(j=0; j<m; j++) {
+      assert(x[j] == 0);
+    }*/
+
+    // il ne doit plus rien rester
+
+    /* the solution is scattered in x. Copy it to a (contiguous) y */
+    for (j = 0; j < Sm; j++) {
+      y[j] = x[ q[ Uq[j] ] ];
+    }
+
+    new = spasm_dense_LU_process(U, y, Uq);
+    if (new) {
+      fprintf(stderr, "+");
+    } else {
+      fprintf(stderr, ".");
+    }
+    fflush(stderr);
+    r += new;
+
+    /*if ((i % verbose_step) == 0) {
+      fprintf(stderr, "\rSchur : %d / %d [S=%d * %d, %d NNZ] -- current density= (%.3f)", i, n, Sn, Sm, snz, 1.0 * snz / (1.0 * Sm * Sn));
+      fflush(stderr);
+    }*/
+  }
+  fprintf(stderr, "\n");
+  return r;
+}
