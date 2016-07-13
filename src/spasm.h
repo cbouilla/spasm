@@ -192,7 +192,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L);
 void spasm_free_LU(spasm_lu * X);
 int spasm_find_pivot(int *xi, spasm_GFp * x, int top, spasm * U, spasm * L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n);
 spasm *spasm_schur(const spasm * A, const int *p, int stop);
-int spasm_narrow_schur_trick(spasm * A, int *p, int n_cheap);
+int spasm_schur_probe(const spasm * A, const int *p, const int n_pivots, const int R, double *density); 
 
 /* spasm_dense_lu.c */
 spasm_dense_lu *spasm_dense_LU_alloc(int m, int prime);

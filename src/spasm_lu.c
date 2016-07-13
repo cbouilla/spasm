@@ -346,10 +346,10 @@ void spasm_free_LU(spasm_lu * X) {
   free(X);
 }
 
-
-/** Computes the Schur complement, by eliminating the pivots located on
- *  rows p[0] ... p[n_pivots-1] of input matrix A.
- */
+/* Computes the Schur complement, by eliminating the pivots located on
+* rows p[0] ... p[n_pivots-1] of input matrix A. The pivots must be the
+* entries on the lines. This returns a sparse representation of S.
+*/
 spasm *spasm_schur(const spasm * A, const int *p, const int n_pivots) {
   spasm *S;
   int *Sp, *Sj, Sn, Sm, m, n, snz, px, *xi, i, inew, top, j, *qinv, *q,
@@ -458,3 +458,57 @@ spasm *spasm_schur(const spasm * A, const int *p, const int n_pivots) {
 
   return S;
 }
+
+
+/** Samples R rows at random in the schur complement of A w.r.t. the pivots in p[0:n_pivots],
+* and return the number that are non-zero (these rows of A are linearly independent from the pivots).
+*/
+int spasm_schur_probe(const spasm * A, const int *p, const int n_pivots, const int R, double *density) {
+  int m, n, px, *xi, i, inew, top, j, *qinv, *Ap, *Aj, k, nnz, tmp;
+  spasm_GFp *x;
+
+  /* check inputs */
+  m = A->m;
+  n = A->n;
+  Ap = A->p;
+  Aj = A->j;
+
+  /* Get Workspace */
+  qinv = spasm_malloc(m * sizeof(int));
+  x = spasm_malloc(m * sizeof(spasm_GFp));
+  xi = spasm_malloc(3 * m * sizeof(int));
+  spasm_vector_zero(xi, 3 * m);
+
+  spasm_vector_set(qinv, 0, m, -1);
+  for (i = 0; i < n_pivots; i++) {
+    inew = p[i];
+    j = Aj[Ap[inew]];
+    qinv[j] = inew;             /* (inew, j) is a pivot */
+  }
+
+  k = 0;
+  nnz = 0;
+  for (i = 0; i < R; i++) {
+    /* pick a random row in S, check if non-zero */
+    inew = p[n_pivots + (rand() % (n - n_pivots))];
+    top = spasm_sparse_forward_solve(A, A, inew, xi, x, qinv);
+    tmp = 0;
+    for (px = top; px < m; px++) {
+      j = xi[px];
+      if (qinv[j] < 0 && x[j] != 0) {  /* non-zero entry in a non-pivotal column ==> row of S in non-zero */
+        nnz++;
+        tmp = 1;
+      }
+    }
+    k += tmp;
+  }
+    
+  /* free extra workspace */
+  free(qinv);
+  free(x);
+  free(xi);
+
+  *density = ((double) nnz) / (m - n_pivots) / R;
+  return (int) (((double) k) / ((double) R) * (n - n_pivots));
+}
+
