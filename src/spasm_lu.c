@@ -462,6 +462,8 @@ spasm *spasm_schur(const spasm * A, const int *p, const int n_pivots) {
 
 /** Samples R rows at random in the schur complement of A w.r.t. the pivots in p[0:n_pivots],
 * and return the number that are non-zero (these rows of A are linearly independent from the pivots).
+*
+* le seul truc utile, c'est la densité.
 */
 int spasm_schur_probe(const spasm * A, const int *p, const int n_pivots, const int R, double *density) {
   int m, n, px, *xi, i, inew, top, j, *qinv, *Ap, *Aj, k, nnz, tmp;
@@ -526,16 +528,17 @@ void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p
   for(i = 0; i < npiv; i++) {
     inew = p[i];
     j = Aj[Ap[inew]];
-
-    const spasm_GFp diagonal_entry = Ax[ Ap[inew] ];
-    assert (diagonal_entry != 0);
+    
     if (x[j] == 0) {
       continue;
     }
 
     /* computing this inverse here is bad. The pivots in A should be unitary */
-    const spasm_GFp d = (x[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-    spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], prime - d, x, prime);
+    // const spasm_GFp diagonal_entry = Ax[ Ap[inew] ];
+    // assert (diagonal_entry == 1);
+
+    
+    spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], prime - x[j], x, prime);
     assert(x[j] == 0);
 
     for(k = 0; k < i; k++) {
@@ -549,7 +552,7 @@ void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p
 
 
 int spasm_schur_rank(const spasm * A, const int *p, const int npiv) {
-  int Sn, Sm, m, n, i, inew, j, k, r, prime, new;
+  int Sn, Sm, m, n, i, inew, j, k, r, px, prime, new, step, nbad, ngood;
   int *qinv, *q, *Ap, *Aj;
   spasm_GFp *Ax, *x, *y, *Uq;
 
@@ -585,6 +588,17 @@ int spasm_schur_rank(const spasm * A, const int *p, const int npiv) {
     }
   }
 
+  /* make pivotal rows of A unitary */
+  for(i = 0; i < npiv; i++) {
+    inew = p[i];
+    const spasm_GFp diagonal_entry = Ax[ Ap[inew] ];
+    const spasm_GFp alpha = spasm_GFp_inverse(diagonal_entry, prime);
+    for (px = Ap[inew]; px < Ap[inew+1]; px++) {
+      Ax[px] *= alpha;
+      Ax[px] = Ax[px] % prime;
+    }
+  }
+
   spasm_dense_lu *U = spasm_dense_LU_alloc(Sm, A->prime);
   Uq = spasm_malloc(Sm * sizeof(int));
   for (j = 0; j < Sm; j++) {
@@ -594,21 +608,37 @@ int spasm_schur_rank(const spasm * A, const int *p, const int npiv) {
   /* ---- compute Schur complement ----- */
   fprintf(stderr, "Starting Schur complement computation...\n");
   r = 0;
-  int seed = rand() + 1;
-  for (k = npiv; k < n; k++) {
-    /* compute a random linear combination of the non-pivotal rows. not DRY */
+  step = 1;
+  k = 1;
+  nbad = 0;
+  ngood = 0;
+  int64 a=0, b=0, c=0, start;
+
+  while (1) {
+    /* compute a random linear combination of [step] non-pivotal rows. not DRY */
+    
+    /* l'essentiel du temps se passe avec step == 1 */
+
+    start = spasm_ticks();
     spasm_vector_zero(x, m);
-    //for(int i = 0; i < n; i++) {
-      inew = p[k];
-      spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], 1, x, prime); //rand_r(&seed) % prime, x, prime);
-    //}
+    if (step >= n) { /* on prend tout ! */
+      for(i = npiv; i < n; i++) {
+        inew = p[i];
+        spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, x, prime);
+      }
+    } else { /* on prend un sous-ensemble aléatoire */
+      for(i = 0; i < step; i++) {
+        inew = p[npiv + (rand() % (n - npiv))];
+        spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], 1 + (rand() % (prime-1)), x, prime);
+      }
+    }
+    a += spasm_ticks() - start;
+    start = spasm_ticks();
 
     spasm_eliminate_sparse_pivots(A, npiv, p, x);
-    /*for(j=0; j<m; j++) {
-      assert(x[j] == 0);
-    }*/
-
-    // il ne doit plus rien rester
+    
+    b += spasm_ticks() - start;
+    start = spasm_ticks();
 
     /* the solution is scattered in x. Copy it to a (contiguous) y */
     for (j = 0; j < Sm; j++) {
@@ -616,18 +646,38 @@ int spasm_schur_rank(const spasm * A, const int *p, const int npiv) {
     }
 
     new = spasm_dense_LU_process(U, y, Uq);
-    if (new) {
-      fprintf(stderr, "+");
-    } else {
-      fprintf(stderr, ".");
-    }
-    fflush(stderr);
-    r += new;
 
-    /*if ((i % verbose_step) == 0) {
-      fprintf(stderr, "\rSchur : %d / %d [S=%d * %d, %d NNZ] -- current density= (%.3f)", i, n, Sn, Sm, snz, 1.0 * snz / (1.0 * Sm * Sn));
+    c += spasm_ticks() - start;
+
+    if (new) {
+      r++;
+      ngood++;
+      if (ngood == 16) {
+        if (step > 1) {
+          nbad = 0;
+        }
+        step = spasm_max(step / 2, 1);
+        ngood = 0;
+      }
+      // fprintf(stderr, "+");
+    } else {
+      nbad++;
+      if (nbad == 3) {
+        if (step > n) {
+          break; // c'est fini
+        }
+        step *= 2;
+        nbad = 0;
+        ngood = 0;
+      }
+      // fprintf(stderr, ".");
+    }
+    
+    if ((k % 1) == 0) {
+      fprintf(stderr, "\rSchur : %d [step = %d] -- current rank = %d / bad = %d, good = %d | %"PRId64" %"PRId64" %"PRId64"          ", k, step, r, nbad, ngood, a/k,b/k,c/k);
       fflush(stderr);
-    }*/
+    }
+    k++;
   }
   fprintf(stderr, "\n");
   return r;
