@@ -25,7 +25,8 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *U, *L;
   spasm_lu *LU;
-  int r, n, m, *p, ch, prime, allow_transpose, sort_strategy, keep_L, timer;
+  int r, n, m, ch, prime, allow_transpose, sort_strategy, keep_L, timer, npiv;
+  int *qinv, *p;
   double start_time, end_time;
 
   prime = 42013;
@@ -81,12 +82,11 @@ int main(int argc, char **argv) {
     spasm_triplet_transpose(T);
     fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
   }
+
   A = spasm_compress(T);
   spasm_triplet_free(T);
   n = A->n;
   m = A->m;
-
-
   start_time = spasm_wtime();
 
   switch (sort_strategy) {
@@ -95,11 +95,8 @@ int main(int argc, char **argv) {
     break;
 
   case 1:
-    fprintf(stderr, "[rank] finding cheap pivots : ");
-    fflush(stderr);
-    int npiv;
-    int *qinv = spasm_malloc(m * sizeof(int));
-    int *p = spasm_malloc(n * sizeof(int));
+    qinv = spasm_malloc(m * sizeof(int));
+    p = spasm_malloc(n * sizeof(int));
     npiv = spasm_find_pivots(A, p, qinv);
     spasm *B = spasm_permute_pivots(A, p, qinv, npiv);
     
@@ -109,7 +106,7 @@ int main(int argc, char **argv) {
     p = SPASM_IDENTITY_PERMUTATION;
     A = B;
 
-    fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
+    fprintf(stderr, "[rank] finding pivots: %.1f s\n", spasm_wtime() - start_time);
     break;
 
   case 2:
