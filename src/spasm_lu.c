@@ -131,8 +131,8 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
   spasm *L, *U;
   spasm_lu *N;
   spasm_GFp *Lx, *Ux, *x;
-  int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xi;
-  int n, m, r, ipiv, i, inew, j, top, px, lnz, unz, old_unz, prime, defficiency,
+  int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xj;
+  int n, m, r, jpiv, i, inew, j, top, px, lnz, unz, old_unz, prime, defficiency,
       verbose_step;
   int rows_since_last_pivot, early_abort_done;
 
@@ -158,8 +158,8 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
   x = spasm_malloc(m * sizeof(spasm_GFp));
 
   /* get int workspace */
-  xi = spasm_malloc(3 * m * sizeof(int));
-  spasm_vector_zero(xi, 3 * m);
+  xj = spasm_malloc(3 * m * sizeof(int));
+  spasm_vector_zero(xj, 3 * m);
 
   /* allocate result */
   N = spasm_malloc(sizeof(spasm_lu));
@@ -233,7 +233,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     Ux = U->x;
 
     inew = (row_permutation != NULL) ? row_permutation[i] : i;
-    top = spasm_sparse_forward_solve(U, A, inew, xi, x, qinv);
+    top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
 
 
     /*
@@ -243,12 +243,12 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 #ifdef SPASM_TIMING
     start = spasm_ticks();
 #endif
-    ipiv = -1;
-    /* index of best pivot so far. */
+    jpiv = -1; /* column index of best pivot so far. */
+    
 
     for (px = top; px < m; px++) {
       /* x[j] is (generically) nonzero */
-      j = xi[px];
+      j = xj[px];
 
       /* if x[j] == 0 (numerical cancelation), we just ignore it */
       if (x[j] == 0) {
@@ -258,8 +258,8 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
         /* column j is not yet pivotal ? */
 
         /* have found the pivot on row i yet ? */
-        if (ipiv == -1 || j < ipiv) {
-          ipiv = j;
+        if (jpiv == -1 || j < jpiv) {
+          jpiv = j;
         }
       } else if (keep_L) {
         /* column j is pivotal */
@@ -271,30 +271,31 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     }
 
     /* pivot found ? */
-    if (ipiv != -1) {
+    if (jpiv != -1) {
       old_unz = unz;
 
-      /* L[i,i] <--- 1. Last entry of the row ! */
+      /* L[i,i] <--- x[jpiv]. Last entry of the row ! */
       if (keep_L) {
         Lj[lnz] = i - defficiency;
-        Lx[lnz] = 1;
+        Lx[lnz] = x[jpiv];
         lnz++;
       }
-      qinv[ipiv] = i - defficiency;
+      qinv[jpiv] = i - defficiency;
       p[i - defficiency] = i;
 
       /* pivot must be the first entry in U[i] */
-      Uj[unz] = ipiv;
-      Ux[unz] = x[ipiv];
+      Uj[unz] = jpiv;
+      Ux[unz] = 1;
       unz++;
 
       /* send remaining non-pivot coefficients into U */
+      spasm_GFp beta = spasm_GFp_inverse(x[jpiv], prime);
       for (px = top; px < m; px++) {
-        j = xi[px];
+        j = xj[px];
 
         if (qinv[j] < 0) {
           Uj[unz] = j;
-          Ux[unz] = x[j];
+          Ux[unz] = (x[j] * beta) % prime;
           unz++;
         }
       }
@@ -332,7 +333,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     spasm_csr_realloc(L, -1);
   }
   free(x);
-  free(xi);
+  free(xj);
   return N;
 }
 
