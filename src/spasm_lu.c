@@ -60,15 +60,38 @@ spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L) {
   return N;
 }
 
+/* eliminate everything in the (dense) vector x using the pivots found in A */
+void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp *x) {
+  int i, inew, j, prime, *Aj, *Ap;
+  spasm_GFp *Ax;
+
+  Aj = A->j;
+  Ap = A->p;
+  Ax = A->x;
+  prime = A->prime;
+
+  for(i = 0; i < npiv; i++) {
+    inew = (p != NULL) ? p[i] : i;
+    j = Aj[Ap[inew]];
+    
+    if (x[j] == 0) {
+      continue;
+    }
+
+    spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], prime - x[j], x, prime);
+  }
+}
+
+
 /**
  *   Computes a random linear combination of A[k:].
  *   returns TRUE iff it belongs to the row-space of U.
  *   This means that with proba >= 1-1/p, all pivots have been found.
  */
-int spasm_early_abort(const spasm * A, const int *row_permutation, int k, const spasm * U, int nu) {
-  int *Aj, *Ap, *Uj, *Up;
+int spasm_early_abort(const spasm * A, const int *p, int k, const spasm * U, int nu) {
+  int *Aj, *Ap;
   int i, j, inew, n, m, ok;
-  spasm_GFp prime, *y, *Ax, *Ux;
+  spasm_GFp prime, *y, *Ax;
 
   n = A->n;
   m = A->m;
@@ -76,9 +99,6 @@ int spasm_early_abort(const spasm * A, const int *row_permutation, int k, const 
   Aj = A->j;
   Ap = A->p;
   Ax = A->x;
-  Uj = U->j;
-  Up = U->p;
-  Ux = U->x;
 
   y = spasm_malloc(m * sizeof(spasm_GFp));
 
@@ -87,20 +107,11 @@ int spasm_early_abort(const spasm * A, const int *row_permutation, int k, const 
     y[j] = 0;
   }
   for (i = k; i < n; i++) {
-    inew = (row_permutation != NULL) ? row_permutation[i] : i;
+    inew = (p != NULL) ? p[i] : i;
     spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, y, prime);
   }
 
-  /* eliminate the coefficients of y below pivots of U */
-  for (i = 0; i < nu; i++) {
-    j = Uj[Up[i]];
-    const spasm_GFp diagonal_entry = Ux[Up[i]];
-    if (y[j] == 0) {
-      continue;
-    }
-    const spasm_GFp d = (y[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-    spasm_scatter(Uj, Ux, Up[i], Up[i + 1], prime - d, y, prime);
-  }
+  spasm_eliminate_sparse_pivots(U, nu, SPASM_IDENTITY_PERMUTATION, y);
 
   /* if y != 0, then y does not belong to the row space of U */
   ok = 1;
@@ -463,11 +474,9 @@ spasm *spasm_schur(const spasm * A, const int *p, const int n_pivots) {
 
 /** Samples R rows at random in the schur complement of A w.r.t. the pivots in p[0:n_pivots],
 * and return the number that are non-zero (these rows of A are linearly independent from the pivots).
-*
-* le seul truc utile, c'est la densité.
 */
-int spasm_schur_probe(const spasm * A, const int *p, const int n_pivots, const int R, double *density) {
-  int m, n, px, *xi, i, inew, top, j, *qinv, *Ap, *Aj, k, nnz, tmp;
+double spasm_schur_probe_density(const spasm * A, const int *p, const int *qinv, const int npiv, const int R) {
+  int m, n, px, *xj, i, inew, top, j, *Ap, *Aj, nnz;
   spasm_GFp *x;
 
   /* check inputs */
@@ -477,79 +486,29 @@ int spasm_schur_probe(const spasm * A, const int *p, const int n_pivots, const i
   Aj = A->j;
 
   /* Get Workspace */
-  qinv = spasm_malloc(m * sizeof(int));
   x = spasm_malloc(m * sizeof(spasm_GFp));
-  xi = spasm_malloc(3 * m * sizeof(int));
-  spasm_vector_zero(xi, 3 * m);
+  xj = spasm_malloc(3 * m * sizeof(int));
+  spasm_vector_zero(xj, 3 * m);
 
-  spasm_vector_set(qinv, 0, m, -1);
-  for (i = 0; i < n_pivots; i++) {
-    inew = p[i];
-    j = Aj[Ap[inew]];
-    qinv[j] = inew;             /* (inew, j) is a pivot */
-  }
-
-  k = 0;
   nnz = 0;
   for (i = 0; i < R; i++) {
     /* pick a random row in S, check if non-zero */
-    inew = p[n_pivots + (rand() % (n - n_pivots))];
-    top = spasm_sparse_forward_solve(A, A, inew, xi, x, qinv);
-    tmp = 0;
+    inew = p[npiv + (rand() % (n - npiv))];
+    top = spasm_sparse_forward_solve(A, A, inew, xj, x, qinv);
     for (px = top; px < m; px++) {
-      j = xi[px];
+      j = xj[px];
       if (qinv[j] < 0 && x[j] != 0) {  /* non-zero entry in a non-pivotal column ==> row of S in non-zero */
         nnz++;
-        tmp = 1;
       }
     }
-    k += tmp;
   }
     
   /* free extra workspace */
-  free(qinv);
   free(x);
-  free(xi);
+  free(xj);
 
-  *density = ((double) nnz) / (m - n_pivots) / R;
-  return (int) (((double) k) / ((double) R) * (n - n_pivots));
+  return ((double) nnz) / (m - npiv) / R;
 }
-
-
-/* eliminate everything in the (dense) vector x using the pivots found in A */
-void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp *x) {
-  int i, inew, j, prime, *Aj, *Ap, k;
-  spasm_GFp *Ax;
-
-  Aj = A->j;
-  Ap = A->p;
-  Ax = A->x;
-  prime = A->prime;
-
-  for(i = 0; i < npiv; i++) {
-    inew = p[i];
-    j = Aj[Ap[inew]];
-    
-    if (x[j] == 0) {
-      continue;
-    }
-
-    /* computing this inverse here is bad. The pivots in A should be unitary */
-    // const spasm_GFp diagonal_entry = Ax[ Ap[inew] ];
-    // assert (diagonal_entry == 1);
-
-    
-    spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], prime - x[j], x, prime);
-    assert(x[j] == 0);
-
-    for(k = 0; k < i; k++) {
-      j = Aj[Ap[inew]];
-      // assert(x[k] == 0); /* it stays eliminated */
-    }
-  }
-}
-
-
 
 
 int spasm_schur_rank(const spasm * A, const int *p, const int npiv) {

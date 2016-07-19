@@ -8,7 +8,7 @@
 int main(int argc, char **argv) {
 
   /* charge la matrice depuis l'entrée standard */
-  int prime = 42013, n_times, i, rank, npiv, approx_rank, n, m;
+  int prime = 42013, n_times, i, rank, npiv, n, m;
   double start_time, end_time;
   spasm_triplet *T;
   spasm *A, *B;
@@ -39,10 +39,14 @@ int main(int argc, char **argv) {
   start_time = spasm_wtime();
   rank = 0;  
   npiv = spasm_find_pivots(A, p, qinv);
-  approx_rank = spasm_schur_probe(A, p, npiv, 100, &density);
+  density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
   
   for (i = 0; i < n_times; i++) {
-    fprintf(stderr, "round %d. Schur complement is %d x %d (approx density %.2f)\n", i, n-npiv, m-npiv, density);
+    int nnz = density * (n - npiv) * (m - npiv);
+    char tmp[6];
+    spasm_human_format(sizeof(int)*(n-npiv+nnz) + sizeof(spasm_GFp)*nnz, tmp);
+    fprintf(stderr, "round %d. Schur complement is %d x %d, estimted density : %.2f (%s byte)\n", i, n-npiv, m-npiv, density, tmp);
+  
     if (density > 0.1 || m-npiv < 0.1 * m) {
       break;
     }
@@ -56,7 +60,7 @@ int main(int argc, char **argv) {
     m = A->m;
 
     npiv = spasm_find_pivots(A, p, qinv);
-    approx_rank = spasm_schur_probe(A, p, npiv, 100, &density);
+    density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
   }
 
   /* sparse schur complement : GPLU */
