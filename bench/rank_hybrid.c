@@ -2,26 +2,78 @@
 #include <assert.h>
 #include <stdio.h>
 #include "spasm.h"
+#include <getopt.h>
 
 /** Computes the rank of the input matrix using the hybrid strategy */
 
 int main(int argc, char **argv) {
 
   /* charge la matrice depuis l'entrée standard */
-  int prime = 42013, n_times, i, rank, npiv, n, m;
+  int prime = 42013, n_times, i, rank, npiv, n, m, dense_final, gplu_final, allow_transpose, ch;
   double start_time, end_time;
   spasm_triplet *T;
   spasm *A, *B;
   int *p, *qinv;
-  double density;
+  double density, sparsity_threshold;
   char nnz[6];
 
-  T = spasm_load_sms(stdin, prime);
-  A = spasm_compress(T);
-  /*printf("I am going to FREE\n");
-  fflush(stdout);*/
-  spasm_triplet_free(T);
+  allow_transpose = 1;          /* transpose ON by default */
+  n_times = 3;
+  dense_final = 0;
+  gplu_final = 0;
+  sparsity_threshold = 0.1;
 
+  /* options descriptor */
+  struct option longopts[7] = {
+    {"sparse-threshold", required_argument, NULL, 's'},
+    {"max-recursion", required_argument, NULL, 'm'},
+    {"dense-last-step", no_argument, NULL, 'd'},
+    {"gplu-last-step", no_argument, NULL, 'g'},
+    {"no-transpose", no_argument, NULL, 'a'},
+    {"modulus", required_argument, NULL, 'p'},
+    {NULL, 0, NULL, 0}
+  };
+
+  while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
+    switch (ch) {
+    case 's':
+      sparsity_threshold = atof(optarg);
+      break;
+    case 'm':
+      n_times = atoi(optarg);
+      break;
+    case 'd':
+      dense_final = 1;
+      break;
+    case 'a':
+      allow_transpose = 0;
+      break;
+    case 'g':
+      gplu_final = 1;
+      break;
+    case 'p':
+      prime = atoi(optarg);
+      break;
+    default:
+      printf("Unknown option\n");
+      exit(1);
+    }
+  }
+  argc -= optind;
+  argv += optind;
+
+
+  T = spasm_load_sms(stdin, prime);
+  if (allow_transpose && (T->n < T->m)) {
+    fprintf(stderr, "[rank] transposing matrix : ");
+    fflush(stderr);
+    start_time = spasm_wtime();
+    spasm_triplet_transpose(T);
+    fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
+  }
+  
+  A = spasm_compress(T);
+  spasm_triplet_free(T);
   n = A->n;
   m = A->m;
   spasm_human_format(spasm_nnz(A), nnz);
@@ -31,11 +83,6 @@ int main(int argc, char **argv) {
   qinv = spasm_malloc(m * sizeof(int));
 
   /* 3 iterations of Schur complement, by default */
-  n_times = 3;
-  if (argc > 1) {
-    n_times = atoi(argv[1]);
-  }
-
   start_time = spasm_wtime();
   rank = 0;  
   npiv = spasm_find_pivots(A, p, qinv);
@@ -45,9 +92,9 @@ int main(int argc, char **argv) {
     int nnz = density * (n - npiv) * (m - npiv);
     char tmp[6];
     spasm_human_format(sizeof(int)*(n-npiv+nnz) + sizeof(spasm_GFp)*nnz, tmp);
-    fprintf(stderr, "round %d. Schur complement is %d x %d, estimted density : %.2f (%s byte)\n", i, n-npiv, m-npiv, density, tmp);
+    fprintf(stderr, "round %d. Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", i, n-npiv, m-npiv, density, tmp);
   
-    if (density > 0.1 || m-npiv < 0.1 * m) {
+    if (density > sparsity_threshold || m-npiv < 0.1 * m) {
       break;
     }
 
@@ -63,8 +110,10 @@ int main(int argc, char **argv) {
     density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
   }
 
+  /* ---- final step ---------- */
+
   /* sparse schur complement : GPLU */
-  if (density < 0.1) {
+  if (gplu_final || (!dense_final && density < sparsity_threshold)) {
     spasm_lu *LU = spasm_LU(A, p, SPASM_DISCARD_L);
     rank +=  LU->U->n;
     spasm_free_LU(LU);
