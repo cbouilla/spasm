@@ -89,12 +89,12 @@ int main(int argc, char **argv) {
   density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
   
   for (i = 0; i < n_times; i++) {
-    int nnz = density * (n - npiv) * (m - npiv);
+    int nnz = (density * (n - npiv)) * (m - npiv);
     char tmp[6];
     spasm_human_format(sizeof(int)*(n-npiv+nnz) + sizeof(spasm_GFp)*nnz, tmp);
-    fprintf(stderr, "round %d. Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", i, n-npiv, m-npiv, density, tmp);
+    fprintf(stderr, "round %d / %d. Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", i, n_times, n-npiv, m-npiv, density, tmp);
   
-    if (density > sparsity_threshold || m-npiv < 0.1 * m) {
+    if (density > sparsity_threshold) {
       break;
     }
 
