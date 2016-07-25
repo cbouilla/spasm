@@ -204,9 +204,9 @@ int spasm_find_FL_pivots(const spasm * A, int *p, int *qinv) {
 }
 
 
-/* provide already know pivots, and this looks for more */
+/* provide already know pivots, and this looks for more. Updates qinv, but DFS must be performed afterwards */
 int spasm_find_cycle_free_pivots(const spasm * A, int *qinv, int npiv_start) {
-  int i, j, k, px, pxI, idx_j, n, m, I, head, tail, *Aj, *Ap, processed, *w, *queue, v, npiv;
+  int i, j, px, n, m, I, head, tail, *Aj, *Ap, processed, *w, *queue, v, npiv;
   spasm_GFp *Ax;
 
   n = A->n;
@@ -226,6 +226,17 @@ int spasm_find_cycle_free_pivots(const spasm * A, int *qinv, int npiv_start) {
   spasm_vector_set(w, 0, m, 0);
 
   for (i = 0; i < n; i++) {
+    /* for each non-pivotal row, computes the columns reachable from its entries by alternating paths.
+    * Unreachable entries on the row can be chosen as pivots. The w[] array is used for marking during the graph traversal.
+    * Before the search:
+    *   w[j] ==  1  for each non-pivotal entry j on the row
+    *   w[j] ==  0  otherwise
+    * After the search:
+    *   w[j] ==  1  for each unreachable non-pivotal entry j on the row
+    *   w[j] == -1  column j is reachable by an alternating path, or is pivotal (has entered the queue at some point)
+    *   w[j] ==  0  column j was absent and is unreachable
+    */
+
     if (i % v == 0) {
       fprintf(stderr, "\rcheap : %d / %d --- found %d new", processed, n - npiv_start, npiv - npiv_start);
       fflush(stderr);
@@ -235,80 +246,64 @@ int spasm_find_cycle_free_pivots(const spasm * A, int *qinv, int npiv_start) {
     }
     processed++;
 
-    /* scatters non-pivotal columns of A[i] into w */
-    for (px = Ap[i]; px < Ap[i + 1]; px++) {
-      j = Aj[px];
-      if (qinv[j] == -1) {
-        w[j] = 1;  
-      }
-    }
-
-    /* BFS, looking for cycles */
+    /* scatters columns of A[i] into w, enqueue pivotal entries */
     head = 0;
     tail = 0;
     for (px = Ap[i]; px < Ap[i + 1]; px++) {
       j = Aj[px];
-      if (qinv[j] == -1) {      /* column is not pivotal: skip */
-        continue;
+      if (qinv[j] == -1) {
+        /* original non-pivotal column */
+        w[j] = 1;  
+      } else {
+        /* enqueue the entry, and mark it as reachable */
+        w[j] = -1;
+        queue[tail++] = j;
       }
-      if (w[j] < 0) {           /* already marked: skip */
-        continue;
+    }
+
+    /* BFS */
+    while (head < tail) {
+      /* dequeue column j */
+      j = queue[head++];
+      /* is it pivotal ? */
+      I = qinv[j];
+      if (I == -1) {
+        continue;             /* no: nothing to do */
       }
-      queue[tail] = j;
-      tail++;
-      w[j] = -1;
-
-      /* BFS */
-      while (head < tail) {
-        j = queue[head];
-        head++;
-
-        I = qinv[j];
-        if (I == -1) {
-          continue;             /* nothing to do */
+  
+      /* yes: enqueue all the entries on the pivot row */
+      for (px = Ap[I]; px < Ap[I + 1]; px++) {
+        j = Aj[px];
+        if (w[j] < 0) {
+          continue;           /* already marked : do not enqueue */
         }
-        for (pxI = Ap[I]; pxI < Ap[I + 1]; pxI++) {
-          j = Aj[pxI];
-          if (w[j] < 0) {
-            continue;           /* already marked */
-          }
-          queue[tail] = j;
-          tail++;
-          w[j] = -1;
-          /*
-           * ne peut-on éviter d'empiler des trucs qui déclenchent le
-           * "continue" ci-dessus ?
-           */
-        }
+        queue[tail++] = j;
+        w[j] = -1;
       }
     }
 
     /* scan w for surviving entries */
-    k = -1;
     for (px = Ap[i]; px < Ap[i + 1]; px++) {
       j = Aj[px];
-      if ((k == -1) && (w[j] == 1)) {
-        k = j;
-        idx_j = px;
+      if (w[j] == 1) { /* potential pivot found */
+        qinv[j] = i;
+        /* make sure selected pivot entry is the first of the row */
+        spasm_swap(Aj, Ap[i], px);
+        if (Ax != NULL) {
+          spasm_swap(Ax, Ap[i], px);
+        }
+        npiv++;  
+        break;
       }
-      w[j] = 0;                 /* utile ? */
     }
 
-    /* reset w */
+    /* reset w back to zero */
     for (px = 0; px < tail; px++) {
       j = queue[px];
       w[j] = 0;
-    }
-
-    if (k != -1) {
-      qinv[k] = i;
-
-      /* make sure leftmost entry is the first of the row */
-      spasm_swap(Aj, Ap[i], idx_j);
-      spasm_swap(Ax, Ap[i], idx_j);
-      npiv++;
-    }
+    }    
   }
+
   fprintf(stderr, "\r[pivots] found %d cheap pivots (greedy search)\n", npiv - npiv_start);
   free(w);
   free(queue);
@@ -323,8 +318,8 @@ int spasm_find_cycle_free_pivots(const spasm * A, int *qinv, int npiv_start) {
   both p and qinv must be preallocated
 */
 int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
-  int n, m, i, j, k, I, idx_j, px, npiv;
-  int *Ap, *Aj, *w, *queue;
+  int n, m, i, j, k, npiv;
+  int *Ap, *Aj;
   spasm_GFp *Ax;
 
   n = A->n;
