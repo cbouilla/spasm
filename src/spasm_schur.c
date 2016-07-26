@@ -158,6 +158,7 @@ double spasm_schur_probe_density(const spasm * A, const int *p, const int *qinv,
 int spasm_schur_rank(const spasm * A, const int *p, const int npiv) {
   int Sn, Sm, m, n, i, inew, j, k, r, px, prime, new, step, nbad, ngood;
   int *qinv, *q, *Ap, *Aj;
+  double wtime_start;
   spasm_GFp *Ax, *x, *y, *Uq;
 
   n = A->n;
@@ -211,6 +212,7 @@ int spasm_schur_rank(const spasm * A, const int *p, const int npiv) {
 
   /* ---- compute Schur complement ----- */
   fprintf(stderr, "rank of dense schur complement...\n");
+  wtime_start = spasm_wtime();
   r = 0;
   step = 1;
   k = 1;
@@ -283,6 +285,6 @@ int spasm_schur_rank(const spasm * A, const int *p, const int npiv) {
     }
     k++;
   }
-  fprintf(stderr, "\n");
+  fprintf(stderr, "\n[schur/rank] Time: %.1fs\n", spasm_wtime() - wtime_start);
   return r;
 }
