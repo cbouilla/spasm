@@ -3,6 +3,7 @@
 #define _SPASM_H
 
 #define SPASM_TIMING
+#include "config.h"
 
 #include <stdlib.h>
 #include <limits.h>
