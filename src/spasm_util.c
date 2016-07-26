@@ -21,24 +21,24 @@ int spasm_nnz(const spasm * A) {
 }
 
 /* return a string representing n in 4 bytes */
-void spasm_human_format(int n, char *target) {
-  if (n < 1e3) {
-    sprintf(target, "%d", n);
+void spasm_human_format(int64_t n, char *target) {
+  if (n < 1000) {
+    sprintf(target, "%lld", n);
     return;
   }
-  if (n < 1e6) {
+  if (n < 1000000) {
     sprintf(target, "%.1fk", n / 1e3);
     return;
   }
-  if (n < 1e9) {
+  if (n < 1000000000) {
     sprintf(target, "%.1fm", n / 1e6);
     return;
   }
-  if (n < 1e12) {
+  if (n < 1000000000000ll) {
     sprintf(target, "%.1fg", n / 1e9);
     return;
   }
-  if (n < 1e16) {
+  if (n < 1000000000000000ll) {
     sprintf(target, "%.1ft", n / 1e12);
     return;
   }
