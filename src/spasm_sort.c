@@ -111,20 +111,26 @@ int *spasm_row_sort(const spasm * A) {
 }
 
 
-/* --- Faugère-Lachartre pivot detection ------------------ */
+/* Faugère-Lachartre pivot search.
+ * The leftmost entry of each row is a candidate pivot. Select the sparsest row
+ * with a leftmost entry on the given column. Selected pivots are moved to the
+ * front of the row.
+ * qinv must be initialized to -1
+ * p can be arbitrary.
+ * Return the number of pivots found. */
 int spasm_find_FL_pivots(const spasm * A, int *p, int *qinv) {
-  int i, j, inew, n, m, px, idx_j, *w, *Aj, *Ap, npiv, npiv_fl;
+  int i, j, n, m, px, idx_j, *Aj, *Ap, npiv;
   spasm_GFp *Ax;
+  double start;
 
   n = A->n;
   m = A->m;
   Ap = A->p;
   Aj = A->j;
   Ax = A->x;
-  w = spasm_malloc(m * sizeof(int));  
+  start = spasm_wtime();
 
   for (i = 0; i < n; i++) {
-    /* find leftmost entry */
     j = -1;
     for (px = Ap[i]; px < Ap[i + 1]; px++) {
       if (j == -1 || Aj[px] < j) {
@@ -132,36 +138,52 @@ int spasm_find_FL_pivots(const spasm * A, int *p, int *qinv) {
         idx_j = px;
       }
     }
-    /* Skip empty rows */
-    if (j == -1) {
+    
+    if (j == -1) { /* Skip empty rows */
       continue;
     }
-    /* make sure leftmost entry is the first of the row */
-    spasm_swap(Aj, Ap[i], idx_j);
-    if (Ax != NULL) {
-      spasm_swap(Ax, Ap[i], idx_j);
-    }
-    
+
     /* check if it is a sparser pivot */
     if (qinv[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, qinv[j])) {
       qinv[j] = i;
+      spasm_swap(Aj, Ap[i], idx_j);
+      if (Ax != NULL) {
+        spasm_swap(Ax, Ap[i], idx_j);
+      }
     }
   }
 
-  /* count the Faugère-Lachartre pivots, and store their rows in p */
   npiv = 0;
   for (j = 0; j < m; j++) {
     if (qinv[j] != -1) {
       p[npiv++] = qinv[j];
     }
   }
-  npiv_fl = npiv;
-  fprintf(stderr, "[pivots] Faugère-Lachartre: %d pivots found\n", npiv_fl);
+  fprintf(stderr, "[pivots] Faugère-Lachartre: %d pivots found [%.1fs]\n", npiv, spasm_wtime() - start);
+  return npiv;
+}
 
 
-/* --- free column pivots ----------------------------------*/
-  spasm_vector_set(w, 0, m, 1);
+/* Leftovers from FL.
+ * Column not occuring on previously selected pivot row can be made pivotal, as
+ * this will not create alternating cycles.
+ */
+int spasm_find_FL_column_pivots(const spasm * A, int *p, int *qinv, int npiv_fl) {
+    int i, j, inew, n, m, px, *Aj, *Ap, npiv, *w;
+    spasm_GFp *Ax;
+    double start;
+
+    n = A->n;
+    m = A->m;
+    Ap = A->p;
+    Aj = A->j;
+    Ax = A->x;
+    npiv = npiv_fl;
+    w = spasm_malloc(m * sizeof(int));
+    spasm_vector_set(w, 0, m, 1);
   
+  start = spasm_wtime();
+
   /* scatter previous pivot rows into w */
   for (i = 0; i < npiv; i++) {
     inew = p[i];
@@ -193,16 +215,17 @@ int spasm_find_FL_pivots(const spasm * A, int *p, int *qinv) {
         if (Ax != NULL) {
           spasm_swap(Ax, Ap[i], px);
         }
-        /* close more columns */     
+        /* mark the columns occuring on this row as unavailable */     
         for (px = Ap[i]; px < Ap[i + 1]; px++) {
           j = Aj[px];
           w[j] = 0;
         }
-        break;   /* this row is done */
+        break;
       }
     } 
   }
-  fprintf(stderr, "[pivots] ``Faugère-Lachartre on columns'': %d pivots found\n", npiv - npiv_fl);
+  free(w);
+  fprintf(stderr, "[pivots] ``Faugère-Lachartre on columns'': %d pivots found [%.1fs]\n", npiv - npiv_fl, spasm_wtime() - start);
   return npiv;
 }
 
@@ -275,7 +298,7 @@ int spasm_find_cycle_free_pivots(const spasm * A, int *p, int *qinv, int npiv_st
 #endif
 
 
-#pragma omp for schedule(guided)
+#pragma omp for schedule(dynamic, 1000)
     for (int i = 0; i < n; i++) {
       /*
        * for each non-pivotal row, computes the columns reachable from its
@@ -398,9 +421,10 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
 
   spasm_vector_set(qinv, 0, m, -1);
   npiv = spasm_find_FL_pivots(A, p, qinv);
-#if 1
+  npiv = spasm_find_FL_column_pivots(A, p, qinv, npiv);
+
+  /* TODO : rendre ceci optionnel, car c'est long */
   npiv = spasm_find_cycle_free_pivots(A, p, qinv, npiv);
-#endif
 
   /* --- build corresponding row permutation ---------------------- */
   int *xj = spasm_malloc(m * sizeof(int));
