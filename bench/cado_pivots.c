@@ -7,23 +7,24 @@
 
 int main(int argc, char **argv) {
   /* charge la matrice depuis l'entrée standard */
-  int n_cheap, *p;
-  double start_time, end_time;
+  int npiv, *p, *qinv, n, m, *Aj, nnz;
 
   assert(argc > 1);
   spasm *A = spasm_load_CADO(argv[1]);
-  
-  for(int i=0; i<A->nzmax; i++) {
-    A->j[i] = A->m - A->j[i];
-  }
+  Aj = A->j;
+  m = A->m;
+  n = A->n;
+  nnz = A->nzmax;
 
-  start_time = spasm_wtime();
-  p = spasm_cheap_pivots(A, &n_cheap);
-  end_time = spasm_wtime();
-  // printf("%d; %.2f\n", n_cheap, end_time - start_time);
+  #pragma omp parallel for schedule(static)
+  for(int i=0; i< nnz; i++)
+    Aj[i] = (m-1) - Aj[i];
 
-  spasm_save_csr(stdout, A);
+  p = spasm_malloc(n * sizeof(int));
+  qinv = spasm_malloc(m * sizeof(int));
+  npiv = spasm_find_pivots(A, p, qinv);
 
   free(p);
+  free(qinv);
   spasm_csr_free(A);
 }

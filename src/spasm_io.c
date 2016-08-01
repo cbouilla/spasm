@@ -227,8 +227,8 @@ spasm * spasm_load_CADO(const char *filename) {
   int fd;
   uint32_t * map;
   struct stat buffer;
-  int64_t i, k, size;
-  int u, j, n, m, nnz;
+  int64_t k, size;
+  int i, n, m, nnz;
   spasm *A;
 
   fprintf(stderr, "loading CADO file: %s\n", filename);
@@ -252,7 +252,7 @@ spasm * spasm_load_CADO(const char *filename) {
 
   n = size / map[0];      /* this is an estimate */
   int *Ap = spasm_malloc(n * sizeof(int));
-  int *Aj = spasm_malloc(size * sizeof(int));
+  int *Aj = spasm_malloc(size * sizeof(int)); /* slight upper-bound */
 
   m = 0;
   i = 0;
@@ -266,10 +266,8 @@ spasm * spasm_load_CADO(const char *filename) {
     }
     Ap[i] = nnz;
 
-    // printf("row %" PRId64 " / size %d\n", i, map[k]);
-
-    for(u = 0; u < map[k]; u++) {
-      j = map[k+1+u];
+    for(unsigned int u = 0; u < map[k]; u++) {
+      int j = map[k+1+u];
       m = spasm_max(m, j);
       Aj[nnz + u] = j;
     }
@@ -285,14 +283,16 @@ spasm * spasm_load_CADO(const char *filename) {
 
   A = spasm_malloc(sizeof(spasm));
   A->n = i;
-  A->m = m;
+  A->m = m + 1;
   A->nzmax = size;
   A->p = Ap;
   A->j = Aj;
   A->prime = 42013;
   A->x = NULL;
 
-  fprintf(stderr, "dimensions: %" PRId64 " x %d\n", i, m);
+  char tmp[16];
+  spasm_human_format(nnz, tmp);
+  fprintf(stderr, "dimensions: %d x %d with %s NNZ\n", i, m, tmp);
   return A;
 }
 
