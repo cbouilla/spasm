@@ -60,15 +60,38 @@ spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L) {
   return N;
 }
 
+/* eliminate everything in the (dense) vector x using the pivots found in A */
+void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp *x) {
+  int i, inew, j, prime, *Aj, *Ap;
+  spasm_GFp *Ax;
+
+  Aj = A->j;
+  Ap = A->p;
+  Ax = A->x;
+  prime = A->prime;
+
+  for(i = 0; i < npiv; i++) {
+    inew = (p != NULL) ? p[i] : i;
+    j = Aj[Ap[inew]];
+    
+    if (x[j] == 0) {
+      continue;
+    }
+
+    spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], prime - x[j], x, prime);
+  }
+}
+
+
 /**
  *   Computes a random linear combination of A[k:].
  *   returns TRUE iff it belongs to the row-space of U.
  *   This means that with proba >= 1-1/p, all pivots have been found.
  */
-int spasm_early_abort(const spasm * A, const int *row_permutation, int k, const spasm * U, int nu) {
-  int *Aj, *Ap, *Uj, *Up;
+int spasm_early_abort(const spasm * A, const int *p, int k, const spasm * U, int nu) {
+  int *Aj, *Ap;
   int i, j, inew, n, m, ok;
-  spasm_GFp prime, *y, *Ax, *Ux;
+  spasm_GFp prime, *y, *Ax;
 
   n = A->n;
   m = A->m;
@@ -76,9 +99,6 @@ int spasm_early_abort(const spasm * A, const int *row_permutation, int k, const 
   Aj = A->j;
   Ap = A->p;
   Ax = A->x;
-  Uj = U->j;
-  Up = U->p;
-  Ux = U->x;
 
   y = spasm_malloc(m * sizeof(spasm_GFp));
 
@@ -87,20 +107,11 @@ int spasm_early_abort(const spasm * A, const int *row_permutation, int k, const 
     y[j] = 0;
   }
   for (i = k; i < n; i++) {
-    inew = (row_permutation != NULL) ? row_permutation[i] : i;
+    inew = (p != NULL) ? p[i] : i;
     spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, y, prime);
   }
 
-  /* eliminate the coefficients of y below pivots of U */
-  for (i = 0; i < nu; i++) {
-    j = Uj[Up[i]];
-    const spasm_GFp diagonal_entry = Ux[Up[i]];
-    if (y[j] == 0) {
-      continue;
-    }
-    const spasm_GFp d = (y[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-    spasm_scatter(Uj, Ux, Up[i], Up[i + 1], prime - d, y, prime);
-  }
+  spasm_eliminate_sparse_pivots(U, nu, SPASM_IDENTITY_PERMUTATION, y);
 
   /* if y != 0, then y does not belong to the row space of U */
   ok = 1;
@@ -131,8 +142,8 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
   spasm *L, *U;
   spasm_lu *N;
   spasm_GFp *Lx, *Ux, *x;
-  int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xi;
-  int n, m, r, ipiv, i, inew, j, top, px, lnz, unz, old_unz, prime, defficiency,
+  int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xj;
+  int n, m, r, jpiv, i, inew, j, top, px, lnz, unz, old_unz, prime, defficiency,
       verbose_step;
   int rows_since_last_pivot, early_abort_done;
 
@@ -158,8 +169,8 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
   x = spasm_malloc(m * sizeof(spasm_GFp));
 
   /* get int workspace */
-  xi = spasm_malloc(3 * m * sizeof(int));
-  spasm_vector_zero(xi, 3 * m);
+  xj = spasm_malloc(3 * m * sizeof(int));
+  spasm_vector_zero(xj, 3 * m);
 
   /* allocate result */
   N = spasm_malloc(sizeof(spasm_lu));
@@ -233,7 +244,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     Ux = U->x;
 
     inew = (row_permutation != NULL) ? row_permutation[i] : i;
-    top = spasm_sparse_forward_solve(U, A, inew, xi, x, qinv);
+    top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
 
 
     /*
@@ -243,12 +254,12 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 #ifdef SPASM_TIMING
     start = spasm_ticks();
 #endif
-    ipiv = -1;
-    /* index of best pivot so far. */
+    jpiv = -1; /* column index of best pivot so far. */
+    
 
     for (px = top; px < m; px++) {
       /* x[j] is (generically) nonzero */
-      j = xi[px];
+      j = xj[px];
 
       /* if x[j] == 0 (numerical cancelation), we just ignore it */
       if (x[j] == 0) {
@@ -258,8 +269,8 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
         /* column j is not yet pivotal ? */
 
         /* have found the pivot on row i yet ? */
-        if (ipiv == -1 || j < ipiv) {
-          ipiv = j;
+        if (jpiv == -1 || j < jpiv) {
+          jpiv = j;
         }
       } else if (keep_L) {
         /* column j is pivotal */
@@ -271,30 +282,31 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     }
 
     /* pivot found ? */
-    if (ipiv != -1) {
+    if (jpiv != -1) {
       old_unz = unz;
 
-      /* L[i,i] <--- 1. Last entry of the row ! */
+      /* L[i,i] <--- x[jpiv]. Last entry of the row ! */
       if (keep_L) {
         Lj[lnz] = i - defficiency;
-        Lx[lnz] = 1;
+        Lx[lnz] = x[jpiv];
         lnz++;
       }
-      qinv[ipiv] = i - defficiency;
+      qinv[jpiv] = i - defficiency;
       p[i - defficiency] = i;
 
       /* pivot must be the first entry in U[i] */
-      Uj[unz] = ipiv;
-      Ux[unz] = x[ipiv];
+      Uj[unz] = jpiv;
+      Ux[unz] = 1;
       unz++;
 
       /* send remaining non-pivot coefficients into U */
+      spasm_GFp beta = spasm_GFp_inverse(x[jpiv], prime);
       for (px = top; px < m; px++) {
-        j = xi[px];
+        j = xj[px];
 
         if (qinv[j] < 0) {
           Uj[unz] = j;
-          Ux[unz] = x[j];
+          Ux[unz] = (x[j] * beta) % prime;
           unz++;
         }
       }
@@ -332,7 +344,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
     spasm_csr_realloc(L, -1);
   }
   free(x);
-  free(xi);
+  free(xj);
   return N;
 }
 
@@ -346,115 +358,3 @@ void spasm_free_LU(spasm_lu * X) {
   free(X);
 }
 
-
-/** Computes the Schur complement, by eliminating the pivots located on
- *  rows p[0] ... p[n_pivots-1] of input matrix A.
- */
-spasm *spasm_schur(const spasm * A, const int *p, const int n_pivots) {
-  spasm *S;
-  int *Sp, *Sj, Sn, Sm, m, n, snz, px, *xi, i, inew, top, j, *qinv, *q,
-      verbose_step, *Ap, *Aj;
-  spasm_GFp *Sx, *x;
-
-  /* check inputs */
-  assert(A != NULL);
-  n = A->n;
-  m = A->m;
-  assert(n >= n_pivots);
-  assert(m >= n_pivots);
-
-  /* Get Workspace */
-  Sn = n - n_pivots;
-  Sm = m - n_pivots;
-  snz = 4 * (Sn + Sm);          /* educated guess */
-  S = spasm_csr_alloc(Sn, Sm, snz, A->prime, SPASM_WITH_NUMERICAL_VALUES);
-  qinv = spasm_malloc(m * sizeof(int));
-  x = spasm_malloc(m * sizeof(spasm_GFp));
-  xi = spasm_malloc(3 * m * sizeof(int));
-  verbose_step = spasm_max(1, n / 1000);
-
-  Ap = A->p;
-  Aj = A->j;
-  Sp = S->p;
-  Sj = S->j;
-  Sx = S->x;
-
-  spasm_vector_zero(xi, 3 * m);
-
-  /* build qinv from A [i.e. the "cheap pivots"] */
-  for (j = 0; j < m; j++) {
-    qinv[j] = -1;
-  }
-  for (i = 0; i < n_pivots; i++) {
-    inew = p[i];
-    j = Aj[Ap[inew]];
-    qinv[j] = inew;             /* (inew, j) is a pivot */
-  }
-
-  /*
-   * q sends the non-pivotal columns of A to the columns of S. It is not the
-   * inverse of qinv...
-   */
-  q = spasm_malloc(m * sizeof(int));
-  i = 0;
-  for (j = 0; j < m; j++) {
-    if (qinv[j] < 0) {
-      q[j] = i;
-      i++;
-    } else {
-      q[j] = -1;
-    }
-  }
-
-  /* ---- compute Schur complement ----- */
-  snz = 0;                      /* non-zero in S */
-  Sn = 0;                       /* rows in S */
-  fprintf(stderr, "Starting Schur complement computation...\n");
-  for (i = n_pivots; i < n; i++) {
-    Sp[Sn] = snz;               /* S[i] starts here */
-
-    /* not enough room in S ? realloc twice the size */
-    if (snz + Sm > S->nzmax) {
-      spasm_csr_realloc(S, 2 * S->nzmax + Sm);
-      Sj = S->j;
-      Sx = S->x;
-    }
-    /* triangular solve */
-    inew = p[i];
-    top = spasm_sparse_forward_solve(A, A, inew, xi, x, qinv);
-
-    /* dispatch x in S */
-    for (px = top; px < m; px++) {
-      j = xi[px];
-
-      if (x[j] == 0) {          /* if x[j] == 0 (numerical cancelation), we
-                                 * just ignore it */
-        continue;
-      }
-      /* send non-pivot coefficients into S */
-      if (q[j] >= 0) {
-        Sj[snz] = q[j];
-        Sx[snz] = x[j];
-        snz++;
-      }
-    }
-    Sn++;
-
-    if ((i % verbose_step) == 0) {
-      fprintf(stderr, "\rSchur : %d / %d [S=%d * %d, %d NNZ] -- current density= (%.3f)", i, n, Sn, Sm, snz, 1.0 * snz / (1.0 * Sm * Sn));
-      fflush(stderr);
-    }
-  }
-  /* finalize S */
-  fprintf(stderr, "\n");
-  Sp[S->n] = snz;
-  spasm_csr_realloc(S, -1);
-
-  /* free extra workspace */
-  free(qinv);
-  free(q);
-  free(x);
-  free(xi);
-
-  return S;
-}

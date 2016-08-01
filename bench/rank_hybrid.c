@@ -1,97 +1,135 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut rank_hybrid.c */
+  /* indent -nfbs -i2 -nip -npsl -di0 -nut rank_hybrid.c */
 #include <assert.h>
 #include <stdio.h>
 #include "spasm.h"
+#include <getopt.h>
 
 /** Computes the rank of the input matrix using the hybrid strategy */
-
-/* NOT DRY (the same function is in rank_hybrid) */
-spasm *filtered_schur(spasm * A, int *npiv) {
-  int n_cheap, n_filtered, free_nnz, min, max, h, i;
-  float avg;
-
-  /* find free pivots. */
-  int *p = spasm_cheap_pivots(A, &n_cheap);
-  int *filtered = malloc(A->n * sizeof(int));
-
-  /* collect stats */
-  free_nnz = 0;
-  min = A->m;
-  max = 0;
-  for (i = 0; i < n_cheap; i++) {
-    h = spasm_row_weight(A, p[i]);
-    free_nnz += h;
-    min = spasm_min(min, h);
-    max = spasm_max(max, h);
-  }
-  avg = 1.0 * free_nnz / n_cheap;
-  fprintf(stderr, "[schur] free pivots NNZ (min/avg/max): %d / %.1f / %d\n", min, avg, max);
-
-  /* filter rows that are too dense */
-  n_filtered = 0;
-  h = n_cheap - 1;
-  for (i = 0; i < n_cheap; i++) {
-    if (spasm_row_weight(A, p[i]) <= 3 * avg) {
-      filtered[n_filtered++] = p[i];
-    } else {
-      filtered[h--] = p[i];
-    }
-  }
-  for (i = n_cheap; i < A->n; i++) {
-    filtered[i] = p[i];
-  }
-
-  fprintf(stderr, "[schur] %d free pivots after filtering\n", n_filtered);
-  free(p);
-
-  /* schur complement */
-  spasm *S = spasm_schur(A, filtered, n_filtered);
-
-  fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S) / (1. * S->n * S->m));
-
-  free(filtered);
-  *npiv = n_filtered;
-
-  return S;
-}
-
 
 int main(int argc, char **argv) {
 
   /* charge la matrice depuis l'entrée standard */
-  int prime = 42013, n_times, i, n_cheap, rank, npiv;
+  int prime = 42013, n_times, i, rank, npiv, n, m, dense_final, gplu_final, allow_transpose, ch;
   double start_time, end_time;
   spasm_triplet *T;
   spasm *A, *B;
+  int *p, *qinv;
+  double density, sparsity_threshold;
+  char nnz[6];
+
+  allow_transpose = 1;          /* transpose ON by default */
+  n_times = 3;
+  dense_final = 0;
+  gplu_final = 0;
+  sparsity_threshold = 0.1;
+
+  /* options descriptor */
+  struct option longopts[7] = {
+    {"sparse-threshold", required_argument, NULL, 's'},
+    {"max-recursion", required_argument, NULL, 'm'},
+    {"dense-last-step", no_argument, NULL, 'd'},
+    {"gplu-last-step", no_argument, NULL, 'g'},
+    {"no-transpose", no_argument, NULL, 'a'},
+    {"modulus", required_argument, NULL, 'p'},
+    {NULL, 0, NULL, 0}
+  };
+
+  while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
+    switch (ch) {
+    case 's':
+      sparsity_threshold = atof(optarg);
+      break;
+    case 'm':
+      n_times = atoi(optarg);
+      break;
+    case 'd':
+      dense_final = 1;
+      break;
+    case 'a':
+      allow_transpose = 0;
+      break;
+    case 'g':
+      gplu_final = 1;
+      break;
+    case 'p':
+      prime = atoi(optarg);
+      break;
+    default:
+      printf("Unknown option\n");
+      exit(1);
+    }
+  }
+  argc -= optind;
+  argv += optind;
+
 
   T = spasm_load_sms(stdin, prime);
+  if (allow_transpose && (T->n < T->m)) {
+    fprintf(stderr, "[rank] transposing matrix : ");
+    fflush(stderr);
+    start_time = spasm_wtime();
+    spasm_triplet_transpose(T);
+    fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
+  }
+  
   A = spasm_compress(T);
   spasm_triplet_free(T);
+  n = A->n;
+  m = A->m;
+  spasm_human_format(spasm_nnz(A), nnz);
+  fprintf(stderr, "start. A is %d x %d (%s nnz)\n", n, m, nnz);
+  
+  p = spasm_malloc(n * sizeof(int));
+  qinv = spasm_malloc(m * sizeof(int));
 
   /* 3 iterations of Schur complement, by default */
-  n_times = 3;
-  if (argc > 1) {
-    n_times = atoi(argv[1]);
-  }
   start_time = spasm_wtime();
-
-  rank = 0;
+  rank = 0;  
+  npiv = spasm_find_pivots(A, p, qinv);
+  spasm_make_pivots_unitary(A, p, npiv);
+  density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
+  
   for (i = 0; i < n_times; i++) {
-    fprintf(stderr, "%d : A : (%d x %d) nnz %d\n", i, A->n, A->m, A->nzmax);
-    B = filtered_schur(A, &npiv);
+    int64_t nnz = (density * (n - npiv)) * (m - npiv);
+    char tmp[6];
+    spasm_human_format(sizeof(int)*(n-npiv+nnz) + sizeof(spasm_GFp)*nnz, tmp);
+    fprintf(stderr, "round %d / %d. Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", i, n_times, n-npiv, m-npiv, density, tmp);
+  
+    if (density > sparsity_threshold) {
+      break;
+    }
+
+    /* compute schur complement, update matrix */
+    B = spasm_schur(A, p, qinv, npiv);
     spasm_csr_free(A);
     A = B;
     rank += npiv;
+    n = A->n;
+    m = A->m;
+
+    npiv = spasm_find_pivots(A, p, qinv);
+    spasm_make_pivots_unitary(A, p, npiv);
+    density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
   }
 
-  /* finish the job with GPLU */
-  int *p = spasm_cheap_pivots(A, &n_cheap);
-  spasm_lu *LU = spasm_LU(A, p, 0);
-  free(p);
+  /* ---- final step ---------- */
+
+  /* sparse schur complement : GPLU */
+  if (gplu_final || (!dense_final && density < sparsity_threshold)) {
+    spasm_lu *LU = spasm_LU(A, p, SPASM_DISCARD_L);
+    rank +=  LU->U->n;
+    spasm_free_LU(LU);
+  } else {
+    /* dense schur complement */
+    int r = spasm_schur_rank(A, p, qinv, npiv);
+    fprintf(stderr, "rank = %d + %d\n", npiv, r);
+    rank += npiv + r;
+  }
 
   end_time = spasm_wtime();
-  fprintf(stderr, "done in %.3f s rank = %d\n", end_time - start_time, rank + LU->U->n);
-
-  spasm_free_LU(LU);
+  fprintf(stderr, "done in %.3f s rank = %d\n", end_time - start_time, rank);
   spasm_csr_free(A);
+  free(p);
+  free(qinv);
+  return 0;
 }

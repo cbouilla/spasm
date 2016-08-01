@@ -1,9 +1,14 @@
 There are several BFS in the code (in the DM/CC part, and to find pivots). Not DRY. Factorize.
 
-refactor spasm_save_scr spasm_save_triplet
+refactor spasm_save_scr spasm_save_triplet, spasm_free_LU;
 
 refactor the whole DM mess
+
+SCC should use Tarjan's or Dijkstra's algorithm instead of Kosaraju's. It would remove the need to transpose and be 2x faster.
+
+Markowitz pivoting to find many good pivots.
 
 spasm_PLUQ should return PLUQ == A (incorporate the row_permutation into P).
 
 bench/rank_hybrid should automatically transpose its input.
+

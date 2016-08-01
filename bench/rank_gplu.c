@@ -25,7 +25,8 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *U, *L;
   spasm_lu *LU;
-  int r, n, m, *p, ch, prime, allow_transpose, sort_strategy, keep_L, timer;
+  int r, n, m, ch, prime, allow_transpose, sort_strategy, keep_L, timer, npiv;
+  int *qinv, *p;
   double start_time, end_time;
 
   prime = 42013;
@@ -74,7 +75,6 @@ int main(int argc, char **argv) {
   argv += optind;
 
   T = spasm_load_sms(stdin, prime);
-  fprintf(stderr, "A : %d x %d with %d nnz (density = %.3f %%) -- loaded modulo %d\n", T->n, T->m, T->nz, 100.0 * T->nz / (1.0 * T->n * T->m), prime);
   if (allow_transpose && (T->n < T->m)) {
     fprintf(stderr, "[rank] transposing matrix : ");
     fflush(stderr);
@@ -82,12 +82,11 @@ int main(int argc, char **argv) {
     spasm_triplet_transpose(T);
     fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
   }
+
   A = spasm_compress(T);
   spasm_triplet_free(T);
   n = A->n;
   m = A->m;
-
-
   start_time = spasm_wtime();
 
   switch (sort_strategy) {
@@ -96,42 +95,18 @@ int main(int argc, char **argv) {
     break;
 
   case 1:
-    fprintf(stderr, "[rank] finding cheap pivots : ");
-    fflush(stderr);
-    int n_cheap, i, j, k;
-    int *Ap = A->p;
-    int *Aj = A->j;
-    p = spasm_cheap_pivots(A, &n_cheap);
-
-    /* build qinv to reflect the changes in p */
-    int *qinv = spasm_malloc(m * sizeof(int));
-    for (j = 0; j < m; j++) {
-      qinv[j] = -1;
-    }
-
-    /* pivotal column first, in row-order */
-    k = 0;
-    for (i = 0; i < n_cheap; i++) {
-      j = Aj[Ap[p[i]]];         /* the pivot is the first entry of each row */
-      qinv[j] = k++;
-    }
-
-    /* put remaining non-pivotal columns afterwards, in any order */
-    for (j = 0; j < m; j++) {
-      if (qinv[j] == -1) {
-        qinv[j] = k++;
-      }
-    }
-
-    spasm *B = spasm_permute(A, p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+    qinv = spasm_malloc(m * sizeof(int));
+    p = spasm_malloc(n * sizeof(int));
+    npiv = spasm_find_pivots(A, p, qinv);
+    spasm *B = spasm_permute_pivots(A, p, qinv, npiv);
+    
+    spasm_csr_free(A);
     free(p);
     free(qinv);
-    p = NULL;
-
-    spasm_csr_free(A);
+    p = SPASM_IDENTITY_PERMUTATION;
     A = B;
 
-    fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
+    fprintf(stderr, "[rank] finding pivots: %.1f s\n", spasm_wtime() - start_time);
     break;
 
   case 2:

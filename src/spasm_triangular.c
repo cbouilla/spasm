@@ -25,7 +25,7 @@ int spasm_is_upper_triangular(const spasm * A) {
     if (Aj[Ap[i]] != i) {
       return 0;
     }
-    if (Ax[Ap[i]] == 0) {
+    if (Ax[Ap[i]] != 1) {
       return 0;
     }
     /* check other entries */
@@ -115,7 +115,7 @@ void spasm_dense_back_solve(const spasm * L, spasm_GFp * b, spasm_GFp * x, const
 
     /* pivot on the j-th column is on the i-th row */
     const spasm_GFp diagonal_entry = Lx[Lp[i + 1] - 1];
-    assert(diagonal_entry != 0);
+    //assert(diagonal_entry == 1);
 
     /* axpy - inplace */
     x[i] = (b[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
@@ -168,10 +168,10 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, con
     if (b[j] != 0) {
       /* check diagonal entry */
       const spasm_GFp diagonal_entry = Ux[Up[i]];
-      assert(diagonal_entry != 0);
+      assert(diagonal_entry == 1);
 
-      //axpy - inplace
-        x[i] = (b[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
+      /* axpy - inplace */
+      x[i] = b[j];
       spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[i], b, prime);
       b[j] = 0;
     }
@@ -200,8 +200,8 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, con
  * top is the return value.
  *
  */
-int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xi, spasm_GFp * x, const int *pinv) {
-  int i, I, p, px, top, m, prime, *Up, *Uj, *Bp, *Bj;
+int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj, spasm_GFp * x, const int *qinv) {
+  int top, m, prime, *Up, *Uj, *Bp, *Bj;
   spasm_GFp *Ux, *Bx;
 
 #ifdef SPASM_TIMING
@@ -210,7 +210,7 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xi,
 
   assert(U != NULL);
   assert(B != NULL);
-  assert(xi != NULL);
+  assert(xj != NULL);
   assert(x != NULL);
 
   m = U->m;
@@ -227,45 +227,38 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xi,
   start = spasm_ticks();
 #endif
 
-  /* xi[top : n] = Reach( U, B[k] ) */
-  top = spasm_reach(U, B, k, m, xi, pinv);
+  /* xj[top : n] = Reach(U, B[k]) */
+  top = spasm_reach(U, B, k, m, xj, qinv);
 
 #ifdef SPASM_TIMING
   reach += spasm_ticks() - start;
 #endif
 
   /* clear x */
-  for (p = top; p < m; p++) {
-    x[xi[p]] = 0;
-  }
+  for (int px = top; px < m; px++)
+    x[xj[px]] = 0;
 
   /* scatter B[k] into x */
-  for (p = Bp[k]; p < Bp[k + 1]; p++) {
-    x[Bj[p]] = Bx[p];
-  }
+  for (int px = Bp[k]; px < Bp[k + 1]; px++)
+    x[Bj[px]] = Bx[px];
 
   /* iterate over the (precomputed) pattern of x (= the solution) */
 #ifdef SPASM_TIMING
   start = spasm_ticks();
 #endif
 
-  for (px = top; px < m; px++) {
-    /* x[i] is nonzero */
-    i = xi[px];
+  for (int px = top; px < m; px++) {
+    /* x[j] is nonzero */
+    int j = xj[px];
 
-    /* i maps to row I of U */
-    I = (pinv != NULL) ? (pinv[i]) : i;
-    if (I < 0) {
-      /* row I is empty */
+    /* locate corresponding pivot if there is any */
+    int i = (qinv != NULL) ? (qinv[j]) : j;
+    if (i < 0)
       continue;
-    }
-    /* get U[i,i] */
-    const spasm_GFp diagonal_entry = Ux[Up[I]];
-    assert(diagonal_entry != 0);
-    /* axpy-in-place */
-    x[i] = (x[i] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
 
-    spasm_scatter(Uj, Ux, Up[I] + 1, Up[I + 1], prime - x[i], x, prime);
+    /* the pivot entry on row i is 1, so we just have to multiply by -x[j] */
+    assert (Ux[Up[i]] == 1);
+    spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[j], x, prime);
   }
 
 #ifdef SPASM_TIMING
@@ -283,7 +276,7 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xi,
  *
  * x has size m (number of columns of L).
  *
- * when this function returns, the solution scattered in x, and its pattern
+ * when this function returns, the solution is scattered in x, and its pattern
  * is given in xi[top : n].
  *
  * top is the return value.

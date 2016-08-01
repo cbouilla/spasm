@@ -18,9 +18,9 @@ int subrank(const spasm * M, int a, int b, int c, int d) {
     int r, n_cheap;
 
     C = spasm_submatrix(M, a, c, b, d, SPASM_WITH_NUMERICAL_VALUES);
-    p = spasm_cheap_pivots(C, &n_cheap);
-    LU = spasm_LU(C, p, SPASM_DISCARD_L);
-    free(p);
+    //p = spasm_cheap_pivots(C, &n_cheap);
+    LU = spasm_LU(C, NULL, SPASM_DISCARD_L);
+    //free(p);
     r = LU->U->n;
     spasm_free_LU(LU);
     spasm_csr_free(C);
@@ -44,7 +44,7 @@ void show(const spasm * M, spasm_cc * Y) {
                 f = Y->SCC[i]->cc[j];
                 g = Y->SCC[i]->rr[j + 1];
                 h = Y->SCC[i]->cc[j + 1];
-                r = subrank(M, e, f, g, h);
+                r = 0; // subrank(M, e, f, g, h);
                 if (g - e > 1) {
                     nontrivial_diag_size += g - e;
                     nontrivial_diag_rank += r;

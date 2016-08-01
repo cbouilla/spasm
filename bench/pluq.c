@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *U, *L;
   spasm_lu *PLUQ;
-  int r, n, m, *p, ch, prime, allow_transpose, sort_strategy, keep_L;
+  int r, n, m, *p, *qinv, ch, prime, allow_transpose, sort_strategy, keep_L;
   double start_time, end_time;
 
   prime = 42013;
@@ -73,6 +73,8 @@ int main(int argc, char **argv) {
   }
   A = spasm_compress(T);
   spasm_triplet_free(T);
+  n = A->n;
+  m = A->m;
 
   start_time = spasm_wtime();
 
@@ -85,8 +87,10 @@ int main(int argc, char **argv) {
     printf("[rank] finding cheap pivots : ");
     fflush(stdout);
     start_time = spasm_wtime();
-    int n_cheap;
-    p = spasm_cheap_pivots(A, &n_cheap);
+    int npiv;
+    p = spasm_malloc(n * sizeof(int));
+    qinv = spasm_malloc(m * sizeof(int));
+    npiv = spasm_find_pivots(A, p, qinv);
     printf("%.1f s\n", spasm_wtime() - start_time);
     break;
   case 2:
@@ -104,9 +108,7 @@ int main(int argc, char **argv) {
 
   U = PLUQ->U;
   r = U->n;
-  n = A->n;
-  m = A->m;
-
+  
   printf("LU factorisation (+ sort took) %.2f s\n", end_time - start_time);
   printf("U :  %d x %d with %d nnz (density = %.1f %%)\n", r, m, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0 * r * m - r * r / 2.0));
   if (PLUQ->L != NULL) {

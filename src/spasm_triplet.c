@@ -54,6 +54,7 @@ spasm *spasm_compress(const spasm_triplet * T) {
   int m, n, nz, sum, p, k, *Cp, *Cj, *w, *Ti, *Tj;
   spasm_GFp *Cx, *Tx;
   spasm *C;
+  double start;
 
   m = T->m;
   n = T->n;
@@ -61,6 +62,10 @@ spasm *spasm_compress(const spasm_triplet * T) {
   Tj = T->j;
   Tx = T->x;
   nz = T->nz;
+  
+  start = spasm_wtime();
+  fprintf(stderr, "[CSR] Compressing... ");
+  fflush(stderr);
 
   /* allocate result */
   C = spasm_csr_alloc(n, m, nz, T->prime, Tx != NULL);
@@ -95,6 +100,10 @@ spasm *spasm_compress(const spasm_triplet * T) {
   }
 
   /* success; free w and return C */
+  char mem[16];
+  int size = sizeof(int)*(n+nz)+sizeof(spasm_GFp)*((Cx != NULL) ? nz : 0);
+  spasm_human_format(size , mem);
+  fprintf(stderr, "Mem usage = %sbyte [%.2fs]\n", mem, spasm_wtime() - start);
   free(w);
   return C;
 }

@@ -6,8 +6,8 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A;
   spasm_lu *LU;
-  spasm_GFp *w, *x, *y, *u, *v, *row_permutation;
-  int n, m, test, i, j;
+  spasm_GFp *w, *x, *y, *u, *v;
+  int n, m, test, i, j, *p, *qinv;
 
   assert(argc > 1);
   test = atoi(argv[1]);
@@ -19,14 +19,16 @@ int main(int argc, char **argv) {
   n = A->n;
   m = A->m;
 
-  w = malloc(n * sizeof(spasm_GFp));
-  x = malloc(n * sizeof(spasm_GFp));
-  y = malloc(m * sizeof(spasm_GFp));
-  u = malloc(n * sizeof(spasm_GFp));
-  v = malloc(m * sizeof(spasm_GFp));
-  int n_cheap;
-  row_permutation = spasm_cheap_pivots(A, &n_cheap);
-  LU = spasm_LU(A, row_permutation, SPASM_KEEP_L);
+  w = spasm_malloc(n * sizeof(spasm_GFp));
+  x = spasm_malloc(n * sizeof(spasm_GFp));
+  y = spasm_malloc(m * sizeof(spasm_GFp));
+  u = spasm_malloc(n * sizeof(spasm_GFp));
+  v = spasm_malloc(m * sizeof(spasm_GFp));
+  
+  p = spasm_malloc(n * sizeof(int));
+  qinv = spasm_malloc(m * sizeof(int));
+  spasm_find_pivots(A, p, qinv);
+  LU = spasm_LU(A, p, SPASM_KEEP_L);
 
   for(i = 0; i < n; i++) {
     for(j = 0; j < n; j++) {
@@ -39,15 +41,15 @@ int main(int argc, char **argv) {
     }
     x[i] = 1;
 
-    spasm_ipvec(row_permutation, x, w, n);
+    spasm_ipvec(p, x, w, n);
     spasm_gaxpy(A, w, y);     // y <- x*P*A
     spasm_gaxpy(LU->L, x, u); // u <- x*L
     spasm_gaxpy(LU->U, u, v); // v <- (x*L)*U
 
     for(j = 0; j < m; j++) {
       if (y[j] != v[j]) {
-	printf("not ok %d - L*U == P*A (col %d)\n", test, j);
-	exit(0);
+	      printf("not ok %d - L*U == P*A (col %d)\n", test, j);
+	      exit(0);
       }
     }
   }
@@ -60,5 +62,7 @@ int main(int argc, char **argv) {
   free(y);
   free(u);
   free(v);
+  free(p);
+  free(qinv);
   return 0;
 }

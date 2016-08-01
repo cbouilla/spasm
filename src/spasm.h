@@ -3,12 +3,17 @@
 #define _SPASM_H
 
 #define SPASM_TIMING
+#include "config.h"
 
 #include <stdlib.h>
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stddef.h>
+
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
 
 /* --- primary SpaSM routines and data structures --- */
 
@@ -68,6 +73,15 @@ typedef struct {                /* a PLUQ factorisation */
   int *p;
 }      spasm_lu;
 
+typedef struct {                /* a dense LU factorization */
+  int n;                        /* number of rows */
+  int m;                        /* number of columns */
+  int prime; 
+  int *p;                       /* positions of pivots in allocated rows */
+  spasm_GFp **x;                /* pointers to the rows */
+}      spasm_dense_lu;
+
+
 typedef struct {                /* Partition of the rows / columns */
   int *p;                       /* size m, row permutation */
   int *q;                       /* size n, column permutation */
@@ -120,6 +134,7 @@ void spasm_partition_tighten(spasm_partition * P);
 void spasm_vector_zero(spasm_GFp * x, int n);
 void spasm_vector_set(spasm_GFp * x, int a, int b, spasm_GFp alpha);
 spasm *spasm_identity(int n, int prime);
+void spasm_human_format(int64_t n, char *target);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x);
@@ -152,7 +167,7 @@ spasm *spasm_rows_submatrix(const spasm * A, int i0, int i1, int with_values);
 void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
 int *spasm_pinv(int const *p, int n);
-spasm *spasm_permute(const spasm * A, const int *pinv, const int *q, int values);
+spasm *spasm_permute(const spasm * A, const int *p, const int *qinv, int with_values);
 int *spasm_random_permutation(int n);
 void spasm_range_pvec(int *x, int a, int b, int *p);
 
@@ -183,8 +198,19 @@ spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L);
 spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L);
 void spasm_free_LU(spasm_lu * X);
 int spasm_find_pivot(int *xi, spasm_GFp * x, int top, spasm * U, spasm * L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n);
-spasm *spasm_schur(const spasm * A, const int *p, int stop);
-int spasm_narrow_schur_trick(spasm * A, int *p, int n_cheap);
+void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp *x);
+
+/* spasm_schur.c */
+void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv);
+spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv);
+int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv);
+double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R);
+
+
+/* spasm_dense_lu.c */
+spasm_dense_lu *spasm_dense_LU_alloc(int m, int prime);
+void spasm_dense_LU_free(spasm_dense_lu * A);
+int spasm_dense_LU_process(spasm_dense_lu *A, spasm_GFp *y);
 
 /* spasm_solutions.c */
 int spasm_PLUQ_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
@@ -192,7 +218,8 @@ int spasm_LU_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
 
 /* spasm_sort.c */
 int *spasm_row_sort(const spasm * A);
-int *spasm_cheap_pivots(const spasm * A, int *cheap_ptr);
+int spasm_find_pivots(const spasm * A, int *p, int *qinv);
+spasm * spasm_permute_pivots(const spasm *A, int *p, int *qinv, int npiv);
 
 /* spasm_concatenate.c */
 spasm *spasm_row_concatenation(const spasm * A, const spasm * B, int with_values);
