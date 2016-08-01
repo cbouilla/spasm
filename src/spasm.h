@@ -11,6 +11,10 @@
 #include <stdio.h>
 #include <stddef.h>
 
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
+
 /* --- primary SpaSM routines and data structures --- */
 
 typedef int spasm_GFp;
@@ -73,8 +77,8 @@ typedef struct {                /* a dense LU factorization */
   int n;                        /* number of rows */
   int m;                        /* number of columns */
   int prime; 
-  int nmax;                     /* number of allocated rows */
-  spasm_GFp *x;                 /* array of coefficients in C order */
+  int *p;                       /* positions of pivots in allocated rows */
+  spasm_GFp **x;                /* pointers to the rows */
 }      spasm_dense_lu;
 
 
@@ -204,7 +208,7 @@ double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const
 /* spasm_dense_lu.c */
 spasm_dense_lu *spasm_dense_LU_alloc(int m, int prime);
 void spasm_dense_LU_free(spasm_dense_lu * A);
-int spasm_dense_LU_process(spasm_dense_lu *A, spasm_GFp *y, int *q);
+int spasm_dense_LU_process(spasm_dense_lu *A, spasm_GFp *y);
 
 /* spasm_solutions.c */
 int spasm_PLUQ_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);

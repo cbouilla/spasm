@@ -6,8 +6,8 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A;
   spasm_dense_lu *LU;
-  spasm_GFp *x, *y, *Ax;
-  int *q, *Ap, *Aj;
+  spasm_GFp *x, *Ax;
+  int *Ap, *Aj;
   int n, m, test, i, j, px, prime;
 
   prime = 42013;
@@ -25,12 +25,7 @@ int main(int argc, char **argv) {
   Ax = A->x;
 
   LU = spasm_dense_LU_alloc(m, prime);
-  q = spasm_malloc(m * sizeof(int));
   x = spasm_malloc(m * sizeof(spasm_GFp));
-  y = spasm_malloc(m * sizeof(spasm_GFp));
-  for(j = 0; j < m; j++) {
-    q[j] = j;
-  }
 
   /* compute a dense "LU" factorisation of the input matrix */
   for(i = 0; i < n; i++) {
@@ -38,10 +33,7 @@ int main(int argc, char **argv) {
     for(px = Ap[i]; px < Ap[i+1]; px++) {
       x[ Aj[px] ] = Ax[px];
     }
-    for(j = 0; j < m; j++) {
-      y[j] = x[ q[j] ];
-    }
-    spasm_dense_LU_process(LU, y, q);
+    spasm_dense_LU_process(LU, x);
   }
 
   /* check that all rows of the input matrix belong to the row-space of U */  
@@ -50,10 +42,7 @@ int main(int argc, char **argv) {
     for(px = Ap[i]; px < Ap[i+1]; px++) {
       x[ Aj[px] ] = Ax[px];
     }
-    for(j = 0; j < m; j++) {
-      y[j] = x[ q[j] ];
-    }
-    if (spasm_dense_LU_process(LU, y, q)) {
+    if (spasm_dense_LU_process(LU, x)) {
       printf("not ok %d - rowspan(U) == rowspan(A) (row %d)\n", test, i);
       exit(0);
     }
@@ -64,7 +53,5 @@ int main(int argc, char **argv) {
   spasm_csr_free(A);
   spasm_dense_LU_free(LU);
   free(x);
-  free(y);
-  free(q);
   return 0;
 }

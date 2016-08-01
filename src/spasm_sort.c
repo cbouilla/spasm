@@ -1,9 +1,6 @@
 /* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_sort.c */
 #include <assert.h>
 #include "spasm.h"
-#ifdef USE_OPENMP
-#include <omp.h>
-#endif
 
 #define INSERT_SORT_THRESHOLD 42/* TODO : tune this value */
 
@@ -143,14 +140,12 @@ void spasm_prepare_pivot(const spasm *A, const int i, const int px) {
  * Return the number of pivots found. */
 int spasm_find_FL_pivots(const spasm * A, int *p, int *qinv) {
   int n, m, idx_j, *Aj, *Ap, npiv;
-  spasm_GFp *Ax;
   double start;
 
   n = A->n;
   m = A->m;
   Ap = A->p;
   Aj = A->j;
-  Ax = A->x;
   start = spasm_wtime();
 
   for (int i = 0; i < n; i++) {
@@ -194,14 +189,12 @@ int spasm_find_FL_pivots(const spasm * A, int *p, int *qinv) {
  */
 int spasm_find_FL_column_pivots(const spasm * A, int *p, int *qinv, int npiv_fl) {
   int n, m, *Aj, *Ap, npiv, *w;
-  spasm_GFp *Ax;
   double start;
 
   n = A->n;
   m = A->m;
   Ap = A->p;
   Aj = A->j;
-  Ax = A->x;
   npiv = npiv_fl;
   w = spasm_malloc(m * sizeof(int));
   spasm_vector_set(w, 0, m, 1);

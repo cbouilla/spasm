@@ -3,36 +3,36 @@
 #include "spasm.h"
 
 /* make pivotal rows of A unitary */
-void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv) {
-        int prime = A->prime;
-        int *Ap = A->p;
-        spasm_GFp *Ax = A->x;
+void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
+	int prime = A->prime;
+	int *Ap = A->p;
+	spasm_GFp *Ax = A->x;
 
 #pragma omp parallel for
-        for (int i = 0; i < npiv; i++) {
-                int inew;
-                spasm_GFp diag, alpha;
+	for (int i = 0; i < npiv; i++) {
+		int inew;
+		spasm_GFp diag, alpha;
 
-                inew = p[i];
-                diag = Ax[Ap[inew]];
-                if (diag == 1)
-                        continue;
+		inew = p[i];
+		diag = Ax[Ap[inew]];
+		if (diag == 1)
+			continue;
 
-                alpha = spasm_GFp_inverse(diag, prime);
-                for (int px = Ap[inew]; px < Ap[inew + 1]; px++)
-                        Ax[px] = (alpha * Ax[px]) % prime;
-        }
+		alpha = spasm_GFp_inverse(diag, prime);
+		for (int px = Ap[inew]; px < Ap[inew + 1]; px++)
+			Ax[px] = (alpha * Ax[px]) % prime;
+	}
 }
 
 /*
  * Computes the Schur complement, by eliminating the pivots located on rows
  * p[0] ... p[n_pivots-1] of input matrix A. The pivots must be the entries
- * on the lines. This returns a sparse representation of S.
- * The pivots must be unitary.
+ * on the lines. This returns a sparse representation of S. The pivots must
+ * be unitary.
  */
 spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 	spasm *S;
-	int *Sp, *Sj, Sn, Sm, m, n, snz, px, *xi, i, inew, top, j, *q, verbose_step, *Ap, *Aj;
+	int k, *Sp, *Sj, Sn, Sm, m, n, snz, *xj, top, *q, verbose_step;
 	spasm_GFp *Sx, *x;
 
 	/* check inputs */
@@ -49,12 +49,10 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 	S = spasm_csr_alloc(Sn, Sm, snz, A->prime, SPASM_WITH_NUMERICAL_VALUES);
 
 	x = spasm_malloc(m * sizeof(spasm_GFp));
-	xi = spasm_malloc(3 * m * sizeof(int));
-	spasm_vector_zero(xi, 3 * m);
+	xj = spasm_malloc(3 * m * sizeof(int));
+	spasm_vector_zero(xj, 3 * m);
 
 	verbose_step = spasm_max(1, n / 1000);
-	Ap = A->p;
-	Aj = A->j;
 	Sp = S->p;
 	Sj = S->j;
 	Sx = S->x;
@@ -63,23 +61,20 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 	 * q sends the non-pivotal columns of A to the columns of S. It is
 	 * not the inverse of qinv...
 	 */
-    q = spasm_malloc(m * sizeof(int));
-	i = 0;
-	for (j = 0; j < m; j++) 
-                q[j] = (qinv[j] < 0) ? i++ : -1;
+	q = spasm_malloc(m * sizeof(int));
+	k = 0;
+	for (int j = 0; j < m; j++)
+		q[j] = (qinv[j] < 0) ? k++ : -1;
 
 	snz = 0;		/* non-zero in S */
 	Sn = 0;			/* rows in S */
 
 	fprintf(stderr, "Starting Schur complement computation...\n");
-	for (i = npiv; i < n; i++) {
-                inew = p[i];
+	for (int i = npiv; i < n; i++) {
+		int inew = p[i];
 
-                /* triangular solve */
-                top = spasm_sparse_forward_solve(A, A, inew, xi, x, qinv);
-
-                /* dispatch x in S */
-		Sp[Sn] = snz;	/* S[i] starts here */
+		/* triangular solve */
+		top = spasm_sparse_forward_solve(A, A, inew, xj, x, qinv);
 
 		/* not enough room in S ? realloc twice the size */
 		if (snz + Sm > S->nzmax) {
@@ -87,18 +82,14 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 			Sj = S->j;
 			Sx = S->x;
 		}
+		Sp[Sn] = snz;	/* S[i] starts here */
+		for (int px = top; px < m; px++) {
+			int j = xj[px];
 
-		
-
-		for (px = top; px < m; px++) {
-			j = xi[px];
-
-			if (x[j] == 0) {	/* if x[j] == 0 (numerical
-						 * cancelation), we just
-						 * ignore it */
+			if (x[j] == 0)
 				continue;
-			}
-			/* send non-pivot coefficients into S */
+
+			/* save non-zero, non-pivot coefficients in S */
 			if (q[j] >= 0) {
 				Sj[snz] = q[j];
 				Sx[snz] = x[j];
@@ -120,7 +111,7 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 	/* free extra workspace */
 	free(q);
 	free(x);
-	free(xi);
+	free(xj);
 
 	return S;
 }
@@ -131,7 +122,7 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 * The pivots must be unitary.
 */
 double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R) {
-	int m, n, px, *xj, i, inew, top, j, *Ap, *Aj, nnz;
+	int m, n, px, *xj, top, *Ap, *Aj, nnz;
 	spasm_GFp *x;
 
 	/* check inputs */
@@ -146,15 +137,14 @@ double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const
 	spasm_vector_zero(xj, 3 * m);
 
 	nnz = 0;
-	for (i = 0; i < R; i++) {
+	for (int i = 0; i < R; i++) {
 		/* pick a random row in S, check if non-zero */
-		inew = p[npiv + (rand() % (n - npiv))];
+		int inew = p[npiv + (rand() % (n - npiv))];
 		top = spasm_sparse_forward_solve(A, A, inew, xj, x, qinv);
-		for (px = top; px < m; px++) {
-			j = xj[px];
-			if (qinv[j] < 0 && x[j] != 0) {
+		for (int px = top; px < m; px++) {
+			int j = xj[px];
+			if (qinv[j] < 0 && x[j] != 0)
 				nnz++;
-			}
 		}
 	}
 
@@ -167,14 +157,13 @@ double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const
 
 /*
  * computes the rank of the schur complement, but not the schur complement
- * itself.
- * The pivots must be unitary.
+ * itself. The pivots must be unitary.
  */
 int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
-	int Sn, Sm, m, n, i, inew, j, k, r, prime, new, step, nbad, ngood;
+	int Sn, Sm, m, n, k, r, prime, new, step, nbad, ngood;
 	int *q, *Ap, *Aj;
 	double wtime_start;
-	spasm_GFp *Ax, *x, *y, *Uq;
+	spasm_GFp *Ax, *x, *y;
 
 	n = A->n;
 	m = A->m;
@@ -191,16 +180,12 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	y = spasm_malloc(Sm * sizeof(spasm_GFp));
 
 	/* q sends columns of S to non-pivotal columns of A */
-  	k = 0;
-  	for (j = 0; j < m; j++)
-    		if (qinv[j] < 0)
-      			q[k++] = j;
+	k = 0;
+	for (int j = 0; j < m; j++)
+		if (qinv[j] < 0)
+			q[k++] = j;
 
 	spasm_dense_lu *U = spasm_dense_LU_alloc(Sm, A->prime);
-	Uq = spasm_malloc(Sm * sizeof(int));
-	for (j = 0; j < Sm; j++) {
-		Uq[j] = j;
-	}
 
 	/* ---- compute Schur complement ----- */
 	fprintf(stderr, "rank of dense schur complement...\n");
@@ -216,29 +201,25 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 
 		/* random linear combination */
 		spasm_vector_zero(x, m);
-		if (step >= n) {/* on prend tout ! */
-			for (i = npiv; i < n; i++) {
-				inew = p[i];
+		if (step >= n)	/* on prend tout ! */
+			for (int i = npiv; i < n; i++) {
+				int inew = p[i];
 				spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, x, prime);
 			}
-		} else {	/* on prend un sous-ensemble aléatoire */
-			for (i = 0; i < step; i++) {
-				inew = p[npiv + (rand() % (n - npiv))];
+		else		/* on prend un sous-ensemble aléatoire */
+			for (int i = 0; i < step; i++) {
+				int inew = p[npiv + (rand() % (n - npiv))];
 				spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], 1 + (rand() % (prime - 1)), x, prime);
 			}
-		}
 
 		spasm_eliminate_sparse_pivots(A, npiv, p, x);
 
-		/*
-		 * the solution is scattered in x. Copy it to a (contiguous)
-		 * y
-		 */
-		for (j = 0; j < Sm; j++) {
-			y[j] = x[q[Uq[j]]];
+		/* Gather the solution in y */
+		for (int j = 0; j < Sm; j++) {
+			y[j] = x[q[j]];
 		}
 
-		new = spasm_dense_LU_process(U, y, Uq);
+		new = spasm_dense_LU_process(U, y);
 
 		if (new) {
 			r++;
@@ -268,9 +249,8 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	}
 	fprintf(stderr, "\n[schur/rank] Time: %.1fs\n", spasm_wtime() - wtime_start);
 	free(q);
-        free(x);
-        free(y);
-        free(Uq);
-        spasm_dense_LU_free(U);
-        return r;
+	free(x);
+	free(y);
+	spasm_dense_LU_free(U);
+	return r;
 }
