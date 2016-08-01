@@ -103,7 +103,7 @@ spasm *spasm_compress(const spasm_triplet * T) {
   char mem[16];
   int size = sizeof(int)*(n+nz)+sizeof(spasm_GFp)*((Cx != NULL) ? nz : 0);
   spasm_human_format(size , mem);
-  fprintf(stderr, "Mem usage = %sbyte [%.2f]\n", mem, spasm_wtime() - start);
+  fprintf(stderr, "Mem usage = %sbyte [%.2fs]\n", mem, spasm_wtime() - start);
   free(w);
   return C;
 }

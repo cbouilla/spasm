@@ -12,6 +12,7 @@ int main() {
   spasm *A;
   spasm_dense_lu *LU;
   spasm_GFp *x, *y, *Ax;
+  double start;
 
   prime = 42013;
   
@@ -29,6 +30,8 @@ int main() {
   q = spasm_malloc(m * sizeof(int));
   x = spasm_malloc(m * sizeof(spasm_GFp));
   y = spasm_malloc(m * sizeof(spasm_GFp));
+  
+  start = spasm_wtime();
   for(j = 0; j < m; j++) {
     q[j] = j;
   }
@@ -48,7 +51,7 @@ int main() {
     fflush(stderr);
   }
 
-  fprintf(stderr, "\nFinal rank = %d\n", r);
+  fprintf(stderr, "\nFinal rank = %d [%.1fs]\n", r, spasm_wtime() - start);
 
   free(q);
   free(x);

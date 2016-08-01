@@ -86,10 +86,11 @@ int main(int argc, char **argv) {
   start_time = spasm_wtime();
   rank = 0;  
   npiv = spasm_find_pivots(A, p, qinv);
+  spasm_make_pivots_unitary(A, p, npiv);
   density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
   
   for (i = 0; i < n_times; i++) {
-    int nnz = (density * (n - npiv)) * (m - npiv);
+    int64_t nnz = (density * (n - npiv)) * (m - npiv);
     char tmp[6];
     spasm_human_format(sizeof(int)*(n-npiv+nnz) + sizeof(spasm_GFp)*nnz, tmp);
     fprintf(stderr, "round %d / %d. Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", i, n_times, n-npiv, m-npiv, density, tmp);
@@ -99,7 +100,7 @@ int main(int argc, char **argv) {
     }
 
     /* compute schur complement, update matrix */
-    B = spasm_schur(A, p, npiv);
+    B = spasm_schur(A, p, qinv, npiv);
     spasm_csr_free(A);
     A = B;
     rank += npiv;
@@ -107,6 +108,7 @@ int main(int argc, char **argv) {
     m = A->m;
 
     npiv = spasm_find_pivots(A, p, qinv);
+    spasm_make_pivots_unitary(A, p, npiv);
     density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
   }
 
@@ -119,7 +121,7 @@ int main(int argc, char **argv) {
     spasm_free_LU(LU);
   } else {
     /* dense schur complement */
-    int r = spasm_schur_rank(A, p, npiv);
+    int r = spasm_schur_rank(A, p, qinv, npiv);
     fprintf(stderr, "rank = %d + %d\n", npiv, r);
     rank += npiv + r;
   }

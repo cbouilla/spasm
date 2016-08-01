@@ -201,7 +201,7 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, con
  *
  */
 int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj, spasm_GFp * x, const int *qinv) {
-  int i, j, px, top, m, prime, *Up, *Uj, *Bp, *Bj;
+  int top, m, prime, *Up, *Uj, *Bp, *Bj;
   spasm_GFp *Ux, *Bx;
 
 #ifdef SPASM_TIMING
@@ -235,33 +235,29 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
 #endif
 
   /* clear x */
-  for (px = top; px < m; px++) {
-    j = xj[px];
-    x[j] = 0;
-  }
+  for (int px = top; px < m; px++)
+    x[xj[px]] = 0;
 
   /* scatter B[k] into x */
-  for (px = Bp[k]; px < Bp[k + 1]; px++) {
-    j = Bj[px]; 
-    x[j] = Bx[px];
-  }
+  for (int px = Bp[k]; px < Bp[k + 1]; px++)
+    x[Bj[px]] = Bx[px];
 
   /* iterate over the (precomputed) pattern of x (= the solution) */
 #ifdef SPASM_TIMING
   start = spasm_ticks();
 #endif
 
-  for (px = top; px < m; px++) {
-    /* x[i] is nonzero */
-    j = xj[px];
+  for (int px = top; px < m; px++) {
+    /* x[j] is nonzero */
+    int j = xj[px];
 
-    /* i maps to row I of U */
-    i = (qinv != NULL) ? (qinv[j]) : j;
-    if (i < 0) {
-      /* row I is empty */
+    /* locate corresponding pivot if there is any */
+    int i = (qinv != NULL) ? (qinv[j]) : j;
+    if (i < 0)
       continue;
-    }
+
     /* the pivot entry on row i is 1, so we just have to multiply by -x[j] */
+    assert (Ux[Up[i]] == 1);
     spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[j], x, prime);
   }
 
