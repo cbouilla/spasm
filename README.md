@@ -4,7 +4,7 @@ SpaSM (Sparse direct Solver Modulo _p_)
 SpaSM is a software library devoted to sparse gaussian elimination modulo a small prime _p_. 
 It is available under the General Public License Version 2 or later (GPLv2+).
 
-The algorithms used in SpaSM are described in [this paper](http://cristal.univ-lille.fr/~bouillag/pub/CASC16.pdf).
+The algorithms used in SpaSM are described in [this paper](http://cristal.univ-lille.fr/~bouillag/pub/CASC16.pdf). For more information, consult the [SpaSM homepage](http://cristal.univ-lille.fr/~bouillag/spasm).
 
 Features
 --------
@@ -38,6 +38,8 @@ SpaSM does not rely on any third-party software, but is capable of using:
   * [FFLAS-FFPACK](https://github.com/linbox-team/fflas-ffpack) for dense rank computation.
   * [LinBox](https://github.com/linbox-team/linbox) for other rank algorithms.
 
+SpaSM uses OpenMP to exploit multicore machines.
+
 The most commonly used option include:
 - `--with-metis=<path>` : build the METIS interface
 - `--with-fflas-ffpack=<path>` : enable the tools relying on dense rank computation
@@ -60,7 +62,7 @@ It would be necessary to disable greedy pivot search for this one:
 curl http://hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D9.sms.gz | gunzip - | ./rank_hybrid
 ```
 
-When matrices have many empty rows/columns, they can be removed with the `stack` utility:
+When matrices have many empty rows/columns, they can/have to be removed with the `stack` utility:
 ```
 curl http://hpac.imag.fr/Matrices/Relat/relat8.sms.gz | gunzip - | ./stack | ./rank_hybrid
 curl http://hpac.imag.fr/Matrices/Relat/relat9.sms.gz | gunzip - | ./stack | ./rank_hybrid
