@@ -191,9 +191,10 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	y = spasm_malloc(Sm * sizeof(spasm_GFp));
 
 	/* q sends columns of S to non-pivotal columns of A */
-        i = 0;
-        for (j = 0; j < m; j++) 
-                q[j] = (qinv[j] < 0) ? i++ : -1;
+  	k = 0;
+  	for (j = 0; j < m; j++)
+    		if (qinv[j] < 0)
+      			q[k++] = j;
 
 	spasm_dense_lu *U = spasm_dense_LU_alloc(Sm, A->prime);
 	Uq = spasm_malloc(Sm * sizeof(int));
@@ -269,5 +270,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	free(q);
         free(x);
         free(y);
+        free(Uq);
+        spasm_dense_LU_free(U);
         return r;
 }

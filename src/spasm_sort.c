@@ -438,7 +438,7 @@ int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
 
   spasm_vector_set(qinv, 0, m, -1);
   npiv = spasm_find_FL_pivots(A, p, qinv);
-  /* npiv = spasm_find_FL_column_pivots(A, p, qinv, npiv); */
+  npiv = spasm_find_FL_column_pivots(A, p, qinv, npiv);
   npiv = spasm_find_cycle_free_pivots(A, p, qinv, npiv);
 
   /* --- build corresponding row permutation ---------------------- */
