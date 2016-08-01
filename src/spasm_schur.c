@@ -122,14 +122,12 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 * The pivots must be unitary.
 */
 double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R) {
-	int m, n, px, *xj, top, *Ap, *Aj, nnz;
+	int m, n, *xj, top, nnz;
 	spasm_GFp *x;
 
 	/* check inputs */
 	m = A->m;
 	n = A->n;
-	Ap = A->p;
-	Aj = A->j;
 
 	/* Get Workspace */
 	x = spasm_malloc(m * sizeof(spasm_GFp));
@@ -160,10 +158,10 @@ double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const
  * itself. The pivots must be unitary.
  */
 int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
-	int Sn, Sm, m, n, k, r, prime, new, step, nbad, ngood;
+	int Sn, Sm, m, n, k, r, prime, new, step, nbad, ngood, abort;
 	int *q, *Ap, *Aj;
-	double wtime_start;
-	spasm_GFp *Ax, *x, *y;
+	double start;
+	spasm_GFp *Ax;
 
 	n = A->n;
 	m = A->m;
@@ -176,9 +174,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	Sn = n - npiv;
 	Sm = m - npiv;
 	q = spasm_malloc(Sm * sizeof(int));
-	x = spasm_malloc(m * sizeof(spasm_GFp));
-	y = spasm_malloc(Sm * sizeof(spasm_GFp));
-
+	
 	/* q sends columns of S to non-pivotal columns of A */
 	k = 0;
 	for (int j = 0; j < m; j++)
@@ -189,68 +185,83 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 
 	/* ---- compute Schur complement ----- */
 	fprintf(stderr, "rank of dense schur complement...\n");
-	wtime_start = spasm_wtime();
+	
+	start = spasm_wtime();
 	r = 0;
 	step = 1;
-	k = 1;
+	k = 0;
 	nbad = 0;
 	ngood = 0;
+	abort = 0;
 
-	while (1) {
-		/* l'essentiel du temps se passe avec step == 1 */
+#pragma omp parallel
+	{
+		spasm_GFp * x = spasm_malloc(m * sizeof(spasm_GFp));
+		spasm_GFp * y = spasm_malloc(Sm * sizeof(spasm_GFp));
 
-		/* random linear combination */
-		spasm_vector_zero(x, m);
-		if (step >= n)	/* on prend tout ! */
-			for (int i = npiv; i < n; i++) {
-				int inew = p[i];
-				spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, x, prime);
+		while (!abort) {
+			/* l'essentiel du temps se passe avec step == 1 */
+
+			/* make sure I have the latest value of step */
+			#pragma omp flush(step)
+
+			/* random linear combination */
+			spasm_vector_zero(x, m);
+			if (step >= n)	/* on prend tout ! */
+				for (int i = npiv; i < n; i++) {
+					int inew = p[i];
+					spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, x, prime);
+				}
+			else		/* on prend un sous-ensemble aléatoire */
+				for (int i = 0; i < step; i++) {
+					int inew = p[npiv + (rand() % (n - npiv))];
+					spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], 1 + (rand() % (prime - 1)), x, prime);
+				}
+
+			spasm_eliminate_sparse_pivots(A, npiv, p, x);
+
+			/* Gather the solution in y */
+			for (int j = 0; j < Sm; j++) {
+				y[j] = x[q[j]];
 			}
-		else		/* on prend un sous-ensemble aléatoire */
-			for (int i = 0; i < step; i++) {
-				int inew = p[npiv + (rand() % (n - npiv))];
-				spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], 1 + (rand() % (prime - 1)), x, prime);
-			}
 
-		spasm_eliminate_sparse_pivots(A, npiv, p, x);
+			new = spasm_dense_LU_process(U, y);
 
-		/* Gather the solution in y */
-		for (int j = 0; j < Sm; j++) {
-			y[j] = x[q[j]];
-		}
-
-		new = spasm_dense_LU_process(U, y);
-
-		if (new) {
-			r++;
-			ngood++;
-			if (ngood == 16) {
-				if (step > 1) {
+#pragma omp critical(schur_rank)
+			if (new) {
+				r++;
+				ngood++;
+				if (ngood == 16) {
+					if (step > 1) {
+						nbad = 0;
+					}
+					step = spasm_max(step / 2, 1);
+					ngood = 0;
+				}
+			} else {
+				nbad++;
+				if (nbad == 3) {
+					if (step > n) {
+						abort = 1;	/* c'est fini */
+					}
+					step *= 2;
 					nbad = 0;
+					ngood = 0;
 				}
-				step = spasm_max(step / 2, 1);
-				ngood = 0;
 			}
-		} else {
-			nbad++;
-			if (nbad == 3) {
-				if (step > n) {
-					break;	/* c'est fini */
-				}
-				step *= 2;
-				nbad = 0;
-				ngood = 0;
-			}
-		}
 
-		fprintf(stderr, "\rSchur : %d [step = %d] -- current rank = %d / bad = %d, good = %d   ", k, step, r, nbad, ngood);
-		fflush(stderr);
-		k++;
+			#pragma omp atomic update
+			k++;
+			fprintf(stderr, "\rSchur : %d [step = %d] -- current rank = %d / bad = %d, good = %d   ", k, step, r, nbad, ngood);
+			fflush(stderr);
+
+			#pragma omp flush(abort)
+		}
+		free(x);
+		free(y);
 	}
-	fprintf(stderr, "\n[schur/rank] Time: %.1fs\n", spasm_wtime() - wtime_start);
+	fprintf(stderr, "\n[schur/rank] Time: %.1fs\n", spasm_wtime() - start);
 	free(q);
-	free(x);
-	free(y);
 	spasm_dense_LU_free(U);
 	return r;
 }

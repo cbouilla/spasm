@@ -410,7 +410,7 @@ int spasm_find_cycle_free_pivots(const spasm * A, int *p, int *qinv, int npiv_st
     free(queue);
   } /* end of omp parallel */
 
-  fprintf(stderr, "\r[pivots] greedy alternating cycle-free search: %d pivots found [%.1f]\n", npiv - npiv_start, spasm_wtime() - start);
+  fprintf(stderr, "\r[pivots] greedy alternating cycle-free search: %d pivots found [%.1fs]\n", npiv - npiv_start, spasm_wtime() - start);
   return npiv;
 }
 
