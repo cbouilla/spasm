@@ -158,7 +158,7 @@ double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const
  * itself. The pivots must be unitary.
  */
 int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
-	int Sm, m, n, k, r, prime, step, bad, good, searched;
+	int Sm, m, n, k, r, prime, step, threads, searched, prev_r;
 	int *q, *Ap, *Aj;
 	double start;
 	spasm_GFp *Ax;
@@ -190,78 +190,75 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	step = 1;
 	k = 0;
 	searched = 0;
-	bad = 0;
-	good = 0;
+	threads = 1;
+	prev_r = 0;
+#ifdef USE_OPENMP
+	threads = omp_get_num_threads();
+#endif
 
 #pragma omp parallel
 	{
 		spasm_GFp * x = spasm_malloc(m * sizeof(spasm_GFp));
 		spasm_GFp * y = spasm_malloc(Sm * sizeof(spasm_GFp));
-		int local_step = step, new;
+		int gain;
 
-		/* note : l'essentiel du temps se passe avec step == 1 */
-		while (searched < (n - npiv) / 2) {
+		while (step < n / (8 * threads)) { /* <--- tweak-me */
 			double it_start = spasm_wtime();
-			
+			prev_r = r;
+
 			/* random linear combination */
 			spasm_vector_zero(x, m);
-			for (int i = 0; i < local_step; i++) {
+			for (int i = 0; i < step; i++) {
 				int inew = p[npiv + (rand() % (n - npiv))];
 				spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], 1 + (rand() % (prime - 1)), x, prime);
 			}
 			spasm_eliminate_sparse_pivots(A, npiv, p, x);
 			for (int j = 0; j < Sm; j++) /* gather into y */
 				y[j] = x[q[j]];
-			new = spasm_dense_LU_process(U, y);
 
-			fprintf(stderr, "\rSchur : %d [%.1fs] -- current rank = %d / step = %d", k, spasm_wtime() - it_start, r, local_step);
-			fflush(stderr);
+			#pragma omp atomic update
+			r += spasm_dense_LU_process(U, y);
 
-#pragma omp critical(schur_rank)
+			/* this is a barrier */
+			#pragma omp single
 			{
-				k++;
-				r += new;				
-				if (new) { /* something was found at width local_step: let's keep doing it */
-					step = local_step;
-					bad = 0;
-					searched = 0;
-					good++;
-					if (good >= 8) {
-						good = 0;
-						step = spasm_max(1, step / 2);
-					}
-				} else {
-					searched += local_step;
+				fprintf(stderr, "\rSchur : %d [%.1fs] -- current rank = %d / step = %d", k, spasm_wtime() - it_start, r, step);
+				fflush(stderr);
 
-					if (local_step == step) {  /* width is the same since the begining of this step */
-						good = 0;
-						bad++;
-						if (bad >= 2) { /* we may consider increase the width */
-							bad = 0;
-							step *= 4;
-						}
-					}
-				}
-				local_step = step;
+				k++;
+				searched += threads * step;
+				gain = r - prev_r;
+
+				if (gain < threads)
+					step *= 2;
+				else
+					step = spasm_max(1, step/2);
 			}
 		}
-
-		int final_bad = 0;
 
 		#pragma omp single
-		while(final_bad < 3) {
-			for (int i = npiv; i < n; i++) {
-				int inew = p[i];
-				spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, x, prime);
-			}
-			spasm_eliminate_sparse_pivots(A, npiv, p, x);
-			for (int j = 0; j < Sm; j++)
-				y[j] = x[q[j]];
-			new = spasm_dense_LU_process(U, y);
-			r += new;
-			final_bad += 1 - new;
-		}
+		{
+			int final_bad = 0;
+			k = 0;
+			fprintf(stderr, "\n");
 
+			while(final_bad < 3) {
+				double it_start = spasm_wtime();
+				for (int i = npiv; i < n; i++) {
+					int inew = p[i];
+					spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, x, prime);
+				}
+				spasm_eliminate_sparse_pivots(A, npiv, p, x);
+				for (int j = 0; j < Sm; j++)
+					y[j] = x[q[j]];
+				int new = spasm_dense_LU_process(U, y);
+				r += new;
+				final_bad += 1 - new;
+				k++;
+				fprintf(stderr, "\rSchur : %d [%.1fs] -- current rank = %d / final", k, spasm_wtime() - it_start, r);
+				fflush(stderr);
+			}
+		}
 		free(x);
 		free(y);
 	}
