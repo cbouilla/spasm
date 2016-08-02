@@ -158,7 +158,7 @@ double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const
  * itself. The pivots must be unitary.
  */
 int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
-	int Sn, Sm, m, n, k, r, prime, new, step, nbad, ngood, abort;
+	int Sm, m, n, k, r, prime, step, nbad, ngood;
 	int *q, *Ap, *Aj;
 	double start;
 	spasm_GFp *Ax;
@@ -171,7 +171,6 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	prime = A->prime;
 
 	/* Get Workspace */
-	Sn = n - npiv;
 	Sm = m - npiv;
 	q = spasm_malloc(Sm * sizeof(int));
 	
@@ -192,39 +191,26 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	k = 0;
 	nbad = 0;
 	ngood = 0;
-	abort = 0;
 
 #pragma omp parallel
 	{
 		spasm_GFp * x = spasm_malloc(m * sizeof(spasm_GFp));
 		spasm_GFp * y = spasm_malloc(Sm * sizeof(spasm_GFp));
+		int local_step = step, new;
 
-		while (!abort) {
-			/* l'essentiel du temps se passe avec step == 1 */
-
-			/* make sure I have the latest value of step */
-			#pragma omp flush(step)
-
+		/* note : l'essentiel du temps se passe avec step == 1 */
+		while (local_step < n) {
+			double it_start = spasm_wtime();
+			
 			/* random linear combination */
 			spasm_vector_zero(x, m);
-			if (step >= n)	/* on prend tout ! */
-				for (int i = npiv; i < n; i++) {
-					int inew = p[i];
-					spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, x, prime);
-				}
-			else		/* on prend un sous-ensemble aléatoire */
-				for (int i = 0; i < step; i++) {
-					int inew = p[npiv + (rand() % (n - npiv))];
-					spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], 1 + (rand() % (prime - 1)), x, prime);
-				}
-
-			spasm_eliminate_sparse_pivots(A, npiv, p, x);
-
-			/* Gather the solution in y */
-			for (int j = 0; j < Sm; j++) {
-				y[j] = x[q[j]];
+			for (int i = 0; i < local_step; i++) {
+				int inew = p[npiv + (rand() % (n - npiv))];
+				spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], 1 + (rand() % (prime - 1)), x, prime);
 			}
-
+			spasm_eliminate_sparse_pivots(A, npiv, p, x);
+			for (int j = 0; j < Sm; j++) /* gather into y */
+				y[j] = x[q[j]];
 			new = spasm_dense_LU_process(U, y);
 
 #pragma omp critical(schur_rank)
@@ -235,32 +221,51 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 					if (step > 1) {
 						nbad = 0;
 					}
-					step = spasm_max(step / 2, 1);
+					#pragma omp atomic write
+					step = spasm_max(step / 2, 1);;
 					ngood = 0;
 				}
 			} else {
 				nbad++;
-				if (nbad == 3) {
-					if (step > n) {
-						abort = 1;	/* c'est fini */
-					}
-					step *= 2;
-					nbad = 0;
+				if (nbad >= 3) {
 					ngood = 0;
+					#pragma omp atomic update
+					step *= 2;
 				}
 			}
 
 			#pragma omp atomic update
 			k++;
-			fprintf(stderr, "\rSchur : %d [step = %d] -- current rank = %d / bad = %d, good = %d   ", k, step, r, nbad, ngood);
+
+			double now = spasm_wtime();
+			fprintf(stderr, "\rSchur : %d [%.1fs] -- current rank = %d / step = %d", k, now - it_start, r, local_step);
 			fflush(stderr);
 
-			#pragma omp flush(abort)
+			#pragma omp atomic read
+			local_step = step;
 		}
+
+		int final_bad = 0;
+
+		#pragma omp single
+		while(final_bad < 3) {
+			for (int i = npiv; i < n; i++) {
+				int inew = p[i];
+				spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, x, prime);
+			}
+			spasm_eliminate_sparse_pivots(A, npiv, p, x);
+			for (int j = 0; j < Sm; j++)
+				y[j] = x[q[j]];
+			new = spasm_dense_LU_process(U, y);
+			r += new;
+			final_bad += 1 - new;
+		}
+
 		free(x);
 		free(y);
 	}
 	fprintf(stderr, "\n[schur/rank] Time: %.1fs\n", spasm_wtime() - start);
+	
 	free(q);
 	spasm_dense_LU_free(U);
 	return r;
