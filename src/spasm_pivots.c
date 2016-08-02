@@ -11,7 +11,7 @@ int spasm_is_row_pivotal(const spasm *A, const int *qinv, const int i) {
 }
 
 /* make pivot the first entry of the row */
-void spasm_prepare_pivot(const spasm *A, const int i, const int px) {
+void spasm_prepare_pivot(spasm *A, const int i, const int px) {
   int *Ap, *Aj;
   spasm_GFp *Ax;
 
@@ -25,14 +25,15 @@ void spasm_prepare_pivot(const spasm *A, const int i, const int px) {
 }
 
 
-/* Faugère-Lachartre pivot search.
+/** Faugère-Lachartre pivot search.
+ *
  * The leftmost entry of each row is a candidate pivot. Select the sparsest row
  * with a leftmost entry on the given column. Selected pivots are moved to the
  * front of the row.
- * qinv must be initialized to -1
- * p can be arbitrary.
- * Return the number of pivots found. */
-int spasm_find_FL_pivots(const spasm * A, int *p, int *qinv) {
+ * @param qinv must be initialized to -1
+ * @param p can be arbitrary.
+ * @return number of pivots found. */
+int spasm_find_FL_pivots(spasm * A, int *p, int *qinv) {
   int n, m, idx_j, *Aj, *Ap, npiv;
   double start;
 
@@ -81,7 +82,7 @@ int spasm_find_FL_pivots(const spasm * A, int *p, int *qinv) {
  * w[j] = 1 <===> column j does not appear in a pivotal row
  * 
  */
-int spasm_find_FL_column_pivots(const spasm * A, int *p, int *qinv, int npiv_fl) {
+int spasm_find_FL_column_pivots(spasm * A, int *p, int *qinv, int npiv_fl) {
   int n, m, *Aj, *Ap, npiv, *w;
   double start;
 
@@ -169,7 +170,7 @@ void BFS_enqueue_row(int *w, int *queue, int *surviving, int *tail, const int *A
   }
 }
 
-int spasm_find_cycle_free_pivots(const spasm * A, int *p, int *qinv, int npiv_start) {
+int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
   int n, m, *Aj, *Ap, processed, v, npiv, retries;
   double start;
   spasm_GFp *Ax;
@@ -314,7 +315,7 @@ int spasm_find_cycle_free_pivots(const spasm * A, int *p, int *qinv, int npiv_st
  * on which the pivot on column j is, or -1 if there is no pivot on column j.
  * both p and qinv must be preallocated
  */
-int spasm_find_pivots(const spasm * A, int *p, int *qinv) {
+int spasm_find_pivots(spasm * A, int *p, int *qinv) {
   int n, m, i, j, k, npiv;
   int *Ap, *Aj;
 

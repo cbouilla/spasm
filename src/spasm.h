@@ -214,7 +214,7 @@ int spasm_PLUQ_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
 int spasm_LU_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
 
 /* spasm_pivots.c */
-int spasm_find_pivots(const spasm * A, int *p, int *qinv);
+int spasm_find_pivots(spasm * A, int *p, int *qinv);
 spasm * spasm_permute_pivots(const spasm *A, int *p, int *qinv, int npiv);
 
 /* spasm_matching.c */
