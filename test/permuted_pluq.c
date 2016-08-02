@@ -7,8 +7,8 @@ int main(int argc, char **argv) {
   spasm *A, *U, *L;
   spasm_lu *PLUQ;
   spasm_GFp *x, *y, *u, *v, *w, *z;
-  int n, m, r, test, i, j;
-  int *row_permutation;
+  int n, m, r, test;
+  int *p, *qinv;
 
   assert(argc > 1);
   test = atoi(argv[1]);
@@ -20,12 +20,15 @@ int main(int argc, char **argv) {
   n = A->n;
   m = A->m;
 
-  row_permutation = spasm_row_sort(A);
-  PLUQ = spasm_PLUQ(A, row_permutation, SPASM_KEEP_L);
+  qinv = spasm_malloc(m * sizeof(int));
+  p = spasm_malloc(n * sizeof(int));
+  spasm_find_pivots(A, p, qinv);  
+
+  PLUQ = spasm_PLUQ(A, p, SPASM_KEEP_L);
+  
   U = PLUQ->U;
   L = PLUQ->L;
   r = U->n;
-
 
   x = malloc(n * sizeof(spasm_GFp));
   y = malloc(m * sizeof(spasm_GFp));
@@ -41,42 +44,34 @@ int main(int argc, char **argv) {
     exit(0);
   }
 
-    if (spasm_is_lower_triangular(L)) {
+  if (spasm_is_lower_triangular(L)) {
     printf("# PLUQ = P'A ---> L is lower\n");
   } else {
     printf("not ok %d - PLUQ = P'A : L is not lower-triangular\n", test);
     exit(0);
-    }
+  }
 
 
-  for(i = 0; i < n; i++) {
-    for(j = 0; j < n; j++) {
-      x[j] = 0;
-    }
-    for(j = 0; j < r; j++) {
-      v[j] = 0;
-    }
-    for(j = 0; j < m; j++) {
-      y[j] = 0;
-      w[j] = 0;
-      z[j] = 0;
-    }
+  for(int i = 0; i < n; i++) {
+    spasm_vector_set(x, 0, n, 0);
+    spasm_vector_set(v, 0, r, 0);
+    spasm_vector_set(y, 0, m, 0);
+    spasm_vector_set(w, 0, m, 0);
+    spasm_vector_set(z, 0, m, 0);
     x[i] = 1;
 
     spasm_gaxpy(A, x, y);             // y <- x*A
-
-    spasm_pvec(row_permutation, x, u, n);
+    spasm_pvec(p, x, u, n);
     spasm_pvec(PLUQ->p, u, x, n);     // u <--- x.P
     spasm_gaxpy(L, x, v);             // v <--- x.(P.L)
     spasm_gaxpy(U, v, w);             // w <--- x.(P.L.U)
     spasm_pvec(PLUQ->qinv, w, z, m);  // u <--- x.(P.L.U.Q)
 
-    for(j = 0; j < m; j++) {
+    for(int j = 0; j < m; j++)
       if (y[j] != z[j]) {
-	printf("not ok %d - PLUQ == P'A (col %d)\n", test, j);
-	exit(0);
+	      printf("not ok %d - PLUQ == P'A (col %d)\n", test, j);
+	      exit(0);
       }
-    }
   }
   printf("ok %d - PLUQ == P'A\n", test);
 
@@ -88,5 +83,7 @@ int main(int argc, char **argv) {
   free(v);
   free(w);
   free(z);
+  free(p);
+  free(qinv);
   return 0;
 }

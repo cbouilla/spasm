@@ -36,13 +36,10 @@ int main(int argc, char **argv) {
   timer = -1;
 
   /* options descriptor */
-  struct option longopts[7] = {
-    {"sort-rows", no_argument, NULL, 's'},
-    {"keep-rows", no_argument, NULL, 'k'},
-    {"no-transpose", no_argument, NULL, 'a'},
+  struct option longopts[4] = {
     {"modulus", required_argument, NULL, 'p'},
-    {"keep-L", no_argument, NULL, 'l'},
     {"max-time", required_argument, NULL, 't'},
+    {"keep-L", no_argument, NULL, 'k'},
     {NULL, 0, NULL, 0}
   };
 
@@ -51,20 +48,11 @@ int main(int argc, char **argv) {
     case 'p':
       prime = atoi(optarg);
       break;
-    case 'k':
-      sort_strategy = 0;
-      break;
-    case 'a':
-      allow_transpose = 0;
-      break;
-    case 's':
-      sort_strategy = 2;
-      break;
-    case 'l':
-      keep_L = 1;
-      break;
     case 't':
       timer = atoi(optarg);
+      break;
+    case 'k':
+      keep_L = 1;
       break;
     default:
       printf("Unknown option\n");
@@ -75,48 +63,29 @@ int main(int argc, char **argv) {
   argv += optind;
 
   T = spasm_load_sms(stdin, prime);
-  if (allow_transpose && (T->n < T->m)) {
-    fprintf(stderr, "[rank] transposing matrix : ");
-    fflush(stderr);
-    start_time = spasm_wtime();
+  if (T->n < T->m) {
+    fprintf(stderr, "[rank] transposing matrix\n");
     spasm_triplet_transpose(T);
-    fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
   }
-
   A = spasm_compress(T);
   spasm_triplet_free(T);
   n = A->n;
   m = A->m;
   start_time = spasm_wtime();
 
-  switch (sort_strategy) {
-  case 0:
-    p = NULL;
-    break;
+  qinv = spasm_malloc(m * sizeof(int));
+  p = spasm_malloc(n * sizeof(int));
+  npiv = spasm_find_pivots(A, p, qinv);
+  spasm *B = spasm_permute_pivots(A, p, qinv, npiv);
+  
+  spasm_csr_free(A);
+  free(p);
+  free(qinv);
+  p = SPASM_IDENTITY_PERMUTATION;
+  A = B;
 
-  case 1:
-    qinv = spasm_malloc(m * sizeof(int));
-    p = spasm_malloc(n * sizeof(int));
-    npiv = spasm_find_pivots(A, p, qinv);
-    spasm *B = spasm_permute_pivots(A, p, qinv, npiv);
-    
-    spasm_csr_free(A);
-    free(p);
-    free(qinv);
-    p = SPASM_IDENTITY_PERMUTATION;
-    A = B;
-
-    fprintf(stderr, "[rank] finding pivots: %.1f s\n", spasm_wtime() - start_time);
-    break;
-
-  case 2:
-    fprintf(stderr, "[rank] sorting rows : ");
-    fflush(stderr);
-    p = spasm_row_sort(A);
-    fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
-    break;
-  }
-
+  fprintf(stderr, "[rank] finding pivots: %.1f s\n", spasm_wtime() - start_time);
+  
   if (timer > 0) {
     signal(SIGALRM, alarm_handler);
     alarm(timer);
@@ -138,6 +107,7 @@ int main(int argc, char **argv) {
     L = LU->L;
     fprintf(stderr, "L :  %d x %d with %d nnz (density =%.1f %%)\n", L->n, r, spasm_nnz(L), 100.0 * spasm_nnz(L) / (1.0 * r * n - r * r / 2.0));
   }
+
 #ifdef SPASM_TIMING
   fprintf(stderr, "----------------------------------------\n");
   fprintf(stderr, "reach   : %12" PRId64 "\n", reach);

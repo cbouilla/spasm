@@ -204,7 +204,6 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv);
 int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv);
 double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R);
 
-
 /* spasm_dense_lu.c */
 spasm_dense_lu *spasm_dense_LU_alloc(int m, int prime);
 void spasm_dense_LU_free(spasm_dense_lu * A);
@@ -214,13 +213,9 @@ int spasm_dense_LU_process(spasm_dense_lu *A, spasm_GFp *y);
 int spasm_PLUQ_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
 int spasm_LU_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
 
-/* spasm_sort.c */
-int *spasm_row_sort(const spasm * A);
+/* spasm_pivots.c */
 int spasm_find_pivots(const spasm * A, int *p, int *qinv);
 spasm * spasm_permute_pivots(const spasm *A, int *p, int *qinv, int npiv);
-
-/* spasm_concatenate.c */
-spasm *spasm_row_concatenation(const spasm * A, const spasm * B, int with_values);
 
 /* spasm_matching.c */
 int spasm_maximum_matching(const spasm * A, int *jmatch, int *imatch);

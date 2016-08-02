@@ -20,15 +20,10 @@ int main(int argc, char **argv) {
   double start_time, end_time;
 
   prime = 42013;
-  sort_strategy = 1;            /* cheap pivots by default */
-  allow_transpose = 1;          /* transpose if more columns than rows by
-                                 * default */
   keep_L = 0;
 
   /* options descriptor */
   struct option longopts[6] = {
-    {"sort-rows", no_argument, NULL, 's'},
-    {"keep-rows", no_argument, NULL, 'k'},
     {"no-transpose", no_argument, NULL, 'a'},
     {"modulus", required_argument, NULL, 'p'},
     {"keep-L", no_argument, NULL, 'l'},
@@ -39,17 +34,6 @@ int main(int argc, char **argv) {
     switch (ch) {
     case 'p':
       prime = atoi(optarg);
-      break;
-    case 'k':
-      sort_strategy = 0;
-      break;
-    case 't':
-      break;
-    case 'a':
-      allow_transpose = 0;
-      break;
-    case 's':
-      sort_strategy = 2;
       break;
     case 'l':
       keep_L = 1;
@@ -64,12 +48,9 @@ int main(int argc, char **argv) {
 
   T = spasm_load_sms(stdin, prime);
   printf("A : %d x %d with %d nnz (density = %.3f %%) -- loaded modulo %d\n", T->n, T->m, T->nz, 100.0 * T->nz / (1.0 * T->n * T->m), prime);
-  if (allow_transpose && (T->n < T->m)) {
-    printf("[rank] transposing matrix : ");
-    fflush(stdout);
-    start_time = spasm_wtime();
+  if (T->n < T->m) {
+    printf("[pluq] transposing matrix\n");
     spasm_triplet_transpose(T);
-    printf("%.1f s\n", spasm_wtime() - start_time);
   }
   A = spasm_compress(T);
   spasm_triplet_free(T);
@@ -79,29 +60,12 @@ int main(int argc, char **argv) {
   start_time = spasm_wtime();
 
   p = NULL;
-
-  switch (sort_strategy) {
-  case 0:
-    break;
-  case 1:
-    printf("[rank] finding cheap pivots : ");
-    fflush(stdout);
-    start_time = spasm_wtime();
-    int npiv;
-    p = spasm_malloc(n * sizeof(int));
-    qinv = spasm_malloc(m * sizeof(int));
-    npiv = spasm_find_pivots(A, p, qinv);
-    printf("%.1f s\n", spasm_wtime() - start_time);
-    break;
-  case 2:
-    printf("[rank] sorting rows : ");
-    fflush(stdout);
-    start_time = spasm_wtime();
-    p = spasm_row_sort(A);
-    printf("%.1f s\n", spasm_wtime() - start_time);
-    break;
-  }
-
+  start_time = spasm_wtime();
+  int npiv;
+  p = spasm_malloc(n * sizeof(int));
+  qinv = spasm_malloc(m * sizeof(int));
+  npiv = spasm_find_pivots(A, p, qinv);
+  
   PLUQ = spasm_PLUQ(A, p, keep_L);
   end_time = spasm_wtime();
   printf("\n");
