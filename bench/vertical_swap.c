@@ -3,21 +3,20 @@
 #include "spasm.h"
 
 int main() {
-  spasm_triplet *A;
-  int m, nz, k;
-  int *Aj;
+	spasm_triplet *A;
+	int m, nz;
+	int *Aj;
 
-  A = spasm_load_sms(stdin, 42013);
-  
-  m = A->m;
-  nz = A->nz;
-  Aj = A->j;
-  
-  for (k = 0; k < nz; k++) {
-      Aj[k] = m - Aj[k];
-  }
+	A = spasm_load_sms(stdin, 42013);
 
-  spasm_save_triplet(stdout, A);
-  spasm_triplet_free(A);
-  return 0;
+	m = A->m;
+	nz = A->nz;
+	Aj = A->j;
+
+	for (int k = 0; k < nz; k++)
+		Aj[k] = m - Aj[k];
+
+	spasm_save_triplet(stdout, A);
+	spasm_triplet_free(A);
+	return 0;
 }

@@ -7,107 +7,107 @@ size_t mem_alloc;
 
 
 double spasm_wtime() {
-  struct timeval ts;
+	struct timeval ts;
 
-  gettimeofday(&ts, NULL);
-  return (double)ts.tv_sec + ts.tv_usec / 1E6;
+	gettimeofday(&ts, NULL);
+	return (double)ts.tv_sec + ts.tv_usec / 1E6;
 }
 
 
 int spasm_nnz(const spasm * A) {
-  assert(A != NULL);
+	assert(A != NULL);
 
-  return A->p[A->n];
+	return A->p[A->n];
 }
 
 /* return a string representing n in 4 bytes */
 void spasm_human_format(int64_t n, char *target) {
-  if (n < 1000) {
-    sprintf(target, "%lld", n);
-    return;
-  }
-  if (n < 1000000) {
-    sprintf(target, "%.1fk", n / 1e3);
-    return;
-  }
-  if (n < 1000000000) {
-    sprintf(target, "%.1fm", n / 1e6);
-    return;
-  }
-  if (n < 1000000000000ll) {
-    sprintf(target, "%.1fg", n / 1e9);
-    return;
-  }
-  if (n < 1000000000000000ll) {
-    sprintf(target, "%.1ft", n / 1e12);
-    return;
-  }
+	if (n < 1000) {
+		sprintf(target, "%lld", n);
+		return;
+	}
+	if (n < 1000000) {
+		sprintf(target, "%.1fk", n / 1e3);
+		return;
+	}
+	if (n < 1000000000) {
+		sprintf(target, "%.1fm", n / 1e6);
+		return;
+	}
+	if (n < 1000000000000ll) {
+		sprintf(target, "%.1fg", n / 1e9);
+		return;
+	}
+	if (n < 1000000000000000ll) {
+		sprintf(target, "%.1ft", n / 1e12);
+		return;
+	}
 }
 
 void *spasm_malloc(size_t size) {
-  void *x = malloc(size);
-  if (x == NULL) {
-    perror("malloc failed");
-    exit(1);
-  }
-  mem_alloc += size;
-  return x;
+	void *x = malloc(size);
+	if (x == NULL) {
+		perror("malloc failed");
+		exit(1);
+	}
+	mem_alloc += size;
+	return x;
 }
 
 void *spasm_calloc(size_t count, size_t size) {
-  void *x = calloc(count, size);
-  if (x == NULL) {
-    perror("calloc failed");
-    exit(1);
-  }
-  return x;
+	void *x = calloc(count, size);
+	if (x == NULL) {
+		perror("calloc failed");
+		exit(1);
+	}
+	return x;
 }
 
 void *spasm_realloc(void *ptr, size_t size) {
-  void *x = realloc(ptr, size);
-  if (ptr != NULL && x == NULL && size != 0) {
-    perror("realloc failed");
-    exit(1);
-  }
-  return x;
+	void *x = realloc(ptr, size);
+	if (ptr != NULL && x == NULL && size != 0) {
+		perror("realloc failed");
+		exit(1);
+	}
+	return x;
 }
 
 
 /* allocate a sparse matrix (compressed-row form) */
 spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
-  spasm *A;
+	spasm *A;
 
-  if (prime > 46337) {
-    prime = 46337;
-    fprintf(stderr, "WARNING: modulus has been set to 46337.\n");
-  }
-  A = spasm_malloc(sizeof(spasm));      /* allocate the cs struct */
-  A->m = m;                     /* define dimensions and nzmax */
-  A->n = n;
-  A->nzmax = nzmax;
-  A->prime = prime;
-  A->p = spasm_malloc((n + 1) * sizeof(int));
-  A->j = spasm_malloc(nzmax * sizeof(int));
-  A->x = (with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL);
-  return A;
+	if (prime > 46337) {
+		prime = 46337;
+		fprintf(stderr, "WARNING: modulus has been set to 46337.\n");
+	}
+	A = spasm_malloc(sizeof(spasm));	/* allocate the cs struct */
+	A->m = m;		/* define dimensions and nzmax */
+	A->n = n;
+	A->nzmax = nzmax;
+	A->prime = prime;
+	A->p = spasm_malloc((n + 1) * sizeof(int));
+	A->j = spasm_malloc(nzmax * sizeof(int));
+	A->x = (with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL);
+	return A;
 
 }
 
 
 /* allocate a sparse matrix (triplet form) */
 spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_values) {
-  spasm_triplet *A;
+	spasm_triplet *A;
 
-  A = spasm_malloc(sizeof(spasm_triplet));
-  A->m = m;
-  A->n = n;
-  A->nzmax = nzmax;
-  A->prime = prime;
-  A->nz = 0;
-  A->i = spasm_malloc(nzmax * sizeof(int));
-  A->j = spasm_malloc(nzmax * sizeof(int));
-  A->x = (with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL);
-  return A;
+	A = spasm_malloc(sizeof(spasm_triplet));
+	A->m = m;
+	A->n = n;
+	A->nzmax = nzmax;
+	A->prime = prime;
+	A->nz = 0;
+	A->i = spasm_malloc(nzmax * sizeof(int));
+	A->j = spasm_malloc(nzmax * sizeof(int));
+	A->x = (with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL);
+	return A;
 }
 
 
@@ -117,16 +117,16 @@ spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_
  * matrix is trimmed to its current nnz.
  */
 void spasm_csr_realloc(spasm * A, int nzmax) {
-  assert(A != NULL);
+	assert(A != NULL);
 
-  if (nzmax < 0) {
-    nzmax = spasm_nnz(A);
-  }
-  A->j = spasm_realloc(A->j, nzmax * sizeof(int));
-  if (A->x != NULL) {
-    A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
-  }
-  A->nzmax = nzmax;
+	if (nzmax < 0) {
+		nzmax = spasm_nnz(A);
+	}
+	A->j = spasm_realloc(A->j, nzmax * sizeof(int));
+	if (A->x != NULL) {
+		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
+	}
+	A->nzmax = nzmax;
 }
 
 
@@ -135,172 +135,172 @@ void spasm_csr_realloc(spasm * A, int nzmax) {
  * matrix is trimmed to its current nnz.
  */
 void spasm_triplet_realloc(spasm_triplet * A, int nzmax) {
-  assert(A != NULL);
+	assert(A != NULL);
 
-  if (nzmax < 0) {
-    nzmax = A->nz;
-  }
-  A->i = spasm_realloc(A->i, nzmax * sizeof(int));
-  A->j = spasm_realloc(A->j, nzmax * sizeof(int));
-  if (A->x != NULL) {
-    A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
-  }
-  A->nzmax = nzmax;
+	if (nzmax < 0) {
+		nzmax = A->nz;
+	}
+	A->i = spasm_realloc(A->i, nzmax * sizeof(int));
+	A->j = spasm_realloc(A->j, nzmax * sizeof(int));
+	if (A->x != NULL) {
+		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
+	}
+	A->nzmax = nzmax;
 }
 
 
 /* free a sparse matrix */
 void spasm_csr_free(spasm * A) {
-  if (A == NULL) {
-    return;
-  }
-  free(A->p);
-  free(A->j);
-  free(A->x);                   /* trick : free does nothing on NULL pointer */
-  free(A);
+	if (A == NULL) {
+		return;
+	}
+	free(A->p);
+	free(A->j);
+	free(A->x);		/* trick : free does nothing on NULL pointer */
+	free(A);
 }
 
 void spasm_triplet_free(spasm_triplet * A) {
-  assert(A != NULL);
-  free(A->i);
-  free(A->j);
-  free(A->x);                   /* trick : free does nothing on NULL pointer */
-  free(A);
+	assert(A != NULL);
+	free(A->i);
+	free(A->j);
+	free(A->x);		/* trick : free does nothing on NULL pointer */
+	free(A);
 }
 
 void spasm_csr_resize(spasm * A, int n, int m) {
-  int i, *Ap;
-  assert(A != NULL);
+	int i, *Ap;
+	assert(A != NULL);
 
-  A->m = m;
-  /* in case of a column shrink, check that no entries are left outside */
-  A->p = spasm_realloc(A->p, (n + 1) * sizeof(int));
+	A->m = m;
+	/* in case of a column shrink, check that no entries are left outside */
+	A->p = spasm_realloc(A->p, (n + 1) * sizeof(int));
 
-  if (A->n < n) {
-    Ap = A->p;
-    for (i = A->n; i < n + 1; i++) {
-      Ap[i] = Ap[A->n];
-    }
-  }
-  A->n = n;
+	if (A->n < n) {
+		Ap = A->p;
+		for (i = A->n; i < n + 1; i++) {
+			Ap[i] = Ap[A->n];
+		}
+	}
+	A->n = n;
 }
 
 
 spasm_partition *spasm_partition_alloc(int n, int m, int nr, int nc) {
-  spasm_partition *P;
+	spasm_partition *P;
 
-  P = spasm_malloc(sizeof(spasm_partition));
-  P->p = spasm_malloc(n * sizeof(int));
-  P->q = spasm_malloc(m * sizeof(int));
-  P->rr = spasm_malloc((nr + 1) * sizeof(int));
-  P->cc = spasm_malloc((nc + 1) * sizeof(int));
-  P->nr = 0;
-  P->nr = 0;
-  return P;
+	P = spasm_malloc(sizeof(spasm_partition));
+	P->p = spasm_malloc(n * sizeof(int));
+	P->q = spasm_malloc(m * sizeof(int));
+	P->rr = spasm_malloc((nr + 1) * sizeof(int));
+	P->cc = spasm_malloc((nc + 1) * sizeof(int));
+	P->nr = 0;
+	P->nr = 0;
+	return P;
 }
 
 void spasm_partition_tighten(spasm_partition * P) {
-  assert(P != NULL);
-  P->rr = spasm_realloc(P->rr, (P->nr + 1) * sizeof(int));
-  P->cc = spasm_realloc(P->cc, (P->nc + 1) * sizeof(int));
+	assert(P != NULL);
+	P->rr = spasm_realloc(P->rr, (P->nr + 1) * sizeof(int));
+	P->cc = spasm_realloc(P->cc, (P->nc + 1) * sizeof(int));
 }
 
 
 void spasm_partition_free(spasm_partition * P) {
-  if (P == NULL) {
-    return;
-  }
-  free(P->p);
-  free(P->q);
-  free(P->rr);
-  free(P->cc);
-  free(P);
+	if (P == NULL) {
+		return;
+	}
+	free(P->p);
+	free(P->q);
+	free(P->rr);
+	free(P->cc);
+	free(P);
 }
 
 void spasm_cc_free(spasm_cc * C) {
-  if (C == NULL) {
-    return;
-  }
-  spasm_partition_free(C->CC);
-  spasm_partition_free(C->SCC);
-  free(C);
+	if (C == NULL) {
+		return;
+	}
+	spasm_partition_free(C->CC);
+	spasm_partition_free(C->SCC);
+	free(C);
 }
 
 void spasm_dm_free(spasm_dm * x) {
-  if (x == NULL) {
-    return;
-  }
-  spasm_partition_free(x->DM);
-  spasm_cc_free(x->H);
-  spasm_cc_free(x->S);
-  spasm_cc_free(x->V);
-  free(x);
+	if (x == NULL) {
+		return;
+	}
+	spasm_partition_free(x->DM);
+	spasm_cc_free(x->H);
+	spasm_cc_free(x->S);
+	spasm_cc_free(x->V);
+	free(x);
 }
 
 
 void spasm_vector_zero(spasm_GFp * x, int n) {
-  int i;
+	int i;
 
-  for (i = 0; i < n; i++) {
-    x[i] = 0;
-  }
+	for (i = 0; i < n; i++) {
+		x[i] = 0;
+	}
 }
 
 void spasm_vector_set(spasm_GFp * x, int a, int b, spasm_GFp alpha) {
-  int i;
+	int i;
 
-  for (i = a; i < b; i++) {
-    x[i] = alpha;
-  }
+	for (i = a; i < b; i++) {
+		x[i] = alpha;
+	}
 }
 
 spasm *spasm_identity(int n, int prime) {
-  spasm *I;
-  int i;
+	spasm *I;
+	int i;
 
-  I = spasm_csr_alloc(n, n, n, prime, 1);
+	I = spasm_csr_alloc(n, n, n, prime, 1);
 
-  for (i = 0; i < n; i++) {
-    I->p[i] = i;
-    I->j[i] = i;
-    I->x[i] = 1;
-  }
-  I->p[n] = n;
+	for (i = 0; i < n; i++) {
+		I->p[i] = i;
+		I->j[i] = i;
+		I->x[i] = 1;
+	}
+	I->p[n] = n;
 
-  return I;
+	return I;
 }
 
 /*
  * duplicate a matrix.
  */
 spasm *spasm_duplicate(const spasm * A) {
-  spasm *B;
-  int k, n, m, nzmax, prime, with_values;
-  int *Ap, *Aj, *Bp, *Bj;
-  spasm_GFp *Ax, *Bx;
+	spasm *B;
+	int k, n, m, nzmax, prime, with_values;
+	int *Ap, *Aj, *Bp, *Bj;
+	spasm_GFp *Ax, *Bx;
 
-  n = A->n;
-  m = A->m;
-  nzmax = A->nzmax;
-  prime = A->prime;
-  Ap = A->p;
-  Aj = A->j;
-  Ax = A->x;
-  with_values = (Ax != NULL) ? 1 : 0;
+	n = A->n;
+	m = A->m;
+	nzmax = A->nzmax;
+	prime = A->prime;
+	Ap = A->p;
+	Aj = A->j;
+	Ax = A->x;
+	with_values = (Ax != NULL) ? 1 : 0;
 
-  B = spasm_csr_alloc(n, m, nzmax, prime, with_values);
-  Bp = B->p;
-  Bj = B->j;
-  Bx = B->x;
+	B = spasm_csr_alloc(n, m, nzmax, prime, with_values);
+	Bp = B->p;
+	Bj = B->j;
+	Bx = B->x;
 
-  for (k = 0; k <= n; k++) {
-    Bp[k] = Ap[k];
-  }
-  for (k = 0; k < nzmax; k++) {
-    Bj[k] = Aj[k];
-    if (with_values)
-      Bx[k] = Ax[k];
-  }
+	for (k = 0; k <= n; k++) {
+		Bp[k] = Ap[k];
+	}
+	for (k = 0; k < nzmax; k++) {
+		Bj[k] = Aj[k];
+		if (with_values)
+			Bx[k] = Ax[k];
+	}
 
-  return B;
+	return B;
 }

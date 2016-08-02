@@ -173,7 +173,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	/* Get Workspace */
 	Sm = m - npiv;
 	q = spasm_malloc(Sm * sizeof(int));
-	
+
 	/* q sends columns of S to non-pivotal columns of A */
 	k = 0;
 	for (int j = 0; j < m; j++)
@@ -184,7 +184,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 
 	/* ---- compute Schur complement ----- */
 	fprintf(stderr, "rank of dense schur complement...\n");
-	
+
 	start = spasm_wtime();
 	r = 0;
 	step = 1;
@@ -198,11 +198,11 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 
 #pragma omp parallel
 	{
-		spasm_GFp * x = spasm_malloc(m * sizeof(spasm_GFp));
-		spasm_GFp * y = spasm_malloc(Sm * sizeof(spasm_GFp));
+		spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
+		spasm_GFp *y = spasm_malloc(Sm * sizeof(spasm_GFp));
 		int gain;
 
-		while (step <= (1 << 16)) { /* <--- tweak-me */
+		while (step <= (1 << 16)) {	/* <--- tweak-me */
 			double it_start = spasm_wtime();
 			prev_r = r;
 
@@ -213,14 +213,14 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 				spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], 1 + (rand() % (prime - 1)), x, prime);
 			}
 			spasm_eliminate_sparse_pivots(A, npiv, p, x);
-			for (int j = 0; j < Sm; j++) /* gather into y */
+			for (int j = 0; j < Sm; j++)	/* gather into y */
 				y[j] = x[q[j]];
 
-			#pragma omp atomic update
+#pragma omp atomic update
 			r += spasm_dense_LU_process(U, y);
 
 			/* this is a barrier */
-			#pragma omp single
+#pragma omp single
 			{
 				fprintf(stderr, "\rSchur : %d [%.1fs] -- current rank = %d / step = %d", k, spasm_wtime() - it_start, r, step);
 				fflush(stderr);
@@ -232,17 +232,17 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 				if (gain < threads)
 					step *= 2;
 				else
-					step = spasm_max(1, step/2);
+					step = spasm_max(1, step / 2);
 			}
 		}
 
-		#pragma omp single
+#pragma omp single
 		{
 			int final_bad = 0;
 			k = 0;
 			fprintf(stderr, "\n");
 
-			while(final_bad < 3) {
+			while (final_bad < 3) {
 				double it_start = spasm_wtime();
 				for (int i = npiv; i < n; i++) {
 					int inew = p[i];
@@ -263,7 +263,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 		free(y);
 	}
 	fprintf(stderr, "\n[schur/rank] Time: %.1fs\n", spasm_wtime() - start);
-	
+
 	free(q);
 	spasm_dense_LU_free(U);
 	return r;

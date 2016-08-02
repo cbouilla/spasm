@@ -5,8 +5,6 @@
 
 /** computes a Dulmage-Mendelson decomposition */
 
-/* indent -nfbs -i4 -nip -npsl -di0 -nut dm.c  */
-
 int nontrivial_diag_size = 0;
 int nontrivial_diag_rank = 0;
 int trivial_diag_rank = 0;

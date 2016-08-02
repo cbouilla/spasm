@@ -5,18 +5,16 @@
  * depth-first-search of the graph of a matrix, starting at column j.
  *
  * The traversal works as follow : starting from a column j, find the
- * row containing the pivot on this column (row "inew"). If there is no
- * pivot on column j, then assume it is on row j (this allows to work
- * with matrices like U for which n < m --- an implicit identity is padded below).
+ * row containing the pivot on this column (row "inew"). If there is not pivot on column j, stop.
  *
- * When pivot row has been found, append its next unseen entry to the stack, and restart.
+ * When a pivot row has been found, append its next unseen entry to the stack, and restart.
  *
- * @param pinv
- *           pinv[j] indicates the row on which the j-th column pivot can be found.
- *           pinv[j] == -1 means that there is no pivot on column j.
+ * @param qinv
+ *           qinv[j] indicates the row on which the j-th column pivot can be found.
+ *           qinv[j] == -1 means that there is no pivot on column j.
  *
- * The matrix need not be square. If n < m, then pinv must be non-NULL, and
- * pinv[i] = -1 means that row[i] implicitly is an identity row.
+ * The matrix need not be square. If n < m, then qinv must be non-NULL, and
+ * qinv[j] = -1 that there is no pivot on column j
  *
  * @param j column at which the traversal starts.
  *
@@ -31,86 +29,72 @@
  *
  * @return top
  */
-int spasm_dfs(int j, const spasm * G, int top, int *xj, int *pstack, int *marks, const int *pinv) {
-  int p, p2, inew, head, *Gp, *Gj;
+int spasm_dfs(int j, const spasm * A, int top, int *xj, int *pstack, int *marks, const int *qinv) {
+	int px, p2, inew, head, *Ap, *Aj;
 
-  /* check inputs */
-  assert(G != NULL);
-  assert(xj != NULL);
-  assert(pstack != NULL);
-  assert(marks != NULL);
+	/* check inputs */
+	assert(A != NULL);
+	assert(xj != NULL);
+	assert(pstack != NULL);
+	assert(marks != NULL);
 
-  Gp = G->p;
-  Gj = G->j;
-  /*
-   * initialize the recursion stack (rows waiting to be traversed). The stack
-   * is held at the begining of xj, and has head elements.
-   */
-  head = 0;
-  xj[head] = j;
+	Ap = A->p;
+	Aj = A->j;
+	/*
+	 * initialize the recursion stack (rows waiting to be traversed). The
+	 * stack is held at the begining of xj, and has head elements.
+	 */
+	head = 0;
+	xj[head] = j;
 
-  /* stack empty ? */
-  while (head >= 0) {
-    /* get i from the top of the recursion stack */
-    j = xj[head];
-    inew = (pinv != NULL) ? pinv[j] : j;
+	/* stack empty ? */
+	while (head >= 0) {
+		/* get j from the top of the recursion stack */
+		j = xj[head];
+		inew = (qinv != NULL) ? qinv[j] : j;
 
-    /*
-     * has row i been seen before ? 
-     * adjacent columns are Gj[ Gp[jnew]     : Gp[jnew + 1] ] 
-     * UNSEEN columns are   Gj[ pstack[head] : Gp[jnew + 1] ]
-     */
+		/*
+		 * has row i been seen before ? adjacent columns are Gj[
+		 * Gp[jnew]     : Gp[jnew + 1] ] UNSEEN columns are   Gj[
+		 * pstack[head] : Gp[jnew + 1] ]
+		 */
 
-    if (!marks[j]) {
-      /* mark node i as seen. This is done only once. */
-      marks[j] = 1;
-      /*
-       * Initialize pstack for this node: first unseen column is... the first
-       * entry on the row
-       */
-      pstack[head] = (inew < 0) ? 0 : Gp[inew];
-    }
-    /* index of last entry */
-    p2 = (inew < 0) ? 0 : Gp[inew + 1];
+		if (!marks[j]) {
+			/* mark node i as seen and initialize pstack. This is done only once. */
+			marks[j] = 1;
+			pstack[head] = (inew < 0) ? 0 : Ap[inew];
+		}
+		/* index of last entry of row inew */
+		p2 = (inew < 0) ? 0 : Ap[inew + 1];
 
-    /* examine all yet-unseen entries of row i */
-    for (p = pstack[head]; p < p2; p++) {
+		/* examine all yet-unseen entries of row i */
+		for (px = pstack[head]; px < p2; px++) {
+			j = Aj[px];
+			if (marks[j])
+				continue;
+			/*
+			 * interrupt the enumeration of entries of row inew,
+			 * and deal with column j instead. Save status of row
+			 * inew in the stack.
+			 */
+			pstack[head] = px + 1;
 
-      /* consider next adjacent column */
-      j = Gj[p];
+			/*
+			 * push column j onto the recursion stack. This will
+			 * start a DFS from j
+			 */
+			xj[++head] = j;
 
-      /* if already visisted, skip */
-      if (marks[j]) {
-        continue;
-      }
-      /*
-       * interrupt the enumeration of entries of row inew, and deal with
-       * column j instead. Save status of row inew in the stack.
-       */
-      pstack[head] = p + 1;
+			/* node i is not done, exit the loop */
+			break;
+		}
 
-      /*
-       * push column j onto the recursion stack. This will start a DFS from j
-       */
-
-      head++;
-      xj[head] = j;
-
-      /* node i is not done, exit the loop */
-      break;
-    }
-
-    /* depth-first search at node i done ? */
-    if (p == p2) {
-      /* push initial column in the output stack */
-      top--;
-      xj[top] = xj[head];
-
-      /* pop it from the recursion stack */
-      head--;
-    }
-  }
-  return top;
+		/* depth-first search at node i done ? */
+		if (px == p2)
+			/* push initial column in the output stack and pop it from the recursion stack*/
+			xj[--top] = xj[head--];
+	}
+	return top;
 }
 
 
@@ -136,41 +120,39 @@ int spasm_dfs(int j, const spasm * G, int top, int *xj, int *pstack, int *marks,
  * 
  * xj [l...3l-1] used as workspace
  */
-int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xj, const int *pinv) {
-  int p, m, top, *Bp, *Bj, *pstack, *marks;
+int spasm_reach(const spasm * A, const spasm * B, int k, int l, int *xj, const int *qinv) {
+	int  m, top, *Bp, *Bj, *pstack, *marks;
 
-  /* check inputs */
-  assert(G != NULL);
-  assert(B != NULL);
-  assert(xj != NULL);
+	/* check inputs */
+	assert(A != NULL);
+	assert(B != NULL);
+	assert(xj != NULL);
 
-  m = G->m;
-  Bp = B->p;
-  Bj = B->j;
-  top = l;
+	m = A->m;
+	Bp = B->p;
+	Bj = B->j;
+	top = l;
 
-  pstack = xj + l;
-  marks = pstack + l;
+	pstack = xj + l;
+	marks = pstack + l;
 
-  /*
-   * iterates over the k-th row of B.  For each column index j present in
-   * B[k], check if j is in the pattern (i.e. if it is marked). If not, start
-   * a DFS from j and add to the pattern all columns reachable from j.
-   */
-  for (p = Bp[k]; p < Bp[k + 1]; p++) {
-    if (!marks[Bj[p]]) {
-      top = spasm_dfs(Bj[p], G, top, xj, pstack, marks, pinv);
-    }
-  }
+	/*
+	 * iterates over the k-th row of B.  For each column index j present
+	 * in B[k], check if j is in the pattern (i.e. if it is marked). If
+	 * not, start a DFS from j and add to the pattern all columns
+	 * reachable from j.
+	 */
+	for (int px = Bp[k]; px < Bp[k + 1]; px++)
+		if (!marks[Bj[px]])
+			top = spasm_dfs(Bj[px], A, top, xj, pstack, marks, qinv);
 
-  /* unmark all marked nodes. */
-  /*
-   * TODO : possible optimization : if stuff is marked "k", and initialized
-   * with -1, then this is not necessary
-   */
-  for (p = top; p < l; p++) {
-    marks[xj[p]] = 0;
-  }
+	/* unmark all marked nodes. */
+	/*
+	 * TODO : possible optimization : if stuff is marked "k", and
+	 * initialized with -1, then this is not necessary
+	 */
+	for (int px = top; px < l; px++)
+		marks[xj[px]] = 0;
 
-  return top;
+	return top;
 }
