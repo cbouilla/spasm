@@ -158,7 +158,7 @@ double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const
  * itself. The pivots must be unitary.
  */
 int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
-	int Sm, m, n, k, r, prime, step, nbad, ngood;
+	int Sm, m, n, k, r, prime, step, bad, good, searched;
 	int *q, *Ap, *Aj;
 	double start;
 	spasm_GFp *Ax;
@@ -189,8 +189,9 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	r = 0;
 	step = 1;
 	k = 0;
-	nbad = 0;
-	ngood = 0;
+	searched = 0;
+	bad = 0;
+	good = 0;
 
 #pragma omp parallel
 	{
@@ -199,7 +200,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 		int local_step = step, new;
 
 		/* note : l'essentiel du temps se passe avec step == 1 */
-		while (local_step < n) {
+		while (searched < (n - npiv) / 2) {
 			double it_start = spasm_wtime();
 			
 			/* random linear combination */
@@ -213,38 +214,36 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 				y[j] = x[q[j]];
 			new = spasm_dense_LU_process(U, y);
 
-#pragma omp critical(schur_rank)
-			if (new) {
-				r++;
-				ngood++;
-				if (ngood == 16) {
-					if (step > 1) {
-						nbad = 0;
-					}
-					local_step = spasm_max(step / 2, 1);
-					#pragma omp atomic write
-					step = local_step;
-					ngood = 0;
-				}
-			} else {
-				nbad++;
-				if (nbad >= 3) {
-					ngood = 0;
-					local_step = spasm_max(step, 2*local_step);
-					#pragma omp atomic write
-					step = local_step;
-				}
-			}
-
-			#pragma omp atomic update
-			k++;
-
-			double now = spasm_wtime();
-			fprintf(stderr, "\rSchur : %d [%.1fs] -- current rank = %d / step = %d", k, now - it_start, r, local_step);
+			fprintf(stderr, "\rSchur : %d [%.1fs] -- current rank = %d / step = %d", k, spasm_wtime() - it_start, r, local_step);
 			fflush(stderr);
 
-			#pragma omp atomic read
-			local_step = step;
+#pragma omp critical(schur_rank)
+			{
+				k++;
+				r += new;				
+				if (new) { /* something was found at width local_step: let's keep doing it */
+					step = local_step;
+					bad = 0;
+					searched = 0;
+					good++;
+					if (good >= 8) {
+						good = 0;
+						step = spasm_max(1, step / 2);
+					}
+				} else {
+					searched += local_step;
+
+					if (local_step == step) {  /* width is the same since the begining of this step */
+						good = 0;
+						bad++;
+						if (bad >= 2) { /* we may consider increase the width */
+							bad = 0;
+							step *= 4;
+						}
+					}
+				}
+				local_step = step;
+			}
 		}
 
 		int final_bad = 0;
