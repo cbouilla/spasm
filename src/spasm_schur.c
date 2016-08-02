@@ -221,16 +221,18 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 					if (step > 1) {
 						nbad = 0;
 					}
+					local_step = spasm_max(step / 2, 1);
 					#pragma omp atomic write
-					step = spasm_max(step / 2, 1);;
+					step = local_step;
 					ngood = 0;
 				}
 			} else {
 				nbad++;
 				if (nbad >= 3) {
 					ngood = 0;
-					#pragma omp atomic update
-					step *= 2;
+					local_step = spasm_max(step, 2*local_step):
+					#pragma omp atomic write
+					step = local_step;
 				}
 			}
 
