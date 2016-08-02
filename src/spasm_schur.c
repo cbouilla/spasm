@@ -230,7 +230,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 				nbad++;
 				if (nbad >= 3) {
 					ngood = 0;
-					local_step = spasm_max(step, 2*local_step):
+					local_step = spasm_max(step, 2*local_step);
 					#pragma omp atomic write
 					step = local_step;
 				}
