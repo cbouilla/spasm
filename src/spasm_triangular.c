@@ -208,11 +208,6 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
   uint64_t start;
 #endif
 
-  assert(U != NULL);
-  assert(B != NULL);
-  assert(xj != NULL);
-  assert(x != NULL);
-
   m = U->m;
   Up = U->p;
   Uj = U->j;
@@ -242,11 +237,11 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
   for (int px = Bp[k]; px < Bp[k + 1]; px++)
     x[Bj[px]] = Bx[px];
 
-  /* iterate over the (precomputed) pattern of x (= the solution) */
 #ifdef SPASM_TIMING
   start = spasm_ticks();
 #endif
 
+  /* iterate over the (precomputed) pattern of x (= the solution) */
   for (int px = top; px < m; px++) {
     /* x[j] is nonzero */
     int j = xj[px];
