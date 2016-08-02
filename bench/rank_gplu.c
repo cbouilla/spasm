@@ -25,13 +25,11 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *U, *L;
   spasm_lu *LU;
-  int r, n, m, ch, prime, allow_transpose, sort_strategy, keep_L, timer, npiv;
+  int r, n, m, ch, prime, keep_L, timer, npiv;
   int *qinv, *p;
   double start_time, end_time;
 
   prime = 42013;
-  sort_strategy = 1;            /* cheap pivots ON by default */
-  allow_transpose = 1;          /* transpose ON by default */
   keep_L = 0;
   timer = -1;
 
@@ -91,7 +89,7 @@ int main(int argc, char **argv) {
     alarm(timer);
 
     if (setjmp(Env) != 0) {
-      fprintf(stderr, "\nTimeout after %d seconds\n", timer);
+      fprintf(stderr, "\nTimeout\n");
       exit(2);
     }
   }
@@ -101,11 +99,10 @@ int main(int argc, char **argv) {
   U = LU->U;
   r = U->n;
 
-  printf("%.2f\n", end_time - start_time);
   fprintf(stderr, "U :  %d x %d with %d nnz (density = %.1f %%)\n", r, m, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0 * r * m - r * r / 2.0));
   if (LU->L != NULL) {
     L = LU->L;
-    fprintf(stderr, "L :  %d x %d with %d nnz (density =%.1f %%)\n", L->n, r, spasm_nnz(L), 100.0 * spasm_nnz(L) / (1.0 * r * n - r * r / 2.0));
+    fprintf(stderr, "L :  %d x %d with %d nnz (density = %.1f %%)\n", L->n, r, spasm_nnz(L), 100.0 * spasm_nnz(L) / (1.0 * r * n - r * r / 2.0));
   }
 
 #ifdef SPASM_TIMING
@@ -116,8 +113,7 @@ int main(int argc, char **argv) {
   fprintf(stderr, "----------------------------------------\n");
 #endif
 
-  printf("rank of A = %d\n", U->n);
-
+  printf("rank of A = %d [%.1fs]\n", r, end_time - start_time);
   free(p);
   spasm_free_LU(LU);
   spasm_csr_free(A);
