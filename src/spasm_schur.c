@@ -202,7 +202,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 		spasm_GFp * y = spasm_malloc(Sm * sizeof(spasm_GFp));
 		int gain;
 
-		while (step < n / (8 * threads)) { /* <--- tweak-me */
+		while (step <= (1 << 16)) { /* <--- tweak-me */
 			double it_start = spasm_wtime();
 			prev_r = r;
 
