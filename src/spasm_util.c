@@ -239,19 +239,13 @@ void spasm_dm_free(spasm_dm * x) {
 
 
 void spasm_vector_zero(spasm_GFp * x, int n) {
-	int i;
-
-	for (i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++)
 		x[i] = 0;
-	}
 }
 
 void spasm_vector_set(spasm_GFp * x, int a, int b, spasm_GFp alpha) {
-	int i;
-
-	for (i = a; i < b; i++) {
+	for (int i = a; i < b; i++)
 		x[i] = alpha;
-	}
 }
 
 spasm *spasm_identity(int n, int prime) {

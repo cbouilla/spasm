@@ -1,147 +1,133 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_matching.c */
 #include <assert.h>
 #include "spasm.h"
 
-/*
- * k indicates the starting row. imatch[j] indicates which row matches column
- * j (or -1 if column j is not matched).
+void spasm_augment_matching(int head, int *istack, int *jstack, int *p, int *qinv) {
+	for (int px = head; px >= 0; px--) {
+		int i = istack[px];
+		int j = jstack[px];
+		qinv[j] = i;
+		p[i] = j;
+	}
+}
+
+/* lookahead: search for unmatched column in A[i,:]. If found, it completes the
+ * alternating path in istack/jstack, so we augment the matching. */
+int spasm_lookahead(const spasm *A, int i, int head, int *plookahead, int *istack, int *jstack, int *p, int *qinv) {
+	int *Ap = A->p;
+	int *Aj = A->j;
+			
+	for (int px = plookahead[i]; px < Ap[i + 1]; px++) {
+		int j = Aj[px];
+		if (qinv[j] < 0) {
+			plookahead[i] = px + 1;
+			jstack[head] = j;
+			spasm_augment_matching(head, istack, jstack, p, qinv);
+			return 1;
+		}	
+	}
+	/* all column on A[i,:] are matched. start the DFS */
+	plookahead[i] = Ap[i + 1];
+	return 0;
+}
+
+/**
+ * Search an augmenting path w.r.t. the matching, starting from row k (i.e. a
+ * path from an unmatched row to an unmatched column).
+ *
+ * This does a DFS starting from row k, and memorizes the path in (row_stack / 
+ * col_stack). When looking for an unmatched column reachable from a row, the 
+ * adjacent columns are examined first. This "lookeahead" amounts to do one step
+ * of BFS inside the DFS.
+ *
+ * Because the matching increases monotonically (when row/column is matched, it
+ * stays matched), is it useless to re-examine matched columns.
  */
-static int spasm_augmenting_path(const spasm * A, int k, int *row_stack, int *col_stack, int *pointer_stack, int *marks, int *cheap, int *imatch, int *jmatch) {
-	int i, j, p, head, found;
+int spasm_augmenting_path(const spasm * A, int k, int *istack, int *jstack, int *pstack, int *marks, int *plookahead, int *p, int *qinv) {
+	int head, px;
 	int *Ap, *Aj;
 
-	/* check inputs */
 	Ap = A->p;
 	Aj = A->j;
 
-	/*
-	 * initialize the recursion stack (row nodes waiting to be
-	 * traversed). The stack is held at the begining of xi, and has head
-	 * elements.
-	 */
+	/* initialize the DFS */
 	head = 0;
-	row_stack[head] = k;
-	found = 0;
+	istack[head] = k;
 
 	/* stack empty ? */
 	while (head >= 0) {
-		/* get i from the top of the recursion stack */
-		i = row_stack[head];
+		/* search an unmatched column reachable from row i */
+		int i = istack[head];
 
 		if (marks[i] != k) {
 			marks[i] = k;
-
-			/*
-			 * now try to find an unmatched column adjacent to
-			 * row i
-			 */
-			for (p = cheap[i]; p < Ap[i + 1]; p++) {
-				j = Aj[p];
-				if (imatch[j] == -1) {
-					found = 1;
-					break;
-				}
-			}
-			cheap[i] = p;
-
-			if (found) {
-				col_stack[head] = j;
-				break;
-			}
-			/*
-			 * all adjacent columns are matched: we need to push
-			 * the DFS search deeper
-			 */
-			pointer_stack[head] = Ap[i];
+			if (spasm_lookahead(A, i, head, plookahead, istack, jstack, p, qinv))
+				return 1;
+			/* nothing on row i: we have to start the DFS */
+			pstack[head] = Ap[i];
 		}
-		/*
-		 * --- Depth-first-search of column adjacent to row i
-		 * --------------------
-		 */
-		for (p = pointer_stack[head]; p < Ap[i + 1]; p++) {
-			j = Aj[p];
-			if (marks[imatch[j]] == k) {
+		
+		/* Depth-first-search of columns adjacent to row i */
+		for (px = pstack[head]; px < Ap[i + 1]; px++) {
+			int j = Aj[px];
+			int inew = qinv[j];
+			if (marks[inew] == k)
 				continue;
-			}
-			/*
-			 * found an unexplored neighbor imatch[j]: pause dfs
-			 * of node i
-			 */
-			pointer_stack[head] = p + 1;
-			col_stack[head] = j;
-
-			/* start dfs at row imatch[j] */
-			head++;
-			row_stack[head] = imatch[j];
+			/* pause DFS of row i, start DFS of row inew. */
+			pstack[head] = px + 1;
+			jstack[head] = j;
+			istack[++head] = inew;
 			break;
 		}
-		/* row node i is done: pop it from stack */
-		if (p == Ap[i + 1]) {
+		/* row i is done: pop it from stack */
+		if (px == Ap[i + 1])
 			head--;
-		}
-	}
-
-	if (found) {
-		//printf("path of length %d\n", head + 1);
-		for (p = head; p >= 0; p--) {
-			imatch[col_stack[p]] = row_stack[p];
-			jmatch[row_stack[p]] = col_stack[p];
-		}
-		return 1;
 	}
 	return 0;
 }
 
-
-/*
- * returns the size of the matching.
+/** 
+ * Computes a maximum matching using the Ford–Fulkerson algorithm.
+ *
+ * If the matrix is rectangular, it is a big advantage to transpose it so that n << m.
  * 
- * imatch[j] indicates the row    matched to column j jmatch[i] indicates the
- * column matched to row    i
+ * @param qinv[j] = row matched to column j (or -1) 
+ *
+ * @param p[i] = column matched to row i (or -1)
  * 
- * If the matrix is rectangular, it is a big advantage to transpose it so that n
- * << m
+ * @return size of the matching
  */
-int spasm_maximum_matching(const spasm * A, int *jmatch, int *imatch) {
-	int n, m, r, i, j, k;
-	int *Ap, *w, *row_stack, *col_stack, *marks, *pointer_stack, *cheap;
+int spasm_maximum_matching(const spasm * A, int *p, int *qinv) {
+	int n, m, r, k;
+	int *Ap, *istack, *jstack, *marks, *pstack, *plookahead;
 
 	n = A->n;
 	m = A->m;
-	r = spasm_min(n, m);
+	r = spasm_min(n, m); /* the matching cant' be bigger than this */
 	Ap = A->p;
 
-	/* cette procédure nécessite peut-être que n >= m (?) */
-	for (j = 0; j < m; j++) {
-		imatch[j] = -1;
-	}
-
 	/* get workspace */
-	w = spasm_malloc(5 * n * sizeof(int));
-	row_stack = w;
-	col_stack = w + n;
-	pointer_stack = w + 2 * n;
-	marks = w + 3 * n;
-	cheap = w + 4 * n;
+	istack = spasm_malloc(n * sizeof(int));
+	jstack = spasm_malloc(n * sizeof(int));
+	pstack = spasm_malloc(n * sizeof(int));
+	marks  = spasm_malloc(n * sizeof(int));
+	plookahead = spasm_malloc(n * sizeof(int));
 
-	for (i = 0; i < n; i++) {
-		marks[i] = -1;
-		cheap[i] = Ap[i];
-		jmatch[i] = -1;
-	}
+	spasm_vector_set(qinv, 0, m, -1);
+	spasm_vector_set(p, 0, n, -1);
+	spasm_vector_set(marks, 0, n, -1);
+	for (int i = 0; i < n; i++)
+		plookahead[i] = Ap[i];
 
 	k = 0;
-	/* --- finds a maximal matching ----------------------------- */
-	for (i = 0; i < n; i++) {
-		if (k == r) {
-			break;	/* early abort */
-		}
-		if (jmatch[i] == -1) {
-			k += spasm_augmenting_path(A, i, row_stack, col_stack, pointer_stack, marks, cheap, imatch, jmatch);
-		}
-	}
+	for (int i = 0; (i < n) && (k < r); i++)
+		if (p[i] < 0)
+			k += spasm_augmenting_path(A, i, istack, jstack, pstack, marks, plookahead, p, qinv);
 
-	free(w);
+	free(istack);
+	free(jstack);
+	free(pstack);
+	free(marks);
+	free(plookahead);
 	return k;
 }
 
@@ -199,17 +185,4 @@ int *spasm_submatching(const int *match, int a, int b, int c, int d) {
 		}
 	}
 	return pmatch;
-}
-
-int spasm_structural_rank(const spasm * A) {
-	int n, m;
-	int *imatch, *jmatch;
-
-	n = A->n;
-	m = A->m;
-
-	imatch = spasm_malloc(m * sizeof(int));
-	jmatch = spasm_malloc(n * sizeof(int));
-
-	return spasm_maximum_matching(A, jmatch, imatch);
 }

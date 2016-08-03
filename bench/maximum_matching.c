@@ -14,25 +14,27 @@ int main() {
 	int transposed = 0;
 
 	T = spasm_load_sms(stdin, 42013);
-	n = T->n;
-	m = T->m;
 	fprintf(stderr, "A : %d x %d with %d nnz (density = %.3f %%)\n", T->n, T->m, T->nz, 100.0 * T->nz / (1.0 * T->n * T->m));
 
-	if (T->n > T->m) {
+	n = T->n;
+	m = T->m;
+
+	if (n > m) {
 		fprintf(stderr, "[matching - info] transposing matrix to speed-up maximum matching\n");
 		spasm_triplet_transpose(T);
 		transposed = 1;
 	}
 	A = spasm_compress(T);
 
-	imatch = spasm_malloc(m * sizeof(int));
-	jmatch = spasm_malloc(n * sizeof(int));
+	jmatch = spasm_malloc(T->n * sizeof(int));
+	imatch = spasm_malloc(T->m * sizeof(int));
 
 	fprintf(stderr, "[matching] maximum matching...");
 	fflush(stderr);
+	
 	start_time = spasm_wtime();
-
 	r = spasm_maximum_matching(A, jmatch, imatch);
+	fprintf(stderr, " %.1f s\n", spasm_wtime() - start_time);
 
 	if (transposed) {
 		spasm_csr_free(A);
@@ -42,7 +44,9 @@ int main() {
 		imatch = jmatch;
 		jmatch = p;
 	}
-	fprintf(stderr, " %.1f s\n", spasm_wtime() - start_time);
+	
+	spasm_triplet_free(T);
+
 	if (r < spasm_min(n, m)) {
 		fprintf(stderr, "[matching] matrix is structurally rank-deficient. Structural rank: %d\n", r);
 	} else if (n == m) {
