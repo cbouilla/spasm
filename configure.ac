@@ -1,11 +1,11 @@
-AC_INIT([spasm],[1.0],[charles.bouillaguet@univ-lille1.fr])
+AC_INIT([spasm],[1.1],[charles.bouillaguet@univ-lille1.fr])
 AC_PREREQ([2.69])
 #AC_CANONICAL_HOST
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 LT_INIT
 
-AM_INIT_AUTOMAKE([1.8 gnu no-dependencies foreign -Wall])
+AM_INIT_AUTOMAKE([1.8 no-dependencies foreign -Wall])
 AC_CONFIG_HEADERS([src/config.h])
 AM_MAINTAINER_MODE
 

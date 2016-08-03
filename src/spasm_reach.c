@@ -121,18 +121,16 @@ int spasm_dfs(int j, const spasm * A, int top, int *xj, int *pstack, int *marks,
  * xj [l...3l-1] used as workspace
  */
 int spasm_reach(const spasm * A, const spasm * B, int k, int l, int *xj, const int *qinv) {
-	int  m, top, *Bp, *Bj, *pstack, *marks;
+	int  top, *Bp, *Bj, *pstack, *marks;
 
 	/* check inputs */
 	assert(A != NULL);
 	assert(B != NULL);
 	assert(xj != NULL);
 
-	m = A->m;
 	Bp = B->p;
 	Bj = B->j;
 	top = l;
-
 	pstack = xj + l;
 	marks = pstack + l;
 
