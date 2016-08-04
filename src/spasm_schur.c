@@ -31,7 +31,7 @@ void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
  * be unitary.
  */
 spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
-	int k, snz, *q;
+	int k, snz, *q, writing;
 	double start;
 	spasm *S;
 
@@ -56,6 +56,7 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 	spasm_GFp *Sx = S->x;
 	snz = 0;
 	k = 0;
+	writing = 0;
 	start = spasm_wtime();
 
 #pragma omp parallel
@@ -64,29 +65,54 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 		int *xj = spasm_malloc(3 * m * sizeof(int));
 		spasm_vector_zero(xj, 3 * m);		
 		int tid = spasm_get_thread_num();
+		int row_snz, row_k, row_px;
 
-#pragma omp for schedule(dynamic, verbose_step)
+		#pragma omp for schedule(dynamic, verbose_step)
 		for (int i = npiv; i < n; i++) {
 			const int inew = p[i];
 			const int top = spasm_sparse_forward_solve(A, A, inew, xj, x, qinv);
-#pragma omp critical
+
+			row_snz = 0;
+			for (int px = top; px < m; px++) {
+				const int j = xj[px];
+				if ((q[j] >= 0) && (x[j] != 0))
+					row_snz++;
+			}
+
+			#pragma omp critical(schur_complement)
 			{
 				/* not enough room in S ? realloc twice the size */
 				if (snz + Sm > S->nzmax) {
+					/* TODO wait until other threads stop writing into it */
+					#pragma omp flush(writing)
+					while (writing > 0) {
+						#pragma omp flush(writing)
+					}
 					spasm_csr_realloc(S, 2 * S->nzmax + Sm);
 					Sj = S->j;
 					Sx = S->x;
 				}
 				/* save row k */
-				Sp[k++] = snz;
-				for (int px = top; px < m; px++) {
-					const int j = xj[px];
-					if ((q[j] >= 0) && (x[j] != 0)) {
-						Sj[snz] = q[j];
-						Sx[snz++] = x[j];
-					}
+				row_k = k++;
+				row_px = snz;
+				snz += row_snz;
+				#pragma omp atomic update
+				writing++;
+			}
+			
+			/* write the new row in S */
+			Sp[row_k] = row_px;
+			for (int px = top; px < m; px++) {
+				const int j = xj[px];
+				if ((q[j] >= 0) && (x[j] != 0)) {
+					Sj[row_px] = q[j];
+					Sx[row_px++] = x[j];
 				}
 			}
+
+			#pragma omp atomic update
+			writing--;
+
 			if (tid == 0 && (i % verbose_step) == 0) {
 				double density =  1.0 * snz / (1.0 * Sm * k);
 				fprintf(stderr, "\rSchur complement: %d/%d [%d NNZ / density= %.3f]", k, Sn, snz, density);
