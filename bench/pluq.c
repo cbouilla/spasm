@@ -57,8 +57,6 @@ int main(int argc, char **argv) {
 	n = A->n;
 	m = A->m;
 
-	start_time = spasm_wtime();
-
 	p = NULL;
 	start_time = spasm_wtime();
 	p = spasm_malloc(n * sizeof(int));
