@@ -193,7 +193,7 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 		tid = 0;
 		spasm_vector_set(w, 0, m, 0);
 
-#ifdef USE_OPENMP
+#ifdef _OPENMP
 		tid = omp_get_thread_num();
 		if (tid == 0)
 			fprintf(stderr, "[pivots] Greedy pivot search starting on %d threads\n", omp_get_num_threads());

@@ -1,17 +1,20 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm.h */
 #ifndef _SPASM_H
 #define _SPASM_H
 
 #define SPASM_TIMING
-#include "config.h"
+#ifdef SPASM_TIMING
+#include "cycleclock.h"
+#endif
 
+#include "config.h"
 #include <stdlib.h>
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <stdint.h>
 
-#ifdef USE_OPENMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
@@ -252,12 +255,7 @@ static inline void spasm_swap(int *a, int i, int j) {
 }
 
 static inline int spasm_row_weight(const spasm * A, int i) {
-  int *Ap;
-  Ap = A->p;
+  int *Ap = A->p;
   return Ap[i + 1] - Ap[i];
 }
-
-#ifdef SPASM_TIMING
-#include "cycleclock.h"
-#endif
 #endif

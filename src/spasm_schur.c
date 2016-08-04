@@ -192,7 +192,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	searched = 0;
 	threads = 1;
 	prev_r = 0;
-#ifdef USE_OPENMP
+#ifdef _OPENMP
 	threads = omp_get_num_threads();
 #endif
 
