@@ -216,8 +216,8 @@ void spasm_dense_LU_free(spasm_dense_lu * A);
 int spasm_dense_LU_process(spasm_dense_lu *A, spasm_GFp *y);
 
 /* spasm_solutions.c */
-int spasm_PLUQ_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
-int spasm_LU_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
+int spasm_PLUQ_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x);
+int spasm_LU_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x);
 
 /* spasm_pivots.c */
 int spasm_find_pivots(spasm * A, int *p, int *qinv);
