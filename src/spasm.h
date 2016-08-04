@@ -206,7 +206,7 @@ void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p
 
 /* spasm_schur.c */
 void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv);
-spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv);
+spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, double est_density);
 int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv);
 double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R);
 

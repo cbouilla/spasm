@@ -29,8 +29,10 @@ void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
  * p[0] ... p[n_pivots-1] of input matrix A. The pivots must be the first entries
  * on the lines. This returns a sparse representation of S. The pivots must
  * be unitary.
+ *
+ * if the estimated density is unknown, set it to -1;
  */
-spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
+spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, double est_density) {
 	int k, snz, *q, writing;
 	double start;
 	spasm *S;
@@ -50,7 +52,10 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 	for (int j = 0; j < m; j++)
 		q[j] = (qinv[j] < 0) ? k++ : -1;
 
-	S = spasm_csr_alloc(Sn, Sm, Sn + Sm, A->prime, SPASM_WITH_NUMERICAL_VALUES);
+	if (est_density < 0)
+		est_density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
+
+	S = spasm_csr_alloc(Sn, Sm, (est_density*Sn)*Sm, A->prime, SPASM_WITH_NUMERICAL_VALUES);
 	int *Sp = S->p;
 	int *Sj = S->j;
 	spasm_GFp *Sx = S->x;
@@ -81,9 +86,9 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 
 			#pragma omp critical(schur_complement)
 			{
-				/* not enough room in S ? realloc twice the size */
-				if (snz + Sm > S->nzmax) {
-					/* TODO wait until other threads stop writing into it */
+				/* enough room in S? */
+				if (snz + row_snz > S->nzmax) {
+					/* wait until other threads stop writing into it */
 					#pragma omp flush(writing)
 					while (writing > 0) {
 						#pragma omp flush(writing)
@@ -137,11 +142,9 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 * The pivots must be unitary.
 */
 double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R) {
-	int nnz;
-	
+	int nnz;	
 	const int m = A->m;
 	const int n = A->n;
-	nnz = 0;
 
 #pragma omp parallel 
 	{
