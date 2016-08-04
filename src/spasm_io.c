@@ -47,10 +47,8 @@ spasm_triplet *spasm_load_sms(FILE * f, int prime) {
 
 /* load a matrix in old GBLA format */
 spasm *spasm_load_gbla_old(FILE * f, int with_values) {
-	int i, m, n, p;
+	int m, n, p;
 	long long int nnz;
-	int *Mp, *Mj;
-	spasm_GFp *Mx;
 	spasm *M;
 
 	/* get rows */
@@ -72,9 +70,9 @@ spasm *spasm_load_gbla_old(FILE * f, int with_values) {
 		errx(2, "more than 2^31 NNZ. You are going to hit limitations of spasm... Sorry\n");
 	}
 	M = spasm_csr_alloc(n, m, nnz, p, with_values);
-	Mp = M->p;
-	Mj = M->j;
-	Mx = M->x;
+	int * const Mp = M->p;
+	int * const Mj = M->j;
+	spasm_GFp * const Mx = M->x;
 
 	/*
 	 * dirty hack : we load the 16-bit coefficient in the area dedicated
@@ -83,30 +81,23 @@ spasm *spasm_load_gbla_old(FILE * f, int with_values) {
 	 */
 	uint16_t *buffer = (uint16_t *) M->j;
 	size_t r = nnz;
-	if (fread(buffer, sizeof(uint16_t), nnz, f) != r) {
+	if (fread(buffer, sizeof(uint16_t), nnz, f) != r)
 		err(1, "error while reading the coefficients");
-	}
-	if (with_values) {
-		for (i = 0; i < nnz; i++) {
+	if (with_values)
+		for (int i = 0; i < nnz; i++)
 			Mx[i] = buffer[i];
-		}
-	}
 	/* read the column indices */
 	r = nnz;
-	if (fread(M->j, sizeof(uint32_t), nnz, f) != r) {
+	if (fread(Mj, sizeof(uint32_t), nnz, f) != r)
 		err(1, "error while reading the column indices");
-	}
 	/* read the row lengths */
 	r = n;
-	if (fread(&Mp[1], sizeof(uint32_t), n, f) != r) {
+	if (fread(&Mp[1], sizeof(uint32_t), n, f) != r)
 		err(1, "error while reading the row lengths (read %zu items)", r);
-	}
 	/* sum-prefix */
 	Mp[0] = 0;
-	for (i = 1; i <= n; i++) {
+	for (int i = 1; i <= n; i++)
 		Mp[i] += Mp[i - 1];
-	}
-
 	return M;
 }
 
@@ -121,75 +112,62 @@ spasm *spasm_load_gbla_new(FILE * f) {
 	unsigned int i, j, m, n;
 	uint64_t nnz;
 	uint16_t p;
-	int *Mp, *Mj;
-	spasm_GFp *Mx;
 	spasm *M;
 	uint32_t b;
 
 	/* get header */
-	if (fread(&b, sizeof(uint32_t), 1, f) != 1) {
+	if (fread(&b, sizeof(uint32_t), 1, f) != 1)
 		err(1, "error reading b");
-	}
-	if ((b & VERMASK) != VERMASK) {
+	if ((b & VERMASK) != VERMASK)
 		errx(1, "wrong format version");
-	}
 	b = b ^ VERMASK;
-	if (((b >> 1) & 3) != 1) {
+	if (((b >> 1) & 3) != 1)
 		errx(1, "field elements are not on 16 bits");
-	}
 	/* get rows */
-	if (fread(&n, sizeof(uint32_t), 1, f) != 1) {
+	if (fread(&n, sizeof(uint32_t), 1, f) != 1)
 		err(1, "error reading m");
-	}
 	/* get columns */
-	if (fread(&m, sizeof(uint32_t), 1, f) != 1) {
+	if (fread(&m, sizeof(uint32_t), 1, f) != 1)
 		err(1, "error reading n");
-	}
-	if ((fread(&p, sizeof(uint16_t), 1, f) != 1)) {
+	if ((fread(&p, sizeof(uint16_t), 1, f) != 1))
 		err(1, "error reading p");
-	}
 	/* get number of nonzero elements */
-	if (fread(&nnz, sizeof(uint64_t), 1, f) != 1) {
+	if (fread(&nnz, sizeof(uint64_t), 1, f) != 1)
 		err(1, "error reading nnz");
-	}
-	if (nnz >> 31ull) {
+	if (nnz >> 31ull)
 		errx(2, "more than 2^31 NNZ. You are going to hit limitations of spasm... Sorry\n");
-	}
 	M = spasm_csr_alloc(n, m, nnz, (int)p, SPASM_IGNORE_VALUES);
-	Mp = M->p;
-	Mj = M->j;
-	Mx = M->x;
+	int * const Mp = M->p;
+	int * const Mj = M->j;
 
 	/* read the row lengths */
 	size_t r = n;
-	if (fread(&Mp[1], sizeof(uint32_t), n, f) != r) {
+	if (fread(&Mp[1], sizeof(uint32_t), n, f) != r)
 		err(1, "error while reading the row lengths (read %zu items)", r);
-	}
 	/* sum-prefix */
 	Mp[0] = 0;
-	for (i = 1; i <= n; i++) {
+	for (unsigned int i = 1; i <= n; i++)
 		Mp[i] += Mp[i - 1];
-	}
 
 	/*
 	 * read (and ignore) the polmaps. Dirty hack: we send them to the
 	 * area for the column indices
 	 */
 	r = n;
-	if (fread(Mj, sizeof(uint32_t), n, f) != r) {
+	if (fread(Mj, sizeof(uint32_t), n, f) != r)
 		err(1, "error while reading the polmaps (read %zu items)", r);
-	}
+
 	uint64_t k;
 	/* get number of compressed columns element */
-	if (fread(&k, sizeof(uint64_t), 1, f) != 1) {
+	if (fread(&k, sizeof(uint64_t), 1, f) != 1)
 		err(1, "error reading k");
-	}
+
 	/* read compressed columns indices */
 	uint32_t *buffer = spasm_malloc(k * sizeof(uint32_t));
 	r = k;
-	if (fread(buffer, sizeof(uint32_t), k, f) != r) {
+	if (fread(buffer, sizeof(uint32_t), k, f) != r)
 		err(1, "error while reading the compressed column ids (read %zu items)", r);
-	}
+
 	/* uncompress columns indices */
 	i = 0;
 	j = 0;

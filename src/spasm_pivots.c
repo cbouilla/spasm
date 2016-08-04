@@ -190,15 +190,8 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 		int head, tail, npiv_local, surviving, tid;
 
 		/* workspace initialization */
-		tid = 0;
+		tid = spasm_get_thread_num();
 		spasm_vector_set(w, 0, m, 0);
-
-#ifdef _OPENMP
-		tid = omp_get_thread_num();
-		if (tid == 0)
-			fprintf(stderr, "[pivots] Greedy pivot search starting on %d threads\n", omp_get_num_threads());
-#endif
-
 
 #pragma omp for schedule(dynamic, 1000)
 		for (int i = 0; i < n; i++) {
@@ -216,8 +209,8 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 			 * point) w[j] ==  0  column j was absent and is
 			 * unreachable
 			 */
-			if (tid == 0 && (i % v) == 0) {
-				fprintf(stderr, "\r[pivots] %d / %d --- found %d new --- %d retries", processed, n - npiv_start, npiv - npiv_start, retries);
+			if ((tid == 0) && (i % v) == 0) {
+				fprintf(stderr, "\r[pivots] %d / %d --- found %d new", processed, n - npiv_start, npiv - npiv_start);
 				fflush(stderr);
 			}
 			if (spasm_is_row_pivotal(A, qinv, i))

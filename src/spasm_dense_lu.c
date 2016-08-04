@@ -49,18 +49,18 @@ int spasm_dense_LU_grow(spasm_dense_lu * A, const spasm_GFp * y, int k, int proc
  * 1. This function is THREAD-SAFE.
  */
 int spasm_dense_LU_process(spasm_dense_lu * A, spasm_GFp * y) {
-	int processed, k;
+	int processed, k, n;
 	spasm_GFp beta;
 
-	int m = A->m;
-	int prime = A->prime;
-	int *p = A->p;
+	const int m = A->m;
+	const int prime = A->prime;
+	const int *p = A->p;
 	spasm_GFp **Ax = A->x;
 	processed = 0;
 
 	while (1) {
 #pragma omp atomic read
-		int n = A->n;
+		n = A->n;
 
 		for (int i = processed; i < n; i++) {
 			beta = prime - y[p[i]];

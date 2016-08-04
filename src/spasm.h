@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <assert.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -138,6 +139,8 @@ void spasm_vector_zero(spasm_GFp * x, int n);
 void spasm_vector_set(spasm_GFp * x, int a, int b, spasm_GFp alpha);
 spasm *spasm_identity(int n, int prime);
 void spasm_human_format(int64_t n, char *target);
+int spasm_get_num_threads();
+int spasm_get_thread_num();
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x);

@@ -26,37 +26,21 @@ void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
 
 /*
  * Computes the Schur complement, by eliminating the pivots located on rows
- * p[0] ... p[n_pivots-1] of input matrix A. The pivots must be the entries
+ * p[0] ... p[n_pivots-1] of input matrix A. The pivots must be the first entries
  * on the lines. This returns a sparse representation of S. The pivots must
  * be unitary.
  */
 spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
+	int k, snz, *q;
+	double start;
 	spasm *S;
-	int k, *Sp, *Sj, Sn, Sm, m, n, snz, *xj, top, *q, verbose_step;
-	spasm_GFp *Sx, *x;
 
-	/* check inputs */
-	assert(A != NULL);
-	n = A->n;
-	m = A->m;
-	assert(n >= npiv);
-	assert(m >= npiv);
-
-	/* Get Workspace */
-	Sn = n - npiv;
-	Sm = m - npiv;
-	snz = 4 * (Sn + Sm);	/* educated guess */
-	S = spasm_csr_alloc(Sn, Sm, snz, A->prime, SPASM_WITH_NUMERICAL_VALUES);
-
-	x = spasm_malloc(m * sizeof(spasm_GFp));
-	xj = spasm_malloc(3 * m * sizeof(int));
-	spasm_vector_zero(xj, 3 * m);
-
-	verbose_step = spasm_max(1, n / 1000);
-	Sp = S->p;
-	Sj = S->j;
-	Sx = S->x;
-
+	const int n = A->n;
+	const int m = A->m;
+	const int Sm = m - npiv;
+	const int Sn = n - npiv;
+	const int verbose_step = spasm_max(1, n / 1000);
+	
 	/*
 	 * q sends the non-pivotal columns of A to the columns of S. It is
 	 * not the inverse of qinv...
@@ -66,53 +50,58 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 	for (int j = 0; j < m; j++)
 		q[j] = (qinv[j] < 0) ? k++ : -1;
 
-	snz = 0;		/* non-zero in S */
-	Sn = 0;			/* rows in S */
+	S = spasm_csr_alloc(Sn, Sm, Sn + Sm, A->prime, SPASM_WITH_NUMERICAL_VALUES);
+	int *Sp = S->p;
+	int *Sj = S->j;
+	spasm_GFp *Sx = S->x;
+	snz = 0;
+	k = 0;
+	start = spasm_wtime();
 
-	fprintf(stderr, "Starting Schur complement computation...\n");
-	for (int i = npiv; i < n; i++) {
-		int inew = p[i];
+#pragma omp parallel
+	{
+		spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
+		int *xj = spasm_malloc(3 * m * sizeof(int));
+		spasm_vector_zero(xj, 3 * m);		
+		int tid = spasm_get_thread_num();
 
-		/* triangular solve */
-		top = spasm_sparse_forward_solve(A, A, inew, xj, x, qinv);
-
-		/* not enough room in S ? realloc twice the size */
-		if (snz + Sm > S->nzmax) {
-			spasm_csr_realloc(S, 2 * S->nzmax + Sm);
-			Sj = S->j;
-			Sx = S->x;
-		}
-		Sp[Sn] = snz;	/* S[i] starts here */
-		for (int px = top; px < m; px++) {
-			int j = xj[px];
-
-			if (x[j] == 0)
-				continue;
-
-			/* save non-zero, non-pivot coefficients in S */
-			if (q[j] >= 0) {
-				Sj[snz] = q[j];
-				Sx[snz] = x[j];
-				snz++;
+#pragma omp for schedule(dynamic, verbose_step)
+		for (int i = npiv; i < n; i++) {
+			const int inew = p[i];
+			const int top = spasm_sparse_forward_solve(A, A, inew, xj, x, qinv);
+#pragma omp critical
+			{
+				/* not enough room in S ? realloc twice the size */
+				if (snz + Sm > S->nzmax) {
+					spasm_csr_realloc(S, 2 * S->nzmax + Sm);
+					Sj = S->j;
+					Sx = S->x;
+				}
+				/* save row k */
+				Sp[k++] = snz;
+				for (int px = top; px < m; px++) {
+					const int j = xj[px];
+					if ((q[j] >= 0) && (x[j] != 0)) {
+						Sj[snz] = q[j];
+						Sx[snz++] = x[j];
+					}
+				}
+			}
+			if (tid == 0 && (i % verbose_step) == 0) {
+				double density =  1.0 * snz / (1.0 * Sm * k);
+				fprintf(stderr, "\rSchur complement: %d/%d [%d NNZ / density= %.3f]", k, Sn, snz, density);
+				fflush(stderr);
 			}
 		}
-		Sn++;
-
-		if ((i % verbose_step) == 0) {
-			fprintf(stderr, "\rSchur : %d / %d [S=%d * %d, %d NNZ] -- current density= (%.3f)", i, n, Sn, Sm, snz, 1.0 * snz / (1.0 * Sm * Sn));
-			fflush(stderr);
-		}
+		free(x);
+		free(xj);
 	}
 	/* finalize S */
-	fprintf(stderr, "\n");
-	Sp[S->n] = snz;
+	Sp[Sn] = snz;
 	spasm_csr_realloc(S, -1);
-
-	/* free extra workspace */
+	double density = 1.0 * snz / (1.0 * Sm * Sn);
+	fprintf(stderr, "\rSchur complement: %d * %d [%d NNZ / density= %.3f], %.1fs\n", Sn, Sm, snz, density, spasm_wtime() - start);
 	free(q);
-	free(x);
-	free(xj);
-
 	return S;
 }
 
@@ -122,35 +111,33 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv) {
 * The pivots must be unitary.
 */
 double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R) {
-	int m, n, *xj, top, nnz;
-	spasm_GFp *x;
-
-	/* check inputs */
-	m = A->m;
-	n = A->n;
-
-	/* Get Workspace */
-	x = spasm_malloc(m * sizeof(spasm_GFp));
-	xj = spasm_malloc(3 * m * sizeof(int));
-	spasm_vector_zero(xj, 3 * m);
-
+	int nnz;
+	
+	const int m = A->m;
+	const int n = A->n;
 	nnz = 0;
-	for (int i = 0; i < R; i++) {
-		/* pick a random row in S, check if non-zero */
-		int inew = p[npiv + (rand() % (n - npiv))];
-		top = spasm_sparse_forward_solve(A, A, inew, xj, x, qinv);
-		for (int px = top; px < m; px++) {
-			int j = xj[px];
-			if (qinv[j] < 0 && x[j] != 0)
-				nnz++;
+
+#pragma omp parallel 
+	{
+		spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
+		int *xj = spasm_malloc(3 * m * sizeof(int));
+		spasm_vector_zero(xj, 3 * m);
+
+#pragma omp for reduction(+:nnz) schedule(dynamic)
+		for (int i = 0; i < R; i++) {
+			/* pick a random row in S, check if non-zero */
+			int inew = p[npiv + (rand() % (n - npiv))];
+			int top = spasm_sparse_forward_solve(A, A, inew, xj, x, qinv);
+			for (int px = top; px < m; px++) {
+				int j = xj[px];
+				if (qinv[j] < 0 && x[j] != 0)
+					nnz++;
+			}
 		}
+		free(x);
+		free(xj);
 	}
-
-	/* free extra workspace */
-	free(x);
-	free(xj);
-
-	return ((double)nnz) / (m - npiv) / R;
+	return ((double) nnz) / (m - npiv) / R;
 }
 
 /*
@@ -190,11 +177,8 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 	step = 1;
 	k = 0;
 	searched = 0;
-	threads = 1;
 	prev_r = 0;
-#ifdef _OPENMP
-	threads = omp_get_num_threads();
-#endif
+	threads = spasm_get_num_threads();
 
 #pragma omp parallel
 	{
@@ -222,7 +206,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 			/* this is a barrier */
 #pragma omp single
 			{
-				fprintf(stderr, "\rSchur : %d [%.1fs] -- current rank = %d / step = %d", k, spasm_wtime() - it_start, r, step);
+				fprintf(stderr, "\rSchur rank: %d [%.1fs] -- current rank = %d / step = %d", k, spasm_wtime() - it_start, r, step);
 				fflush(stderr);
 
 				k++;
@@ -255,7 +239,7 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 				r += new;
 				final_bad += 1 - new;
 				k++;
-				fprintf(stderr, "\rSchur : %d [%.1fs] -- current rank = %d / final", k, spasm_wtime() - it_start, r);
+				fprintf(stderr, "\rSchur rank: %d [%.1fs] -- current rank = %d / final", k, spasm_wtime() - it_start, r);
 				fflush(stderr);
 			}
 		}

@@ -32,11 +32,10 @@ int main() {
 	int nnz = schur_density * (n - npiv) * (m - npiv);
 	char tmp[6];
 	spasm_human_format(sizeof(int) * (n - npiv + nnz) + sizeof(spasm_GFp) * nnz, tmp);
-	fprintf(stderr, "Schur complement: (%d x %d), estimted density : %.4f (%s byte)\n", n - npiv, m - npiv, schur_density, tmp);
+	fprintf(stderr, "Schur complement: (%d x %d), estimated density : %.4f (%s byte)\n", n - npiv, m - npiv, schur_density, tmp);
 
 	/* go for it */
 	S = spasm_schur(A, p, qinv, npiv);
-	fprintf(stderr, "Schur complement: (%d x %d), nnz : %d, dens : %.5f\n", S->n, S->m, spasm_nnz(S), 1. * spasm_nnz(S) / (1. * S->n * S->m));
 
 	spasm_save_csr(stdout, S);
 	free(p);

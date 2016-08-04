@@ -1,6 +1,22 @@
 #include <sys/time.h>
-#include <assert.h>
 #include "spasm.h"
+
+int spasm_get_num_threads() {
+#ifdef _OPENMP
+	return omp_get_num_threads();
+#else
+	return 1;
+#endif
+}
+
+int spasm_get_thread_num() {
+#ifdef _OPENMP
+	return omp_get_thread_num();
+#else
+	return 0;
+#endif
+}
+
 
 double spasm_wtime() {
 	struct timeval ts;
@@ -213,7 +229,6 @@ void spasm_dm_free(spasm_dm * x) {
 	spasm_cc_free(x->V);
 	free(x);
 }
-
 
 void spasm_vector_zero(spasm_GFp * x, int n) {
 	for (int i = 0; i < n; i++)

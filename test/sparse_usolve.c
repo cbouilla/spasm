@@ -6,7 +6,7 @@
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *U, *B;
-  int i, n, m, test, top, *xi, *pinv;
+  int i, n, m, test, *xi, *pinv;
   spasm_GFp *x, *y;
 
   assert(argc == 2);
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  top = spasm_sparse_forward_solve(U, B, 0, xi, x, pinv);
+  spasm_sparse_forward_solve(U, B, 0, xi, x, pinv);
 
   spasm_gaxpy(U, x, y);
   for(i = n; i < m; i++) {
