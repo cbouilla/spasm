@@ -1,4 +1,5 @@
 #include <sys/time.h>
+#include <err.h>
 #include "spasm.h"
 
 int spasm_get_num_threads() {
@@ -55,31 +56,24 @@ void spasm_human_format(int64_t n, char *target) {
 
 void *spasm_malloc(size_t size) {
 	void *x = malloc(size);
-	if (x == NULL) {
-		perror("malloc failed");
-		exit(1);
-	}
+	if (x == NULL)
+		err(1, "malloc failed");
 	return x;
 }
 
 void *spasm_calloc(size_t count, size_t size) {
 	void *x = calloc(count, size);
-	if (x == NULL) {
-		perror("calloc failed");
-		exit(1);
-	}
+	if (x == NULL)
+		err(1, "calloc failed");
 	return x;
 }
 
 void *spasm_realloc(void *ptr, size_t size) {
 	void *x = realloc(ptr, size);
-	if (ptr != NULL && x == NULL && size != 0) {
-		perror("realloc failed");
-		exit(1);
-	}
+	if (ptr != NULL && x == NULL && size != 0)
+		err(1, "realloc failed");
 	return x;
 }
-
 
 /* allocate a sparse matrix (compressed-row form) */
 spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
@@ -101,7 +95,6 @@ spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
 
 }
 
-
 /* allocate a sparse matrix (triplet form) */
 spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_values) {
 	spasm_triplet *A;
@@ -118,8 +111,6 @@ spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_
 	return A;
 }
 
-
-
 /*
  * change the max # of entries in a sparse matrix. If nzmax < 0, then the
  * matrix is trimmed to its current nnz.
@@ -132,7 +123,6 @@ void spasm_csr_realloc(spasm * A, int nzmax) {
 		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
 	A->nzmax = nzmax;
 }
-
 
 /*
  * change the max # of entries in a sparse matrix. If nzmax < 0, then the
@@ -147,7 +137,6 @@ void spasm_triplet_realloc(spasm_triplet * A, int nzmax) {
 		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
 	A->nzmax = nzmax;
 }
-
 
 /* free a sparse matrix */
 void spasm_csr_free(spasm * A) {
@@ -167,15 +156,13 @@ void spasm_triplet_free(spasm_triplet * A) {
 }
 
 void spasm_csr_resize(spasm * A, int n, int m) {
-	int i, *Ap;
-
 	A->m = m;
 	/* in case of a column shrink, check that no entries are left outside */
 	A->p = spasm_realloc(A->p, (n + 1) * sizeof(int));
 
 	if (A->n < n) {
-		Ap = A->p;
-		for (i = A->n; i < n + 1; i++)
+		int *Ap = A->p;
+		for (int i = A->n; i < n + 1; i++)
 			Ap[i] = Ap[A->n];
 	}
 	A->n = n;
@@ -196,7 +183,6 @@ spasm_partition *spasm_partition_alloc(int n, int m, int nr, int nc) {
 }
 
 void spasm_partition_tighten(spasm_partition * P) {
-	assert(P != NULL);
 	P->rr = spasm_realloc(P->rr, (P->nr + 1) * sizeof(int));
 	P->cc = spasm_realloc(P->cc, (P->nc + 1) * sizeof(int));
 }

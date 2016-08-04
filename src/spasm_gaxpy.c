@@ -1,4 +1,3 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_dm.c */
 #include <assert.h>
 #include "spasm.h"
 
@@ -6,23 +5,15 @@
  * (dense vector) * (sparse) Matrix y <--- y + x*A
  */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp * y) {
-	int i, n, prime;
-	int *Ap, *Aj, *Ax;
+	const int n = A->n;
+	const int *Ap = A->p;
+	const int *Aj = A->j;
+	const spasm_GFp *Ax = A->x;
+	const int prime = A->prime;
+	assert(Ax != NULL);
 
-	/* check inputs */
-	assert(x != NULL);
-	assert(y != NULL);
-	assert(A != NULL);
-
-	n = A->n;
-	Ap = A->p;
-	Aj = A->j;
-	Ax = A->x;
-	prime = A->prime;
-
-	for (i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++)
 		spasm_scatter(Aj, Ax, Ap[i], Ap[i + 1], x[i], y, prime);
-	}
 }
 
 
