@@ -28,6 +28,7 @@ void spasm_triplet_transpose(spasm_triplet * T) {
 	int nz = T->nz;
 	int *Ti = T->i;
 	int *Tj = T->j;
+#pragma omp parallel for schedule(static)
 	for (int k = 0; k < nz; k++) {
 		int i = Ti[k];
 		int j = Tj[k];
