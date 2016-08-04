@@ -197,8 +197,10 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, con
  * when this function returns, the solution is scattered in x, and its pattern
  * is given in xi[top : m].
  *
- * top is the return value.
+ * xj must be zero-initialized on the first call (and it stays OK)
+ * x does not need to be initialized.
  *
+ * top is the return value.
  */
 int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj, spasm_GFp * x, const int *qinv) {
 	int top, m, prime, *Up, *Uj, *Bp, *Bj;

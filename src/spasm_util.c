@@ -1,22 +1,15 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_util.c  */
 #include <sys/time.h>
 #include <assert.h>
 #include "spasm.h"
 
-size_t mem_alloc;
-
-
 double spasm_wtime() {
 	struct timeval ts;
-
 	gettimeofday(&ts, NULL);
 	return (double)ts.tv_sec + ts.tv_usec / 1E6;
 }
 
 
 int spasm_nnz(const spasm * A) {
-	assert(A != NULL);
-
 	return A->p[A->n];
 }
 
@@ -50,7 +43,6 @@ void *spasm_malloc(size_t size) {
 		perror("malloc failed");
 		exit(1);
 	}
-	mem_alloc += size;
 	return x;
 }
 
@@ -88,7 +80,7 @@ spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
 	A->prime = prime;
 	A->p = spasm_malloc((n + 1) * sizeof(int));
 	A->j = spasm_malloc(nzmax * sizeof(int));
-	A->x = (with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL);
+	A->x = with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL;
 	return A;
 
 }
@@ -117,15 +109,11 @@ spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_
  * matrix is trimmed to its current nnz.
  */
 void spasm_csr_realloc(spasm * A, int nzmax) {
-	assert(A != NULL);
-
-	if (nzmax < 0) {
+	if (nzmax < 0)
 		nzmax = spasm_nnz(A);
-	}
 	A->j = spasm_realloc(A->j, nzmax * sizeof(int));
-	if (A->x != NULL) {
+	if (A->x != NULL)
 		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
-	}
 	A->nzmax = nzmax;
 }
 
@@ -135,25 +123,20 @@ void spasm_csr_realloc(spasm * A, int nzmax) {
  * matrix is trimmed to its current nnz.
  */
 void spasm_triplet_realloc(spasm_triplet * A, int nzmax) {
-	assert(A != NULL);
-
-	if (nzmax < 0) {
+	if (nzmax < 0)
 		nzmax = A->nz;
-	}
 	A->i = spasm_realloc(A->i, nzmax * sizeof(int));
 	A->j = spasm_realloc(A->j, nzmax * sizeof(int));
-	if (A->x != NULL) {
+	if (A->x != NULL)
 		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
-	}
 	A->nzmax = nzmax;
 }
 
 
 /* free a sparse matrix */
 void spasm_csr_free(spasm * A) {
-	if (A == NULL) {
+	if (A == NULL)
 		return;
-	}
 	free(A->p);
 	free(A->j);
 	free(A->x);		/* trick : free does nothing on NULL pointer */
@@ -161,7 +144,6 @@ void spasm_csr_free(spasm * A) {
 }
 
 void spasm_triplet_free(spasm_triplet * A) {
-	assert(A != NULL);
 	free(A->i);
 	free(A->j);
 	free(A->x);		/* trick : free does nothing on NULL pointer */
@@ -170,7 +152,6 @@ void spasm_triplet_free(spasm_triplet * A) {
 
 void spasm_csr_resize(spasm * A, int n, int m) {
 	int i, *Ap;
-	assert(A != NULL);
 
 	A->m = m;
 	/* in case of a column shrink, check that no entries are left outside */
@@ -178,9 +159,8 @@ void spasm_csr_resize(spasm * A, int n, int m) {
 
 	if (A->n < n) {
 		Ap = A->p;
-		for (i = A->n; i < n + 1; i++) {
+		for (i = A->n; i < n + 1; i++)
 			Ap[i] = Ap[A->n];
-		}
 	}
 	A->n = n;
 }
@@ -207,9 +187,8 @@ void spasm_partition_tighten(spasm_partition * P) {
 
 
 void spasm_partition_free(spasm_partition * P) {
-	if (P == NULL) {
+	if (P == NULL)
 		return;
-	}
 	free(P->p);
 	free(P->q);
 	free(P->rr);
@@ -218,18 +197,16 @@ void spasm_partition_free(spasm_partition * P) {
 }
 
 void spasm_cc_free(spasm_cc * C) {
-	if (C == NULL) {
+	if (C == NULL)
 		return;
-	}
 	spasm_partition_free(C->CC);
 	spasm_partition_free(C->SCC);
 	free(C);
 }
 
 void spasm_dm_free(spasm_dm * x) {
-	if (x == NULL) {
+	if (x == NULL)
 		return;
-	}
 	spasm_partition_free(x->DM);
 	spasm_cc_free(x->H);
 	spasm_cc_free(x->S);
@@ -246,55 +223,4 @@ void spasm_vector_zero(spasm_GFp * x, int n) {
 void spasm_vector_set(spasm_GFp * x, int a, int b, spasm_GFp alpha) {
 	for (int i = a; i < b; i++)
 		x[i] = alpha;
-}
-
-spasm *spasm_identity(int n, int prime) {
-	spasm *I;
-	int i;
-
-	I = spasm_csr_alloc(n, n, n, prime, 1);
-
-	for (i = 0; i < n; i++) {
-		I->p[i] = i;
-		I->j[i] = i;
-		I->x[i] = 1;
-	}
-	I->p[n] = n;
-
-	return I;
-}
-
-/*
- * duplicate a matrix.
- */
-spasm *spasm_duplicate(const spasm * A) {
-	spasm *B;
-	int k, n, m, nzmax, prime, with_values;
-	int *Ap, *Aj, *Bp, *Bj;
-	spasm_GFp *Ax, *Bx;
-
-	n = A->n;
-	m = A->m;
-	nzmax = A->nzmax;
-	prime = A->prime;
-	Ap = A->p;
-	Aj = A->j;
-	Ax = A->x;
-	with_values = (Ax != NULL) ? 1 : 0;
-
-	B = spasm_csr_alloc(n, m, nzmax, prime, with_values);
-	Bp = B->p;
-	Bj = B->j;
-	Bx = B->x;
-
-	for (k = 0; k <= n; k++) {
-		Bp[k] = Ap[k];
-	}
-	for (k = 0; k < nzmax; k++) {
-		Bj[k] = Aj[k];
-		if (with_values)
-			Bx[k] = Ax[k];
-	}
-
-	return B;
 }

@@ -32,9 +32,8 @@ spasm_triplet *spasm_load_sms(FILE * f, int prime) {
 	T = spasm_triplet_alloc(i, j, 1, prime, prime != -1);
 
 	while (fscanf(f, "%d %d %d\n", &i, &j, &x) == 3) {
-		if (i == 0 && j == 0 && x == 0) {
+		if (i == 0 && j == 0 && x == 0)
 			break;
-		}
 		assert(i != 0);
 		assert(j != 0);
 		spasm_add_entry(T, i - 1, j - 1, x);

@@ -1,38 +1,32 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_transpose.c  */
-#include <assert.h>
 #include "spasm.h"
 
 spasm *spasm_transpose(const spasm * C, int keep_values) {
-	int i, j, m, n, sum, px, py, *Cp, *Cj, *w, *Tp, *Tj;
-	spasm_GFp *Cx, *Tx;
+	int sum, *w;
 	spasm *T;
 
-	m = C->m;
-	n = C->n;
-	Cp = C->p;
-	Cj = C->j;
-	Cx = C->x;
+	int m = C->m;
+	int n = C->n;
+	int *Cp = C->p;
+	int *Cj = C->j;
+	spasm_GFp *Cx = C->x;
 
 	/* allocate result */
 	T = spasm_csr_alloc(m, n, spasm_nnz(C), C->prime, keep_values && (Cx != NULL));
-	Tp = T->p;
-	Tj = T->j;
-	Tx = T->x;
+	int *Tp = T->p;
+	int *Tj = T->j;
+	spasm_GFp *Tx = T->x;
 
 	/* get workspace */
 	w = spasm_calloc(m, sizeof(int));
 
 	/* compute column counts */
-	for (i = 0; i < n; i++) {
-		for (px = Cp[i]; px < Cp[i + 1]; px++) {
-			j = Cj[px];
-			w[j]++;
-		}
-	}
+	for (int i = 0; i < n; i++)
+		for (int px = Cp[i]; px < Cp[i + 1]; px++)
+			w[Cj[px]]++;
 
 	/* compute column pointers (in both Cp and w) */
 	sum = 0;
-	for (j = 0; j < m; j++) {
+	for (int j = 0; j < m; j++) {
 		Tp[j] = sum;
 		sum += w[j];
 		w[j] = Tp[j];
@@ -40,14 +34,13 @@ spasm *spasm_transpose(const spasm * C, int keep_values) {
 	Tp[m] = sum;
 
 	/* dispatch entries */
-	for (i = 0; i < n; i++) {
-		for (px = Cp[i]; px < Cp[i + 1]; px++) {
-			j = Cj[px];
-			py = w[j];
+	for (int i = 0; i < n; i++) {
+		for (int px = Cp[i]; px < Cp[i + 1]; px++) {
+			int j = Cj[px];
+			int py = w[j];
 			Tj[py] = i;
-			if (Tx != NULL) {
+			if (Tx != NULL)
 				Tx[py] = Cx[px];
-			}
 			w[j]++;
 		}
 	}

@@ -4,22 +4,17 @@
 
 /* add an entry to a triplet matrix; enlarge it if necessary */
 void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x) {
-	int prime;
 	spasm_GFp x_p;
 
-	assert(T != NULL);
 	assert((i >= 0) && (j >= 0));
+	int prime = T->prime;
 
-	prime = T->prime;
-
-	if (T->nz == T->nzmax) {
+	if (T->nz == T->nzmax)
 		spasm_triplet_realloc(T, 2 * T->nzmax);
-	}
 	if (T->x != NULL) {
 		x_p = ((x % prime) + prime) % prime;
-		if (x_p == 0) {
+		if (x_p == 0)
 			return;
-		}
 		T->x[T->nz] = x_p;
 	}
 	T->i[T->nz] = i;
@@ -30,38 +25,34 @@ void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x) {
 }
 
 void spasm_triplet_transpose(spasm_triplet * T) {
-	int i, j, k, nz, *Ti, *Tj;
-
-	assert(T != NULL);
-	nz = T->nz;
-	Ti = T->i;
-	Tj = T->j;
-
-	for (k = 0; k < nz; k++) {
-		i = Ti[k];
-		j = Tj[k];
+	int nz = T->nz;
+	int *Ti = T->i;
+	int *Tj = T->j;
+	for (int k = 0; k < nz; k++) {
+		int i = Ti[k];
+		int j = Tj[k];
 		Tj[k] = i;
 		Ti[k] = j;
 	}
-	i = T->m;
+	int tmp = T->m;
 	T->m = T->n;
-	T->n = i;
+	T->n = tmp;
 }
 
 
 /* C = compressed-row form of a triplet matrix T */
 spasm *spasm_compress(const spasm_triplet * T) {
-	int m, n, nz, sum, p, k, *Cp, *Cj, *w, *Ti, *Tj;
-	spasm_GFp *Cx, *Tx;
+	int sum, *w;
 	spasm *C;
 	double start;
 
-	m = T->m;
-	n = T->n;
-	Ti = T->i;
-	Tj = T->j;
-	Tx = T->x;
-	nz = T->nz;
+	int m = T->m;
+	int n = T->n;
+	int nz = T->nz;
+	int *Ti = T->i;
+	int *Tj = T->j;
+	spasm_GFp *Tx = T->x;
+	
 
 	start = spasm_wtime();
 	fprintf(stderr, "[CSR] Compressing... ");
@@ -72,18 +63,17 @@ spasm *spasm_compress(const spasm_triplet * T) {
 
 	/* get workspace */
 	w = spasm_calloc(n, sizeof(int));
-	Cp = C->p;
-	Cj = C->j;
-	Cx = C->x;
+	int *Cp = C->p;
+	int *Cj = C->j;
+	spasm_GFp *Cx = C->x;
 
 	/* compute row counts */
-	for (k = 0; k < nz; k++) {
+	for (int k = 0; k < nz; k++)
 		w[Ti[k]]++;
-	}
 
 	/* compute row pointers (in both Cp and w) */
 	sum = 0;
-	for (k = 0; k < n; k++) {
+	for (int k = 0; k < n; k++) {
 		Cp[k] = sum;
 		sum += w[k];
 		w[k] = Cp[k];
@@ -91,12 +81,11 @@ spasm *spasm_compress(const spasm_triplet * T) {
 	Cp[n] = sum;
 
 	/* dispatch entries */
-	for (k = 0; k < nz; k++) {
-		p = w[Ti[k]]++;	/* A(i,j) is the p-th entry in C */
-		Cj[p] = Tj[k];
-		if (Cx != NULL) {
-			Cx[p] = Tx[k];
-		}
+	for (int k = 0; k < nz; k++) {
+		int px = w[Ti[k]]++;	/* A(i,j) is the p-th entry in C */
+		Cj[px] = Tj[k];
+		if (Cx != NULL)
+			Cx[px] = Tx[k];
 	}
 
 	/* success; free w and return C */

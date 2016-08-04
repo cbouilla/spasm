@@ -1,5 +1,3 @@
-/* indent -nfbs -nip -npsl -di0 spasm_dense_lu.c  */
-#include <assert.h>
 #include "spasm.h"
 
 spasm_dense_lu *spasm_dense_LU_alloc(int m, int prime) {
@@ -36,9 +34,8 @@ int spasm_dense_LU_grow(spasm_dense_lu * A, const spasm_GFp * y, int k, int proc
 			A->p[n] = k;
 			Ax = A->x;
 			Ax[n] = spasm_malloc(m * sizeof(spasm_GFp));
-			for (int j = 0; j < m; j++) {
+			for (int j = 0; j < m; j++)
 				Ax[n][j] = y[j];
-			}
 #pragma omp atomic update
 			A->n++;
 		}
@@ -52,18 +49,18 @@ int spasm_dense_LU_grow(spasm_dense_lu * A, const spasm_GFp * y, int k, int proc
  * 1. This function is THREAD-SAFE.
  */
 int spasm_dense_LU_process(spasm_dense_lu * A, spasm_GFp * y) {
-	int processed, k, n, m, prime, *p;
-	spasm_GFp beta, **Ax;
+	int processed, k;
+	spasm_GFp beta;
 
-	m = A->m;
-	prime = A->prime;
-	p = A->p;
-	Ax = A->x;
+	int m = A->m;
+	int prime = A->prime;
+	int *p = A->p;
+	spasm_GFp **Ax = A->x;
 	processed = 0;
 
 	while (1) {
 #pragma omp atomic read
-		n = A->n;
+		int n = A->n;
 
 		for (int i = processed; i < n; i++) {
 			beta = prime - y[p[i]];
