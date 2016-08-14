@@ -34,8 +34,9 @@ void spasm_numa_info()
 		errx(1, "The system does not support the NUMA API.\n");
 	
 	int nodes = numa_num_configured_nodes();
-	fprintf(stderr, "[numa] nodes on the system: %d\n", nodes);
+	int cpus = numa_num_configured_cpus();
 
+	fprintf(stderr, "[numa] nodes on the system: %d\n", nodes);
 	fprintf(stderr, "[numa] nodes available: ");
 	for (int i = 0; i < nodes; i++)
     		fprintf(stderr, "%d ", numa_bitmask_isbitset(numa_all_nodes_ptr , i));
@@ -57,7 +58,6 @@ void spasm_numa_info()
 
 	fprintf(stderr, "[numa] preferred node: %d\n", numa_preferred());
 
-	int cpus = numa_num_configured_cpus();
 	fprintf(stderr, "[numa] CPUs on the machine: %d\n", cpus);
 	fprintf(stderr, "[numa] CPUs available: ");
 	for (int i = 0; i < cpus; i++)
