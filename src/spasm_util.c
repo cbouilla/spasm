@@ -26,6 +26,7 @@ int spasm_get_thread_num()
 
 #ifdef HAVE_NUMA
 #include <numa.h>
+#include <numaif.h>
 void spasm_numa_info() 
 {
 	struct bitmask *bm;
@@ -50,8 +51,8 @@ void spasm_numa_info()
 		for (int j = 0; j < cpus; j++)
 			if (numa_bitmask_isbitset(bm, j))
 				fprintf(stderr, "%d ", j);
+		fprintf(stderr, "\n");
 	}
-	fprintf(stderr, "\n");
 	numa_bitmask_free(bm);
 
 	for (int i = 0; i < nodes; i++)
@@ -76,6 +77,14 @@ void spasm_numa_info()
 			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");		
 	numa_bitmask_free(bm);
+
+	/* perform a test */
+	int *test = malloc(100);
+	int nid;
+	if (!get_mempolicy(&nid, NULL, 0, test, MPOL_F_NODE | MPOL_F_ADDR))
+		err(1, "get_mempolicy: ");
+	fprintf("[numa] Just allocated something on node: %d\n", nid);
+	free(test);
 }
 #else
 void spasm_numa_info() 
