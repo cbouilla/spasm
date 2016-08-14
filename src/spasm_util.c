@@ -33,7 +33,7 @@ void spasm_numa_info()
 	if (numa_available() < 0)
 		errx(1, "The system does not support the NUMA API.\n");
 	
-	int nodes = numa_num_possible_nodes();
+	int nodes = numa_num_configured_nodes();
 	fprintf(stderr, "[numa] nodes on the system: %d\n", nodes);
 
 	fprintf(stderr, "[numa] nodes available: ");
