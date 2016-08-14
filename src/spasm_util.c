@@ -27,6 +27,26 @@ int spasm_get_thread_num()
 #ifdef HAVE_NUMA
 #include <numa.h>
 #include <numaif.h>
+int spasm_numa_get_node() {
+	int result = -1;
+	struct bitmask *thread_bm = numa_get_run_node_mask();
+	if (numa_bitmask_weight(bm) != 1) {
+		fprintf(stderr, "[numa] WARNING, CPUs available to thread %d: ", spasm_get_thread_num());
+		for (int j = 0; j < numa_num_configured_nodes(); j++)
+			if (numa_bitmask_isbitset(thread_bm, j))
+				fprintf(stderr, "%d ", j);
+		fprintf(stderr, "\n");
+		result = -1;
+	} else {
+		for (int j = 0; j < numa_num_configured_nodes(); j++)
+			if (numa_bitmask_isbitset(thread_bm, j))
+				result = j;
+		
+	}
+	numa_bitmask_free(thread_bm);
+	return result;
+}
+
 void spasm_numa_info() 
 {
 	struct bitmask *bm;
@@ -71,18 +91,8 @@ void spasm_numa_info()
 	#pragma omp parallel
 	{
 		int i = spasm_get_thread_num();
-		//struct bitmask *thread_bm = numa_get_run_cpu_mask(); // OK pour déterminer le node courant
-		struct bitmask *thread_bm = numa_all_cpus_ptr;
-
-		#pragma omp critical
-		{
-			fprintf(stderr, "[numa] CPUs available to thread %d: ", i);
-			for (int j = 0; j < cpus; j++)
-				if (numa_bitmask_isbitset(thread_bm, j))
-					fprintf(stderr, "%d ", j);
-			fprintf(stderr, "\n");
-		}
-		numa_bitmask_free(thread_bm);
+		int j = spasm_numa_get_node();
+		fprintf(stderr, "[numa/omp] thread %d running on node %d", i, j);
 	}
 
 	int pagesize = numa_pagesize();
