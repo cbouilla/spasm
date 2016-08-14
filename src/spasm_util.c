@@ -82,7 +82,7 @@ void spasm_numa_node_leaders(int *leaders) {
 	for(int i = 0; i < nodes; i++)
 		OK |= (leaders[i] >= 0);
 	if (!OK)
-		errx(1, "Unable to determine NUMA node leaders. Make sure that OMP_PROC_BIND=true");
+		fprintf(stderr, "[numa] Unable to determine NUMA node leaders. Make sure that OMP_PROC_BIND=true\n");
 }
 
 

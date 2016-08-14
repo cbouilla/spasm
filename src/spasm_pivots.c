@@ -189,8 +189,10 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 	int original_copy_node = spasm_numa_get_node();
 	int **Ap_ = spasm_malloc(sizeof(int*) * nodes);
 	int **Aj_ = spasm_malloc(sizeof(int*) * nodes);
-	Ap_[original_copy_node] = Ap;
-	Aj_[original_copy_node] = Aj;
+	for(int i = 0; i < nodes; i++) {
+		Ap_[i] = Ap;
+		Aj_[i] = Aj;
+	}
 
 #pragma omp parallel
 	{
@@ -211,8 +213,8 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 		}
 		#pragma omp barrier
 		
-		Ap = Ap_[node];
-		Aj = Aj_[node];
+		Ap = Ap_[(node >= 0) ? node : 0];
+		Aj = Aj_[(node >= 0) ? node : 0];
 		spasm_vector_set(w, 0, m, 0);
 
 #pragma omp for schedule(dynamic, 1000)
