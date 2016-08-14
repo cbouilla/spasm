@@ -68,7 +68,7 @@ void spasm_numa_info()
 			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");
 
-	#pragma omp parallel for ordered
+	#pragma omp parallel for schedule(static,1) ordered
 	for(int i = 0; i < spasm_get_num_threads(); i++) {
 		struct bitmask *thread_bm = numa_get_run_node_mask();
 		#pragma omp ordered
@@ -93,7 +93,7 @@ void spasm_numa_info()
 				fprintf(stderr, "%d ", i);
 		fprintf(stderr, "\n");
 	} else {
-		fprintf(stderr, "[numa] page interleaving disabled");		
+		fprintf(stderr, "[numa] page interleaving disabled\n");		
 	}
 	numa_bitmask_free(bm);
 
