@@ -91,7 +91,7 @@ void spasm_numa_info()
  	int ret_code;
  	status[0]=-1;
  	ret_code = numa_move_pages(0, 1, &test, NULL, status, 0);
- 	fprintf(stderr, "Memory at %p is at %d node (retcode %d)\n", ptr_to_check, status[0], ret_code);
+ 	fprintf(stderr, "Memory at %p is at %d node (retcode %d)\n", test, status[0], ret_code);
 
 	//fprintf(stderr, "[numa] Just allocated something on node: %d\n", nid);
 	free(test);
