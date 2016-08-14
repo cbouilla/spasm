@@ -74,16 +74,15 @@ void spasm_numa_info()
 	{
 		int tid = spasm_get_thread_num();
 		thread_bm[tid] = numa_get_run_node_mask();
-
-		#pragma omp single
-		for(int i = 0; i < nthreads; i++) {
-			fprintf(stderr, "[numa] CPUs available to thread %d: ", i);
-			for (int j = 0; j < cpus; i++)
-				if (numa_bitmask_isbitset(numa_all_cpus_ptr , i))
-					fprintf(stderr, "%d ", i);
-			fprintf(stderr, "\n");
-		}
-		numa_bitmask_free(thread_bm[tid]);
+	}
+	
+	for(int i = 0; i < nthreads; i++) {
+		fprintf(stderr, "[numa] CPUs available to thread %d: ", i);
+		for (int j = 0; j < cpus; i++)
+			if (numa_bitmask_isbitset(thread_bm[i] , i))
+				fprintf(stderr, "%d ", i);
+		fprintf(stderr, "\n");
+		numa_bitmask_free(thread_bm[i]);
 	}
 	free(thread_bm);
 
