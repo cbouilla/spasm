@@ -78,7 +78,7 @@ void spasm_numa_info()
 	
 	for(int i = 0; i < nthreads; i++) {
 		fprintf(stderr, "[numa] CPUs available to thread %d: ", i);
-		for (int j = 0; j < cpus; i++)
+		for (int j = 0; j < cpus; j++)
 			if (numa_bitmask_isbitset(thread_bm[i], j))
 				fprintf(stderr, "%d ", j);
 		fprintf(stderr, "\n");
