@@ -81,6 +81,9 @@ void spasm_numa_info()
 
 	/* perform a test */
 	int *test = malloc(10000);
+	for(int i = 0; i < 2500; i++) {
+		test[i] = i;
+	}
 	while (((uint64_t) test) % pagesize)
 		test++;
 	/*int nid;
