@@ -142,6 +142,9 @@ void spasm_human_format(int64_t n, char *target);
 int spasm_get_num_threads();
 int spasm_get_thread_num();
 void spasm_numa_info();
+int spasm_numa_num_nodes();
+int spasm_numa_get_node();
+void spasm_numa_node_leaders(int *leaders);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x);

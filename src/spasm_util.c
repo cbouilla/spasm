@@ -37,7 +37,10 @@ int spasm_get_thread_num()
 
 #ifdef HAVE_NUMA
 #include <numa.h>
-#include <numaif.h>
+int spasm_numa_num_nodes() {
+	return numa_num_configured_nodes();
+}
+
 int spasm_numa_get_node() {
 	int result = -1;
 	struct bitmask *bm = numa_get_run_node_mask();
@@ -58,6 +61,30 @@ int spasm_numa_get_node() {
 	numa_bitmask_free(bm);
 	return result;
 }
+
+void spasm_numa_node_leaders(int *leaders) {
+	int nodes = spasm_numa_num_nodes();
+	for(int i = 0; i < nodes; i++)
+		leaders[i] = -1;
+	#pragma omp parallel
+	{
+		int tid = spasm_get_thread_num();
+		int node = spasm_numa_get_node();
+		if (node >= 0) {
+			#pragma omp critical
+			if (leaders[node] < 0)
+				leaders[node] = tid;
+			else
+				leaders[node] = spasm_min(leaders[node], tid);
+		}
+	}
+	int OK = 0;
+	for(int i = 0; i < nodes; i++)
+		OK |= (leaders[i] >= 0);
+	if (!OK)
+		errx(1, "Unable to determine NUMA node leaders. Make sure that OMP_PROC_BIND=true");
+}
+
 
 void spasm_numa_extra_verbose()
 {
@@ -109,7 +136,7 @@ void spasm_numa_extra_verbose()
 	numa_bitmask_free(bm);
 
 	/* perform a test */
-	int *test = malloc(13000);
+	/*int *test = malloc(13000);
 	int *aligned = test;
 	for(int i = 0; i < 13000/4; i++) {
 		test[i] = i;
@@ -122,7 +149,7 @@ void spasm_numa_extra_verbose()
  	if (ret != 0)
  		err(1, "numa_move_pages: ");
  	fprintf(stderr, "[numa] two consecutives malloc'd pages on nodes: %d, %d\n", status[0], status[1]);
-	free(test);
+	free(test);*/
 }
 
 void spasm_numa_info() 
@@ -134,7 +161,7 @@ void spasm_numa_info()
 	
 	int nodes = numa_num_configured_nodes();
 	int cpus = numa_num_configured_cpus();
-	fprintf(stderr, "[numa] %d-node machine, %d-CPU\n", nodes, cpus);
+	fprintf(stderr, "[numa] %d-node, %d-CPU machine\n", nodes, cpus);
 	fprintf(stderr, "[numa] running %d thread\n", spasm_get_max_threads());
 
 	int *threads_on_node = calloc(sizeof(int), nodes);
@@ -142,14 +169,27 @@ void spasm_numa_info()
 	{
 		int i = spasm_get_thread_num();
 		int j = spasm_numa_get_node();
-		#pragma omp atomic
-		threads_on_node[j]++;
+		if (j >= 0)
+			#pragma omp atomic
+			threads_on_node[j]++;
 	}	
 	for(int i=0; i < nodes; i++)
 		fprintf(stderr, "[numa] %d threads running on node %d\n", threads_on_node[i], i);
 	free(threads_on_node);
 }
 #else
+int spasm_numa_num_nodes() {
+	return 1;
+}
+
+int spasm_numa_get_node() {
+	return 0;
+}
+
+void spasm_numa_node_leaders(int *leaders) {
+	leaders[0] = 0;
+}
+
 void spasm_numa_info() 
 {
 }

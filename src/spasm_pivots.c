@@ -183,14 +183,36 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 	npiv = npiv_start;
 	start = spasm_wtime();
 
+	int nodes = spasm_numa_num_nodes();
+	int *leaders = spasm_malloc(nodes * sizeof(int));
+	spasm_numa_node_leaders(leaders);
+	int original_copy_node = spasm_numa_get_node();
+	int **Ap_ = spasm_malloc(sizeof(int*) * nodes);
+	int **Aj_ = spasm_malloc(sizeof(int*) * nodes);
+	Ap_[original_copy_node] = Ap;
+	Aj_[original_copy_node] = Aj;
+
 #pragma omp parallel
 	{
 		int *w = spasm_malloc(m * sizeof(int));
 		int *queue = spasm_malloc(2 * m * sizeof(int));
-		int head, tail, npiv_local, surviving, tid;
+		int head, tail, npiv_local, surviving, tid, node;
 
 		/* workspace initialization */
 		tid = spasm_get_thread_num();
+		node = spasm_numa_get_node();
+		if (node >= 0 && node != original_copy_node && tid == leaders[node]) {
+			Ap_[node] = spasm_malloc(sizeof(int) * (n+1));
+			Aj_[node] = spasm_malloc(sizeof(int) * spasm_nnz(A));
+			for(int i=0; i<n+1; i++)
+				Ap_[node][i] = Ap[i];
+			for(int i=0; i<spasm_nnz(A); i++)
+				Aj_[node][i] = Aj[i];
+		}
+		#pragma omp barrier
+		
+		Ap = Ap_[node];
+		Aj = Aj_[node];
 		spasm_vector_set(w, 0, m, 0);
 
 #pragma omp for schedule(dynamic, 1000)
