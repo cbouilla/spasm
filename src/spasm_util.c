@@ -68,15 +68,29 @@ void spasm_numa_info()
 			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");
 
+	#pragma omp parallel
+	{
+		bm = numa_get_run_node_mask();
+		fprintf(stderr, "[numa] CPUs available to thread %d: ", spasm_get_thread_num());
+		for (int i = 0; i < cpus; i++)
+			if (numa_bitmask_isbitset(numa_all_cpus_ptr , i))
+				fprintf(stderr, "%d ", i);
+		fprintf(stderr, "\n");
+	}
+
 	int pagesize = numa_pagesize();
 	fprintf(stderr, "[numa] page size: %d\n", pagesize);
 
 	bm = numa_get_interleave_mask();
-	fprintf(stderr, "[numa] interleave mask: ");
-	for (int i = 0; i < nodes; i++)
-		if (numa_bitmask_isbitset(bm, i))
-			fprintf(stderr, "%d ", i);
-	fprintf(stderr, "\n");		
+	if (numa_bitmask_weight(bm)) {
+		fprintf(stderr, "[numa] pages interleaved on nodes: ");
+		for (int i = 0; i < nodes; i++)
+			if (numa_bitmask_isbitset(bm, i))
+				fprintf(stderr, "%d ", i);
+		fprintf(stderr, "\n");
+	} else {
+		fprintf(stderr, "[numa] page interleaving disabled");		
+	}
 	numa_bitmask_free(bm);
 
 	/* perform a test */
