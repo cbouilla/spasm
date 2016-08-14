@@ -146,6 +146,7 @@ void spasm_numa_extra_verbose();
 int spasm_numa_num_nodes();
 int spasm_numa_get_node();
 void spasm_numa_node_leaders(int *leaders);
+void * spasm_numa_alloc_local(size_t size);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x);

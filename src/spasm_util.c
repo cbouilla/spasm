@@ -158,6 +158,8 @@ void spasm_numa_extra_verbose()
 	 	ret = numa_move_pages(0, 2, &aligned, NULL, status, 0);
 	 	if (ret != 0)
 	 		err(1, "numa_move_pages: ");
+	 	#pragma omp critical
+	 	fprintf(stderr, "[debug] thread %d got nodes %d %d\n", spasm_get_thread_num(), status[0], status[1]);
 	 	if (status[0] != status[1]) {
 	 		#pragma omp atomic write
 	 		interleaving = 1;
@@ -200,6 +202,11 @@ void spasm_numa_info()
 		fprintf(stderr, "[numa] %d threads running on node %d\n", threads_on_node[i], i);
 	free(threads_on_node);
 }
+
+void * spasm_numa_alloc_local(size_t size) {
+	return numa_alloc_local(size);
+}
+
 #else
 int spasm_numa_num_nodes() {
 	return 1;
@@ -219,6 +226,11 @@ void spasm_numa_info()
 
 void spasm_numa_extra_verbose()
 {
+}
+
+void * spasm_numa_alloc_local(size_t size) 
+{
+	return spasm_malloc(size);
 }
 #endif
 
