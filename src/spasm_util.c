@@ -80,23 +80,18 @@ void spasm_numa_info()
 	numa_bitmask_free(bm);
 
 	/* perform a test */
-	int *test = malloc(10000);
-	for(int i = 0; i < 2500; i++) {
+	int *test = malloc(13000);
+	int *aligned = test;
+	for(int i = 0; i < 13000/4; i++) {
 		test[i] = i;
 	}
-	while (((uint64_t) test) % pagesize)
-		test++;
-	/*int nid;
-	if (!get_mempolicy(&nid, NULL, 0, test, MPOL_F_NODE | MPOL_F_ADDR))
-		err(1, "get_mempolicy: ");*/
-	
- 	int status[1];
- 	int ret_code;
- 	status[0]=-1;
- 	ret_code = numa_move_pages(0, 1, &test, NULL, status, 0);
- 	fprintf(stderr, "Memory at %p is at %d node (retcode %d)\n", test, status[0], ret_code);
-
-	//fprintf(stderr, "[numa] Just allocated something on node: %d\n", nid);
+	while (((uint64_t) aligned) % pagesize)
+		aligned++;	
+ 	int status[2];
+ 	if (!numa_move_pages(0, 2, &aligned, NULL, status, 0)) {
+ 		err(1, "numa_move_pages: ");
+ 	}
+ 	fprintf(stderr, "[numa] two consecutives malloc'd pages on nodes: %d, %d\n", status[0], status[1]);
 	free(test);
 }
 #else
