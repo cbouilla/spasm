@@ -29,21 +29,22 @@ int spasm_get_thread_num()
 #include <numaif.h>
 int spasm_numa_get_node() {
 	int result = -1;
-	struct bitmask *thread_bm = numa_get_run_node_mask();
+	struct bitmask *bm = numa_get_run_node_mask();
+	int nodes = numa_num_configured_nodes();
 	if (numa_bitmask_weight(bm) != 1) {
 		fprintf(stderr, "[numa] WARNING, CPUs available to thread %d: ", spasm_get_thread_num());
-		for (int j = 0; j < numa_num_configured_nodes(); j++)
-			if (numa_bitmask_isbitset(thread_bm, j))
+		for (int j = 0; j < nodes; j++)
+			if (numa_bitmask_isbitset(bm, j))
 				fprintf(stderr, "%d ", j);
 		fprintf(stderr, "\n");
 		result = -1;
 	} else {
-		for (int j = 0; j < numa_num_configured_nodes(); j++)
-			if (numa_bitmask_isbitset(thread_bm, j))
+		for (int j = 0; j < nodes; j++)
+			if (numa_bitmask_isbitset(bm, j))
 				result = j;
 		
 	}
-	numa_bitmask_free(thread_bm);
+	numa_bitmask_free(bm);
 	return result;
 }
 
