@@ -204,6 +204,8 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 		tid = spasm_get_thread_num();
 		node = spasm_numa_get_node();
 		if (node >= 0 && node != original_copy_node && tid == leaders[node]) {
+			#pragma omp critical
+			fprintf(stderr, "[pivots/numa] Making a copy of the matrix on node %d\n", node);
 			Ap_[node] = spasm_malloc(sizeof(int) * (n+1));
 			Aj_[node] = spasm_malloc(sizeof(int) * spasm_nnz(A));
 			for(int i=0; i<n+1; i++)
