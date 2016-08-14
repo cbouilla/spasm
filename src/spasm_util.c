@@ -68,7 +68,7 @@ void spasm_numa_info()
 			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");
 
-	int pagesize = numa_pagesize()
+	int pagesize = numa_pagesize();
 	fprintf(stderr, "[numa] page size: %d\n", pagesize);
 
 	bm = numa_get_interleave_mask();
