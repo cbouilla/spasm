@@ -136,20 +136,43 @@ void spasm_numa_extra_verbose()
 	numa_bitmask_free(bm);
 
 	/* perform a test */
-	/*int *test = malloc(13000);
-	int *aligned = test;
-	for(int i = 0; i < 13000/4; i++) {
-		test[i] = i;
+	int interleaving = 0;
+	int non_local = 0;
+	int non_bound = 0;
+	#pragma omp parallel
+	{
+		int node = spasm_numa_get_node();
+		if (node < 0)
+			#pragma omp atomic write
+			non_bound = 1;
+
+		int *test = malloc(13000);
+		int *aligned = test;
+		for(int i = 0; i < 13000/4; i++) {
+			test[i] = i;
+		}
+		while (((uint64_t) aligned) % pagesize)
+			aligned++;	
+	 	int status[2];
+	 	int ret;
+	 	ret = numa_move_pages(0, 2, &aligned, NULL, status, 0);
+	 	if (ret != 0)
+	 		err(1, "numa_move_pages: ");
+	 	if (status[0] != status[1]) {
+	 		#pragma omp atomic write
+	 		interleaving = 1;
+	 	} else if (node >= 0 && status[0] != node) {
+	 		#pragma omp atomic write
+	 		non_local = 1;
+	 	}
+		free(test);
 	}
-	while (((uint64_t) aligned) % pagesize)
-		aligned++;	
- 	int status[2];
- 	int ret;
- 	ret = numa_move_pages(0, 2, &aligned, NULL, status, 0);
- 	if (ret != 0)
- 		err(1, "numa_move_pages: ");
- 	fprintf(stderr, "[numa] two consecutives malloc'd pages on nodes: %d, %d\n", status[0], status[1]);
-	free(test);*/
+	if (interleaving)
+		fprintf(stderr, "[numa] malloc is interleaving pages\n");
+	if (non_local)
+		fprintf(stderr, "[numa] malloc is allocating pages non-locally\n");
+	if (non_bound)
+		fprintf(stderr, "[numa] unable to perform locality test\n");
 }
 
 void spasm_numa_info() 
@@ -191,6 +214,10 @@ void spasm_numa_node_leaders(int *leaders) {
 }
 
 void spasm_numa_info() 
+{
+}
+
+void spasm_numa_extra_verbose()
 {
 }
 #endif

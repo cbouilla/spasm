@@ -15,6 +15,8 @@ int main() {
 	spasm *A, *B;
 
 	spasm_numa_info();
+	spasm_numa_extra_verbose();
+
 	T = spasm_load_sms(stdin, prime);
 	A = spasm_compress(T);
 	spasm_triplet_free(T);

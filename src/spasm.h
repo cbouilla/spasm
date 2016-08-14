@@ -142,6 +142,7 @@ void spasm_human_format(int64_t n, char *target);
 int spasm_get_num_threads();
 int spasm_get_thread_num();
 void spasm_numa_info();
+void spasm_numa_extra_verbose();
 int spasm_numa_num_nodes();
 int spasm_numa_get_node();
 void spasm_numa_node_leaders(int *leaders);
