@@ -83,7 +83,7 @@ void spasm_numa_info()
 	int nid;
 	if (!get_mempolicy(&nid, NULL, 0, test, MPOL_F_NODE | MPOL_F_ADDR))
 		err(1, "get_mempolicy: ");
-	fprintf("[numa] Just allocated something on node: %d\n", nid);
+	fprintf(stderr, "[numa] Just allocated something on node: %d\n", nid);
 	free(test);
 }
 #else
