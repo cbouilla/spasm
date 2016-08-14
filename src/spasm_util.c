@@ -68,7 +68,8 @@ void spasm_numa_info()
 			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "[numa] page size: %d\n", numa_pagesize());
+	int pagesize = numa_pagesize()
+	fprintf(stderr, "[numa] page size: %d\n", pagesize);
 
 	bm = numa_get_interleave_mask();
 	fprintf(stderr, "[numa] interleave mask: ");
@@ -79,11 +80,20 @@ void spasm_numa_info()
 	numa_bitmask_free(bm);
 
 	/* perform a test */
-	int *test = malloc(100);
-	int nid;
+	int *test = malloc(10000);
+	while (((uint64_t) test) % pagesize)
+		test++
+	/*int nid;
 	if (!get_mempolicy(&nid, NULL, 0, test, MPOL_F_NODE | MPOL_F_ADDR))
-		err(1, "get_mempolicy: ");
-	fprintf(stderr, "[numa] Just allocated something on node: %d\n", nid);
+		err(1, "get_mempolicy: ");*/
+	
+ 	int status[1];
+ 	int ret_code;
+ 	status[0]=-1;
+ 	ret_code = numa_move_pages(0, 1, &test, NULL, status, 0);
+ 	fprintf(stderr, "Memory at %p is at %d node (retcode %d)\n", ptr_to_check, status[0], ret_code);
+
+	//fprintf(stderr, "[numa] Just allocated something on node: %d\n", nid);
 	free(test);
 }
 #else
