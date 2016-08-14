@@ -71,8 +71,9 @@ void spasm_numa_info()
 	#pragma omp parallel
 	{
 		int i = spasm_get_thread_num();
-		struct bitmask *thread_bm = numa_get_run_node_mask();
-	
+		//struct bitmask *thread_bm = numa_get_run_cpu_mask(); // OK pour déterminer le node courant
+		struct bitmask *thread_bm = numa_all_cpus_ptr
+
 		#pragma omp critical
 		{
 			fprintf(stderr, "[numa] CPUs available to thread %d: ", i);
