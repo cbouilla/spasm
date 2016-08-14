@@ -102,9 +102,10 @@ void spasm_numa_info()
 	while (((uint64_t) aligned) % pagesize)
 		aligned++;	
  	int status[2];
- 	if (!numa_move_pages(0, 2, &aligned, NULL, status, 0)) {
+ 	int ret;
+ 	ret = numa_move_pages(0, 2, &aligned, NULL, status, 0);
+ 	if (ret != 0)
  		err(1, "numa_move_pages: ");
- 	}
  	fprintf(stderr, "[numa] two consecutives malloc'd pages on nodes: %d, %d\n", status[0], status[1]);
 	free(test);
 }
