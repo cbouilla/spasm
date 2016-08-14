@@ -82,7 +82,7 @@ void spasm_numa_info()
 	/* perform a test */
 	int *test = malloc(10000);
 	while (((uint64_t) test) % pagesize)
-		test++
+		test++;
 	/*int nid;
 	if (!get_mempolicy(&nid, NULL, 0, test, MPOL_F_NODE | MPOL_F_ADDR))
 		err(1, "get_mempolicy: ");*/
