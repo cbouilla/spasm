@@ -147,12 +147,14 @@ void spasm_numa_extra_verbose()
 			non_bound = 1;
 
 		int *test = malloc(13000);
-		int *aligned = test;
-		for(int i = 0; i < 13000/4; i++) {
+		int *aligned[2];
+		for(int i = 0; i < 13000/sizeof(int); i++) {
 			test[i] = i;
 		}
-		while (((uint64_t) aligned) % pagesize)
-			aligned++;	
+		aligned[0] = test;
+		while (((uint64_t) aligned[0]) % pagesize)
+			aligned[0]++;
+		aligned[1] = aligned[0] + pagesize / sizeof(int);
 	 	int status[2];
 	 	int ret;
 	 	ret = numa_move_pages(0, 2, &aligned, NULL, status, 0);
