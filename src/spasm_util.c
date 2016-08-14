@@ -39,7 +39,8 @@ void spasm_numa_info()
 	fprintf(stderr, "[numa] nodes on the system: %d\n", nodes);
 	fprintf(stderr, "[numa] nodes available: ");
 	for (int i = 0; i < nodes; i++)
-    		fprintf(stderr, "%d ", numa_bitmask_isbitset(numa_all_nodes_ptr , i));
+		if (numa_bitmask_isbitset(bm , i))
+			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");
 
 	bm = numa_allocate_cpumask();
@@ -53,7 +54,7 @@ void spasm_numa_info()
 	numa_bitmask_free(bm);
 
 	for (int i = 0; i < nodes; i++)
-		for (int j = i + 1; j <= nodes; j++)
+		for (int j = i + 1; j < nodes; j++)
 			fprintf(stderr, "[numa] distance %d <--> %d: %d\n", i, j, numa_distance(i, j));
 
 	fprintf(stderr, "[numa] preferred node: %d\n", numa_preferred());
