@@ -68,23 +68,21 @@ void spasm_numa_info()
 			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");
 
-	int nthreads = spasm_get_num_threads();
-	struct bitmask **thread_bm = malloc(sizeof(*thread_bm) * nthreads);
 	#pragma omp parallel
 	{
-		int tid = spasm_get_thread_num();
-		thread_bm[tid] = numa_get_run_node_mask();
-	}
+		int i = spasm_get_thread_num();
+		struct bitmask *thread_bm = numa_get_run_node_mask();
 	
-	for(int i = 0; i < nthreads; i++) {
-		fprintf(stderr, "[numa] CPUs available to thread %d: ", i);
-		for (int j = 0; j < cpus; j++)
-			if (numa_bitmask_isbitset(thread_bm[i], j))
-				fprintf(stderr, "%d ", j);
-		fprintf(stderr, "\n");
-		numa_bitmask_free(thread_bm[i]);
+		#pragma omp critical
+		{
+			fprintf(stderr, "[numa] CPUs available to thread %d: ", i);
+			for (int j = 0; j < cpus; j++)
+				if (numa_bitmask_isbitset(thread_bm, j))
+					fprintf(stderr, "%d ", j);
+			fprintf(stderr, "\n");
+		}
+		numa_bitmask_free(thread_bm);
 	}
-	free(thread_bm);
 
 	int pagesize = numa_pagesize();
 	fprintf(stderr, "[numa] page size: %d\n", pagesize);
