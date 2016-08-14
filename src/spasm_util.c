@@ -2,21 +2,79 @@
 #include <err.h>
 #include "spasm.h"
 
-int spasm_get_num_threads() {
 #ifdef _OPENMP
+int spasm_get_num_threads()
+{
 	return omp_get_num_threads();
-#else
-	return 1;
-#endif
 }
 
-int spasm_get_thread_num() {
-#ifdef _OPENMP
+int spasm_get_thread_num()
+{
 	return omp_get_thread_num();
-#else
-	return 0;
-#endif
 }
+#else
+int spasm_get_num_threads()
+{
+	return 1;
+}
+
+int spasm_get_thread_num()
+{
+	return 0;
+}
+#endif
+
+#ifdef HAVE_NUMA
+#include <numa.h>
+void spasm_numa_info() 
+{
+	struct bitmask *bm;
+
+	if (numa_available() < 0)
+		errx(1, "The system does not support the NUMA API.\n");
+	
+	int nodes = numa_num_possible_nodes();
+	fprintf(stderr, "[numa] nodes on the system: %d\n", nodes);
+
+	fprintf(stderr, "[numa] nodes available: ");
+	for (int i = 0; i < nodes; i++)
+    		fprintf(stderr, "%d ", numa_bitmask_isbitset(numa_all_nodes_ptr , i));
+	fprintf(stderr, "\n");
+
+	bm = numa_allocate_cpumask();
+	for (int i = 0; i < nodes; i++) {
+		fprintf(sdterr, "[numa] CPUs in node %d: ");
+		for (int j = 0; j < nodes; j++)
+			fprintf(stderr, "%d ", numa_bitmask_isbitset(bm , j));
+	}
+	numa_bitmask_free(bm);
+
+	for (int i = 0; i < nodes; i++)
+		for (int j = i + 1; j <= nodes; j++)
+			fprintf(stderr, "[numa] distance %d <--> %d: %d\n", i, j, numa_distance(i, j));
+
+	fprintf(stderr, "[numa] preferred node: %d\n", numa_preferred());
+
+	int cpus = numa_num_configured_cpus();
+	fprintf(stderr, "[numa] CPUs on the machine: %d\n", cpus);
+	fprintf(stderr, "[numa] CPUs available: ");
+	for (int i = 0; i < cpus; i++)
+    		fprintf(stderr, "%d ", numa_bitmask_isbitset(numa_all_cpus_ptr , i));
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "[numa] page size: %d\n", numa_pagesize());
+
+	bm = numa_get_interleave_mask();
+	fprintf(stderr, "[numa] interleave mask: ");
+	for (int i = 0; i < bm->size; i++)
+		fprintf(stderr, "%d ", numa_bitmask_isbitset(bm , i));
+	numa_bitmask_free(bm);
+}
+#else
+void spasm_numa_info() 
+{
+}
+#endif
 
 
 double spasm_wtime() {

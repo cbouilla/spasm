@@ -141,6 +141,7 @@ spasm *spasm_identity(int n, int prime);
 void spasm_human_format(int64_t n, char *target);
 int spasm_get_num_threads();
 int spasm_get_thread_num();
+void spasm_numa_info();
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x);
