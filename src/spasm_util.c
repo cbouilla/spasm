@@ -93,7 +93,8 @@ void spasm_numa_info()
 	{
 		int i = spasm_get_thread_num();
 		int j = spasm_numa_get_node();
-		fprintf(stderr, "[numa/omp] thread %d running on node %d", i, j);
+		#pragma omp critical
+		fprintf(stderr, "[numa/omp] thread %d running on node %d\n", i, j);
 	}
 
 	int pagesize = numa_pagesize();
