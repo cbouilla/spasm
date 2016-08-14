@@ -8,6 +8,12 @@ int spasm_get_num_threads()
 	return omp_get_num_threads();
 }
 
+int spasm_get_max_threads()
+{
+	return omp_get_max_threads();
+}
+
+
 int spasm_get_thread_num()
 {
 	return omp_get_thread_num();
@@ -16,6 +22,11 @@ int spasm_get_thread_num()
 int spasm_get_num_threads()
 {
 	return 1;
+}
+
+int spasm_get_max_threads()
+{
+	return 1;	
 }
 
 int spasm_get_thread_num()
@@ -32,11 +43,11 @@ int spasm_numa_get_node() {
 	struct bitmask *bm = numa_get_run_node_mask();
 	int nodes = numa_num_configured_nodes();
 	if (numa_bitmask_weight(bm) != 1) {
-		fprintf(stderr, "[numa] WARNING, CPUs available to thread %d: ", spasm_get_thread_num());
+		/*fprintf(stderr, "[numa] WARNING, CPUs available to thread %d: ", spasm_get_thread_num());
 		for (int j = 0; j < nodes; j++)
 			if (numa_bitmask_isbitset(bm, j))
 				fprintf(stderr, "%d ", j);
-		fprintf(stderr, "\n");
+		fprintf(stderr, "\n");*/
 		result = -1;
 	} else {
 		for (int j = 0; j < nodes; j++)
@@ -123,8 +134,8 @@ void spasm_numa_info()
 	
 	int nodes = numa_num_configured_nodes();
 	int cpus = numa_num_configured_cpus();
-	fprintf(stderr, "[numa] %d-node machine, %d-CPU\n", cpus, nodes);
-	fprintf(stderr, "[numa] running %d thread\n", spasm_get_num_threads());
+	fprintf(stderr, "[numa] %d-node machine, %d-CPU\n", nodes, cpus);
+	fprintf(stderr, "[numa] running %d thread\n", spasm_get_max_threads());
 
 	int *threads_on_node = calloc(sizeof(int), nodes);
 	#pragma omp parallel
