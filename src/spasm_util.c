@@ -43,7 +43,7 @@ void spasm_numa_info()
 
 	bm = numa_allocate_cpumask();
 	for (int i = 0; i < nodes; i++) {
-		fprintf(stderr, "[numa] CPUs in node %d: ");
+		fprintf(stderr, "[numa] CPUs in node %d: ", i);
 		for (int j = 0; j < cpus; j++)
 			if (numa_bitmask_isbitset(bm , j))
 				fprintf(stderr, "%d ", j);
