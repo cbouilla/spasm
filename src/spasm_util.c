@@ -82,17 +82,6 @@ void spasm_numa_extra_verbose()
 			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");
 
-	int *threads_on_node = calloc(sizeof(int), nodes);
-	#pragma omp parallel
-	{
-		int i = spasm_get_thread_num();
-		int j = spasm_numa_get_node();
-		#pragma omp atomic
-		threads_on_node[j]++
-	}
-	for(int i=0; i < nodes; i++)
-		fprintf(stderr, "[numa] %d threads running on node %d\n", threads_on_node[i], i);
-
 	int pagesize = numa_pagesize();
 	fprintf(stderr, "[numa] page size: %d bytes\n", pagesize);
 
@@ -134,8 +123,9 @@ void spasm_numa_info()
 	
 	int nodes = numa_num_configured_nodes();
 	int cpus = numa_num_configured_cpus();
-	fprintf(stderr, "[numa] %d-CPU, %d-node machine\n", cpus, nodes);
-	
+	fprintf(stderr, "[numa] %d-node machine, %d-CPU\n", cpus, nodes);
+	fprintf(stderr, "[numa] running %d thread\n", spasm_get_num_threads());
+
 	int *threads_on_node = calloc(sizeof(int), nodes);
 	#pragma omp parallel
 	{
@@ -143,9 +133,10 @@ void spasm_numa_info()
 		int j = spasm_numa_get_node();
 		#pragma omp atomic
 		threads_on_node[j]++
-	}
+	}	
 	for(int i=0; i < nodes; i++)
 		fprintf(stderr, "[numa] %d threads running on node %d\n", threads_on_node[i], i);
+	free(threads_on_node);
 }
 #else
 void spasm_numa_info() 
