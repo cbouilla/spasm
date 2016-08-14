@@ -132,7 +132,7 @@ void spasm_numa_info()
 		int i = spasm_get_thread_num();
 		int j = spasm_numa_get_node();
 		#pragma omp atomic
-		threads_on_node[j]++
+		threads_on_node[j]++;
 	}	
 	for(int i=0; i < nodes; i++)
 		fprintf(stderr, "[numa] %d threads running on node %d\n", threads_on_node[i], i);
