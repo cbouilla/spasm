@@ -44,9 +44,11 @@ void spasm_numa_info()
 	bm = numa_allocate_cpumask();
 	for (int i = 0; i < nodes; i++) {
 		fprintf(stderr, "[numa] CPUs in node %d: ");
-		for (int j = 0; j < nodes; j++)
-			fprintf(stderr, "%d ", numa_bitmask_isbitset(bm , j));
+		for (int j = 0; j < cpus; j++)
+			if (numa_bitmask_isbitset(bm , j))
+				fprintf(stderr, "%d ", j);
 	}
+	fprintf(stderr, "\n");
 	numa_bitmask_free(bm);
 
 	for (int i = 0; i < nodes; i++)
@@ -59,15 +61,18 @@ void spasm_numa_info()
 	fprintf(stderr, "[numa] CPUs on the machine: %d\n", cpus);
 	fprintf(stderr, "[numa] CPUs available: ");
 	for (int i = 0; i < cpus; i++)
-    		fprintf(stderr, "%d ", numa_bitmask_isbitset(numa_all_cpus_ptr , i));
+		if (numa_bitmask_isbitset(numa_all_cpus_ptr , i))
+			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "[numa] page size: %d\n", numa_pagesize());
 
 	bm = numa_get_interleave_mask();
 	fprintf(stderr, "[numa] interleave mask: ");
-	for (int i = 0; i < bm->size; i++)
-		fprintf(stderr, "%d ", numa_bitmask_isbitset(bm , i));
+	for (int i = 0; i < nodes; i++)
+		if (numa_bitmask_isbitset(bm, i))
+			fprintf(stderr, "%d ", i);
+	fprintf(stderr, "\n");		
 	numa_bitmask_free(bm);
 }
 #else
