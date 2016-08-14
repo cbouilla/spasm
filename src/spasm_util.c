@@ -48,7 +48,7 @@ int spasm_numa_get_node() {
 	return result;
 }
 
-void spasm_numa_info() 
+void spasm_numa_extra_verbose()
 {
 	struct bitmask *bm;
 
@@ -58,13 +58,8 @@ void spasm_numa_info()
 	int nodes = numa_num_configured_nodes();
 	int cpus = numa_num_configured_cpus();
 
-	fprintf(stderr, "[numa] nodes on the system: %d\n", nodes);
-	fprintf(stderr, "[numa] nodes available: ");
-	for (int i = 0; i < nodes; i++)
-		if (numa_bitmask_isbitset(numa_all_nodes_ptr, i))
-			fprintf(stderr, "%d ", i);
-	fprintf(stderr, "\n");
 
+	fprintf(stderr, "[numa] %d-CPU, %d-node machine\n", cpus, nodes);
 	bm = numa_allocate_cpumask();
 	for (int i = 0; i < nodes; i++) {
 		numa_node_to_cpus(i, bm);
@@ -81,24 +76,25 @@ void spasm_numa_info()
 			fprintf(stderr, "[numa] distance %d <--> %d: %d\n", i, j, numa_distance(i, j));
 
 	fprintf(stderr, "[numa] preferred node: %d\n", numa_preferred());
-
-	fprintf(stderr, "[numa] CPUs on the machine: %d\n", cpus);
 	fprintf(stderr, "[numa] CPUs available: ");
 	for (int i = 0; i < cpus; i++)
 		if (numa_bitmask_isbitset(numa_all_cpus_ptr , i))
 			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");
 
+	int *threads_on_node = calloc(sizeof(int), nodes);
 	#pragma omp parallel
 	{
 		int i = spasm_get_thread_num();
 		int j = spasm_numa_get_node();
-		#pragma omp critical
-		fprintf(stderr, "[numa/omp] thread %d running on node %d\n", i, j);
+		#pragma omp atomic
+		threads_on_node[j]++
 	}
+	for(int i=0; i < nodes; i++)
+		fprintf(stderr, "[numa] %d threads running on node %d\n", threads_on_node[i], i);
 
 	int pagesize = numa_pagesize();
-	fprintf(stderr, "[numa] page size: %d\n", pagesize);
+	fprintf(stderr, "[numa] page size: %d bytes\n", pagesize);
 
 	bm = numa_get_interleave_mask();
 	if (numa_bitmask_weight(bm)) {
@@ -128,12 +124,34 @@ void spasm_numa_info()
  	fprintf(stderr, "[numa] two consecutives malloc'd pages on nodes: %d, %d\n", status[0], status[1]);
 	free(test);
 }
+
+void spasm_numa_info() 
+{
+	struct bitmask *bm;
+
+	if (numa_available() < 0)
+		errx(1, "The system does not support the NUMA API.\n");
+	
+	int nodes = numa_num_configured_nodes();
+	int cpus = numa_num_configured_cpus();
+	fprintf(stderr, "[numa] %d-CPU, %d-node machine\n", cpus, nodes);
+	
+	int *threads_on_node = calloc(sizeof(int), nodes);
+	#pragma omp parallel
+	{
+		int i = spasm_get_thread_num();
+		int j = spasm_numa_get_node();
+		#pragma omp atomic
+		threads_on_node[j]++
+	}
+	for(int i=0; i < nodes; i++)
+		fprintf(stderr, "[numa] %d threads running on node %d\n", threads_on_node[i], i);
+}
 #else
 void spasm_numa_info() 
 {
 }
 #endif
-
 
 double spasm_wtime() {
 	struct timeval ts;
