@@ -39,7 +39,7 @@ void spasm_numa_info()
 	fprintf(stderr, "[numa] nodes on the system: %d\n", nodes);
 	fprintf(stderr, "[numa] nodes available: ");
 	for (int i = 0; i < nodes; i++)
-		if (numa_bitmask_isbitset(bm , i))
+		if (numa_bitmask_isbitset(numa_all_nodes_ptr, i))
 			fprintf(stderr, "%d ", i);
 	fprintf(stderr, "\n");
 
@@ -47,7 +47,7 @@ void spasm_numa_info()
 	for (int i = 0; i < nodes; i++) {
 		fprintf(stderr, "[numa] CPUs in node %d: ", i);
 		for (int j = 0; j < cpus; j++)
-			if (numa_bitmask_isbitset(bm , j))
+			if (numa_bitmask_isbitset(bm, j))
 				fprintf(stderr, "%d ", j);
 	}
 	fprintf(stderr, "\n");
