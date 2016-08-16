@@ -182,8 +182,9 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 	retries = 0;
 	npiv = npiv_start;
 	start = spasm_wtime();
+	int64_t first = 0, critical = 0, second = 0;
 
-#pragma omp parallel
+#pragma omp parallel reduction(+:first, critical, second)
 	{
 		int *w = spasm_malloc(m * sizeof(int));
 		int *queue = spasm_malloc(2 * m * sizeof(int));
@@ -216,12 +217,18 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 			if (spasm_is_row_pivotal(A, qinv, i))
 				continue;
 
-#pragma omp atomic update
+			#pragma omp flush(processed)
 			processed++;
+			#pragma omp flush(processed)
 
 			/* we start reading qinv: begining of transaction */
 #pragma omp atomic read
 			npiv_local = npiv;
+
+			int64_t first_start, critical_start, second_start;
+			critical_start = 0;
+			second_start = 0;
+			first_start = spasm_ticks();
 
 			/*
 			 * scatters columns of A[i] into w, enqueue pivotal
@@ -256,10 +263,7 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 				int j = find_survivor(A, i, w);
 				int npiv_target = -1;
 
-				/*
-				 * si aucun nouveau pivot n'est arrivé,
-				 * ajouter
-				 */
+				critical_start = spasm_ticks();
 #pragma omp critical
 				{
 					if (npiv == npiv_local) {
@@ -273,6 +277,9 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 						retries++;
 					}
 				}
+				critical += spasm_ticks() - critical_start;
+				if (!second_start)
+					second_start = spasm_ticks();
 
 				if (npiv_target < 0)
 					goto cleanup;
@@ -307,12 +314,22 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 				w[Aj[px]] = 0;
 			for (int px = 0; px < tail; px++)
 				w[queue[px]] = 0;
+			
+			first += spasm_ticks() - first_start;
+			if (second_start)
+				second += spasm_ticks() - second_start;
 		}		/* end for */
 		free(w);
 		free(queue);
 	}			/* end of omp parallel */
 
 	fprintf(stderr, "\r[pivots] greedy alternating cycle-free search: %d pivots found [%.1fs]\n", npiv - npiv_start, spasm_wtime() - start);
+
+	fprintf(stderr, "retries: %d\n", retries);
+	fprintf(stderr, "first   : %12" PRId64 " cycles\n", first);
+	fprintf(stderr, "critical: %12" PRId64 " cycles\n", critical);
+	fprintf(stderr, "second  : %12" PRId64 " cycles\n", second);
+
 	return npiv;
 }
 
