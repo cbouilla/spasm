@@ -136,13 +136,13 @@ int spasm_find_FL_column_pivots(spasm * A, int *p, int *qinv, int npiv_fl) {
 
 
 
-int find_survivor(spasm * A, int i, int *w) {
+int find_survivor(spasm * A, int i, char *w) {
 	int *Ap = A->p;
 	int *Aj = A->j;
 
 	for (int px = Ap[i]; px < Ap[i + 1]; px++) {
 		int j = Aj[px];
-		if (w[j] == 1) {/* potential pivot found */
+		if (w[j] == 1) { /* potential pivot found */
 			spasm_prepare_pivot(A, i, px);
 			return j;
 		}
@@ -154,13 +154,13 @@ int find_survivor(spasm * A, int i, int *w) {
  * provide already know pivots, and this looks for more. Updates qinv, but
  * DFS must be performed afterwards
  */
-void BFS_enqueue(int *w, int *queue, int *surviving, int *tail, int j) {
+void BFS_enqueue(char *w, int *queue, int *surviving, int *tail, int j) {
 	queue[(*tail)++] = j;
 	*surviving -= w[j];
 	w[j] = -1;
 }
 
-void BFS_enqueue_row(int *w, int *queue, int *surviving, int *tail, const int *Ap, const int *Aj, int i) {
+void BFS_enqueue_row(char *w, int *queue, int *surviving, int *tail, const int *Ap, const int *Aj, int i) {
 	for (int px = Ap[i]; px < Ap[i + 1]; px++) {
 		/* this is the critical section */
 		int j = Aj[px];
@@ -186,13 +186,14 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 
 #pragma omp parallel reduction(+:first, critical, second)
 	{
-		int *w = spasm_malloc(m * sizeof(int));
-		int *queue = spasm_malloc(2 * m * sizeof(int));
+		char *w = spasm_malloc(m * sizeof(char));
+		int *queue = spasm_malloc(m * sizeof(int));
 		int head, tail, npiv_local, surviving, tid;
 
 		/* workspace initialization */
 		tid = spasm_get_thread_num();
-		spasm_vector_set(w, 0, m, 0);
+		for(int j = 0; j < m; j++)
+			w[j] = 0;
 
 #pragma omp for schedule(dynamic, 1000)
 		for (int i = 0; i < n; i++) {
