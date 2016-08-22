@@ -154,13 +154,13 @@ int find_survivor(spasm * A, int i, char *w) {
  * provide already know pivots, and this looks for more. Updates qinv, but
  * DFS must be performed afterwards
  */
-void BFS_enqueue(char *w, int *queue, int *surviving, int *tail, int j) {
+inline void BFS_enqueue(char *w, int *queue, int *surviving, int *tail, int j) {
 	queue[(*tail)++] = j;
 	*surviving -= w[j];
 	w[j] = -1;
 }
 
-void BFS_enqueue_row(char *w, int *queue, int *surviving, int *tail, const int *Ap, const int *Aj, int i) {
+inline void BFS_enqueue_row(char *w, int *queue, int *surviving, int *tail, const int *Ap, const int *Aj, int i) {
 	for (int px = Ap[i]; px < Ap[i + 1]; px++) {
 		/* this is the critical section */
 		int j = Aj[px];
