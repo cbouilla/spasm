@@ -5,8 +5,8 @@
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *B, *C;
-  int n, m, test, i, j, px, k, nb;
-  int *rr, *p, *x, *pinv, *Cp, *Cj;
+  int n, m, test;
+  int *x, *pinv, *Cp, *Cj;
   spasm_partition *P;
 
   assert(argc > 1);
@@ -20,39 +20,44 @@ int main(int argc, char **argv) {
   m = A->m;
   assert(n == m);
 
-  // generate random row & col permutation
-  p = spasm_random_permutation(n);
+  /* generate random row & col permutation */
+  /*p = spasm_random_permutation(n);
   pinv = spasm_pinv(p, n);
   B = spasm_permute(A, p, pinv, SPASM_WITH_NUMERICAL_VALUES);
-
   free(pinv);
   spasm_csr_free(A);
-
-  P = spasm_strongly_connected_components(B);
-  p = P->p;
-  rr = P->rr;
-  nb = P->nr;
-
-  /* verbosity
-  printf("p = ");
-  for(k = 0; k < n; k++) {
-    printf("%d ", p[k] + 1);
-  }
-  printf("\n -----------------------\n");
-  printf("r = ");
-  for(k = 0; k < nb + 1; k++) {
-    printf("%d ", r[k]);
-  }
-  printf("\n ");
   */
+  B = A;
+  P = spasm_strongly_connected_components(B);
+  int *p = P->p;
+  int *q = P->q;
+  int *rr = P->rr;
+  int nb = P->nr;
 
+  /* verbosity */
+  printf("# p = ");
+  for(int k = 0; k < n; k++)
+    printf("%d ", p[k]);
+ 
+  printf("\n# -----------------------\n");
+  printf("#rr = ");
+  for (int k = 0; k < nb + 1; k++)
+    printf("%d ", rr[k]);
+  printf("\n ");
+
+  /* --- check that p and q match ---------- */
+  for(int i = 0; i < n; i++)
+	if (p[i] != q[i]) {
+		printf("not ok %d - SCC - p != q\n", test);
+      		exit(0);
+	}
   /* --- check that p is actually a permutation ---------------- */
   x = spasm_malloc(n * sizeof(int));
 
-  for(i = 0; i < n; i++) {
+  for(int i = 0; i < n; i++)
     x[i] = 0;
-  }
-  for(i = 0; i < n; i++) {
+  
+  for(int i = 0; i < n; i++) {
     if (p[i] < 0 || p[i] >= n) {
       printf("not ok %d - SCC - p is out of range, p[%d] = %d\n", test, i, p[i]);
       exit(0);
@@ -60,23 +65,21 @@ int main(int argc, char **argv) {
     x[ p[i] ]++;
   }
 
-  for(i = 0; i < n; i++) {
+  for(int i = 0; i < n; i++)
     if (x[i] != 1) {
-      printf("not ok %d - SCC - p is not bijective\n", test);
+      printf("not ok %d - SCC - p is not bijective (x[%d] = %d)\n", test, i, x[i]);
       exit(0);
     }
-  }
 
   free(x);
 
   /* --- verbosity ---------------- */
-  printf("#SCC = %d\n", nb);
+  printf("# SCC = %d\n", nb);
 
-  for(k = 0; k < nb; k++) {
+  for (int k = 0; k < nb; k++) {
     printf("# SCC_%d : ", k);
-    for(i = rr[k]; i < rr[k + 1]; i++) {
+    for (int i = rr[k]; i < rr[k + 1]; i++)
       printf("%d ", p[i]);
-    }
     printf("\n");
   }
 
@@ -89,17 +92,15 @@ int main(int argc, char **argv) {
   free(pinv);
   spasm_csr_free(B);
 
-  for(k = 0; k < nb; k++) {
-    for(i = rr[k]; i < rr[k + 1]; i++) {
-      for(px = Cp[i]; px < Cp[i + 1]; px++) {
-	j = Cj[px];
-	if (j < rr[k]) {
-	  printf("not ok %d - SCC - row %d (in C_%d) has entries on column %d\n", test, i, k, j);
-	  exit(0);
+  for (int k = 0; k < nb; k++)
+    for (int i = rr[k]; i < rr[k + 1]; i++)
+      for (int px = Cp[i]; px < Cp[i + 1]; px++) {
+	   int j = Cj[px];
+	   if (j < rr[k]) {
+	  	printf("not ok %d - SCC - row %d (in C_%d) has entries on column %d\n", test, i, k, j);
+	  	exit(0);
+	   }
 	}
-      }
-    }
-  }
 
   printf("ok %d - SCC\n", test);
 
