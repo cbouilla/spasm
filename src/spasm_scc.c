@@ -40,7 +40,6 @@ spasm_partition *spasm_strongly_connected_components(const spasm * A) {
 	rr[n_scc] = 0;
 	for (int i = 0; i < n; i++) {
 		int head, top;
-		fprintf(stderr, "starting on %d\n", i);
 		if (marks[i] >= 0)
 			continue;
 		
@@ -52,17 +51,14 @@ spasm_partition *spasm_strongly_connected_components(const spasm * A) {
 		while (j >= 0) {
 			/* get j from the top of the recursion stack */
 			int px, px2;
-			fprintf(stderr, "iterating, j = %d\n", j);
 			if (marks[j] < 0) {
 				/* init */
-				fprintf(stderr, "index[%d] = %d\n", j, index);
 				lowlink[j] = index;
 				marks[j] = index++;
 			}
 			px2 = Ap[j + 1];
 			for (px = pstack[j]; px < px2; px++) {
 				int k = Aj[px];
-				fprintf(stderr, "[px=%d] edge %d --> %d\n", px, j, k);
 
 				if (marks[k] >= 0) {
 					/* update */
@@ -77,10 +73,8 @@ spasm_partition *spasm_strongly_connected_components(const spasm * A) {
 				break;
 			}
 			if (px == px2) {
-				fprintf(stderr, "poping %d\n", j);
 				/* check if we have the root of a SCC */
 				if (lowlink[j] == marks[j]) {
-					fprintf(stderr, "SCC found (root %d): ", j);
 					while (stack[top] != j) {
 						int k = stack[top--];
 						p[p_top++] = k;
@@ -93,9 +87,8 @@ spasm_partition *spasm_strongly_connected_components(const spasm * A) {
 
 					rr[++n_scc] = p_top;
 					fprintf(stderr, "\n");
-				} else {
-					fprintf(stderr, "lowlink[%d] = %d\n", j, lowlink[j]);
 				}
+
 				/* pop */
 				int k = j;
 				j = prev[j];
