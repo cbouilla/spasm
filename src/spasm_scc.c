@@ -79,14 +79,12 @@ spasm_partition *spasm_strongly_connected_components(const spasm * A) {
 						int k = stack[top--];
 						p[p_top++] = k;
 						lowlink[k] = n;
-						fprintf(stderr, "%d ", k);					
 					}
 					p[p_top++] = j;
 					lowlink[j] = n;
 					top--;
 
 					rr[++n_scc] = p_top;
-					fprintf(stderr, "\n");
 				}
 
 				/* pop */
