@@ -1,379 +1,285 @@
-/*
- * indent -nfbs -i2 -nip -npsl -di0 -nut spasm_lu.c uetree.c
- * 
- * Created on: July, 2011 updated, August 2012 Author: Kamer Kaya and Bora Ucar
- * 
- * implements the algorithm given in On constructing elimination trees for
- * sparse unsymmetric matrices by Kamer Kaya and Bora Ucar
- * 
- */
-
-#include <time.h>
 #include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
-#include <stdbool.h>
 #include "spasm.h"
 
-#define max(x, y)  (((x) > (y)) ? (x) : (y))
-#define min(x, y)  (((x) > (y)) ? (y) : (x))
 
-/* returns the number of SCC.
-   perm comes straight from the input
-   cptrs is uninitialized on firs call;
-   last 4 arguments are temporary storage */
-int scc(int *Aptrs, int *Aids, int n, int *perm, int *cptrs, int *lowl, int *spos, int *prev, int *tedges) {
-  int i, iv, iw, j, i2, ptr, lcnt, ist, stp, icnt, num, control, tnm;
+/* workspace must have size 5n (ints). Returns the number of scc. 
+   Not dry, because this is a clone of the normal scc function with a different interface. */
+int spasm_scc_for_uetree(const spasm * A, int maxn, int *p, int *rr, int * workspace) {
+	int n = A->n;
+	int *Ap = A->p;
+	int *Aj = A->j;
+	assert (n == A->m); /* square matrices */
 
-  control = icnt = num = 0;
-  tnm = 2 * n - 1;
+	int *pstack = workspace; 
+	int *marks = workspace + n;
+	int *prev = workspace + 2*n;
+	int *stack = workspace + 3*n;
+	int *lowlink = workspace + 4*n;
+	
+	for (int i = 0; i < maxn; i++) {
+		marks[i] = -1;
+		prev[i] = -1;
+		pstack[i] = Ap[i];
+	}
 
-  /* initialization */
-  for (i = 0; i < n; i++) {
-    spos[i] = -1;
-  }
-  memcpy(tedges, Aptrs, sizeof(int) * n);
+	int p_top = 0;
+	int n_scc = 0;
+	int index = 0;
+	rr[0] = 0;
+	for (int i = 0; i < maxn; i++) {
+		int head, top;
+		if (marks[i] >= 0)
+			continue;
+		
+		/* DFS */
+		head = 0;
+		top = 0;
+		stack[top] = i;
+		int j = i;
+		while (j >= 0) {
+			/* get j from the top of the recursion stack */
+			assert (j < maxn);
+			int px, px2;
+			if (marks[j] < 0) {
+				/* init */
+				lowlink[j] = index;
+				marks[j] = index++;
+			}
+			px2 = Ap[j + 1];
+			for (px = pstack[j]; px < px2; px++) {
+				int k = Aj[px];
+				if (k >= maxn)       /* truncate graph */
+					continue;
+				if (marks[k] >= 0) { /* update */
+					lowlink[j] = spasm_min(lowlink[j], lowlink[k]);
+					continue;
+				}
+				/* push */
+				pstack[j] = px + 1;
+				stack[++top] = k;
+				prev[k] = j;
+				j = k;
+				break;
+			}
+			if (px == px2) {
+				/* check if we have the root of a SCC */
+				if (lowlink[j] == marks[j]) {
+					while (stack[top] != j) {
+						int k = stack[top--];
+						p[p_top++] = k;
+						lowlink[k] = n;
+					}
+					p[p_top++] = j;
+					lowlink[j] = n;
+					top--;
 
-  /* main loop */
-  for (i = 0; i < n; i++) {
-    /* if node i is already marked, skip */
-    if (spos[i] != -1) {
-      continue;
-    }
+					rr[++n_scc] = p_top;
+				}
 
-    /* else, start a DFS from node i */
-
-    iv = i;
-    ist = 1;
-
-    /* put the node to the stack */
-    lowl[iv] = spos[iv] = 0;
-    cptrs[n - 1] = iv;
-
-    /* the body of this loop either puts a new node to the stack or backtrack */
-    for (j = 0; j < tnm; j++) {
-      ptr = tedges[iv];
-
-      /* if there exists an edge to visit */
-      if (ptr < Aptrs[iv + 1]) {
-        i2 = Aptrs[iv + 1];
-        control = 0;
-
-        /*
-         * search the edges leaving iv until one enters a new node or all
-         * edges are exhausted
-         */
-        for (; ptr < i2; ptr++) {
-          iw = Aids[ptr];
-          if (iw < n) {
-            /* check if node iw has not been on stack already */
-            if (spos[iw] == -1) {
-              /* put a new node to the stack */
-              tedges[iv] = ptr + 1;
-              prev[iw] = iv;
-              iv = iw;
-
-              lowl[iv] = spos[iv] = ist = ++ist;
-              cptrs[n - ist] = iv;
-              control = 1;
-              break;
-            }
-            /* update lowl[iw] if necessary */
-            if (lowl[iw] < lowl[iv]) {
-              lowl[iv] = lowl[iw];
-            }
-          }
-        }
-
-        if (control == 1) {
-          control = 0;
-          continue;
-        }
-      }
-      /* is node iv the root of a block */
-      if (lowl[iv] >= spos[iv]) {
-        /* order the nodes in the block */
-        lcnt = icnt;
-
-        /*
-         * peel block off the top of the stack starting at the top and
-         * working down to the root of the block
-         */
-        for (stp = n - ist; stp < n; stp++) {
-          iw = cptrs[stp];
-          lowl[iw] = n;
-          spos[iw] = icnt++;
-          if (iw == iv) {
-            break;
-          }
-        }
-
-        ist = (n - 1) - stp;
-        cptrs[num++] = lcnt;
-
-        /* are there any nodes left on the stack */
-        if (ist == 0) {
-          /* if all the nodes have been ordered */
-          if (icnt == n) {
-            control = 1;
-          }
-          break;
-        }
-      }
-      /* backtrack to previous node on a path */
-      iw = iv;
-      iv = prev[iv];
-
-      /* update the value of lowl(iv) if necessary */
-      if (lowl[iw] < lowl[iv]) {
-        lowl[iv] = lowl[iw];
-      }
-    }
-    if (control == 1) {
-      break;
-    }
-  }
-
-  /* put permutation in the required form */
-  for (i = 0; i < n; i++) {
-    perm[spos[i]] = i;
-  }
-  cptrs[num] = n;
-
-  return num;
+				/* pop */
+				int k = j;
+				j = prev[j];
+				if (j >= 0)
+					lowlink[j] = spasm_min(lowlink[j], lowlink[k]);
+			}
+		}
+	}
+	assert (p_top == maxn);
+	return n_scc;
 }
 
-/* #define DEBUG */
+/* computes the unsymmetric elimination tree, using a naive algorithm */
+int * spasm_uetree(const spasm * A) {
+	int n = A->n;
+	int *workspace = spasm_malloc(5*n * sizeof(int));
+	int *rr = spasm_malloc(n * sizeof(int));
+	int *p = spasm_malloc(n * sizeof(int));
+	int *T = spasm_malloc(n * sizeof(int));
+	for(int i = 0; i < n; i++)
+		T[i] = -1;
 
-#ifdef DEBUG
-int nnz(int *a, int size) {
-  int i;
-  int nz = 0;
-  for (i = 0; i < size; i++) {
-    if (a[i] != 0) {
-      nz++;
-    }
-  }
-  return nz;
+	for(int i = 0; i < n; i++) {
+		int n_scc = spasm_scc_for_uetree(A, i + 1, p, rr, workspace);
+
+		/* locate SCC containing vertex i */
+		int scc_idx = -1;
+		for(int k = 0; (k < n_scc) && (scc_idx < 0); k++)
+			for(int j = rr[k]; j < rr[k+1]; j++)
+				if (p[j] == i) {
+					scc_idx = k;
+					break;
+				}
+		assert (scc_idx >= 0);
+
+		/* update parent pointers in the SCC */
+		for(int px = rr[scc_idx]; px < rr[scc_idx+1]; px++) {
+			int j = p[px];
+			if ((j != i) && (T[j] == -1))
+				T[j] = i;
+		}
+		T[i] = -1;
+	}
+
+	free(rr);
+	free(p);
+	free(workspace);
+	return T;
 }
 
-int neq(int *a, int val, int size) {
-  int i;
-  int ne = 0;
-  for (i = 0; i < size; i++) {
-    if (a[i] == val) {
-      ne++;
-    }
-  }
-  return ne;
+/* computes the height of each node in the tree. This destructs head */
+void spasm_depth_dfs(int j, int *head, const int *next, int *depth, int *stack) {
+	int top = 0;
+	stack[0] = j;
+	depth[j] = 0;                       /* j is a root */
+	while (top >= 0) {
+		int p = stack[top];         /* p = top of stack */
+		int i = head[p];            /* i = youngest child of p */
+		if (i == -1) {
+			top--;              /* p has no unordered children left */
+		} else {
+			head[p] = next[i];  /* remove i from children of p */
+			stack[++top] = i;   /* start dfs on child node i */
+			depth[i] = top;
+		}
+	}
 }
 
-int npos(int *a, int size) {
-  int i;
-  int np = 0;
-  for (i = 0; i < size; i++) {
-    if (a[i] > 0) {
-      np++;
-    }
-  }
-  return np;
+
+
+/* depth-first search and postorder of a tree rooted at node j. */
+int spasm_tree_dfs(int j, int k, int *head, const int *next, int *post, int *stack) {
+	int top = 0;
+	stack[0] = j;
+	while (top >= 0) {
+		int p = stack[top];         /* p = top of stack */
+		int i = head[p];            /* i = youngest child of p */
+		if (i == -1) {
+			top--;              /* p has no unordered children left */
+			post[k++] = p;      /* node p is the kth postordered node */
+		} else {
+			head[p] = next[i];  /* remove i from children of p */
+			stack[++top] = i;   /* start dfs on child node i */
+		}
+	}
+	return k;
 }
-#endif
 
 
-/* Aptrs --> Ap
-   Aids  --> Ai CSC 
-   parent --> the output 
-   n --> matrix size
-   s --> FL pivots to skip 
-   vids --> ???? [permutation des lignes ? Vertex ID ?]
-   perm --> ???
-   blocks --> output ? 
-   work, work2, work3, work4 --> temporary storage (size ?)
-   xAids --> ??
-   xShrPtrs --> ??
-   */
-void setparentv2(int *Aptrs, int *Aids, int *parent, int n, int s, int *vids,
-      int *perm, int *blocks, int *work, int *work2, int *work3, int *work4,
-                      int *xAids, int *xShrPtrs) {
-  int i, root, k, num, ik, j, nnz, bi, bj, iv, jv, temp, temp2, ptr, ns,
-      nk, sval, sctemp, totnnz, shrtemp;
-  int *xAptrs, *cptrs, *dupflag;
+/* given the parent pointers, build linked list describing the children */
+void spasm_reverse_tree(int n, const int *parent, int *head, int *next, int *order) {
+	/* empty linked lists */
+	for(int j = 0; j < n; j++)
+		head [j] = -1;
 
-  /*
-   * printf("calling with n = %d nnz = %d s = %d rootsvid = %d\n", n,
-   * Aptrs[n],s, root);
-   */
-  if (n == 2) {
-    parent[vids[0]] = vids[1];
-    return;
-  } else if (s == n - 1) {
-    root = vids[n - 1];
-    for (i = 0; i < n - 1; i++) {
-      parent[vids[i]] = root;
-    }
-    return;
-  } else {
-    nnz = Aptrs[n];
-    cptrs = (int *)malloc((n + 1) * sizeof(int)); /* column pointers ? */
+	/* traverse nodes in reverse order*/
+	for (int px = n-1; px >= 0; px--) {
+		int j = (order != NULL) ? order[px] : px;
+		int p = parent[j];
+		if (p == -1)
+			continue;
+		next[j] = head[p];
+		head[p] = j;
+	}
+}
 
-    k = s;
-    while (k == s) {
-      k = (int)(ceil((s + n) / 2.0));
-      /*
-       * mexPrintf("calling SCC for Gk (containing the first %d vertices) ->
-       * ", k);
-       */
-      num = scc(Aptrs, Aids, k, perm, cptrs, work, work2, work3, work4);
-      /* mexPrintf("number of SCs: %d\n", num); */
 
-      if (num == k) {
-        s = k;
-      }
-      if (s == n - 1) {
-        root = vids[n - 1];
-        for (i = 0; i < n - 1; i++) {
-          parent[vids[i]] = root;
-        }
-        free(cptrs);
-        return;
-      }
-    }
+int *spasm_tree_postorder(const spasm *A, const int *parent) {
+	int n = A->n;
 
-    nk = num - k;
-    ns = n + nk;
+	int *head = spasm_malloc(n * sizeof(int));
+	int *next = spasm_malloc(n * sizeof(int));
+	int *stack = spasm_malloc(n * sizeof(int));
 
-    /* partition starts here ******************************************** */
-    /* find block of each vertex and max edge count of each block        */
-    xAptrs = (int *)malloc((n + num) * sizeof(int));
+	spasm_reverse_tree(n, parent, head, next, SPASM_IDENTITY_PERMUTATION);
+	
+	/* build a real, topologically-ordered, postorder tree traversal */
+	int k = 0;
+	int *post = spasm_malloc(n * sizeof(int));
+	for (int i = 0; i < n; i++) {
+		if (parent[i] != -1) /* skip j if it is not a root */
+			continue;
+		k = spasm_tree_dfs(i, k, head, next, post, stack);
+	}
+	assert (k == n);
 
-    /*
-     * used to mark existence of an edge from some vertex to another one in
-     * the shrinked graph
-     */
-    for (i = 0; i < num; i++) {
-      for (j = cptrs[i]; j < cptrs[i + 1]; j++) {
-        blocks[perm[j]] = num - i - 1;
-      }
-    }
-    for (i = k; i < n; i++) {
-      blocks[i] = i + nk;
-    }                           /* this is the vertex id in the shrinked
-                                 * graph for each vertex >=k */
+	free(stack);
+	free(head);
+	free(next);
+	return post;
+}
 
-    /* find new vertex ids and partition perm */
-    memset(work, 0, sizeof(int) * num);
-    for (i = 0; i < k; i++) {
-      bi = (num - 1) - blocks[i];
-      perm[work[bi] + cptrs[bi]] = i;
-      work3[i] = work[bi]++;
-    }
+int *spasm_tree_topological_postorder(const spasm *A, const int *parent) {
+	int n = A->n;
+	int *Ap = A->p;
+	int *Aj = A->j;
 
-    /* set new edge list */
-    dupflag = work2;
-    for (i = 0; i < ns; i++)
-      dupflag[i] = -1;
+	int *depth = spasm_malloc(n * sizeof(int));
+	int *head = spasm_malloc(n * sizeof(int));
+	int *next = spasm_malloc(n * sizeof(int));
+	int *stack = spasm_malloc(n * sizeof(int));
 
-    xShrPtrs[ns] = shrtemp = nnz;
-    for (i = n - 1; i >= k; i--) {
-      for (ptr = Aptrs[i]; ptr < Aptrs[i + 1]; ptr++) {
-        bj = blocks[Aids[ptr]];
-        if (bj < num) {         /* >=k to SC */
-          if (dupflag[bj] != i) {
-            xAids[--shrtemp] = bj;
-            dupflag[bj] = i;
-          }
-        } else {                /* >=k to >=k */
-          xAids[--shrtemp] = bj;
-        }
-      }
-      xShrPtrs[i + nk] = shrtemp;
-    }
+	/* compute node depth */
+	spasm_reverse_tree(n, parent, head, next, SPASM_IDENTITY_PERMUTATION);
+	for (int j = 0; j < n; j++) {
+		if (parent [j] != -1) /* skip j if it is not a root */
+			continue;
+		spasm_depth_dfs(j, head, next, depth, stack);
+	}
 
-    sctemp = 0;
-    totnnz = 0;
-    for (i = 0; i < num; i++) { /* for each component */
-      temp = (num - 1) - i;
-      dupflag[temp] = i;
-      for (j = cptrs[i]; j < cptrs[i + 1]; j++) {       /* visit the vertices in
-                                                         * the component */
-        iv = perm[j];           /* vertex id */
-        xAptrs[j + i] = sctemp; /* ptrs for the first vertex of the ith block */
-        for (ptr = Aptrs[iv]; ptr < Aptrs[iv + 1]; ptr++) {
-          bj = blocks[Aids[ptr]];
-          if (bj < num) {       /* SC to SC */
-            if (temp == bj) {   /* inside a SC */
-              xAids[totnnz + sctemp++] = work3[Aids[ptr]];
-            } else if (dupflag[bj] != i) {      /* to other SCs */
-              xAids[--shrtemp] = bj;
-              dupflag[bj] = i;
-            }
-          } else {              /* SC to >= k */
-            if (dupflag[bj] != i) {
-              xAids[--shrtemp] = bj;
-              dupflag[bj] = i;
-            }
-          }
-        }
-      }
-      xShrPtrs[(num - 1) - i] = shrtemp;        /* ptrs for shrinked graph */
-      totnnz += sctemp;
-      xAptrs[j + i] = sctemp;
-      sctemp = 0;
-    }
-    /* update shrink ptrs */
-    for (i = 0; i <= ns; i++) {
-      xShrPtrs[i] -= shrtemp;
-    }
-    /* partition ends here ******************************************** */
+	/* build the graph to sort topologically */
+	spasm_triplet *T = spasm_triplet_alloc(n, n, spasm_nnz(A), -1, SPASM_IGNORE_VALUES);
+	for(int i = 0; i < n; i++)
+		for(int px = Ap[i]; px < Ap[i + 1]; px++) {
+			int u = i;
+			int v = Aj[px];
+			/* edge u --> v */
+			while (depth[u] > depth[v])
+				u = parent[u];
+			while (depth[v] > depth[u])
+				v = parent[v];
+			if (u == v)
+				continue;  /* edge is inside a SCC */
+			while (parent[u] != parent[v]) {
+				u = parent[u];
+				v = parent[v];
+			}
+			spasm_add_entry(T, u, v, 1);
+		}
+	free(depth);
+	spasm *G = spasm_compress(T);
+	spasm_triplet_free(T);
 
-    /* recursive call for each strong component************************ */
-    /* partition the original ids now */
-    memcpy(work, vids, k * sizeof(int));
-    for (i = 0; i < k; i++) {
-      vids[i] = work[perm[i]];
-    }
+	/* sort G in toplogical order */
+	int top = n;
+	int *marks = spasm_malloc(n * sizeof(int));
+	int *topo = spasm_malloc(n * sizeof(int));
+	for (int i = 0; i < n; i++)
+		marks[i] = 0;
+	for (int i = 0; i < n; i++)
+		if (!marks[i])
+			top = spasm_dfs(i, G, top, topo, stack, marks, SPASM_IDENTITY_PERMUTATION);
+	
+	assert(top == 0);
+	spasm_csr_free(G);
+	free(marks);
 
-    totnnz = 0;
-    for (i = 0; i < num; i++) {
-      if (cptrs[i + 1] - cptrs[i] > 1) {
-        sval = 0;
-        for (j = cptrs[i]; j < cptrs[i + 1]; j++) {
-          if (perm[j] < s)
-            sval++;
-          else
-            break;
-        }
-        /*
-         * printf("%dth recursive call with %d vertices s = %d nnz = %d\n",
-         * i, cptrs[i+1] - cptrs[i], sval, xAptrs[i + cptrs[i+1]]);
-         */
-        setparentv2(&(xAptrs[cptrs[i] + i]), &(xAids[totnnz]), parent,
-                    cptrs[i + 1] - cptrs[i], sval, &(vids[cptrs[i]]),
-                    &(perm[cptrs[i]]), blocks, work, work2, work3, work4,
-                    &(Aids[totnnz]), Aptrs);
-      }
-      totnnz += xAptrs[i + cptrs[i + 1]];
-    }
-    /******************************************************************/
+	spasm_reverse_tree(n, parent, head, next, topo);
+	
+	/* build a real, topologically-ordered, postorder tree traversal */
+	int k = 0;
+	int *post = spasm_malloc(n * sizeof(int));
+	for (int px = 0; px < n; px++) {
+		int j = topo[px];
+		if (parent[j] != -1) /* skip j if it is not a root */
+			continue;
+		k = spasm_tree_dfs(j, k, head, next, post, stack);
+	}
+	assert (k == n);
 
-    for (i = 0; i < num; i++)
-      vids[i] = vids[cptrs[i + 1] - 1];
-
-    free(cptrs);
-    free(xAptrs);
-
-    /* recursive call for condensed graph **************************** */
-    /* mexPrintf("Shrinked recursive call with %d vertices\n", n - k + num); */
-    memcpy(work, vids, num * sizeof(int));
-    for (i = num - 1; i >= 0; i--)
-      vids[i] = work[(num - 1) - i];
-    for (i = k; i < n; i++) {
-      vids[i + nk] = vids[i];
-    }
-    setparentv2(xShrPtrs, &(xAids[shrtemp]), parent, ns, num, vids, perm, blocks, work, work2, work3, work4, Aids, Aptrs);
-    /******************************************************************/
-  }
+	free(stack);
+	free(head);
+	free(next);
+	free(topo);
+	return post;
 }

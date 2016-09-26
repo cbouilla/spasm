@@ -1,13 +1,9 @@
 #!/bin/sh
 
-echo 1..3
+echo 1..4
 
 #########################################
-INPUT_MATRIX=$srcdir/Matrix/scc.sms
-./scc 1 < $INPUT_MATRIX
-
-INPUT_MATRIX=$srcdir/Matrix/scc2.sms
-./scc 2 < $INPUT_MATRIX
-
-INPUT_MATRIX=$srcdir/Matrix/mat364.sms
-./scc 3 < $INPUT_MATRIX
+./scc 1 < $srcdir/Matrix/scc.sms
+./scc 2 < $srcdir/Matrix/scc2.sms
+./scc 3 < $srcdir/Matrix/scc3.sms
+./scc 4 < $srcdir/Matrix/mat364.sms

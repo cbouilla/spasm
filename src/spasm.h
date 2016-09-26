@@ -125,18 +125,23 @@ int spasm_nnz(const spasm * A);
 void *spasm_malloc(size_t size);
 void *spasm_calloc(size_t count, size_t size);
 void *spasm_realloc(void *ptr, size_t size);
+
 spasm *spasm_csr_alloc(int m, int n, int nzmax, int prime, int with_values);
 void spasm_csr_realloc(spasm * A, int nzmax);
+void spasm_csr_resize(spasm * A, int n, int m);
 void spasm_csr_free(spasm * A);
+
 spasm_triplet *spasm_triplet_alloc(int m, int n, int nzmax, int prime, int with_values);
 void spasm_triplet_realloc(spasm_triplet * A, int nzmax);
 void spasm_triplet_free(spasm_triplet * A);
-void spasm_csr_resize(spasm * A, int n, int m);
+
 spasm_partition *spasm_partition_alloc(int n, int m, int nr, int nc);
 void spasm_partition_free(spasm_partition * P);
 void spasm_partition_tighten(spasm_partition * P);
+
 void spasm_vector_zero(spasm_GFp * x, int n);
 void spasm_vector_set(spasm_GFp * x, int a, int b, spasm_GFp alpha);
+
 spasm *spasm_identity(int n, int prime);
 void spasm_human_format(int64_t n, char *target);
 int spasm_get_num_threads();
@@ -241,6 +246,11 @@ spasm_partition *spasm_strongly_connected_components(const spasm * A);
 
 /* spasm_kernel.c */
 spasm *spasm_kernel(const spasm * A, const int *column_permutation);
+
+/* spasm_uetree.c */
+int * spasm_uetree(const spasm * A);
+int *spasm_tree_postorder(const spasm *A, const int *parent);
+int *spasm_tree_topological_postorder(const spasm *A, const int *parent);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {
