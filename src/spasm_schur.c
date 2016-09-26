@@ -142,7 +142,7 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, dou
 * The pivots must be unitary.
 */
 double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R) {
-	int nnz;	
+	int nnz = 0;
 	const int m = A->m;
 	const int n = A->n;
 
