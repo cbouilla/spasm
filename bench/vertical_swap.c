@@ -14,7 +14,7 @@ int main() {
 	Aj = A->j;
 
 	for (int k = 0; k < nz; k++)
-		Aj[k] = m - Aj[k];
+		Aj[k] = m - Aj[k] - 1;
 
 	spasm_save_triplet(stdout, A);
 	spasm_triplet_free(A);
