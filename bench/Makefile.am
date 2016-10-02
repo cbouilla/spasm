@@ -1,5 +1,6 @@
 AUTOMAKE_OPTIONS = gnu
-AM_CPPFLAGS = -I$(top_builddir)/src
+AM_CPPFLAGS = -I$(top_srcdir)/src
+AM_CFLAGS = -I$(top_srcdir)/src
 AM_LDFLAGS = -lm
 LDADD = $(top_builddir)/src/libspasm.la $(FFLAS_FFPACK_LIBS) $(GIVARO_LIBS)
 

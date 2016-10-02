@@ -5,7 +5,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 LT_INIT
 
-AM_INIT_AUTOMAKE([1.8 no-dependencies foreign -Wall])
+AM_INIT_AUTOMAKE([1.8 check-news no-dependencies foreign silent-rules subdir-objects])
 AC_CONFIG_HEADERS([src/config.h])
 AM_MAINTAINER_MODE
 
@@ -26,10 +26,10 @@ AM_PROG_CC_C_O
 AC_REQUIRE_AUX_FILE([tap-driver.sh])
 
 # Checks for header files.
-AC_HEADER_STDC
+#AC_HEADER_STDC
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_FUNC_MALLOC
+#AC_FUNC_MALLOC
 
 DEFAULT_CHECKING_PATH="/usr /usr/local /opt/local"
 SPASM_CHECK_OMP
