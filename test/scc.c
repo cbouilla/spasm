@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
   spasm *A, *B, *C;
   int n, m, test;
   int *x, *pinv, *Cp, *Cj;
-  spasm_partition *P;
+  spasm_dm *P;
 
   assert(argc > 1);
   test = atoi(argv[1]);
@@ -31,8 +31,8 @@ int main(int argc, char **argv) {
   P = spasm_strongly_connected_components(B);
   int *p = P->p;
   int *q = P->q;
-  int *rr = P->rr;
-  int nb = P->nr;
+  int *rr = P->r;
+  int nb = P->nb;
 
   /* verbosity */
   printf("# p = ");

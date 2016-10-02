@@ -3,126 +3,85 @@
 #include "spasm.h"
 
 int main(int argc, char **argv) {
-  spasm_triplet *T;
-  spasm *A, *B, *C;
-  spasm_dm *X;
-  spasm_partition *DM;
-  int n, m, test, i, j, px;
-  int *rr, *cc, *p, *q, *x, *y, *Cp, *Cj, *pinv, *qinv;
+	assert(argc > 1);
+	int test = atoi(argv[1]);
 
-  assert(argc > 1);
-  test = atoi(argv[1]);
+	spasm_triplet *T = spasm_load_sms(stdin, 42013);
+	spasm *A = spasm_compress(T);
+	spasm_triplet_free(T);
 
-  T = spasm_load_sms(stdin, 42013);
-  A = spasm_compress(T);
-  spasm_triplet_free(T);
+	int n = A->n;
+	int m = A->m;
 
-  n = A->n;
-  m = A->m;
+	/* generate random row & col permutation */
+	int *p = spasm_random_permutation(n);
+	int *q = spasm_random_permutation(m);
+	spasm *B = spasm_permute(A, p, q, SPASM_IGNORE_VALUES);
+	free(p);
+	free(q);
+	spasm_csr_free(A);
 
-  // generate random row & col permutation
-  p = spasm_random_permutation(n);
-  q = spasm_random_permutation(m);
+	/* compute DM decomposition of permuted M. */
+	spasm_dm * DM = spasm_dulmage_mendelsohn(B);
+	int *rr = DM->rr;
+	int *cc = DM->cc;
+	p = DM->p;
+	q = DM->q;
 
-  B = spasm_permute(A, p, q, SPASM_IGNORE_VALUES);
-  free(p);
-  free(q);
-  spasm_csr_free(A);
+	/* check that p and q are actually permutations */
+	int *x = spasm_malloc(n * sizeof(int));
+	int *y = spasm_malloc(m * sizeof(int));
 
-  // compute DM decomposition of permuted M.
-   X = spasm_dulmage_mendelsohn(B);
-   DM = X->DM;
-   rr = DM->rr;
-   cc = DM->cc;
-   p = DM->p;
-   q = DM->q;
+	spasm_vector_zero(x, n);
+	for (int i = 0; i < n; i++)
+		x[p[i]]++;
+	for (int i = 0; i < n; i++)
+		if (x[i] != 1) {
+			printf("not ok %d - DM(A) - p is not bijective\n", test);
+			exit(0);
+		}
 
-  /* --- check that p and q are actually permutations ---------------- */
-  x = spasm_malloc(n * sizeof(int));
-  y = spasm_malloc(m * sizeof(int));
+	spasm_vector_zero(y, m);
+	for (int i = 0; i < m; i++)
+		y[q[i]]++;
+	for (int i = 0; i < m; i++)
+		if (y[i] != 1) {
+			printf("not ok %d - DM(A) - q is not bijective\n", test);
+			exit(0);
+		}
+	free(x);
+	free(y);
 
-  spasm_vector_zero(x, n);
-  for(i = 0; i < n; i++) {
-    x[ p[i] ]++;
-  }
-  for(i = 0; i < n; i++) {
-    if (x[i] != 1) {
-      printf("not ok %d - DM(A) - p is not bijective\n", test);
-      exit(0);
-    }
-  }
+	/* check that coarse decomposition is really block-upper-triangular */
+	int *qinv = spasm_pinv(q, m);
+	spasm *C = spasm_permute(B, p, qinv, SPASM_IGNORE_VALUES);
+	free(qinv);
+	spasm_csr_free(B);
 
-  spasm_vector_zero(y, m);
-  for(i = 0; i < m; i++) {
-    y[ q[i] ]++;
-  }
-  for(i = 0; i < m; i++) {
-    if (y[i] != 1) {
-      printf("not ok %d - DM(A) - q is not bijective\n", test);
-      exit(0);
-    }
-  }
+	int *Cp = C->p;
+	int *Cj = C->j;
+	
+	for (int i = rr[1]; i < rr[2]; i++)
+		for (int px = Cp[i]; px < Cp[i + 1]; px++) {
+			int j = Cj[px];
+			if (j < cc[2]) {
+				printf("not ok %d - DM(A) - row %d (in R_2) has entries in C_0 or C_1\n", test, i);
+				exit(0);
+			}
+		}
 
-  /* --- verbosity ---------------- */
-  printf("# sizes : %d x %d | %d x %d | %d x %d\n", rr[1], cc[2], rr[2] - rr[1], cc[3] - cc[2], rr[4] - rr[2], cc[4] - cc[3]);
+	for (int i = rr[2]; i < rr[4]; i++)
+		for (int px = Cp[i]; px < Cp[i + 1]; px++) {
+			int j = Cj[px];
+			if (j < cc[3]) {
+				printf("not ok %d - DM(A) - row %d (in R_3 or R_0) has entries in C_0, C_1 or C_2\n", test, i);
+				exit(0);
+			}
+		}
 
-  /*  for(j = 1; j < 4; j++) {
-    printf("# R_%d : ", j);
-    for(i = rr[j - 1]; i < rr[j]; i++) {
-      printf("%d ", p[i] + 1);
-    }
-    printf("\n");
-  }
-  printf("# R_0 : ");
-  for(i = rr[3]; i < rr[4]; i++) {
-    printf("%d ", p[i] + 1);
-  }
-  printf("\n");
+	printf("ok %d - Dulmage-Mendelsohn decomposition\n", test);
 
-  for(j = 0; j < 4; j++) {
-    printf("# C_%d : ", j);
-    for(i = cc[j]; i < cc[j + 1]; i++) {
-      printf("%d ", q[i] + 1);
-    }
-    printf("\n");
-    }*/
-
-  /* --- check that coarse decomposition is really block-upper-triangular ---------------- */
-  pinv = spasm_pinv(p, n);
-  qinv = spasm_pinv(q, m);
-  C = spasm_permute(B, p, qinv, SPASM_WITH_NUMERICAL_VALUES);
-  Cp = C->p;
-  Cj = C->j;
-  spasm_csr_free(B);
-
-  for(i = rr[1]; i < rr[2]; i++) {
-    for(px = Cp[i]; px < Cp[i + 1]; px++) {
-      j = Cj[px];
-      if (j < cc[2]) {
-	printf("not ok %d - DM(A) - row %d (in R_2) has entries in C_0 or C_1\n", test, i);
-	exit(0);
-      }
-    }
-  }
-
-  for(i = rr[2]; i < rr[4]; i++) {
-    for(px = Cp[i]; px < Cp[i + 1]; px++) {
-      j = Cj[px];
-      if (j < cc[3]) {
-	printf("not ok %d - DM(A) - row %d (in R_3 or R_0) has entries in C_0, C_1 or C_2\n", test, i);
-	exit(0);
-      }
-    }
-  }
-
-
-
-  printf("ok %d - DM(A)\n", test);
-
-  free(x);
-  free(y);
-  free(qinv);
-  spasm_csr_free(C);
-  spasm_partition_free(DM);
-  return 0;
+	spasm_csr_free(C);
+	spasm_dm_free(DM);
+	return 0;
 }

@@ -10,17 +10,17 @@
 
 /* strategie : quand un noeud est retiré dans une SCC, mettre son index ou son lowlink à n+1 */
 
-spasm_partition *spasm_strongly_connected_components(const spasm * A) {
+spasm_dm *spasm_strongly_connected_components(const spasm * A) {
 	int n = A->n;
 	int m = A->m;
 	int *Ap = A->p;
 	int *Aj = A->j;
 	assert(n == m);
 
-	spasm_partition *P = spasm_partition_alloc(n, n, n, n);
+	spasm_dm *P = spasm_dm_alloc(n, n);
 	int p_top = 0;
 	int *p = P->p;
-	int *rr = P->rr;
+	int *rr = P->r;
 
 	int *pstack = spasm_malloc(n * sizeof(int));
 	int *marks = spasm_malloc(n * sizeof(int));
@@ -99,7 +99,7 @@ spasm_partition *spasm_strongly_connected_components(const spasm * A) {
 
 	/* at this point, blocks are in reverse order, and inside blocks, nodes are in reverse order */
 	int *q = P->q;
-	int *cc = P->cc;
+	int *cc = P->c;
 	for (int i = 0; i < n; i++)
 		q[i] = p[n - 1 - i];
 
@@ -113,13 +113,11 @@ spasm_partition *spasm_strongly_connected_components(const spasm * A) {
 		rr[i] = cc[i];
 
 
-	P->nr = n_scc;
-	P->nc = n_scc;
+	P->nb = n_scc;
 
 	free(stack);
 	free(pstack);
 	free(marks);
 	free(lowlink);
-	spasm_partition_tighten(P);
 	return P;
 }

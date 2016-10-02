@@ -200,29 +200,22 @@ spasm *spasm_load_gbla_new(FILE * f) {
  * save a matrix in SMS format. TODO : change name to spasm_csr_save
  */
 void spasm_save_csr(FILE * f, const spasm * A) {
-	int i, n, m, p, prime;
-	int *Aj, *Ap;
-	spasm_GFp *Ax, x;
-
 	assert(f != NULL);
-	assert(A != NULL);
 
-	Aj = A->j;
-	Ap = A->p;
-	Ax = A->x;
-	n = A->n;
-	m = A->m;
-	prime = A->prime;
+	int *Aj = A->j;
+	int *Ap = A->p;
+	spasm_GFp *Ax = A->x;
+	int n = A->n;
+	int m = A->m;
+	int prime = A->prime;
 
 	fprintf(f, "%d %d M\n", n, m);
-	for (i = 0; i < n; i++) {
-		for (p = Ap[i]; p < Ap[i + 1]; p++) {
-			x = (Ax != NULL) ? Ax[p] : 1;
+	for (int i = 0; i < n; i++)
+		for (int px = Ap[i]; px < Ap[i + 1]; px++) {
+			spasm_GFp x = (Ax != NULL) ? Ax[px] : 1;
 			x = (x > prime / 2) ? x - prime : x;
-			fprintf(f, "%d %d %d\n", i + 1, Aj[p] + 1, x);
+			fprintf(f, "%d %d %d\n", i + 1, Aj[px] + 1, x);
 		}
-	}
-
 	fprintf(f, "0 0 0\n");
 }
 
@@ -230,25 +223,16 @@ void spasm_save_csr(FILE * f, const spasm * A) {
  * save a matrix in SMS format. TODO : change name to spasm_triplet_save
  */
 void spasm_save_triplet(FILE * f, const spasm_triplet * A) {
-	int i, nz, n, m;
-	int *Ai, *Aj;
-	spasm_GFp *Ax;
-
 	assert(f != NULL);
-	assert(A != NULL);
-	Ai = A->i;
-	Aj = A->j;
-	Ax = A->x;
-	nz = A->nz;
-	n = A->n;
-	m = A->m;
 
-	fprintf(f, "%d %d M\n", n, m);
+	int *Ai = A->i;
+	int *Aj = A->j;
+	spasm_GFp *Ax = A->x;
+	int nz = A->nz;
 
-	for (i = 0; i < nz; i++) {
-		fprintf(f, "%d %d %d\n", Ai[i] + 1, Aj[i] + 1, (Ax != NULL) ? Ax[i] : 1);
-	}
-
+	fprintf(f, "%d %d M\n", A->n, A->m);
+	for (int px = 0; px < nz; px++)
+		fprintf(f, "%d %d %d\n", Ai[px] + 1, Aj[px] + 1, (Ax != NULL) ? Ax[px] : 1);
 	fprintf(f, "0 0 0\n");
 }
 
@@ -381,6 +365,7 @@ void spasm_save_pgm(FILE * f, int x, int y, const spasm * A) {
 	free(w);
 }
 
+#if 0
 static void render_block(FILE * f, int m, int *Ap, int *Aj, spasm_partition * CC, spasm_partition ** SCC, int *rr, int *cc,
 	          int ri, int rj, int ci, int cj, int *colors, int *pixel) {
 	int u, i, j, k, l, t, p, CC_n, CC_m, last_CC_row;
@@ -519,3 +504,4 @@ void spasm_save_ppm(FILE * f, const spasm * A, const spasm_dm * X) {
 	fprintf(f, "\n");
 	free(pixel);
 }
+#endif

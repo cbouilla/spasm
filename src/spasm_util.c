@@ -168,52 +168,28 @@ void spasm_csr_resize(spasm * A, int n, int m) {
 	A->n = n;
 }
 
+spasm_dm * spasm_dm_alloc(int n, int m) {
+	spasm_dm *P;
 
-spasm_partition *spasm_partition_alloc(int n, int m, int nr, int nc) {
-	spasm_partition *P;
-
-	P = spasm_malloc(sizeof(spasm_partition));
+	P = spasm_malloc(sizeof(spasm_dm));
 	P->p = spasm_malloc(n * sizeof(int));
 	P->q = spasm_malloc(m * sizeof(int));
-	P->rr = spasm_malloc((nr + 1) * sizeof(int));
-	P->cc = spasm_malloc((nc + 1) * sizeof(int));
-	P->nr = 0;
-	P->nr = 0;
+	P->r = spasm_malloc((n + 6) * sizeof(int));
+	P->c = spasm_malloc((m + 6) * sizeof(int));
+	P->nb = 0;
+	for (int i = 0; i < 5; i++) {
+		P->rr[i] = 0;
+		P->cc[i] = 0;
+	}
 	return P;
 }
 
-void spasm_partition_tighten(spasm_partition * P) {
-	P->rr = spasm_realloc(P->rr, (P->nr + 1) * sizeof(int));
-	P->cc = spasm_realloc(P->cc, (P->nc + 1) * sizeof(int));
-}
-
-
-void spasm_partition_free(spasm_partition * P) {
-	if (P == NULL)
-		return;
+void spasm_dm_free(spasm_dm * P) {
 	free(P->p);
 	free(P->q);
-	free(P->rr);
-	free(P->cc);
+	free(P->r);
+	free(P->c);
 	free(P);
-}
-
-void spasm_cc_free(spasm_cc * C) {
-	if (C == NULL)
-		return;
-	spasm_partition_free(C->CC);
-	spasm_partition_free(C->SCC);
-	free(C);
-}
-
-void spasm_dm_free(spasm_dm * x) {
-	if (x == NULL)
-		return;
-	spasm_partition_free(x->DM);
-	spasm_cc_free(x->H);
-	spasm_cc_free(x->S);
-	spasm_cc_free(x->V);
-	free(x);
 }
 
 void spasm_vector_zero(spasm_GFp * x, int n) {

@@ -86,26 +86,14 @@ typedef struct {                /* a dense LU factorization */
 }      spasm_dense_lu;
 
 
-typedef struct {                /* Partition of the rows / columns */
-  int *p;                       /* size m, row permutation */
-  int *q;                       /* size n, column permutation */
-  int nr;                       /* # of row blocks */
-  int nc;                       /* # of row blocks */
-  int *rr;                      /* row decomposition (i-th block between
-                                 * rr[i] and rr[i+1]) */
-  int *cc;                      /* column decomposition */
-}      spasm_partition;
-
-typedef struct {                /* a connected component holding strongly
-                                 * connected components */
-  spasm_partition *CC;
-  spasm_partition **SCC;
-}      spasm_cc;
-
-
-typedef struct {                /* a Dulmage-Mendelson decomposition */
-  spasm_partition *DM;
-  spasm_cc *H, *S, *V;
+typedef struct {      /**** a Dulmage-Mendelson decomposition */
+        int *p;       /* size n, row permutation */
+        int *q;       /* size m, column permutation */
+        int *r;       /* size nb+1, block k is rows r[k] to r[k+1]-1 in A(p,q) */
+        int *c;       /* size nb+1, block k is cols s[k] to s[k+1]-1 in A(p,q) */
+        int nb;       /* # of blocks in fine decomposition */
+        int rr[5];    /* coarse row decomposition */
+        int cc[5];    /* coarse column decomposition */
 }      spasm_dm;
 
 
@@ -135,9 +123,8 @@ spasm_triplet *spasm_triplet_alloc(int m, int n, int nzmax, int prime, int with_
 void spasm_triplet_realloc(spasm_triplet * A, int nzmax);
 void spasm_triplet_free(spasm_triplet * A);
 
-spasm_partition *spasm_partition_alloc(int n, int m, int nr, int nc);
-void spasm_partition_free(spasm_partition * P);
-void spasm_partition_tighten(spasm_partition * P);
+spasm_dm *spasm_dm_alloc(int n, int m);
+void spasm_dm_free(spasm_dm * P);
 
 void spasm_vector_zero(spasm_GFp * x, int n);
 void spasm_vector_set(spasm_GFp * x, int a, int b, spasm_GFp alpha);
@@ -238,11 +225,11 @@ int spasm_structural_rank(const spasm * A);
 /* spasm_dm.c */
 spasm_dm *spasm_dulmage_mendelsohn(const spasm * A);
 
-/* spasm_cc.c */
-spasm_partition *spasm_connected_components(const spasm * A, const spasm * A_t, const int *jmatch);
-
 /* spasm_scc.c */
-spasm_partition *spasm_strongly_connected_components(const spasm * A);
+spasm_dm *spasm_strongly_connected_components(const spasm * A);
+
+/* spasm_cc.c */
+spasm_dm *spasm_connected_components(const spasm * A, spasm * given_At);
 
 /* spasm_kernel.c */
 spasm *spasm_kernel(const spasm * A, const int *column_permutation);

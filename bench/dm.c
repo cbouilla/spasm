@@ -3,28 +3,8 @@
 #include <getopt.h>
 #include "spasm.h"
 
+#if 0
 /** computes a Dulmage-Mendelson decomposition */
-
-int nontrivial_diag_size = 0;
-int nontrivial_diag_rank = 0;
-int trivial_diag_rank = 0;
-
-int subrank(const spasm * M, int a, int b, int c, int d) {
-    spasm *C;
-    int *p;
-    spasm_lu *LU;
-    int r, n_cheap;
-
-    C = spasm_submatrix(M, a, c, b, d, SPASM_WITH_NUMERICAL_VALUES);
-    //p = spasm_cheap_pivots(C, &n_cheap);
-    LU = spasm_LU(C, NULL, SPASM_DISCARD_L);
-    //free(p);
-    r = LU->U->n;
-    spasm_free_LU(LU);
-    spasm_csr_free(C);
-    return r;
-
-}
 
 void show(const spasm * M, spasm_cc * Y) {
     int i, j, a, b, c, d, e, f, g, h, r;
@@ -55,144 +35,84 @@ void show(const spasm * M, spasm_cc * Y) {
         }
     }
 }
-
-int largest_diagonal_block(spasm_cc * Y, int look_into_scc) {
-    int i, j, r = -1;
-
-    for (i = 0; i < Y->CC->nr; i++) {
-        if (look_into_scc) { /* examine the content of SCC */
-            if (Y->SCC[i] != NULL) {
-                for (j = 0; j < Y->SCC[i]->nr; j++) {
-                    int SCC_n = Y->SCC[i]->rr[j + 1] - Y->SCC[i]->rr[j];
-                    r = spasm_max(r, SCC_n);
-                }
-            }
-        } else { /* just look at CC */
-            int CC_n = Y->CC->rr[i + 1] - Y->CC->rr[i];
-            r = spasm_max(r, CC_n);
-        }
-    }
-    
-    return r;
-}
-
+#endif
 
 int main(int argc, char **argv) {
-    spasm_triplet *T;
-    spasm *A, *B;
-    spasm_dm *x;
-    int n, m, i, j, *qinv, verbose, ch, *rr, *cc;
-    char *pm_file, *img_file;
-    FILE *f;
+    int ch;
 
     /* options descriptor */
-    struct option longopts[6] = {
-        {"permuted", required_argument, NULL, 'p'},
+    struct option longopts[5] = {
+        {"permuted", no_argument, NULL, 'p'},
         {"verbose", no_argument, NULL, 'v'},
         {"tabulated", no_argument, NULL, 't'},
         {"image", required_argument, NULL, 'i'},
         {NULL, 0, NULL, 0}
     };
 
-    pm_file = NULL;
-    img_file = NULL;
-    verbose = 0;
-    B = NULL;
-
+  
+    char mode = 'p';
     while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
         switch (ch) {
         case 'p':
-            pm_file = optarg;
-            break;
         case 'v':
-            verbose = 2;
-            break;
         case 't':
-            verbose = 1;
-            break;
         case 'i':
-            img_file = optarg;
+            mode = ch;
             break;
         default:
             printf("Unknown option\n");
             exit(1);
         }
     }
-    argc -= optind;
-    argv += optind;
 
-    T = spasm_load_sms(stdin, 42013);
-    A = spasm_compress(T);
+    spasm_triplet *T = spasm_load_sms(stdin, 42013);
+    spasm * A = spasm_compress(T);
     spasm_triplet_free(T);
 
-    n = A->n;
-    m = A->m;
+    int n = A->n;
+    int m = A->m;
 
-    x = spasm_dulmage_mendelsohn(A);
-    rr = x->DM->rr;
-    cc = x->DM->cc;
+    spasm_dm *DM = spasm_dulmage_mendelsohn(A);
+    int *rr = DM->rr;
+    int *cc = DM->cc;
 
-    qinv = spasm_pinv(x->DM->q, m);
-    B = spasm_permute(A, x->DM->p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+    int * qinv = spasm_pinv(DM->q, m);
+    spasm * B = spasm_permute(A, DM->p, qinv, SPASM_WITH_NUMERICAL_VALUES);
     free(qinv);
+    spasm_csr_free(A);
 
     /* terse output with just the size of the largest diagonal block */
-    if (verbose == 1) {
-        i = -1;  /* with home-made improvement */
-        j = -1;  /* without home-made improvement */
-        if (x->H != NULL) {
-            i = spasm_max(i, largest_diagonal_block(x->H, 1));
-            j = spasm_max(j, largest_diagonal_block(x->H, 0));
-        }
-        if (x->S != NULL) {
-            i = spasm_max(i, largest_diagonal_block(x->S, 1));
-            j = spasm_max(j, largest_diagonal_block(x->S, 1));
-        }
-        if (x->V != NULL) {
-            i = spasm_max(i, largest_diagonal_block(x->V, 1));
-            j = spasm_max(j, largest_diagonal_block(x->V, 0));
-        }
-        printf("%5d \t %5d \t %6d \t %6d \t %.1f \t %6d \t %.1f\n", n, m, spasm_nnz(A), i, 100.0 * i / spasm_min(n, m), j, 1.0 * i / j);
+    if (mode == 't') {
+//        printf("%5d \t %5d \t %6d \t %6d \t %.1f \t %6d \t %.1f\n", n, m, spasm_nnz(A), i, 100.0 * i / spasm_min(n, m), j, 1.0 * i / j);
     }
-    if (verbose == 2) {
+    if (mode == 'v') {
         printf("structural rank = %d\n", rr[2] + cc[4] - cc[3]);
-        if (x->H != NULL) {
-            int h_n = rr[1] - rr[0];
-            int h_m = cc[2] - cc[0];
-            printf("*) H (%d x %d) : \n", h_n, h_m);
-            show(B, x->H);
-        }
-        if (x->S != NULL) {
-            int s_n = rr[2] - rr[1];
-            int s_m = cc[3] - cc[2];
+        int h_n = rr[1] - rr[0];
+        int h_m = cc[2] - cc[0];
+        if (h_n > 0 && h_m > 0)
+            printf("*) H (%d x %d)\n", h_n, h_m);
+        
+        int s_n = rr[2] - rr[1];
+        int s_m = cc[3] - cc[2];
+        if (s_n > 0 && s_m > 0)
             printf("*) S (%d x %d) : \n", s_n, s_m);
-            show(B, x->S);
-        }
-        if (x->V != NULL) {
-            int v_n = rr[4] - rr[2];
-            int v_m = cc[4] - cc[3];
-            printf("*) V (%d x %d) : \n", v_n, v_m);
-            show(B, x->V);
-        }
+            /* Do something with S */
+        
+        int v_n = rr[4] - rr[2];
+        int v_m = cc[4] - cc[3];
+        if (v_n > 0 && v_m > 0)
+            printf("*) V (%d x %d)\n", v_n, v_m);
+
     }
-    if (pm_file != NULL) {
-        f = fopen(pm_file, "w");
-        spasm_save_csr(f, B);
-        fclose(f);
+    if (mode == 'p') {
+        spasm_save_csr(stdout, B);
     }
-    if (img_file != NULL) {
+    /*if (img_file != NULL) {
         FILE *f = fopen(img_file, "w");
         spasm_save_ppm(f, B, x);
         fclose(f);
-    }
+    }*/
     spasm_csr_free(B);
-    spasm_csr_free(A);
 
-    /*
-     * printf("non trivial diagonal blocks size : %d\n",
-     * nontrivial_diag_size); printf("non trivial diagonal blocks rank :
-     * %d\n", nontrivial_diag_rank); printf("trivial diagonal blocks : %d\n",
-     * trivial_diag_rank);
-     */
     return 0;
 }
