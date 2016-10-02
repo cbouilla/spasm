@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
 	/* get the tree */
 	int *uetree = spasm_uetree(A);
-	int *postorder = spasm_post(A, uetree);
+	int *postorder = spasm_tree_topological_postorder(A, uetree);
 
 	/* identify the SCC */
 	int * marks = spasm_malloc(n * sizeof(int));
