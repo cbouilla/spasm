@@ -6,7 +6,7 @@ LDADD = $(top_builddir)/src/libspasm.la $(FFLAS_FFPACK_LIBS) $(GIVARO_LIBS)
 
 bin_PROGRAMS = rank_gplu dm bitmap pluq kernel transpose stack \
                schur_complement rank_hybrid vertical_swap maximum_matching \
-               rank_dense find_pivots uetree
+               rank_dense find_pivots uetree mtx_reader
 
 if SPASM_HAVE_METIS
 bin_PROGRAMS += metis
@@ -26,8 +26,11 @@ linbox_rank_wm_LDFLAGS = $(LINBOX_LIBS) $(FFLAS_FFPACK_LIBS) $(GIVARO_LIBS)
 linbox_rank_wm_CXXFLAGS = $(LINBOX_CXXFLAGS) $(FFLAS_FFPACK_CXXFLAGS) $(GIVARO_CXXFLAGS)
 endif
 
-%.pbm : %.sms pbm
-	./pbm < $< > $@
-
 %.png : %.pbm
+	convert $< $@
+
+%.png : %.pgm
+	convert $< $@
+
+%.png : %.pnm
 	convert $< $@

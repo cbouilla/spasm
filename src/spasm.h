@@ -141,13 +141,12 @@ spasm *spasm_compress(const spasm_triplet * T);
 
 /* spasm_io.c */
 spasm_triplet *spasm_load_sms(FILE * f, int prime);
+spasm_triplet *spasm_load_mm(FILE * f, int prime);
 void spasm_save_triplet(FILE * f, const spasm_triplet * A);
 void spasm_save_csr(FILE * f, const spasm * A);
 void spasm_save_pbm(FILE * f, int x, int y, const spasm * A);
 void spasm_save_pgm(FILE * f, int x, int y, const spasm * A);
 void spasm_save_ppm(FILE * f, const spasm * A, const spasm_dm * X);
-void spasm_save_permutation(FILE * f, const int *p, int n);
-int *spasm_load_permutation(FILE * f, int n);
 spasm *spasm_load_gbla_old(FILE * f, int with_values);
 spasm *spasm_load_gbla_new(FILE * f);
 

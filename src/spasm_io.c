@@ -1,35 +1,34 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_io.c */
 #include <assert.h>
 #include <math.h>
+#include <err.h>
+
 #include "spasm.h"
-#include "err.h"
+#include "mmio.h"
+
 
 /*
- * load a matrix in SMS format from f. set prime == -1 to avoid loading
- * values.
+ * load a matrix in SMS format from f (an opened file). 
+ * set prime == -1 to avoid loading values.
  */
 spasm_triplet *spasm_load_sms(FILE * f, int prime) {
 	int i, j;
 	spasm_GFp x;
-	spasm_triplet *T;
 	char type;
-	double start;
+	
 	assert(f != NULL);
 
-	start = spasm_wtime();
-	if (fscanf(f, "%d %d %c\n", &i, &j, &type) != 3) {
-		fprintf(stderr, "[spasm_load_sms] bad SMS file (header)\n");
-		exit(1);
-	}
-	if (prime != -1 && type != 'M') {
-		fprintf(stderr, "[spasm_load_sms] only ``Modular'' type supported\n");
-		exit(1);
-	}
-	fprintf(stderr, "[IO] loading %d x %d matrix modulo %d... ", i, j, prime);
+	double start = spasm_wtime();
+	if (fscanf(f, "%d %d %c\n", &i, &j, &type) != 3)
+		errx(1, "[spasm_load_sms] bad SMS file (header)\n");
+
+	if (prime != -1 && type != 'M')
+		errx(1, "[spasm_load_sms] only ``Modular'' type supported\n");
+
+	fprintf(stderr, "[IO] loading %d x %d SMS matrix modulo %d... ", i, j, prime);
 	fflush(stderr);
 
 	/* allocate result */
-	T = spasm_triplet_alloc(i, j, 1, prime, prime != -1);
+	spasm_triplet *T = spasm_triplet_alloc(i, j, 1, prime, prime != -1);
 
 	while (fscanf(f, "%d %d %d\n", &i, &j, &x) == 3) {
 		if (i == 0 && j == 0 && x == 0)
@@ -45,6 +44,61 @@ spasm_triplet *spasm_load_sms(FILE * f, int prime) {
 	return T;
 }
 
+/*
+ * Load a matrix in MatrixMarket sparse format.
+ * Heavily inspired by the example program:
+ *     http://math.nist.gov/MatrixMarket/mmio/c/example_read.c
+ */
+spasm_triplet *spasm_load_mm(FILE * f, int prime) {
+	MM_typecode matcode;
+	int n, m, nnz;
+
+	double start = spasm_wtime();
+	if (mm_read_banner(f, &matcode) != 0) 
+		errx(1, "Could not process Matrix Market banner.\n");
+
+	if (!mm_is_matrix(matcode) || !mm_is_sparse(matcode) || !mm_is_general(matcode))
+		errx(1, "Market Market type: [%s] not supported", mm_typecode_to_str(matcode));
+	
+	if (mm_read_mtx_crd_size(f, &n, &m, &nnz) !=0)
+		errx(1, "Cannot read matrix size");
+
+	fprintf(stderr, "[IO] loading %d x %d MTX [%s] modulo %d...", n, m, mm_typecode_to_str(matcode), prime);
+	fflush(stderr);
+
+
+	if (mm_is_pattern(matcode))
+		prime = -1;
+
+	spasm_triplet *T = spasm_triplet_alloc(n, m, nnz, prime, prime != -1);
+
+	for (int i = 0; i < nnz; i++) {
+		int u, v, w;
+		double x, y;
+
+		if (mm_is_pattern(matcode)) {
+			fscanf(f, "%d %d\n", &u, &v);
+			spasm_add_entry(T, u - 1, v - 1, 1);
+		} else if (mm_is_integer(matcode)) {
+			fscanf(f, "%d %d %d\n", &u, &v, &w);
+			spasm_add_entry(T, u - 1, v - 1, w);
+		} else if (mm_is_real(matcode)) {
+			fscanf(f, "%d %d %lg\n", &u, &v, &x);
+			spasm_add_entry(T, u - 1, v - 1, (int) (100000 * x));
+		} else if (mm_is_complex(matcode)) {
+			fscanf(f, "%d %d %lg %lg\n", &u, &v, &y, &x);
+			spasm_add_entry(T, u - 1, v - 1, (int) (1000 * (y + 100 * x)));
+		} else {
+			errx(1, "Don't know how to read matrix");
+		}
+	}
+
+	char s_nnz[16];
+	spasm_human_format(T->nz, s_nnz);
+	fprintf(stderr, "%s NNZ [%.1fs]\n", s_nnz, spasm_wtime() - start);
+	return T;
+}
+
 /* load a matrix in old GBLA format */
 spasm *spasm_load_gbla_old(FILE * f, int with_values) {
 	int m, n, p;
@@ -52,23 +106,23 @@ spasm *spasm_load_gbla_old(FILE * f, int with_values) {
 	spasm *M;
 
 	/* get rows */
-	if (fread(&n, sizeof(uint32_t), 1, f) != 1) {
+	if (fread(&n, sizeof(uint32_t), 1, f) != 1)
 		err(1, "error reading m");
-	}
+
 	/* get columns */
-	if (fread(&m, sizeof(uint32_t), 1, f) != 1) {
+	if (fread(&m, sizeof(uint32_t), 1, f) != 1)
 		err(1, "error reading n");
-	}
-	if ((fread(&p, sizeof(uint32_t), 1, f) != 1)) {
+
+	if ((fread(&p, sizeof(uint32_t), 1, f) != 1))
 		err(1, "error reading p");
-	}
+
 	/* get number of nonzero elements */
-	if (fread(&nnz, sizeof(uint64_t), 1, f) != 1) {
+	if (fread(&nnz, sizeof(uint64_t), 1, f) != 1)
 		err(1, "error reading nnz");
-	}
-	if (nnz >> 31ull) {
+
+	if (nnz >> 31ull)
 		errx(2, "more than 2^31 NNZ. You are going to hit limitations of spasm... Sorry\n");
-	}
+
 	M = spasm_csr_alloc(n, m, nnz, p, with_values);
 	int * const Mp = M->p;
 	int * const Mj = M->j;
@@ -173,18 +227,14 @@ spasm *spasm_load_gbla_new(FILE * f) {
 	j = 0;
 	const uint32_t MASK = 0x80000000;
 	while (i < k) {
-		uint32_t col = buffer[i];
-		i++;
+		uint32_t col = buffer[i++];
 
 		if (col & MASK) {	/* single column */
-			Mj[j] = col ^ MASK;
-			j++;
+			Mj[j++] = col ^ MASK;
 		} else {
-			uint32_t x = buffer[i];
-			i++;
+			uint32_t x = buffer[i++];
 			for (p = 0; p < x; p++) {
-				Mj[j] = col + p;
-				j++;
+				Mj[j++] = col + p;
 			}
 		}
 	}
@@ -234,28 +284,6 @@ void spasm_save_triplet(FILE * f, const spasm_triplet * A) {
 	for (int px = 0; px < nz; px++)
 		fprintf(f, "%d %d %d\n", Ai[px] + 1, Aj[px] + 1, (Ax != NULL) ? Ax[px] : 1);
 	fprintf(f, "0 0 0\n");
-}
-
-void spasm_save_permutation(FILE * f, const int *p, int n) {
-	int i;
-
-	for (i = 0; i < n; i++) {
-		fprintf(f, "%d\n", (p != NULL) ? p[i] : i);
-	}
-}
-
-int *spasm_load_permutation(FILE * f, int n) {
-	int i, j, *p;
-
-	p = spasm_malloc(n * sizeof(int));
-	for (i = 0; i < n; i++) {
-		if (fscanf(f, "%d\n", &j) != 1) {
-			fprintf(stderr, "[spasm_load_permutation] bad row %d\n", i);
-			exit(1);
-		}
-		p[i] = j;
-	}
-	return p;
 }
 
 
