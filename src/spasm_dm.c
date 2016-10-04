@@ -79,31 +79,6 @@ static void collect_matched(int n, const int *wj, const int *imatch, int *p, int
 	rr[set] = kr;
 }
 
-#if 0
-static spasm_partition *process_square_part(const spasm * B, int rx, int ry, int cx, int cy, int *p, int *q, int ra, int ca) {
-	spasm *C;
-	spasm_partition *SCC;
-	int i, k;
-
-	assert(ry - rx == cy - cx);
-	C = spasm_submatrix(B, rx, ry, cx, cy, SPASM_IGNORE_VALUES);
-	SCC = spasm_strongly_connected_components(C);
-	spasm_csr_free(C);
-	k = SCC->nr;
-
-	/* update permutations of B */
-	spasm_range_pvec(p, rx, ry, SCC->p);
-	spasm_range_pvec(q, cx, cy, SCC->q);
-
-	/* shift SCC */
-	for (i = 0; i <= k; i++) {
-		SCC->rr[i] += rx + ra;
-		SCC->cc[i] += cx + ca;
-	}
-
-	return SCC;
-}
-#endif
 
 spasm_dm *spasm_dulmage_mendelsohn(const spasm * A) {
 	int n = A->n;
@@ -154,6 +129,24 @@ spasm_dm *spasm_dulmage_mendelsohn(const spasm * A) {
 	collect_matched(m, wj, imatch, p, q, cc, rr, 3, 3);
 	collect_unmatched(n, wi, p, rr, 3);
 
+	/* --- fine DM decomposition ---------------------------------- */
+
+	if (rr[2] - rr[1] == 0)
+		return DM;  /* S is empty: no need to find its SCC */
+
+	/* extract S */
+	int *qinv = spasm_pinv(q, m);
+	spasm *B = spasm_permute(A, p, qinv, SPASM_IGNORE_VALUES);
+	spasm *C = spasm_submatrix(B, rr[1], rr[2], cc[2], cc[3], SPASM_IGNORE_VALUES);
+	spasm_csr_free(B);
+
+	spasm_dm *SCC = spasm_strongly_connected_components(C);
+	spasm_csr_free(C);
+
+	/* update permutations */
+	spasm_range_pvec(p, rr[1], rr[2], SCC->p);
+	spasm_range_pvec(q, cc[2], cc[3], SCC->q);
+	spasm_dm_free(SCC);
 
 	return DM;
 }
