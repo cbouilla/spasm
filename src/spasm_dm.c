@@ -141,12 +141,27 @@ spasm_dm *spasm_dulmage_mendelsohn(const spasm * A) {
 	spasm_csr_free(B);
 
 	spasm_dm *SCC = spasm_strongly_connected_components(C);
-	spasm_csr_free(C);
-
+	int n_scc = SCC->nb;
+	int *scc_r = SCC->r;
+	int *scc_c = SCC->c;
+	
 	/* update permutations */
 	spasm_range_pvec(p, rr[1], rr[2], SCC->p);
 	spasm_range_pvec(q, cc[2], cc[3], SCC->q);
-	spasm_dm_free(SCC);
+	
+	/* update fine decomp */
+	r[0] = 0;
+	for(int i = 0; i <= n_scc; i++)
+		r[i + 1] = rr[1] + scc_r[i];
+	r[n_scc + 2] = n;
 
+	c[0] = 0;
+	for(int i = 0; i <= n_scc; i++)
+		c[i + 1] = cc[2] + scc_c[i];
+	c[n_scc + 2] = m;
+	DM->nb = n_scc + 2;
+
+	spasm_dm_free(SCC);
+	spasm_csr_free(C);
 	return DM;
 }

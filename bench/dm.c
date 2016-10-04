@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <getopt.h>
+#include <err.h>
+#include <math.h>
 #include "spasm.h"
 
 #if 0
@@ -39,6 +41,7 @@ void show(const spasm * M, spasm_cc * Y) {
 
 int main(int argc, char **argv) {
     int ch;
+    double mpix;
 
     /* options descriptor */
     struct option longopts[5] = {
@@ -53,15 +56,15 @@ int main(int argc, char **argv) {
     char mode = 'p';
     while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
         switch (ch) {
+        case 'i':
+            mpix = atof(optarg);
         case 'p':
         case 'v':
         case 't':
-        case 'i':
             mode = ch;
             break;
         default:
-            printf("Unknown option\n");
-            exit(1);
+            errx(1, "Unknown option");
         }
     }
 
@@ -81,11 +84,12 @@ int main(int argc, char **argv) {
     free(qinv);
     spasm_csr_free(A);
 
-    /* terse output with just the size of the largest diagonal block */
-    if (mode == 't') {
-//        printf("%5d \t %5d \t %6d \t %6d \t %.1f \t %6d \t %.1f\n", n, m, spasm_nnz(A), i, 100.0 * i / spasm_min(n, m), j, 1.0 * i / j);
-    }
-    if (mode == 'v') {
+    switch(mode) {
+    case 't':
+        /* printf("%5d \t %5d \t %6d \t %6d \t %.1f \t %6d \t %.1f\n", n, m, spasm_nnz(A), i, 100.0 * i / spasm_min(n, m), j, 1.0 * i / j); */
+        break;
+
+    case 'v':
         printf("structural rank = %d\n", rr[2] + cc[4] - cc[3]);
         int h_n = rr[1] - rr[0];
         int h_m = cc[2] - cc[0];
@@ -102,17 +106,21 @@ int main(int argc, char **argv) {
         int v_m = cc[4] - cc[3];
         if (v_n > 0 && v_m > 0)
             printf("*) V (%d x %d)\n", v_n, v_m);
-
-    }
-    if (mode == 'p') {
+        break;
+        
+    case 'p':
         spasm_save_csr(stdout, B);
-    }
-    /*if (img_file != NULL) {
-        FILE *f = fopen(img_file, "w");
-        spasm_save_ppm(f, B, x);
-        fclose(f);
-    }*/
-    spasm_csr_free(B);
+        break;
 
+    case 'i':
+        ;
+        double alpha = sqrt((mpix * 1e6) / (((double) n) * m));
+        int w = alpha * m;
+        int h = alpha * n;
+        spasm_save_pnm(B, stdout, w, h, 3, DM);
+        break;
+    }    
+
+    spasm_csr_free(B);
     return 0;
 }
