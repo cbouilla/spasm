@@ -50,8 +50,7 @@ int main(int argc, char **argv) {
 		errx(1, "--mpixels and --width/--height are mutually exclusive\n");
 
 	if (mpix < 0 && w < 0 && h < 0) {
-		w = m;
-		h = n;
+		mpix = 1;
 	}
 	if (mpix > 0 && w < 0 && h < 0) {
 		double alpha = sqrt((mpix * 1e6) / (((double) n) * m));
