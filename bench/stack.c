@@ -18,6 +18,10 @@ int main() {
 	Ai = A->i;
 	Aj = A->j;
 
+	fprintf(stderr, "matrix has advertized dimension %d x %d... ", n, m);
+	fflush(stderr);
+
+
 	/* allocate result */
 	p = spasm_malloc(n * sizeof(int));
 	q = spasm_malloc(m * sizeof(int));
@@ -41,11 +45,12 @@ int main() {
 		if (q[j] > 0)
 			q[j] = v++;
 
-	fprintf(stderr, "matrix has advertized dimension %d x %d but is in fact %d x %d\n", n, m, u, v);
 
 	/* modify matrix */
 	A->n = u;
 	A->m = v;
+	fprintf(stderr, "but is in fact %d x %d\n", u, v);
+
 	for (int k = 0; k < nz; k++) {
 		Ai[k] = p[Ai[k]];
 		Aj[k] = q[Aj[k]];
