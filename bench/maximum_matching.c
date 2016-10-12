@@ -5,13 +5,30 @@
 
 /** finds a maximum maching between the rows and columns and output the permuted matrix */
 
-int main() {
+int main(int argc, char **argv) {
 	spasm_triplet *T;
 	spasm *A, *B;
 	int k, n, m, r;
 	int *p, *qinv, *imatch, *jmatch;
 	double start_time;
 	int transposed = 0;
+
+	struct option longopts[2] = {
+		{"extract", no_argument, NULL, 'e'},
+		{NULL, 0, NULL, 0}
+	};
+
+	int ch, mode = 'p';
+	while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
+		switch (ch) {
+		case 'e':
+			mode = 'e';
+			break;
+		default:
+			printf("Unknown option\n");
+			exit(1);
+		}
+	}
 
 	T = spasm_load_sms(stdin, 42013);
 	fprintf(stderr, "A : %d x %d with %d nnz (density = %.3f %%)\n", T->n, T->m, T->nz, 100.0 * T->nz / (1.0 * T->n * T->m));
@@ -87,16 +104,24 @@ int main() {
 			qinv[j] = k++;
 	assert(k == m);
 
-	/* print permuted matrix */
 	B = spasm_permute(A, p, qinv, SPASM_WITH_NUMERICAL_VALUES);
-	spasm_save_csr(stdout, B);
-
-	spasm_csr_free(B);
 	spasm_csr_free(A);
+	
+	if (mode == 'p')
+		/* print permuted matrix */
+		spasm_save_csr(stdout, B);
+
+	if (mode == 'e') {
+		/* extract matched part */
+		spasm *C = spasm_submatrix(B, 0, r, 0, r, SPASM_WITH_NUMERICAL_VALUES);
+		spasm_save_csr(stdout, C);
+		spasm_csr_free(C);
+	}
+	spasm_csr_free(B);
+	
 	free(p);
 	free(qinv);
 	free(imatch);
 	free(jmatch);
-
 	return 0;
 }
