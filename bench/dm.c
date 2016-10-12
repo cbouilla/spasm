@@ -98,8 +98,20 @@ int main(int argc, char **argv) {
         
         int s_n = rr[2] - rr[1];
         int s_m = cc[3] - cc[2];
-        if (s_n > 0 && s_m > 0)
+        if (s_n > 0 && s_m > 0) {
             printf("*) S (%d x %d) : \n", s_n, s_m);
+            int *r = DM->r;
+            int n_trivial = 0;
+            for(int i = 1; i < DM->nb - 1; i++) {
+                int size = r[i+1] - r[i];
+                if (size == 1)
+                    n_trivial++;
+                else
+                    printf("    *) SCC of size %d\n", size);
+            }
+            if (n_trivial > 0)
+                printf("    -> plus %d SCC of size 1\n", n_trivial);
+        }
             /* Do something with S */
         
         int v_n = rr[4] - rr[2];
