@@ -119,9 +119,14 @@ int spasm_maximum_matching(const spasm * A, int *p, int *qinv) {
 		plookahead[i] = Ap[i];
 
 	k = 0;
-	for (int i = 0; (i < n) && (k < r); i++)
+	double start = spasm_wtime();
+	for (int i = 0; (i < n) && (k < r); i++) {
 		if (p[i] < 0)
 			k += spasm_augmenting_path(A, i, istack, jstack, pstack, marks, plookahead, p, qinv);
+		fprintf(stderr, "\r[matching] %d / %d, size %d", i, n, k);
+		fflush(stderr);
+	}
+	fprintf(stderr, " [%.1f s]\n", spasm_wtime() - start);
 
 	free(istack);
 	free(jstack);
