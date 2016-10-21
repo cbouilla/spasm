@@ -142,6 +142,7 @@ spasm *spasm_compress(const spasm_triplet * T);
 /* spasm_io.c */
 spasm_triplet *spasm_load_sms(FILE * f, int prime);
 spasm_triplet *spasm_load_mm(FILE * f, int prime);
+spasm *spasm_load_bin(FILE * f, int prime);
 void spasm_save_triplet(FILE * f, const spasm_triplet * A);
 void spasm_save_csr(FILE * f, const spasm * A);
 void spasm_save_pnm(const spasm * A, FILE * f, int x, int y, int mode, spasm_dm *DM);

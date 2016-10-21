@@ -44,6 +44,50 @@ spasm_triplet *spasm_load_sms(FILE * f, int prime) {
 	return T;
 }
 
+
+/*
+ * load a matrix in CSR binary format from f (an opened file). 
+ * set prime == -1 to avoid loading values.
+ */
+spasm *spasm_load_bin(FILE * f, int prime) {
+	int n, m;
+
+	assert(prime == -1); /* values are not handled yet */
+	double start = spasm_wtime();
+
+	/* get rows */
+	if (fread(&n, sizeof(int), 1, f) != 1)
+		err(1, "error reading n");
+	/* get columns */
+	if (fread(&m, sizeof(int), 1, f) != 1)
+		err(1, "error reading m");
+
+	fprintf(stderr, "[IO] loading %d x %d binary matrix... ", n, m);
+	fflush(stderr);
+
+	spasm *M = spasm_csr_alloc(n, m, n+m, prime, SPASM_IGNORE_VALUES);
+	int * const Mp = M->p;
+	
+	/* read the row pointers */
+	size_t r = n + 1;
+	if (fread(Mp, sizeof(int), n+1, f) != r)
+		err(1, "error while reading the row lengths (read %zu items)", r);
+	
+	int nnz = Mp[n];
+	spasm_csr_realloc(M, nnz);
+	int * const Mj = M->j;
+
+	/* read columns indices */
+	r = nnz;
+	if (fread(&Mj[0], sizeof(int), nnz, f) != r)
+		err(1, "error while reading the compressed column ids (read %zu items)", r);
+
+	char nnz_s[16];
+	spasm_human_format(nnz, nnz_s);
+	fprintf(stderr, "%s NNZ [%.1fs]\n", nnz_s, spasm_wtime() - start);
+	return M;
+}
+
 /*
  * Load a matrix in MatrixMarket sparse format.
  * Heavily inspired by the example program:
@@ -321,7 +365,7 @@ void spasm_save_pnm(const spasm * A, FILE * f, int x, int y, int mode, spasm_dm 
 		}
 	}
 
-	int max = 0;
+	double max = 0;
 	for (int j = 0; j < x * y; j++)
 		max = spasm_max(max, w[j]);
 
@@ -342,6 +386,7 @@ void spasm_save_pnm(const spasm * A, FILE * f, int x, int y, int mode, spasm_dm 
 		limits_h[1] = ((long long int) cc[3]) * ((long long int) x) / ((long long int) m);
 		limits_v[0] = ((long long int) rr[1]) * ((long long int) y) / ((long long int) n);
 		limits_v[1] = ((long long int) rr[2]) * ((long long int) y) / ((long long int) n);
+		fprintf(stderr, "limits_v = %d, %d\n", limits_v[0], limits_v[1]);
 		r = DM->r;
 		c = DM->c;
 	}
@@ -359,8 +404,8 @@ void spasm_save_pnm(const spasm * A, FILE * f, int x, int y, int mode, spasm_dm 
 				fprintf(f, "%d ", (w[i * x + j] > 0) ? 1 : 0);
 				break;
 			case 2: 
-				/* intensity = 1.0 - exp(0.1 * log(w[i * x + j] / max)); */
-				intensity = 1.0 - ((double) w[i * x + j]) / max;
+				intensity = 1.0 - exp(0.1 * log(w[i * x + j] / max));
+				/* intensity = 1.0 - ((double) w[i * x + j]) / max; */
 				assert(0 <= intensity && intensity <= 1.0);
 				fprintf(f, "%.0f ", 255.0 * intensity);
 				break;
