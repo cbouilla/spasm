@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <getopt.h>
+#include <unistd.h>
 
 #include "spasm.h"
 
