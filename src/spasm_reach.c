@@ -154,3 +154,5 @@ int spasm_reach(const spasm * A, const spasm * B, int k, int l, int *xj, const i
 
 	return top;
 }
+
+

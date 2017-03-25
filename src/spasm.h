@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
+
 #ifdef USE_OPENMP
 #include <omp.h>
 #endif
@@ -103,6 +104,13 @@ typedef struct {                /* a Dulmage-Mendelson decomposition */
   spasm_partition *DM;
   spasm_cc *H, *S, *V;
 }      spasm_dm;
+
+typedef struct {               /* tables over the rows and the cols of a matrix */
+  int *r; //table indexed by rows index.
+  int *c; //table indexed by columns index.
+  int n; //size of table r
+  int m; //size of table c
+}       spasm_rc;             
 
 
 #define SPASM_IDENTITY_PERMUTATION NULL
@@ -235,6 +243,10 @@ spasm_partition *spasm_strongly_connected_components(const spasm * A);
 
 /* spasm_kernel.c */
 spasm *spasm_kernel(const spasm * A, const int *column_permutation);
+
+/*spasm_tree.c */
+void spasm_search_father(spasm *A, int i, int j, int *At);
+int spasm_tree_update_matching(spasm_rc *match, int i, int j, int b);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {

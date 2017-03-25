@@ -199,6 +199,15 @@ spasm_partition *spasm_partition_alloc(int n, int m, int nr, int nc) {
 	return P;
 }
 
+
+spasm_rc *spasm_rc_alloc(int n, int m){
+  spasm_rc *tab;
+  tab = spasm_malloc(sizeof(spasm_rc));
+  tab->r = spasm_malloc(n * sizeof(int));
+  tab->c = spasm_malloc(m * sizeof(int));
+  return tab;
+}
+
 void spasm_partition_tighten(spasm_partition * P) {
 	assert(P != NULL);
 	P->rr = spasm_realloc(P->rr, (P->nr + 1) * sizeof(int));
@@ -237,6 +246,15 @@ void spasm_dm_free(spasm_dm * x) {
 	free(x);
 }
 
+
+void spasm_rc_free(spasm_rc *tab){
+  if(tab == NULL){
+    return;
+  }
+  free(tab->r);
+  free(tab->c);
+  free(tab);
+}
 
 void spasm_vector_zero(spasm_GFp * x, int n) {
 	int i;
