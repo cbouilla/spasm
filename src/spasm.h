@@ -143,6 +143,8 @@ void spasm_vector_zero(spasm_GFp * x, int n);
 void spasm_vector_set(spasm_GFp * x, int a, int b, spasm_GFp alpha);
 spasm *spasm_identity(int n, int prime);
 void spasm_human_format(int64_t n, char *target);
+spasm_rc *spasm_rc_alloc(int n, int m);
+void spasm_rc_free(spasm_rc *tab);
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x);
@@ -246,7 +248,8 @@ spasm *spasm_kernel(const spasm * A, const int *column_permutation);
 
 /*spasm_tree.c */
 void spasm_search_father(spasm *A, int i, int j, int *At);
-int spasm_tree_update_matching(spasm_rc *match, int i, int j, int b);
+int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, spasm_rc *match, spasm_rc *At, int count);
+spasm_rc *spasm_ur_matching(spasm *A);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {

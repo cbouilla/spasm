@@ -48,9 +48,10 @@ void spasm_search_father(spasm *A, int i, int j, int *At){
  *
  *return 1 if all nodes have been watch at least once, 0 otherwise.
  */
-int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, spasm_rc *match, spasm_rc *At){
+int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, spasm_rc *match, spasm_rc *At, int count){
   int *Ap, *tAp, *Aj, *tAj, *pstack, *Atr, *Atc, *matchr, *matchc, *fpr, *fpc;
-  int j, head, father, px, n, m, count;
+  int j, head, father, px, n, m;
+
 
   assert(A != NULL);
   assert(TA != NULL);
@@ -75,8 +76,7 @@ int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, 
   //init variables.
   head = 0;
   father = -1; // root has no father.
-  count = 0;
-
+  
   //get workspace
   pstack = spasm_malloc((n+m)*sizeof(int));
 
@@ -86,6 +86,7 @@ int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, 
   //main loop: dfs
   while(head >= 0){
 
+
     if(pstack[head] <0){ // pstack[head] is a column
 
       assert(father >= 0); // root isn't a column, so there is a father.
@@ -94,6 +95,8 @@ int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, 
       if(fpc[j] == -1){ // j has not been seen yet.
 
 	count++; // a new node is seen.
+	//fprintf(stderr,"\r number of node %d", count);
+	//fflush(stderr);
 
 	//is (father, j) an edge of the matching?
 	assert(matchc[j] == -1); // j has not been seen yet.
@@ -122,8 +125,8 @@ int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, 
 	j = tAj[px];
 	
 	//put the new node at the end of the tree.
-	spasm_swap(tAj, px, Atc[j]); // no numerical value needed for transpose.
-	Atc[j]++; // new node in the tree.
+	spasm_swap(tAj, px, Atc[father]); // no numerical value needed for transpose.
+	Atc[father]++; // new node in the tree.
 	
 	//update stack.
 	head++;
@@ -133,7 +136,7 @@ int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, 
       }
 
 	//stop test: end of the branch
-	if(px == tAp[j+1]){
+      if(px == tAp[j+1] ){
 	  //j has no son.
 	  j =  father; // go back in the tree.
 	  head--;
@@ -166,19 +169,19 @@ int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, 
 	fpr[j]++; //mark j.
 
       }else if(j != root){ // j is marked and no backward edge possible => change of branch.
-
+	
 	father = Aj[Ap[j]]; // j is not root so the first entry of Ap is the father.
 	
       }else{ // j is root and is marked.
 
 	father = -1; // no father.
       }
-
+      
       // search for descendance.
       for(px = Atr[j]; px < Ap[j+1]; px++){
 	
 	if(fpc[Aj[px]] != -1){ // col i = Aj[px] is already in the tree.
-	  fpr[Aj[px]] ++; // new backward edge.
+	  fpr[Aj[px]]++; // new backward edge.
 	  continue;
 	}
 
@@ -188,32 +191,257 @@ int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, 
 	j = Aj[px];
 	
 	//put the new node at the end of the tree.
-	spasm_swap(Aj, px, Atr[j]);
+	spasm_swap(Aj, px, Atr[father]);
 	if(A->x != NULL){
-	  spasm_swap(A->x, px, Atr[j]); // don't forget numerical values.
+	  spasm_swap(A->x, px, Atr[father]); // don't forget numerical values.
 	}
-	Atr[j]++;
+	Atr[father]++;
 	
 	//update stack.
 	head++;
-	pstack[head] = j; // j is a row.
+	pstack[head] = -j -1; // j is a col.
 	break;
 	
       }
-
+      
 	//stop test: end of the branch
-	if(px == tAp[j+1]){
+	if(px == Ap[j+1]){
 	  //j has no son.
 	  j =  father; // go back in the tree.
 	  head--;
+	 
 	}
-      
-    
+	 
     }
+   
   }
 
   //free workspace
   free(pstack);
+  fprintf(stderr, "count vs tot: %d vs %d\n", count, A->n +A->m);
+  return count;
+}
 
-  return ((count) == (n+m));
+
+/*
+ * procedure that test whether there is an alterning cycle in O(1).
+ */
+/* void spasm_matching_mark(spasm *A, spasm *TA, int *cpt, spasm_rc *At, int i, int k, int start, int in_match, int r){ */
+/*   int *Atr, *Atc, *Ap, *tAp, *Aj, *tAj; */
+/*   int j, px; */
+  
+/*   assert(A != NULL); */
+/*   assert(TA != NULL); */
+/*   Atr = At->r; */
+/*   Atc = At->c; */
+/*   Ap = A->p; */
+/*   Aj = A->j; */
+/*   tAp = TA->p; */
+/*   tAj = TA->j; */
+  
+/*   cpt[i] = k; // init cpt[u]. */
+  
+/* } */
+
+
+/*
+ * given two index son and root, go up in the tree from "son" to "root", and check whether there are two
+ * successive non matching edge. if so stop the procedure and return 1. if you reach root, return 0.
+ */
+int spasm_go_up_in_tree(spasm *A, spasm *TA, int son, int root, spasm_rc *match, int r){
+  int *Ap, *tAp, *Aj, *tAj, *matchr, *matchc;
+  int father, in_match;
+
+  assert(A != NULL);
+  assert(TA != NULL);
+
+  Ap = A->p;
+  tAp = TA->p;
+  Aj = A->j;
+  tAj = TA->j;
+  matchr = match->r;
+  matchc = match->c;
+
+  
+  father = (r == 1) ? Aj[Ap[son]] : tAj[tAp[son]]; //father is the first entry on row son.
+ 
+
+  //The first edge isn't in the matching.
+  assert(matchr[son] != father);
+  in_match = 0;
+  
+  while(father != root){
+    r ^= 1; // <-- if son was a col, son is now a row and resp.
+    son = father;
+    father = (r == 1) ? Aj[Ap[son]] : tAj[tAp[son]];
+
+    if(in_match == 0){ // last edge tested isn't in the matching.
+      if(((r == 1) && (matchr[son] == father)) || ((r == 0) && matchc[son] == father)){
+	in_match = 1;
+      }else{ // two successive edge not in the matching.
+	return 1; 
+      }
+    }
+    
+  }
+  
+  return 0; // root has been reached. alterning path exist.
+}
+
+/*
+ * Given u such that (u,v) is in the matching. Test whether (u,v) is valid (no alterning cycle).
+ * Note, we only need to test whether the father u has backward edge that goes to the bottom.
+ *
+ * Test all "critical" nodes (i.e. nodes w, st (u,w) is backward). 
+ *
+ * First test if (w, father) is in the matching, if get back in the tree, until we find two successive
+ * non matching edges, or until we arrive at u.
+ *
+ * return 1 if (u,v) is valid, 0 otherwise.
+ */
+int spasm_valid_edge(spasm *A, spasm *TA, int u, spasm_rc *At, spasm_rc *mark, spasm_rc *match, int r){
+  int *Ap, *tAp, *Aj, *tAj, *Atr, *Atc, *markr, *markc, *matchr, *matchc;
+  int w, px, father, ok;
+  
+  assert(A != NULL);
+  assert(TA != NULL);
+  assert(At != NULL);
+
+  Ap = A->p;
+  tAp = TA->p;
+  Aj = A->j;
+  tAj = TA->j;
+  Atr = At->r;
+  Atc = At->c;
+  markr = mark->r; // rows that are upper than u in the tree.
+  markc = mark->c; // cols that are upper than u in the tree.
+  matchr = match->r;
+  matchc = match->c;
+  
+
+  //test if u has backward edge.
+  if(r == 1){ // u is a row index.
+    for(px = Atr[u]; px < Ap[u+1]; px++){
+      w = Aj[px]; // get all critical nodes.
+
+      if(markc[w] == 1){ // w is upper than u in the tree, so no alterning cycle.
+	continue;
+      }
+
+      father = tAj[tAp[w]]; // the father of w is the first entry of the col (w isn't root).
+
+      if(matchc[w] != father){ // if c isn't match with its father, then there is no alterning cycle.
+	continue;
+      }
+      
+      // go up in the tree.
+      ok = spasm_go_up_in_tree(A, TA, father, u, match, r);
+      if(ok != 1){ // alterning cycle has been found.
+	matchc[matchr[u]] = -1; // get u and v out of the matching.
+	matchc[u] = -1;
+	return 0;
+      }
+      	
+    }
+
+      
+  }else{ //u is a column.
+    for(px = Atc[u]; px < tAp[u+1]; px++){
+      w  = tAj[px];
+      
+      if(markr[w] == 1){ // w is upper than u in the tree, so no alterning cycle.
+	continue;
+      }
+
+      father = Aj[Ap[w]]; // the father of w is the first entry of the row (w isn't root).
+
+      if(matchc[w] != father){ // if c isn't match with its father, then there is no alterning cycle.
+	continue;
+      }
+      
+      // go up in the tree.
+      ok = spasm_go_up_in_tree(A, TA, father, u, match, r);
+      if(ok != 1){ // alterning cycle has been found.
+	matchr[matchc[u]] = -1; // get u and v out of the matching.
+	matchc[u] = -1;
+	return 0;
+      }
+      
+    }
+  }
+
+  return 1;
+  
+}
+
+
+/*
+ *perform the DFS to create the tree and the matching. Then, for each edge of the matching,
+ *check if there is a backward egde on the tree. If so, test if there is an alterning cycle.
+ *If so, remove the closest edge from the root from the matching.
+ */
+spasm_rc *spasm_ur_matching(spasm *A){
+  spasm_rc *match;
+  spasm *TA;
+  spasm_rc *At, *first_passage;
+  int i, count;
+  int *Atr, *Atc, *fpr, *fpc, *matchr, *matchc;
+
+  //allocate memory.
+  match = spasm_rc_alloc(A->n, A->m);
+
+  //get workspace.
+  first_passage = spasm_rc_alloc(A->n, A->m);
+  At = spasm_rc_alloc(A->n, A->m);
+  TA = spasm_transpose(A, 0); 
+
+  Atr = At->r;
+  Atc = At->c;
+  fpr = first_passage->r;
+  fpc = first_passage->c;
+  matchr = match->r;
+  matchc = match->c;
+
+  //init workspace.
+  for(i = 0; i < A->n; i++){
+    Atr[i] = A->p[i]; // no node in the tree yet.
+    fpr[i] = -1; // no row seen yet.
+    matchr[i] = -1; // no edge in the matching yet.
+  }
+
+  for(i = 0; i < A->m; i++){
+    Atc[i] = TA->p[i];
+    fpc[i] = -1;
+    matchc[i] = -1;
+  }
+
+  //DFS:
+  count = spasm_dfs_bipartite(A, TA, 0, first_passage, match, At, 0);
+
+  while(count != (A->n + A->m)){ // not a tree but a forest.
+    for(i = 0; i < A->n; i++){
+      
+      if(fpr[i] == -1){ // not marked yet.
+	break;
+      }
+    }
+
+    if(i == A->n){ // Empty cols not seen by process
+      break;
+    }
+    
+    count = spasm_dfs_bipartite(A, TA, i, first_passage, match, At, count);
+    // count = A->n +A->m;
+   }
+
+  //go up phase: TODO.
+  
+
+  //free workspace.
+  spasm_rc_free(first_passage);
+  spasm_rc_free(At);
+  spasm_csr_free(TA);
+
+  //return.
+  return match;
 }
