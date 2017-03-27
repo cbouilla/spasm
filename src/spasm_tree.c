@@ -48,9 +48,9 @@ void spasm_search_father(spasm *A, int i, int j, int *At){
  *
  *return 1 if all nodes have been watch at least once, 0 otherwise.
  */
-void spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, spasm_rc *match, spasm_rc *At){
+int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, spasm_rc *match, spasm_rc *At){
   int *Ap, *tAp, *Aj, *tAj, *pstack, *Atr, *Atc, *matchr, *matchc, *fpr, *fpc;
-  int j, head, father, px, n, m;
+  int j, head, father, px, n, m, count;
 
   assert(A != NULL);
   assert(TA != NULL);
@@ -75,6 +75,7 @@ void spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage,
   //init variables.
   head = 0;
   father = -1; // root has no father.
+  count = 0;
 
   //get workspace
   pstack = spasm_malloc((n+m)*sizeof(int));
@@ -91,6 +92,8 @@ void spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage,
 
       j = - pstack[head] - 1; // get the id of the column.
       if(fpc[j] == -1){ // j has not been seen yet.
+
+	count++; // a new node is seen.
 
 	//is (father, j) an edge of the matching?
 	assert(matchc[j] == -1); // j has not been seen yet.
@@ -141,6 +144,8 @@ void spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage,
       j = pstack[head];
 
       if((fpr[j] == -1) && (j==root)){ // first passage on root.
+
+	count++; // new node.
 	
 	assert(father == -1);
 	fpr[j]++; // mark root.
@@ -148,6 +153,8 @@ void spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage,
       } else if((fpr[j] == -1) && (j != root)){ // j has not been seen yet.
 	//is (father, j) an edge of the matching?
 	assert(father >= 0); // j is not root.
+
+	count++;
 	
 	assert(matchr[j] == -1); // j has not been seen yet.
 	if(matchc[father] == -1){ // if father isn't a node of the matching.
@@ -207,5 +214,6 @@ void spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage,
 
   //free workspace
   free(pstack);
-  
+
+  return ((count) == (n+m));
 }
