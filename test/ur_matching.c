@@ -11,8 +11,9 @@ int main(){
  T = spasm_load_sms(stdin, 42013);
  A = spasm_compress(T);
  spasm_triplet_free(T);
-
+ 
  match = spasm_ur_matching(A);
+
 
  for(i = 0; i < A->n; i++){
    if((match->r[i] != -1) && (match->c[match->r[i]] != i)){
