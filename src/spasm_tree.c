@@ -304,11 +304,11 @@ int spasm_go_up_in_tree(spasm *A, spasm *TA, int son, int root, spasm_rc *match,
 
 /*
  * Given u such that (v,u) is in the matching. Test whether (v,u) is valid (no alterning cycle).
- * Note, we only need to test whether the father u has backward edge that goes to the bottom.
+ * Note, we only need to test whether the father u has backward edge that goes to the top.
  *
  * Test all "critical" nodes (i.e. nodes w, st (w,u) is backward). 
  *
- * First test if (w, father) is in the matching, if get back in the tree, until we find two successive
+ * First test if (w, son) is in the matching, if get back in the tree, until we find two successive
  * non matching edges, or until we arrive at u.
  *
  * return number of invalid edge.
@@ -346,7 +346,7 @@ int spasm_valid_edge(spasm *A, spasm *TA, int u, spasm_rc *At, spasm_rc *mark, s
 	continue;
       }
 
-      if(markc[w] != -1){ //w has already been considered.
+      if(markc[w] > markr[u]){ //w has already been considered.
       	continue;
       }
 
@@ -361,8 +361,7 @@ int spasm_valid_edge(spasm *A, spasm *TA, int u, spasm_rc *At, spasm_rc *mark, s
       
       // go up in the tree.
       ok = spasm_go_up_in_tree(A, TA, u, w, match, dad, r);
-      markr[matchc[w]] = ok;
-      markc[w] = ok; //if u, and matchr[u] are valid: 1, 0 otherwise.
+     
       if(ok != 1){ // alterning cycle has been found.
 	printf("Alterning cycle edge: (%d, %d)\n", u, matchr[u]);
 	matchr[matchc[w]] = -1; //
@@ -385,7 +384,7 @@ int spasm_valid_edge(spasm *A, spasm *TA, int u, spasm_rc *At, spasm_rc *mark, s
 	continue;
       }
       
-      if(markr[w] != -1){ // already seen.
+      if(markr[w] > markc[u]){ // w first seen after u. (u, w) goes to the bottom.
       	continue;
       }
 
@@ -404,8 +403,7 @@ int spasm_valid_edge(spasm *A, spasm *TA, int u, spasm_rc *At, spasm_rc *mark, s
 
       // go up in the tree.
       ok = spasm_go_up_in_tree(A, TA, u, w, match, dad, r);
-      markc[matchr[w]] = ok;
-      markr[w] = ok;
+     
       if(ok != 1){ // alterning cycle has been found.
 	printf("Alterning cycle edge: (%d, %d)\n", w, matchc[w]);
 	matchc[matchr[w]] = -1; // get u and v out of the matching.
@@ -429,9 +427,9 @@ int spasm_valid_edge(spasm *A, spasm *TA, int u, spasm_rc *At, spasm_rc *mark, s
 spasm_rc *spasm_ur_matching(spasm *A){
   spasm_rc *match;
   spasm *TA;
-  spasm_rc *At, *first_passage, *mark, *dad;
+  spasm_rc *At, *first_passage, *dad;
   int i, j, count, count_col =0;
-  int *Atr, *Atc, *fpr, *fpc, *matchr, *matchc, *markr, *markc, *col_TO, *dadr, *dadc;
+  int *Atr, *Atc, *fpr, *fpc, *matchr, *matchc, *col_TO, *dadr, *dadc;
 
   //allocate memory.
   match = spasm_rc_alloc(A->n, A->m);
@@ -439,7 +437,6 @@ spasm_rc *spasm_ur_matching(spasm *A){
   //get workspace.
   first_passage = spasm_rc_alloc(A->n, A->m);
   At = spasm_rc_alloc(A->n, A->m);
-  mark = spasm_rc_alloc(A->n, A->m);
   TA = spasm_transpose(A, 0);
   col_TO = spasm_malloc(A->m * sizeof(int));
   dad = spasm_rc_alloc(A->n, A->m);
@@ -448,8 +445,6 @@ spasm_rc *spasm_ur_matching(spasm *A){
   Atc = At->c;
   fpr = first_passage->r;
   fpc = first_passage->c;
-  markr = mark->r;
-  markc = mark->c;
   matchr = match->r;
   matchc = match->c;
   dadr = dad->r;
@@ -460,7 +455,7 @@ spasm_rc *spasm_ur_matching(spasm *A){
     Atr[i] = A->p[i]; // no node in the tree yet.
     fpr[i] = -1; // no row seen yet.
     matchr[i] = -1; // no edge in the matching yet.
-    markr[i] = -1;
+    
     dadr[i] = -1;
   }
 
@@ -468,7 +463,7 @@ spasm_rc *spasm_ur_matching(spasm *A){
     Atc[i] = TA->p[i];
     fpc[i] = -1;
     matchc[i] = -1;
-    markc[i] = -1;
+    
     dadc[i] = -1;
   }
 
@@ -503,7 +498,7 @@ spasm_rc *spasm_ur_matching(spasm *A){
 
 
   //go up phase:
-  count = 0;
+ 
   for(i = 0; i < count_col; i++){ // look at the column. no root.
     
     if(matchc[col_TO[i]] == -1){ // col i is not in the matching.
@@ -515,14 +510,13 @@ spasm_rc *spasm_ur_matching(spasm *A){
       //j is match with its father.
 
       // test whether j is in an alterning cycle.
-      count += spasm_valid_edge(A, TA, j, At, mark, match, dad, 0);
+      count -= spasm_valid_edge(A, TA, j, At, first_passage, match, dad, 0);
      
     }else{ //i is matched with one of its sons
-      count += spasm_valid_edge(A, TA, matchc[j], At, mark, match, dad, 1);
+      count -= spasm_valid_edge(A, TA, matchc[j], At, first_passage, match, dad, 1);
       
     }
 
-    
 
   }
   
@@ -534,7 +528,6 @@ spasm_rc *spasm_ur_matching(spasm *A){
   //free workspace.
   spasm_rc_free(first_passage);
   spasm_rc_free(At);
-  spasm_rc_free(mark);
   spasm_csr_free(TA);
   spasm_rc_free(dad);
   free(col_TO);
