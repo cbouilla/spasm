@@ -19,6 +19,12 @@ int main(){
      printf("not ok row %d: col %d, error %d\n", i, match->r[i], match->c[match->r[i]]);
    }
  }
+
+ for(i = 0; i < A->m; i++){
+   if((match->c[i] != -1) && (match->r[match->c[i]] != i)){
+     printf("not ok col %d: row %d, error %d\n", i, match->c[i], match->r[match->c[i]]);
+   }
+ }
  
  printf("Ok\n");
  spasm_csr_free(A);
