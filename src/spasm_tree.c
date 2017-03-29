@@ -449,21 +449,18 @@ int spasm_valid_edge(spasm *A, spasm *TA, int u, spasm_rc *At, spasm_rc *mark, s
  *check if there is a backward egde on the tree. If so, test if there is an alterning cycle.
  *If so, remove the closest edge from the root from the matching.
  */
-spasm_rc *spasm_ur_matching(spasm *A){
-  spasm_rc *match;
+int spasm_ur_matching(spasm *A, spasm_rc *match, int *col_TO, int *count_col_pt){
   spasm *TA;
   spasm_rc *At, *first_passage, *dad;
   int i, j, count, count_col =0;
-  int *Atr, *Atc, *fpr, *fpc, *matchr, *matchc, *col_TO, *dadr, *dadc;
+  int *Atr, *Atc, *fpr, *fpc, *matchr, *matchc,  *dadr, *dadc;
 
-  //allocate memory.
-  match = spasm_rc_alloc(A->n, A->m);
+  
 
   //get workspace.
   first_passage = spasm_rc_alloc(A->n, A->m);
   At = spasm_rc_alloc(A->n, A->m);
   TA = spasm_transpose(A, 0);
-  col_TO = spasm_malloc(A->m * sizeof(int));
   dad = spasm_rc_alloc(A->n, A->m);
 
   Atr = At->r;
@@ -558,7 +555,7 @@ spasm_rc *spasm_ur_matching(spasm *A){
   }
   
 
-  fprintf(stderr,"\nnumber of valid edges: %d\n", count);
+  fprintf(stderr,"number of valid edges: %d\n", count);
 
   for(i = 0; i < count_col; i++){
     
@@ -571,8 +568,64 @@ spasm_rc *spasm_ur_matching(spasm *A){
   spasm_rc_free(At);
   spasm_csr_free(TA);
   spasm_rc_free(dad);
-  free(col_TO);
 
   //return.
-  return match;
+  *count_col_pt = count_col;
+  return count;
+}
+
+/*
+ * permute the rows and columns in order to have an upper-triangular structure.
+ */
+
+int spasm_pivots_ur_matching(spasm *A, int *p, int *qinv){
+  int npiv, j, i, *col_TO, count_row =0, count_col;
+  spasm_rc *match;
+
+  assert(p != NULL);
+  assert(qinv != NULL);
+  
+  //get workspace.
+  match = spasm_rc_alloc(A->n, A->m);
+  col_TO = spasm_malloc(A->m *sizeof(int));
+
+  for(j = 0; j < A->m; j++){
+    qinv[j] = -1;
+  }
+
+  for(i = 0; i < A->n; i++){
+    p[i] = i;
+  }
+
+  npiv = spasm_ur_matching(A, match, col_TO, &count_col);
+
+  for(i = 0; i< count_col; i++){
+    j = col_TO[i];
+
+    if(match->c[j] == -1){
+      continue;
+    }
+
+    p[count_row] = match->c[j];
+    qinv[j] = match->c[j];
+    count_row++;
+    
+  }
+
+  assert(count_row == npiv);
+
+  for(i=0 ;i < A->n; i++){
+    if(match->r[i] == -1){
+      p[count_row] = i;
+      count_row++;
+    }
+  }
+
+  assert(count_row == A->n);
+  
+  //free workspace.
+  free(col_TO);
+  spasm_rc_free(match);
+
+  return npiv;
 }

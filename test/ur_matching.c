@@ -6,13 +6,16 @@ int main(){
  spasm_triplet *T;
  spasm *A;
  spasm_rc *match;
- int i; 
+ int i, *col_TO, countcol;
 
  T = spasm_load_sms(stdin, 42013);
  A = spasm_compress(T);
  spasm_triplet_free(T);
+
+ match = spasm_rc_alloc(A->n, A->m);
+ col_TO = spasm_malloc(A->m *sizeof(int));
  
- match = spasm_ur_matching(A);
+ spasm_ur_matching(A, match, col_TO, &countcol);
 
 
  for(i = 0; i < A->n; i++){
@@ -30,4 +33,5 @@ int main(){
  printf("Ok\n");
  spasm_csr_free(A);
  spasm_rc_free(match);
+ free(col_TO);
 }
