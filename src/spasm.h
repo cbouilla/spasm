@@ -249,7 +249,8 @@ spasm *spasm_kernel(const spasm * A, const int *column_permutation);
 /*spasm_tree.c */
 void spasm_search_father(spasm *A, int i, int j, int *At);
 int spasm_dfs_bipartite(spasm *A, spasm *TA, int root, spasm_rc *first_passage, spasm_rc *match, spasm_rc *At, spasm_rc *dad, int *col_TO, int count, int *count_col_pt);
-spasm_rc *spasm_ur_matching(spasm *A);
+int spasm_ur_matching(spasm *A, spasm_rc *match, int *col_TO, int *count_col_pt);
+int spasm_pivots_ur_matching(spasm *A, int *p, int *qinv);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {
