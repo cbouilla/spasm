@@ -195,7 +195,7 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, con
  * x has size m (number of columns of U, paradoxically).
  *
  * when this function returns, the solution is scattered in x, and its pattern
- * is given in xi[top : m].
+ * is given in xj[top : m].
  *
  * xj must be zero-initialized on the first call (and it stays OK)
  * x does not need to be initialized.
@@ -224,7 +224,7 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
 	start = spasm_ticks();
 #endif
 
-	/* xj[top : n] = Reach(U, B[k]) */
+	/* xj[top : m] = Reach(U, B[k]) */
 	top = spasm_reach(U, B, k, m, xj, qinv);
 
 #ifdef SPASM_TIMING

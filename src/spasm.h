@@ -114,7 +114,7 @@ void *spasm_malloc(size_t size);
 void *spasm_calloc(size_t count, size_t size);
 void *spasm_realloc(void *ptr, size_t size);
 
-spasm *spasm_csr_alloc(int m, int n, int nzmax, int prime, int with_values);
+spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values);
 void spasm_csr_realloc(spasm * A, int nzmax);
 void spasm_csr_resize(spasm * A, int n, int m);
 void spasm_csr_free(spasm * A);
@@ -196,7 +196,7 @@ void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p
 
 /* spasm_schur.c */
 void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv);
-spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, double est_density);
+spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, double est_density, int stack);
 int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv);
 double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R);
 

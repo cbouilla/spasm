@@ -35,7 +35,7 @@ int main() {
 	fprintf(stderr, "Schur complement: (%d x %d), estimated density : %.4f (%s byte)\n", n - npiv, m - npiv, schur_density, tmp);
 
 	/* go for it */
-	S = spasm_schur(A, p, qinv, npiv, schur_density);
+	S = spasm_schur(A, p, qinv, npiv, schur_density, 1);
 
 	spasm_save_csr(stdout, S);
 	free(p);

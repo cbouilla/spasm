@@ -384,8 +384,8 @@ spasm *spasm_permute_pivots(const spasm * A, const int *p, int *qinv, int npiv) 
 	/* pivotal columns first */
 	k = 0;
 	for (int i = 0; i < npiv; i++) {
-		int j = Aj[Ap[p[i]]];	/* the pivot is the first entry of
-					 * each row */
+		/* the pivot is the first entry of each row */
+		int j = Aj[Ap[p[i]]];
 		qinv[j] = k++;
 	}
 

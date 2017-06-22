@@ -26,20 +26,28 @@ void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
 
 /*
  * Computes the Schur complement, by eliminating the pivots located on rows
- * p[0] ... p[n_pivots-1] of input matrix A. The pivots must be the first entries
- * on the lines. This returns a sparse representation of S. The pivots must
- * be unitary.
+ * p[0] ... p[n_pivots-1] of input matrix A. 
  *
- * if the estimated density is unknown, set it to -1;
+ * non-pivotal rows are p[n_pivots] ... p[n]
+ *
+ * The pivots must be the first entries on the lines.
+ *
+ * The pivots must be unitary.	
+ *
+ * This returns a sparse representation of S. 
+ *
+ * If the estimated density is unknown, set it to -1: it will be evaluated
+ *
+ * If stack, then columns of the output are numbered [0:m - n_pivots], else their numbers are untouched
  */
-spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, double est_density) {
+spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, double est_density, int stack) {
 	int k, snz, *q, writing;
 	double start;
 	spasm *S;
 
 	const int n = A->n;
 	const int m = A->m;
-	const int Sm = m - npiv;
+	const int Sm = stack ? (m - npiv) : m;
 	const int Sn = n - npiv;
 	const int verbose_step = spasm_max(1, n / 1000);
 	
@@ -50,7 +58,10 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, dou
 	q = spasm_malloc(m * sizeof(int));
 	k = 0;
 	for (int j = 0; j < m; j++)
-		q[j] = (qinv[j] < 0) ? k++ : -1;
+		if (stack)
+			q[j] = (qinv[j] < 0) ? k++ : -1;
+		else
+			q[j] = (qinv[j] < 0) ? j : -1;	
 
 	if (est_density < 0)
 		est_density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
