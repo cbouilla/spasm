@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
 	}
 	spasm *A = spasm_compress(T);
-//	spasm *A_start = spasm_compress(T);
+	spasm *A_start = spasm_compress(T);
 	spasm_triplet_free(T);
 	int n = A->n;
 	int m = A->m;
@@ -133,12 +133,12 @@ int main(int argc, char **argv)
 	U->n = u_n;
 	spasm_free_LU(LU);
 
-	double end_time = spasm_wtime();
 	spasm_human_format(spasm_nnz(U), nnz);
-	fprintf(stderr, "done in %.3f s. NNZ(U) = %s. rank = %d\n", end_time - start_time, nnz, u_n);
+	fprintf(stderr, "LU factorization done in %.3f s. NNZ(U) = %s. rank = %d\n", spasm_wtime() - start_time, nnz, u_n);
 
-#if 0
-	/* check */
+	start_time = spasm_wtime();
+
+	/* check that U is permuted lower-triangular*/
 	for (int j = 0; j < m; j++)
 		qinv[j] = -1;
 	
@@ -148,47 +148,99 @@ int main(int argc, char **argv)
 		qinv[Uj[Up[i]]] = i;
 	}
 
+	/* build p to order the rows */
+	int k = 0;
+	for (int j = 0; j < m; j++)
+		if (qinv[j] >= 0)
+			p[k++] = qinv[j];
+	assert(k == u_n);
+
+	/* build the RREF */
+	spasm *R = spasm_csr_alloc(u_n, m, spasm_nnz(U), A->prime, SPASM_WITH_NUMERICAL_VALUES);
+	int *Rp = R->p;
+	int *Rj = R->j;
+	int *Rx = R->x;	
+	int rnz = 0;
+
 	int *xj = spasm_malloc(3*m * sizeof(int));
+  	int *x = spasm_malloc(m * sizeof(spasm_GFp));
   	spasm_vector_zero(xj, 3*m);
 
-  	int *x = spasm_malloc(m * sizeof(spasm_GFp));
-  	int *y = spasm_malloc(m * sizeof(spasm_GFp));
-  	int *z = spasm_malloc(n * sizeof(spasm_GFp));
+  	for (int i = 0; i < u_n; i++) {
+  		spasm_human_format(rnz, nnz);
+  		fprintf(stderr, "\rRREF: %d/%d, |R| = %s    ", i, u_n, nnz);
+  		fflush(stderr);
 
-  	assert(U->m == A_start->m);
-
-  	for (int i = 0; i < n; i++) {
-  		spasm_vector_zero(x, m);
-  		spasm_vector_zero(y, m);
-  		spasm_vector_zero(z, n);
+  		int j = Uj[Up[i]];
+  		assert(qinv[j] == i);
+  		qinv[j] = -1;
+  		int top = spasm_sparse_forward_solve(U, U, i, xj, x, qinv);
   		
-  		// in principle x.U == A_start[i]
-  		int top = spasm_sparse_forward_solve(U, A_start, i, xj, x, qinv);
-  		/*printf("top = %d, m=%d\n", top, m);
-  		for (int px = top; px < m; px++)
-  			printf("x[%d] = %d\n", xj[px], x[xj[px]]);
-  		assert(x[Uj[Up[i]]] == 1);*/
-  		for (int px = top; px < m; px++) {
-  			int j = xj[px];
-  			if (qinv[j] >= 0)
-  				z[qinv[j]] = x[j];
-  		}
-  		// check it: y = x.U
-  		spasm_gaxpy(U, z, y);
-  		spasm_scatter(A_start->j, A_start->x, A_start->p[i], A_start->p[i + 1], A_start->prime - 1, y, A_start->prime);
+		/* not enough room in R ? realloc twice the size */
+		if (rnz + m > R->nzmax) {
+			spasm_csr_realloc(R, 2 * R->nzmax + m);
+			Rj = R->j;
+			Rx = R->x;
+		}
 
-  		for (int j = 0; j < m; j++)
-  			if (y[j]) {
-  				printf("i = %d\ny[%d] == %d\n", i, j, y[j]);
-  				exit(1);
-  			}
-  	}
-#endif
+		/* ensure R has the "pivot first" property */
+		for (int px = top + 1; px < m; px++)
+			if (xj[px] == j) {
+				xj[px] = xj[top];
+				xj[top] = j;
+				break;
+			}
+		assert(xj[top] == j);
 
-	spasm_save_csr(stdout, U);
+		/* copy into R */
+		Rp[i] = rnz;
+		for (int px = top; px < m; px++) {
+			int j = xj[px];
+			if (qinv[j] < 0) {
+				Rj[rnz] = xj[px];
+				Rx[rnz] = x[xj[px]];
+				rnz++;
+			}
+		}
+
+	}
+	Rp[u_n] = rnz;
+	fprintf(stderr, "\n");
+	
+
+	/* check */
+	for (int j = 0; j < m; j++)
+		qinv[j] = -1;
+	for (int i = 0; i < u_n; i++)
+		qinv[Uj[Up[i]]] = i;
+
+	for (int i = 0; i < u_n; i++) {
+		assert(qinv[Rj[Rp[i]]] == i);
+		int found = 0;
+		for (int px = Rp[i]; px < Rp[i + 1]; px++) {
+			found |= Rj[px] == Uj[Up[i]];
+			if (qinv[Rj[px]] != -1)
+				assert(qinv[Rj[px]] == i);
+		}
+		assert(found);
+	}
 	spasm_csr_free(U);
-	//spasm_save_csr(A_start);
+
+	for (int i = 0; i < u_n; i++)
+		qinv[Rj[Rp[p[i]]]] = i;
+
+	spasm *S = spasm_permute(R, p, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
 	free(p);
+	spasm_csr_free(R);
+
+	spasm_human_format(spasm_nnz(S), nnz);
+	fprintf(stderr, "done in %.3f s. NNZ(R) = %s\n", spasm_wtime() - start_time, nnz);
+	
+	spasm_save_csr(stdout, S);
+	spasm_csr_free(S);
+	//spasm_save_csr(A_start);
 	free(qinv);
+	free(x);
+	free(xj);
 	return 0;
 }
