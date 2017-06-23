@@ -1,4 +1,3 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut pluq.c */
 #include <stdio.h>
 #include <assert.h>
 #include <getopt.h>
@@ -10,17 +9,15 @@ extern int64 reach, scatter, data_shuffling;
 #endif
 
 /** computes a PLUQ decomposition. U is always saved in a file named U.sms.
- *  If the keep-L option is provided, then L is also saved in L.sms */
+ *  If the keep-L option is provided, then L is also saved in L.sms.
+ *
+ * This is still suboptimal: the spasm_lu function should detect pre-existing pivots
+ */
 
 int main(int argc, char **argv) {
-	spasm_triplet *T;
-	spasm *A, *U, *L;
-	spasm_lu *PLUQ;
-	int r, n, m, *p, *qinv, ch, prime, keep_L;
-	double start_time, end_time;
-
-	prime = 42013;
-	keep_L = 0;
+	int prime = 42013;
+	int keep_L = 0;
+	int allow_transpose = 1;
 
 	/* options descriptor */
 	struct option longopts[6] = {
@@ -30,8 +27,12 @@ int main(int argc, char **argv) {
 		{NULL, 0, NULL, 0}
 	};
 
+	char ch;
 	while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
 		switch (ch) {
+		case 'a':
+			allow_transpose = 0;
+			break;
 		case 'p':
 			prime = atoi(optarg);
 			break;
@@ -46,34 +47,55 @@ int main(int argc, char **argv) {
 	argc -= optind;
 	argv += optind;
 
-	T = spasm_load_sms(stdin, prime);
+	spasm_triplet *T = spasm_load_sms(stdin, prime);
 	printf("A : %d x %d with %d nnz (density = %.3f %%) -- loaded modulo %d\n", T->n, T->m, T->nz, 100.0 * T->nz / (1.0 * T->n * T->m), prime);
-	if (T->n < T->m) {
+	int transpose = allow_transpose && (T->n < T->m);
+	keep_L |= transpose;
+	if (transpose) {
 		printf("[pluq] transposing matrix\n");
 		spasm_triplet_transpose(T);
 	}
-	A = spasm_compress(T);
+	spasm *A = spasm_compress(T);
 	spasm_triplet_free(T);
-	n = A->n;
-	m = A->m;
+	int n = A->n;
+	int m = A->m;
 
-	p = NULL;
-	start_time = spasm_wtime();
-	p = spasm_malloc(n * sizeof(int));
-	qinv = spasm_malloc(m * sizeof(int));
-	spasm_find_pivots(A, p, qinv);
+	double start_time = spasm_wtime();
+	int *p = spasm_malloc(n * sizeof(int));
+	int *qinv = spasm_malloc(m * sizeof(int));
+	int npiv = spasm_find_pivots(A, p, qinv);
+	spasm_make_pivots_unitary(A, p, npiv);
 
-	PLUQ = spasm_PLUQ(A, p, keep_L);
-	end_time = spasm_wtime();
+	/* check that pivots are permuted correctly */
+	int *Ap = A->p;
+	int *Aj = A->j;
+	for (int j = 0; j < m; j++)
+		qinv[j] = -1;
+	
+	for (int i = 0; i < npiv; i++) {		
+		int I = p[i];
+		for (int px = Ap[I]; px < Ap[I + 1]; px++)
+			assert(qinv[Aj[px]] == -1);
+		qinv[Aj[Ap[I]]] = I;
+	}
+
+	spasm_lu *PLUQ = spasm_PLUQ(A, p, keep_L);
 	printf("\n");
 
-	U = PLUQ->U;
-	r = U->n;
-
-	printf("LU factorisation (+ sort took) %.2f s\n", end_time - start_time);
-	printf("U :  %d x %d with %d nnz (density = %.1f %%)\n", r, m, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0 * r * m - r * r / 2.0));
-	if (PLUQ->L != NULL) {
+	spasm *U = NULL;
+	spasm *L = NULL;
+	if (!transpose) {
 		L = PLUQ->L;
+		U = PLUQ->U;
+	} else {
+		L = spasm_transpose(PLUQ->U, SPASM_WITH_NUMERICAL_VALUES);
+		U = spasm_transpose(PLUQ->L, SPASM_WITH_NUMERICAL_VALUES);
+	}
+	int r = U->n;
+
+	printf("LU factorisation took %.2f s\n", spasm_wtime() - start_time);
+	printf("U :  %d x %d with %d nnz (density = %.1f %%)\n", r, m, spasm_nnz(U), 100.0 * spasm_nnz(U) / (1.0 * r * m - r * r / 2.0));
+	if (L != NULL) {
 		printf("L :  %d x %d with %d nnz (density =%.1f %%)\n", L->n, r, spasm_nnz(L), 100.0 * spasm_nnz(L) / (1.0 * r * n - r * r / 2.0));
 		FILE *f = fopen("L.sms", "w");
 		spasm_save_csr(f, L);

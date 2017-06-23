@@ -127,10 +127,7 @@ int spasm_early_abort(const spasm * A, const int *p, int k, const spasm * U, int
 spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 	spasm *L, *U;
 	spasm_lu *N;
-	spasm_GFp *Lx, *Ux, *x;
-	int *Lp, *Lj, *Up, *Uj, *p, *qinv, *xj;
-	int i, jpiv, top, lnz, unz, old_unz, defficiency, verbose_step;
-	int rows_since_last_pivot, early_abort_done;
+	
 
 #ifdef SPASM_TIMING
 	uint64_t start;
@@ -141,39 +138,45 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 
 	int n = A->n;
 	int m = A->m;
+	int *Ap = A->p;
+	int *Aj = A->j;
+	spasm_GFp *Ax = A->x;
+
 	int r = spasm_min(n, m);
 	int prime = A->prime;
-	defficiency = 0;
-	verbose_step = spasm_max(1, n / 1000);
+	int defficiency = 0;
+	int verbose_step = spasm_max(1, n / 1000);
 
 	/* educated guess of the size of L,U */
-	lnz = 4 * spasm_nnz(A) + n;
-	unz = 4 * spasm_nnz(A) + n;
+	int lnz = 4 * spasm_nnz(A) + n;
+	int unz = 4 * spasm_nnz(A) + n;
 
 	/* workspace */
-	x = spasm_malloc(m * sizeof(spasm_GFp));
-	xj = spasm_malloc(3 * m * sizeof(int));
+	int *x = spasm_malloc(m * sizeof(spasm_GFp));
+	int *xj = spasm_malloc(3 * m * sizeof(int));
 	
 
 	/* allocate result */
 	N = spasm_malloc(sizeof(spasm_lu));
 	N->L = L = (keep_L) ? spasm_csr_alloc(n, r, lnz, prime, true) : NULL;
 	N->U = U = spasm_csr_alloc(r, m, unz, prime, true);
-	N->qinv = qinv = spasm_malloc(m * sizeof(int));
-	N->p = p = spasm_malloc(n * sizeof(int));
-
-	Lp = (keep_L) ? L->p : NULL;
-	Up = U->p;
+	N->qinv = spasm_malloc(m * sizeof(int));
+	N->p = spasm_malloc(n * sizeof(int));
+	int *qinv = N->qinv;
+	int *p = N->p;
+	int *Lp = (keep_L) ? L->p : NULL;
+	int *Up = U->p;
 
 	spasm_vector_set(qinv, 0, m, -1);
 	spasm_vector_zero(xj, 3 * m);
-	old_unz = lnz = unz = 0;
+	int old_unz = lnz = unz = 0;
 
 	/* initialize early abort */
-	rows_since_last_pivot = 0;
-	early_abort_done = 0;
+	int rows_since_last_pivot = 0;
+	int early_abort_done = 0;
 
 	/* --- Main loop : compute L[i] and U[i] ------------------- */
+	int i;
 	for (i = 0; i < n; i++) {
 		if (!keep_L && i - defficiency == r) {
 			fprintf(stderr, "\n[LU] full rank reached ; early abort\n");
@@ -199,19 +202,50 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 			spasm_csr_realloc(L, 2 * L->nzmax + m);
 		if (unz + m > U->nzmax)
 			spasm_csr_realloc(U, 2 * U->nzmax + m);
-		Lj = (keep_L) ? L->j : NULL;
-		Lx = (keep_L) ? L->x : NULL;
-		Uj = U->j;
-		Ux = U->x;
+		int *Lj = (keep_L) ? L->j : NULL;
+		spasm_GFp *Lx = (keep_L) ? L->x : NULL;
+		int *Uj = U->j;
+		spasm_GFp *Ux = U->x;
 
 		int inew = (row_permutation != NULL) ? row_permutation[i] : i;
-		top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
+
+		/* check if the row can be taken directly into U */
+		int directly_pivotal = (Ap[inew + 1] > Ap[inew]) && (Ax[Ap[inew]] == 1);
+		if (directly_pivotal)
+			for (int px = Ap[inew]; px < Ap[inew + 1]; px++)
+				if (qinv[Aj[px]] != -1) {
+					directly_pivotal = 0;
+					break;
+				}
+		if (directly_pivotal) {
+			// fprintf(stderr, "U[%d] <-- FREE ROW %d\n", i-defficiency, inew);
+			qinv[Aj[Ap[inew]]] = i - defficiency;
+			p[i - defficiency] = i;
+			if (keep_L) {
+				Lj[lnz] = i - defficiency;
+				Lx[lnz] = 1;
+				lnz++;
+			}
+			for (int px = Ap[inew]; px < Ap[inew + 1]; px++) {
+				Uj[unz] = Aj[px];
+				Ux[unz] = Ax[px];
+				// printf("setting Ux[%d] = %d\n", unz, Ax[px]);
+				unz++;
+			}
+			rows_since_last_pivot = 0;
+			early_abort_done = 0;
+			//assert(Uj[Up[i - defficiency]] == Aj[Ap[inew]]);
+			//assert(Ux[Up[i - defficiency]] == Ax[Ap[inew]]);
+			continue;
+		}
+
+		int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
 
 		/* --- Find pivot and dispatch coeffs into L and U ------ */
 #ifdef SPASM_TIMING
 		start = spasm_ticks();
 #endif
-		jpiv = -1;	/* column index of best pivot so far. */
+		int jpiv = -1;	/* column index of best pivot so far. */
 
 
 		for (int px = top; px < m; px++) {
