@@ -1,4 +1,3 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut rank_gplu.c */
 #include <stdio.h>
 #include <assert.h>
 #include <getopt.h>
@@ -35,18 +34,18 @@ int main() {
 	start = spasm_wtime();
 	r = 0;
 
-#pragma omp parallel
+	#pragma omp parallel
 	{
 		spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
 
-#pragma omp for schedule(dynamic, 1)
+		#pragma omp for schedule(dynamic, 1)
 		for (int i = 0; i < n; i++) {
 			spasm_vector_zero(x, m);
 			for (int px = Ap[i]; px < Ap[i + 1]; px++)
 				x[Aj[px]] = Ax[px];
 
 			if (spasm_dense_LU_process(LU, x))
-#pragma omp atomic update
+				#pragma omp atomic update
 				r++;
 
 			if (tid == 0) {

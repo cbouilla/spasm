@@ -1,4 +1,3 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut rank_gplu.c */
 #include <stdio.h>
 #include <assert.h>
 #include <getopt.h>
@@ -10,6 +9,9 @@ extern int64 reach, scatter, data_shuffling;
 #endif
 #include <signal.h>
 #include <setjmp.h>
+#include <unistd.h>
+
+/* computes the rank of the input matrix via a LU factorization using the GPLU algorithm */
 
 
 jmp_buf Env;

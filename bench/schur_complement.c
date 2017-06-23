@@ -1,4 +1,3 @@
-/* indent -nfbs -nip -npsl -di0 schur_complement.c */
 #include <assert.h>
 #include <stdio.h>
 #include "spasm.h"

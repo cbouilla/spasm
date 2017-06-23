@@ -34,3 +34,4 @@ bench/demo_cheap
 bench/vertical_swap
 bench/jobs/*
 result/*
+build/*

@@ -5,39 +5,7 @@
 #include <math.h>
 #include "spasm.h"
 
-#if 0
 /** computes a Dulmage-Mendelson decomposition */
-
-void show(const spasm * M, spasm_cc * Y) {
-    int i, j, a, b, c, d, e, f, g, h, r;
-
-    for (i = 0; i < Y->CC->nr; i++) {
-        a = Y->CC->rr[i];
-        b = Y->CC->cc[i];
-        c = Y->CC->rr[i + 1];
-        d = Y->CC->cc[i + 1];
-
-        printf("   *) Connected component (%d x %d) --- (%d, %d) to (%d, %d)\n", c - a, d - b, a, b, c, d);
-        if (Y->SCC[i] != NULL) {
-            for (j = 0; j < Y->SCC[i]->nr; j++) {
-                e = Y->SCC[i]->rr[j];
-                f = Y->SCC[i]->cc[j];
-                g = Y->SCC[i]->rr[j + 1];
-                h = Y->SCC[i]->cc[j + 1];
-                r = 0; // subrank(M, e, f, g, h);
-                if (g - e > 1) {
-                    nontrivial_diag_size += g - e;
-                    nontrivial_diag_rank += r;
-                }
-                if (g - e > 1) {
-                    trivial_diag_rank += 1;
-                }
-                printf("       *) SCC (%d x %d, deffect %d) --- (%d, %d) to (%d, %d)\n", g - e, h - f, spasm_min(g - e, h - f) - r, e, f, g, h);
-            }
-        }
-    }
-}
-#endif
 
 int main(int argc, char **argv) {
     int ch;
@@ -48,7 +16,7 @@ int main(int argc, char **argv) {
         {"permuted", no_argument, NULL, 'p'},
         {"verbose", no_argument, NULL, 'v'},
         {"tabulated", no_argument, NULL, 't'},
-        {"image", required_argument, NULL, 'i'},
+        {"image", no_argument, NULL, 'i'},
         {NULL, 0, NULL, 0}
     };
 

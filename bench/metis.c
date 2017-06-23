@@ -1,4 +1,3 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut metis.c */
 #include <stdio.h>
 #include <assert.h>
 #include "spasm.h"

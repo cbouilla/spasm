@@ -1,10 +1,9 @@
-/* indent -nfbs -nip -npsl -di0 rank_hybrid.c */
 #include <assert.h>
 #include <stdio.h>
 #include "spasm.h"
 #include <getopt.h>
 
-/** Computes the rank of the input matrix using the hybrid strategy */
+/** Computes the rank of the input matrix using the hybrid strategy described in [PASCO'17] */
 int main(int argc, char **argv) {
 
 	/* charge la matrice depuis l'entrée standard */

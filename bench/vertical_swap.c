@@ -2,6 +2,8 @@
 #include <assert.h>
 #include "spasm.h"
 
+/* permute the columns to flip the matrix */
+
 int main() {
 	spasm_triplet *A;
 	int m, nz;

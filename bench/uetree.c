@@ -3,6 +3,7 @@
 #include <getopt.h>
 #include "spasm.h"
 
+/* computes an unsymmetric elimination tree and permute the rows and columns of a (square) matrix according to it */
 
 int main(int argc, char **argv) {
 	int prime = 42013;

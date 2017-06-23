@@ -3,6 +3,10 @@
 #include <assert.h>
 #include "spasm.h"
 
+/* computes a basis of the left-kernel of the input matrix,
+   i.e. the subspace K = { x | x.M == 0 }
+*/
+
 int main(int argc, char **argv) {
 	spasm_triplet *T;
 	spasm *A, *A_t, *K, *A_clean;
