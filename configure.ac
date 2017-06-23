@@ -1,4 +1,4 @@
-AC_INIT([spasm],[1.1],[charles.bouillaguet@univ-lille1.fr])
+AC_INIT([spasm],[1.2],[charles.bouillaguet@univ-lille1.fr])
 AC_PREREQ([2.69])
 #AC_CANONICAL_HOST
 AC_CONFIG_AUX_DIR([build-aux])

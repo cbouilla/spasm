@@ -4,20 +4,21 @@ SpaSM (Sparse direct Solver Modulo _p_)
 SpaSM is a software library devoted to sparse gaussian elimination modulo a small prime _p_. 
 It is available under the General Public License Version 2 or later (GPLv2+).
 
-The algorithms used in SpaSM are described in [this paper](http://cristal.univ-lille.fr/~bouillag/pub/CASC16.pdf). For more information, consult the [SpaSM homepage](http://cristal.univ-lille.fr/~bouillag/spasm).
+The algorithms used in SpaSM are described in [CASC'16](http://cristal.univ-lille.fr/~bouillag/pub/CASC16.pdf) and [PASCO'16](http://cristal.univ-lille.fr/~bouillag/pub/PASCO16.pdf). For more information, consult the [SpaSM homepage](http://cristal.univ-lille.fr/~bouillag/spasm).
 
 Features
 --------
 
 The core of the library is an implementation of the GPLU algorithm, heavily inspired by 
 [Tim Davis](http://faculty.cse.tamu.edu/davis/)'s [CSparse](http://faculty.cse.tamu.edu/davis/publications_files/CSparse.zip), and 
-adapted to the context of exact computation. On top of this, we designed a hybrid left-and-right looking algorithm. 
+adapted to the context of exact computation. On top of this, we designed new strategies to search for structural pivots. 
 This allows several kind of useful operations on sparse matrices:
   * LU and PLUQ factorization
   * Rank computation
   * Solution of linear systems
   * Kernel basis
   * Permutation to block triangular form
+  * Reduced Row-Echelon Form
 
 Finally, the library does I/O of matrices in [SMS format](http://hpac.imag.fr/), which makes it 
 somewhat compatible with [LinBox](http://linalg.org/).
@@ -84,8 +85,8 @@ If by any luck your research depends on the SpaSM library, please consider citin
 @manual{spasm,
 title = {{SpaSM}: a Sparse direct Solver Modulo $p$},
 author = {The SpaSM group},
-edition = {v1.0},
-year = {2016},
+edition = {v1.2},
+year = {2017},
 note = {\url{http://github.com/cbouilla/spasm}}
 }
 ```
