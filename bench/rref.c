@@ -1,20 +1,19 @@
 #include <assert.h>
 #include <stdio.h>
-#include "spasm.h"
 #include <getopt.h>
+
+#include "spasm.h"
 
 /** Computes the rank of the input matrix using the hybrid strategy */
 int main(int argc, char **argv)
 {
 	char nnz[6];
-	int allow_transpose = 1;	/* transpose ON by default */
 	int n_times = 3;
 	int prime = 42013;
 
 	/* options descriptor */
 	struct option longopts[7] = {
 		{"max-recursion", required_argument, NULL, 'm'},
-		{"no-transpose", no_argument, NULL, 'a'},
 		{"modulus", required_argument, NULL, 'p'},
 		{NULL, 0, NULL, 0}
 	};
@@ -24,9 +23,6 @@ int main(int argc, char **argv)
 		switch (ch) {
 		case 'm':
 			n_times = atoi(optarg);
-			break;
-		case 'a':
-			allow_transpose = 0;
 			break;
 		case 'p':
 			prime = atoi(optarg);
@@ -41,15 +37,8 @@ int main(int argc, char **argv)
 
 
 	spasm_triplet *T = spasm_load_sms(stdin, prime);
-	if (allow_transpose && (T->n < T->m)) {
-		fprintf(stderr, "[rank] transposing matrix : ");
-		fflush(stderr);
-		double start_time = spasm_wtime();
-		spasm_triplet_transpose(T);
-		fprintf(stderr, "%.1f s\n", spasm_wtime() - start_time);
-	}
 	spasm *A = spasm_compress(T);
-	// spasm *A_start = spasm_compress(T);
+
 	spasm_triplet_free(T);
 	int n = A->n;
 	int m = A->m;
@@ -157,7 +146,7 @@ int main(int argc, char **argv)
 	assert(k == u_n);
 
 	/* build the RREF */
-	spasm *R = spasm_csr_alloc(u_n, m, spasm_nnz(U), A->prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *R = spasm_csr_alloc(u_n, m, spasm_nnz(U), U->prime, SPASM_WITH_NUMERICAL_VALUES);
 	int *Rp = R->p;
 	int *Rj = R->j;
 	int *Rx = R->x;	
