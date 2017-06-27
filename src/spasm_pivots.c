@@ -1,12 +1,16 @@
-/* indent -nfbs  -nip -npsl -di0 spasm_sort.c */
 #include <assert.h>
 #include "spasm.h"
 
+/* test if a pivot has already been found on row i (if so, it's the first entry of the row ) */
 int spasm_is_row_pivotal(const spasm * A, const int *qinv, const int i) {
 	int *Ap, *Aj;
 
 	Ap = A->p;
 	Aj = A->j;
+
+	/* test for empty row before reading Aj[px] --- it crashes when the last row is empty */
+	if (Ap[i + 1] == Ap[i])
+		return 0;
 	return (qinv[Aj[Ap[i]]] == i);
 }
 
