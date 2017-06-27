@@ -43,10 +43,6 @@ void spasm_triplet_transpose(spasm_triplet * T) {
 
 /* C = compressed-row form of a triplet matrix T */
 spasm *spasm_compress(const spasm_triplet * T) {
-	int sum, *w;
-	spasm *C;
-	double start;
-
 	int m = T->m;
 	int n = T->n;
 	int nz = T->nz;
@@ -55,15 +51,15 @@ spasm *spasm_compress(const spasm_triplet * T) {
 	spasm_GFp *Tx = T->x;
 	
 
-	start = spasm_wtime();
+	double start = spasm_wtime();
 	fprintf(stderr, "[CSR] Compressing... ");
 	fflush(stderr);
 
 	/* allocate result */
-	C = spasm_csr_alloc(n, m, nz, T->prime, Tx != NULL);
+	spasm *C = spasm_csr_alloc(n, m, nz, T->prime, Tx != NULL);
 
 	/* get workspace */
-	w = spasm_calloc(n, sizeof(int));
+	int *w = spasm_calloc(n, sizeof(int));
 	int *Cp = C->p;
 	int *Cj = C->j;
 	spasm_GFp *Cx = C->x;
@@ -73,7 +69,7 @@ spasm *spasm_compress(const spasm_triplet * T) {
 		w[Ti[k]]++;
 
 	/* compute row pointers (in both Cp and w) */
-	sum = 0;
+	int sum = 0;
 	for (int k = 0; k < n; k++) {
 		Cp[k] = sum;
 		sum += w[k];
@@ -83,7 +79,7 @@ spasm *spasm_compress(const spasm_triplet * T) {
 
 	/* dispatch entries */
 	for (int k = 0; k < nz; k++) {
-		int px = w[Ti[k]]++;	/* A(i,j) is the p-th entry in C */
+		int px = w[Ti[k]]++;	/* A(i,j) is the px-th entry in C */
 		Cj[px] = Tj[k];
 		if (Cx != NULL)
 			Cx[px] = Tx[k];

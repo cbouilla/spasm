@@ -218,7 +218,6 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 					break;
 				}
 		if (directly_pivotal) {
-			// fprintf(stderr, "U[%d] <-- FREE ROW %d\n", i-defficiency, inew);
 			qinv[Aj[Ap[inew]]] = i - defficiency;
 			p[i - defficiency] = i;
 			if (keep_L) {
@@ -229,13 +228,10 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 			for (int px = Ap[inew]; px < Ap[inew + 1]; px++) {
 				Uj[unz] = Aj[px];
 				Ux[unz] = Ax[px];
-				// printf("setting Ux[%d] = %d\n", unz, Ax[px]);
 				unz++;
 			}
 			rows_since_last_pivot = 0;
 			early_abort_done = 0;
-			//assert(Uj[Up[i - defficiency]] == Aj[Ap[inew]]);
-			//assert(Ux[Up[i - defficiency]] == Ax[Ap[inew]]);
 			continue;
 		}
 
