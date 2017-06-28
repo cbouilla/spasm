@@ -97,7 +97,9 @@ int main(int argc, char **argv) {
 			break;
 
 		/* compute schur complement, update matrix */
-		B = spasm_schur(A, p, qinv, npiv, density, 1);
+		B = spasm_schur(A, p, npiv, density, 0, NULL);
+		spasm_stack_nonpivotal_columns(B, qinv);
+
 		spasm_csr_free(A);
 		A = B;
 		rank += npiv;

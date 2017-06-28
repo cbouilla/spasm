@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 		Up[u_n] = u_nnz;
 
 		/* compute schur complement, update matrix */
-		spasm *B = spasm_schur(A, p, qinv, npiv, -1, 0);
+		spasm *B = spasm_schur(A, p, npiv, -1, 0, NULL);
 		spasm_csr_free(A);
 		A = B;
 	}

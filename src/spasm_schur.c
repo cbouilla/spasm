@@ -24,11 +24,32 @@ void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
 	}
 }
 
+/* keep only non-pivotal columns are renumber them starting from 0 */
+void spasm_stack_nonpivotal_columns(spasm *A, int *qinv)
+{
+	int n = A->n;
+	int m = A->m;
+	int *Ap = A->p;
+	int *Aj = A->j;
+	int *q = spasm_malloc(m * sizeof(int));
+	int k = 0;
+	for (int j = 0; j < m; j++)
+		q[j] = (qinv[j] < 0) ? k++ : -1;
+
+	#pragma omp parallel for
+	for (int px = 0; px < Ap[n]; px++) {
+		Aj[px] = qinv[Aj[px]];
+		assert(Aj[px] >= 0);
+	}
+	A->m = k;
+}
+
+
 /*
  * Computes the Schur complement, by eliminating the pivots located on rows
  * p[0] ... p[n_pivots-1] of input matrix A. 
  *
- * non-pivotal rows are p[n_pivots] ... p[n]
+ * non-pivotal rows are p[to] ... p[n]
  *
  * The pivots must be the first entries on the lines.
  *
@@ -37,43 +58,38 @@ void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
  * This returns a sparse representation of S. 
  *
  * If the estimated density is unknown, set it to -1: it will be evaluated
- *
- * If stack, then columns of the output are numbered [0:m - n_pivots], else their numbers are untouched
  */
-spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, double est_density, int stack) {
-	int k, snz, *q, writing;
-	double start;
-	spasm *S;
-
+spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, int *p_out)
+{
 	const int n = A->n;
 	const int m = A->m;
-	const int Sm = stack ? (m - npiv) : m;
+	const int Sm = m;
 	const int Sn = n - npiv;
 	const int verbose_step = spasm_max(1, n / 1000);
 	
-	/*
-	 * q sends the non-pivotal columns of A to the columns of S. It is
-	 * not the inverse of qinv...
-	 */
-	q = spasm_malloc(m * sizeof(int));
-	k = 0;
+	/* initialize qinv */
+	int *Aj = A->j;
+	int *Ap = A->p;
+	int *qinv = spasm_malloc(m * sizeof(int));
 	for (int j = 0; j < m; j++)
-		if (stack)
-			q[j] = (qinv[j] < 0) ? k++ : -1;
-		else
-			q[j] = (qinv[j] < 0) ? j : -1;	
+		qinv[j] = -1;
+	for (int k = 0; k < npiv; k++) {
+		int i = p[k];
+		int j = Aj[Ap[i]];
+		qinv[j] = i;
+	}
 
 	if (est_density < 0)
 		est_density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
 
-	S = spasm_csr_alloc(Sn, Sm, (est_density*Sn)*Sm, A->prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *S = spasm_csr_alloc(Sn, Sm, (est_density*Sn)*Sm, A->prime, SPASM_WITH_NUMERICAL_VALUES);
 	int *Sp = S->p;
 	int *Sj = S->j;
 	spasm_GFp *Sx = S->x;
-	snz = 0;
-	k = 0;
-	writing = 0;
-	start = spasm_wtime();
+	int snz = 0;
+	int k = 0;
+	int writing = 0;
+	double start = spasm_wtime();
 
 #pragma omp parallel
 	{
@@ -91,7 +107,7 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, dou
 			row_snz = 0;
 			for (int px = top; px < m; px++) {
 				const int j = xj[px];
-				if ((q[j] >= 0) && (x[j] != 0))
+				if ((keep_L || (qinv[j] < 0)) && (x[j] != 0))
 					row_snz++;
 			}
 
@@ -115,13 +131,15 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, dou
 				#pragma omp atomic update
 				writing++;
 			}
+			if (p_out)
+				p_out[row_k] = inew;
 			
 			/* write the new row in S */
 			Sp[row_k] = row_px;
 			for (int px = top; px < m; px++) {
 				const int j = xj[px];
-				if ((q[j] >= 0) && (x[j] != 0)) {
-					Sj[row_px] = q[j];
+				if ((keep_L || (qinv[j] < 0)) && (x[j] != 0)) {
+					Sj[row_px] = j;
 					Sx[row_px++] = x[j];
 				}
 			}
@@ -143,7 +161,8 @@ spasm *spasm_schur(spasm * A, const int *p, const int *qinv, const int npiv, dou
 	spasm_csr_realloc(S, -1);
 	double density = 1.0 * snz / (1.0 * Sm * Sn);
 	fprintf(stderr, "\rSchur complement: %d * %d [%d NNZ / density= %.3f], %.1fs\n", Sn, Sm, snz, density, spasm_wtime() - start);
-	free(q);
+	
+	free(qinv);
 	return S;
 }
 
@@ -156,6 +175,9 @@ double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const
 	int nnz = 0;
 	const int m = A->m;
 	const int n = A->n;
+
+	if (m == npiv || n == npiv)
+		return 0.0;
 
 #pragma omp parallel 
 	{

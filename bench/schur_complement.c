@@ -33,8 +33,9 @@ int main() {
 	spasm_human_format(sizeof(int) * (n - npiv + nnz) + sizeof(spasm_GFp) * nnz, tmp);
 	fprintf(stderr, "Schur complement: (%d x %d), estimated density : %.4f (%s byte)\n", n - npiv, m - npiv, schur_density, tmp);
 
-	/* go for it */
-	S = spasm_schur(A, p, qinv, npiv, schur_density, 1);
+	/* go for it, don't keep L */
+	S = spasm_schur(A, p, npiv, schur_density, 0, NULL);
+	spasm_stack_nonpivotal_columns(A, qinv);
 
 	spasm_save_csr(stdout, S);
 	free(p);
