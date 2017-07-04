@@ -5,6 +5,7 @@
 
 #include "spasm.h"
 
+/* so far, this checks that the U matrix is in REF, and that rowspan(A) is included in rowspan(U) */
 int * echelon_form_check(spasm *U)
 {
 	int m = U->m;
@@ -123,68 +124,6 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 	fprintf(stderr, "\n");
 }
 
-#if 0
-
-// this requires L
-void probabilistic_rank_test(spasm *A, spasm *U, int *qinv, int n_iterations)
-{
-	fprintf(stderr, "---> Checking that rank(A) >= rank(U) [probabilistic, %d iterations]...\n", n_iterations);
-	
-	int prime = A->prime;
-	int n = A->n;
-	int m = A->m;
-	int r = U->n;
-	int *Ap = A->p;
-	int *Aj = A->j;
-	spasm_GFp *Ax = A->x;
-	int *Up = U->p;
-	int *Uj = U->j;
-	spasm_GFp *Ux = U->x;
-
-	int done = 0;
-	#pragma omp parallel
-	{
-		int tid = spasm_get_thread_num();
-		spasm_GFp *x = spasm_malloc(n * sizeof(spasm_GFp));
-		spasm_GFp *y = spasm_malloc(m * sizeof(spasm_GFp));
-		spasm_GFp *xi = spasm_malloc(n * sizeof(spasm_GFp));
-
-		#pragma omp for schedule(dynamic, 1)
-		for (int k = 0; k < n_iterations; k++) {
-			/* x <--- random linear combination of r rows of A */
-			for (int i = 0; i < n; i++)
-				xi[i] = i;
-			for (int i = 0; i < r; i++)
-				spasm_swap(xi, n-1-i, rand() % (n-1-i));
-			for (int j = 0; j < m; j++)
-				y[j] = 0;
-			for (int i = 0; i < r; i++) {
-				int I = xi[n-1-i];
-				x[I] = rand() % prime;
-				spasm_scatter(Aj, Ax, Ap[I], Ap[I + 1], x[I], y, prime);
-			}
-			/* eliminate everything in y */
-			for (int i = 0; i < r; i++) {
-				int j = Uj[Up[i]];
-				if (y[j] == 0)
-					continue
-				if (y[j] != x[i]
-				errx(1, "rowspan(A) not included in rowspan(U)! (--deterministic gives a more precise diagnostic)\n");		
-				spasm_scatter(Uj, Ux, Up[i], Up[i + 1], prime - y[j], y, prime);
-			}
-			
-			done++;
-
-			if (tid == 0) {
-				fprintf(stderr, "\r%d/%d linear combinations checked", done, n_iterations);
-				fflush(stderr);
-			}
-		}
-		free(x);
-	}
-	fprintf(stderr, "\n");
-}
-#endif
 
 spasm *load_matrix(char *filename, int prime)
 {
@@ -242,7 +181,7 @@ int main(int argc, char **argv)
 	argv += optind;
 
 	if (!A_filename || !U_filename) {
-		printf("USAGE: %s --A [filename.sms] --U [filename.sms] (--modulus [42013])\n", argv[0]);
+		printf("USAGE: %s --A [filename.sms] --U [filename.sms] (--modulus [42013]) (--deterministic)\n", argv[0]);
 		exit(1);
 	}
 

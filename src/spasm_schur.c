@@ -95,7 +95,7 @@ spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, 
 	{
 		spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
 		int *xj = spasm_malloc(3 * m * sizeof(int));
-		spasm_vector_zero(xj, 3 * m);		
+		spasm_vector_zero(xj, 3 * m);
 		int tid = spasm_get_thread_num();
 		int row_snz, row_k, row_px;
 

@@ -140,13 +140,6 @@ int main(int argc, char **argv)
 	U->n = u_n;
 	spasm_free_LU(LU);
 
-	/* check */
-	for (int j = 0; j < m; j++)
-		qinv[j] = -1;
-
-	for (int i = 0; i < u_n; i++)
-		assert(qinv[Uj[Up[i]]] == -1);
-
 	spasm_human_format(spasm_nnz(U), nnz);
 	fprintf(stderr, "LU factorization done in %.3f s. NNZ(U) = %s. rank = %d\n", spasm_wtime() - start_time, nnz, u_n);
 	
