@@ -1,4 +1,3 @@
-/* indent -nfbs -nip -npsl -di0 spasm_schur.c  */
 #include <assert.h>
 #include "spasm.h"
 
@@ -10,15 +9,12 @@ void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
 
 #pragma omp parallel for
 	for (int i = 0; i < npiv; i++) {
-		int inew;
-		spasm_GFp diag, alpha;
-
-		inew = p[i];
-		diag = Ax[Ap[inew]];
+		int inew = p ? p[i] : i;
+		spasm_GFp diag = Ax[Ap[inew]];
 		if (diag == 1)
 			continue;
 
-		alpha = spasm_GFp_inverse(diag, prime);
+		spasm_GFp alpha = spasm_GFp_inverse(diag, prime);
 		for (int px = Ap[inew]; px < Ap[inew + 1]; px++)
 			Ax[px] = (alpha * Ax[px]) % prime;
 	}

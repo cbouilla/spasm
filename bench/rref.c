@@ -57,13 +57,6 @@ int main(int argc, char **argv)
 		qinv[Uj[Up[i]]] = i;
 	}
 
-	/* build p to order the rows */
-	int k = 0;
-	for (int j = 0; j < m; j++)
-		if (qinv[j] >= 0)
-			p[k++] = qinv[j];
-	assert(k == n);
-
 	/* build the RREF. This code is similar to src/spasm_schur.c ---> in bad need of factorization */
 	spasm *R = spasm_csr_alloc(n, m, spasm_nnz(U), U->prime, SPASM_WITH_NUMERICAL_VALUES);
 	int *Rp = R->p;
@@ -71,7 +64,7 @@ int main(int argc, char **argv)
 	int *Rx = R->x;	
 	int rnz = 0;
 	int writing = 0;
-	k = 0;
+	int k = 0;
 
 	#pragma omp parallel
 	{
@@ -158,12 +151,19 @@ int main(int argc, char **argv)
 	} /* parallel section */
 	Rp[n] = rnz;
 	fprintf(stderr, "\n");
-	
 	spasm_csr_free(U);
 
-	/*for (int i = 0; i < u_n; i++)
-		qinv[Rj[Rp[p[i]]]] = i;*/
-
+	/* build p to order the rows */
+	for (int j = 0; j < m; j++)
+		qinv[j] = -1;
+	for (int i = 0; i < n; i++)
+		qinv[Rj[Rp[i]]] = i;
+	k = 0;
+	for (int j = 0; j < m; j++)
+		if (qinv[j] >= 0)
+			p[k++] = qinv[j];
+	assert(k == n);
+	
 	spasm *S = spasm_permute(R, p, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
 	free(p);
 	spasm_csr_free(R);
