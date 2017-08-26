@@ -20,7 +20,7 @@ void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
 	}
 }
 
-/* keep only non-pivotal columns are renumber them starting from 0 */
+/* keep only non-pivotal columns and renumber them starting from 0 */
 void spasm_stack_nonpivotal_columns(spasm *A, int *qinv)
 {
 	int n = A->n;
@@ -35,7 +35,7 @@ void spasm_stack_nonpivotal_columns(spasm *A, int *qinv)
 	#pragma omp parallel for
 	for (int px = 0; px < Ap[n]; px++) {
 		Aj[px] = qinv[Aj[px]];
-		assert(Aj[px] >= 0);
+		assert(Aj[px] < 0);
 	}
 	A->m = k;
 }
