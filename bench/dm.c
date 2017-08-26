@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
         {"permuted", no_argument, NULL, 'p'},
         {"verbose", no_argument, NULL, 'v'},
         {"tabulated", no_argument, NULL, 't'},
-        {"image", no_argument, NULL, 'i'},
+        {"image", required_argument, NULL, 'i'},
         {NULL, 0, NULL, 0}
     };
 
