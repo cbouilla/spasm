@@ -1,4 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
+AM_LDFLAGS = -lm
 
 libspasm_LTLIBRARIES = libspasm.la
 libspasmdir = $(libdir)
