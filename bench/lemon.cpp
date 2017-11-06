@@ -66,8 +66,8 @@ int main() {
 	for (int i = 0; i < n; i++) 
 		if (!p[i] && matcher.mate(V[i]) != INVALID) {
 			int v = index[matcher.mate(V[i])];
-			q[j] = i;
-			q[2*k-1 - j] = v;
+			q[2*j] = i;
+			q[2*j + 1] = v;
 			p[j] = 1;
 			p[v] = 1;
 			j++;
@@ -82,6 +82,11 @@ int main() {
 	}
 	assert(j == n);
 
+	FILE *perm = fopen("permutation.txt", "w");
+	for (int i = 0; i < n; i++)
+		fprintf(perm, "%d\n", q[i]);
+	fclose(perm);
+
 	/* permute */
 	fprintf(stderr, "permute\n");
 	int *qinv = spasm_pinv(q, n);
@@ -90,11 +95,15 @@ int main() {
 		Aj[px] = qinv[Aj[px]];
 	}
 
+	fprintf(stderr, "extract principal submatrix\n");
 	spasm *A = spasm_compress(T);
 	spasm *B = spasm_submatrix(A, 0, 2*k, 0, 2*k, 1);
 
-	//spasm_save_triplet(stdout, T);
-	spasm_save_csr(stdout, B);
+	spasm_save_triplet(stdout, T);
+	FILE *principal = fopen("principal.sms", "w");
+	spasm_save_csr(principal, B);
+	fclose(principal);
+	
 	spasm_triplet_free(T);
 	return 0;
 }

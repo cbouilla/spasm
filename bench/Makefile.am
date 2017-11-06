@@ -15,10 +15,13 @@ lemon_LDFLAGS = -lemon
 
 
 if SPASM_HAVE_METIS
-bin_PROGRAMS += metis
-metis_SOURCES = metis.c
-metis_LDFLAGS = $(METIS_LIBS)
-metis_CFLAGS = $(METIS_CFLAGS)
+bin_PROGRAMS += metis_symmetric metis_asymmetric
+metis_symmetric_SOURCES = metis_symmetric.c
+metis_asymmetric_SOURCES = metis_asymmetric.c
+metis_symmetric_LDFLAGS = $(METIS_LIBS)
+metis_symmetric_CFLAGS = $(METIS_CFLAGS)
+metis_asymmetric_LDFLAGS = $(METIS_LIBS)
+metis_asymmetric_CFLAGS = $(METIS_CFLAGS)
 endif
 
 if SPASM_HAVE_LINBOX
