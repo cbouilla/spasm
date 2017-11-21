@@ -34,8 +34,8 @@ void spasm_stack_nonpivotal_columns(spasm *A, int *qinv)
 
 	#pragma omp parallel for
 	for (int px = 0; px < Ap[n]; px++) {
-		Aj[px] = qinv[Aj[px]];
-		assert(Aj[px] < 0);
+		Aj[px] = q[Aj[px]];
+		assert(Aj[px] >= 0);
 	}
 	A->m = k;
 }
@@ -63,6 +63,8 @@ spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, 
 	const int Sn = n - npiv;
 	const int verbose_step = spasm_max(1, n / 1000);
 	
+	assert(!keep_L);
+
 	/* initialize qinv */
 	int *Aj = A->j;
 	int *Ap = A->p;

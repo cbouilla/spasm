@@ -4,7 +4,7 @@ SpaSM (Sparse direct Solver Modulo _p_)
 SpaSM is a software library devoted to sparse gaussian elimination modulo a small prime _p_. 
 It is available under the General Public License Version 2 or later (GPLv2+).
 
-The algorithms used in SpaSM are described in [CASC'16](http://cristal.univ-lille.fr/~bouillag/pub/CASC16.pdf) and [PASCO'16](http://cristal.univ-lille.fr/~bouillag/pub/PASCO16.pdf). For more information, consult the [SpaSM homepage](http://cristal.univ-lille.fr/~bouillag/spasm).
+The algorithms used in SpaSM are described in [CASC'16](http://cristal.univ-lille.fr/~bouillag/pub/CASC16.pdf) and [PASCO'17](http://cristal.univ-lille.fr/~bouillag/pub/PASCO17.pdf). For more information, consult the [SpaSM homepage](http://cristal.univ-lille.fr/~bouillag/spasm).
 
 Features
 --------
