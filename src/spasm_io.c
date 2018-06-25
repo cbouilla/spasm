@@ -99,15 +99,20 @@ spasm_triplet *spasm_load_mm(FILE * f, int prime) {
 	if (mm_read_banner(f, &matcode) != 0) 
 		errx(1, "Could not process Matrix Market banner.\n");
 
-	if (!mm_is_matrix(matcode) || !mm_is_sparse(matcode) || !mm_is_general(matcode))
-		errx(1, "Market Market type: [%s] not supported", mm_typecode_to_str(matcode));
+	if (!mm_is_matrix(matcode) || !mm_is_sparse(matcode))
+		errx(1, "Matrix Market type: [%s] not supported", mm_typecode_to_str(matcode));
 	
-	if (mm_read_mtx_crd_size(f, &n, &m, &nnz) !=0)
+	int symmetric = mm_is_symmetric(matcode);
+	if (!mm_is_general(matcode) && !symmetric)
+		errx(1, "Matrix market type [%s] not supported",  mm_typecode_to_str(matcode));
+
+	if (mm_read_mtx_crd_size(f, &n, &m, &nnz) != 0)
 		errx(1, "Cannot read matrix size");
 
 	fprintf(stderr, "[IO] loading %d x %d MTX [%s] modulo %d...", n, m, mm_typecode_to_str(matcode), prime);
 	fflush(stderr);
-
+	if (symmetric)
+		nnz *= 2;
 
 	if (mm_is_pattern(matcode))
 		prime = -1;
@@ -133,6 +138,12 @@ spasm_triplet *spasm_load_mm(FILE * f, int prime) {
 		} else {
 			errx(1, "Don't know how to read matrix");
 		}
+	}
+	if (symmetric) {
+		int nz = T->nz;
+		for (int px = 0; px < nz; px++)
+			if (T->j[px] != T->i[px])
+				spasm_add_entry(T, T->j[px], T->i[px], (T->x != NULL) ? T->x[px] : 1);
 	}
 
 	char s_nnz[16];

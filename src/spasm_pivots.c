@@ -8,9 +8,10 @@ int spasm_is_row_pivotal(const spasm * A, const int *qinv, const int i) {
 	Ap = A->p;
 	Aj = A->j;
 
-	/* test for empty row before reading Aj[px] --- it crashes when the last row is empty */
+	/* test for empty row before reading Aj[px] */
 	if (Ap[i + 1] == Ap[i])
 		return 0;
+	assert(Aj[Ap[i]] >= 0);
 	return (qinv[Aj[Ap[i]]] == i);
 }
 
