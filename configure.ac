@@ -5,7 +5,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 LT_INIT
 
-AM_INIT_AUTOMAKE([1.8 check-news no-dependencies foreign silent-rules subdir-objects])
+AM_INIT_AUTOMAKE([1.8 check-news no-dependencies foreign silent-rules subdir-objects -Wall -Wportability])
 AC_CONFIG_HEADERS([src/config.h])
 AM_MAINTAINER_MODE
 
