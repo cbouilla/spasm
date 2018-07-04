@@ -32,9 +32,75 @@ it computes the partition:
 \mathcal{M}(G, v) = \{x\} \cup \{ M~|~ M \text{ is a maximal module not containing } v\}.
 \]
 
-The algorithm could be modified to compute a factorizing permutation.
+The algorithm could be modified (without too much extra work) to compute a
+factorizing permutation. Because the input graphs are not necessarily
+connected, we find its connected components, and compute a modular partition
+of each connected component. A BFS is used to find the connected components.
 
-\section{Data Structures}
+
+<<The main program>>=
+int main()
+{
+	<<Load matrix; set [[n]], [[Ap]], [[Aj]]>>
+	<<Setup BFS>>
+	for (int i = 0; i < n; i++) {
+		<<If vertex $i$ is unmarked, start a BFS from $i$>>
+		<<Compute a modular partition of the connected component>>
+	}
+	<<Print meaningful stuff>>
+	<<Clean-up in [[main]]>>
+	return 0;
+}
+
+@ The BFS enqueues visited vertices in a [[queue]]. Once this is over, visited
+vertices can be found in [[queue[0:hi]]].
+
+<<Setup BFS>>=
+int *mark = spasm_calloc(n, sizeof(int));
+int *queue = spasm_malloc(n * sizeof(int));
+int CC = 0;
+
+<<Clean-up in [[main]]>>=
+free(mark);
+free(queue);
+
+<<If vertex $i$ is unmarked, start a BFS from $i$>>=
+if (mark[i])
+	continue;
+CC++;
+int lo = 0, hi = 0;
+queue[hi++] = i;
+mark[i] = 1;
+while (lo < hi) {
+	int u = queue[lo++];
+	for (int it = Ap[u]; it < Ap[u + 1]; it++) {
+		int v = Aj[it];
+		if (mark[v])
+			continue;
+		queue[hi++] = v;
+		mark[v] = 1;
+	}
+}
+
+@ We enclose the modular partition computation in a function, and accumulate
+statistics in global variables. We count the number of trivial modules, non-
+trivial modules, the total size of non-trivial modules and the size of the
+largest non-trivial module.
+
+<<Compute a modular partition of the connected component>>=
+modular_partition(A, queue, hi);
+
+<<Global variables>>=
+int trivial = 0;
+int nontrivial = 0;
+int nontrivial_size = 0;
+int largest = 0;
+
+<<Print meaningful stuff>>=
+printf("%d; %d; %d; %d; %d\n", CC, trivial, nontrivial, nontrivial_size, largest);
+
+
+@ \section{Data Structures}
 
 Instead of the data structure suggested by Paul et al. (doubly-linked list of
 the nodes, and classes implicitly ordered by the nodes), we use the following:
@@ -90,7 +156,6 @@ struct class_t *class_new()
 
 void class_destroy(struct class_t *C)
 {
-	assert(C->size == 0);
 	free(C->nodes);
 	free(C);
 }
@@ -102,7 +167,7 @@ void print_class(struct class_t *X)
 		printf("%d ", x->vertex);
 }
 
-void print_partition()
+void print_partition(struct class_t *class_head)
 {
 	printf("P = ");
 	for (struct class_t * X = class_head->next; X != class_head; X = X->next) {
@@ -113,42 +178,31 @@ void print_partition()
 }
 
 
-@ Next comes the insertion/removal of a class in the class list. The insertion
-functions inserts $\C$ to the \emph{left} of $\X$ unless instructed otherwise
-by the [[right]] argument. Both operations are particularly simple because the
-class list is never empty (it always contains the ``head'' class). We maintain
-global variable [[n_classes]] which is equal to the length of the class list.
+@ Next comes the insertion/removal of a class in the class list. Both
+operations are particularly simple because the class list is never empty (it
+always contains the ``head'' class). The insertion functions inserts $\C$ to
+the \emph{right} of $\X$. If we wanted a factorizing permutation, we would
+have to choose whether to insert left or right.
 
-<<Global variables>>=
-static const int RIGHT = 1;
-static const int LEFT = 0;
-int n_classes = 0;
 
 <<Functions>>=
-void class_insert(struct class_t *C, struct class_t *X, int right)
+void class_insert(struct class_t *C, struct class_t *X)
 {
-	if (right) {
-		X->prev = C;
-		X->next = C->next;
-	} else {
-		X->next = C;
-		X->prev = C->prev;	
-	}
+	X->prev = C;
+	X->next = C->next;
 	X->prev->next = X;
 	X->next->prev = X;
-	n_classes++;
 }
 
 void class_remove(struct class_t *X)
 {
 	X->next->prev = X->prev;
 	X->prev->next = X->next;
-	n_classes--;
 }
 
-@ Lastly, we conclude with two similar functions to add/remove a node from a
-class. Nodes are always inserted to the right of the ``head node'' of the node
-list of the class.
+@ Lastly, two similar functions to add/remove a node from a class. Nodes are
+always inserted to the right of the ``head node'' of the node list of the
+class.
 
 <<Functions>>=
 void node_insert(struct node_t *x, struct class_t *C)
@@ -183,15 +237,18 @@ void transfer(struct class_t *X, struct class_t *Y, struct node_t *x)
 
 
 
-@ Finally, let's see how the class and node lists are initially set up. The
-initial partition is $[\overline{N}(x), \{x\}, N(x)]$.
+@ Finally, let's see how the class and node lists are initially set up. We
+need to be able to access nodes by vertex number, so we store them in an array
+(where only those corresponding to the current connected component are used).
 
 <<Setup data structures>>=
+int *Ap = A->p;
+int *Aj = A->j;
 <<Setup class list>>
-<<Add all vertices to the initial class>>
+<<Add vertices of the connected component to the initial class>>
 <<Create initial partition>>
 
-<<Global variables>>=
+<<Variables of [[modular_partition]]>>=
 struct class_t * class_head;
 struct node_t * nodes;
 
@@ -201,36 +258,53 @@ class_head->next = class_head;
 class_head->prev = class_head;
 class_head->size = -1;
 struct class_t *initial_class = class_new();
-class_insert(class_head, initial_class, RIGHT);
+class_insert(class_head, initial_class);
 
-<<Add all vertices to the initial class>>=
-nodes = malloc(sizeof(*nodes) * n);
+<<Add vertices of the connected component to the initial class>>=
+nodes = malloc(sizeof(*nodes) * A->n);
 for (int i = 0; i < n; i++) {
-	nodes[i].vertex = i;
-	node_insert(nodes + i, initial_class);
+	nodes[p[i]].vertex = p[i];
+	node_insert(&nodes[p[i]], initial_class);
 }
+
+@ The initial partition is $\{\overline{N}(x), \{x\}, N(x) \}$, where
+$\overline{N}(x)$ denotes the non-neighbors of $x$ in the current connected
+component.
 
 <<Create initial partition>>=
-int v = 0; // arbitrary choice
-struct node_t * x = nodes + v;
+int u = p[0];                // arbitrary choice
+struct node_t * x = &nodes[u];
 struct class_t *x_class = class_new();
-class_insert(initial_class, x_class, RIGHT);
+class_insert(initial_class, x_class);
 transfer(initial_class, x_class, x);
 struct class_t *Nx_class = class_new();
-class_insert(x_class, Nx_class, RIGHT);
-int *Ap = A->p;
-int *Aj = A->j;
-for (int px = Ap[v]; px < Ap[v + 1]; px++) {
-	struct node_t *y = nodes + Aj[px];
+class_insert(x_class, Nx_class);
+for (int it = Ap[u]; it < Ap[u + 1]; it++) {
+	int v = Aj[it];
+	struct node_t *y = &nodes[v];
 	transfer(initial_class, Nx_class, y);
 }
+
+@ Of course, we must clean-up when the modular partition is computed. For this
+we walk the class list.
+
+<<Clean-up in [[modular_partition]]>>=
+free(nodes);
+struct class_t *X = class_head->next;
+while (X != class_head) {
+	struct class_t *Y = X->next;
+	class_destroy(X);
+	X = Y;
+}
+class_destroy(class_head);
 
 
 @ \subsection{Refinement Operations}
 
 There is essentially one operation we must be able to do with classes, namely
 (unordered) refinement by $N(x)$: replacing $\X$ by $\X - N(x), \X \cap N(x)$,
-for some vertex $x$. Note that we only do this when $x \notin \X$.
+for some vertex $x$ and for all classes $\X$. Note that we only do this when
+$x \notin \X$.
 
 To implement this operation efficiently (i.e. in $\mathcal{O}(|N(x)|)$, we
 must identify all classes \emph{properly} split by $N(x)$ , and for each of
@@ -238,15 +312,26 @@ them move elements of $N(x)$ to a new class. A class is properly split by
 $N(x)$ if it intersects $N(x)$ and is not contained in it. To identify them,
 we count the number of elements of $N(x)$ in each class.
 
+Because this function share a lot of state with [[modular_partition]], we wrap
+all this common state in a [[struct module_ctx_t]].
+
+<<Type definitions>>=
+struct module_ctx_t {
+	spasm *A;
+	struct node_t *nodes;
+	<<Extra fields of [[module_ctx_t]]>>
+};
+
+
 <<Functions>>=
-void refine(spasm *A, struct node_t *x)
+void refine(struct module_ctx_t *ctx, struct node_t *x)
 {
 	<<Prepare iteration over $N(x)$>>
 	// printf("Refine with x = %d / N(x) = ", x->vertex);
 	// for (int px = Nx_start; px < Nx_end; px++)
 	// 	printf("%d ", Aj[px]);
 	// printf("\n");
-	<<Count nodes of each class belonging to $N(x)$>>
+	<<Count nodes of each class $\Y$ belonging to $N(x)$>>
 	<<If $\Y$ is properly split, then create $\Y_a$>>
 	<<Transfer elements of $\Y$ belonging to $N(x)$ to $\Y_a$>>
 	<<Update work queues>>	
@@ -258,15 +343,17 @@ in a graph are refered to by their number. In the text, we assume that [[x]]
 is a [[struct node_t *]] variable and that $\X$ is the class of [[x]].
 
 <<Prepare iteration over $N(x)$>>=
-int *Ap = A->p;
-int *Aj = A->j;
+int *Ap = ctx->A->p;
+int *Aj = ctx->A->j;
 int Nx_start = Ap[x->vertex];
 int Nx_end = Ap[x->vertex + 1];
 struct class_t *X = x->class;
+struct node_t *nodes = ctx->nodes;
 
 @ To count the nodes of $N(x)$ that are inside each class, we add an extra
 [[marks]] field to [[struct class_t]]. It is initially set to zero, and reset
-to zero after use.
+to zero after use. The [[split]] field will indicate which classes are
+properly split.
 
 <<Extra fields of [[struct class_t]]>>=
 int marks;
@@ -276,27 +363,29 @@ int split;
 C->marks = 0;
 C->split = 0;
  
-<<Count nodes of each class belonging to $N(x)$>>=
-for (int px = Nx_start; px < Nx_end; px++) {
-	struct node_t *y = nodes + Aj[px];
+<<Count nodes of each class $\Y$ belonging to $N(x)$>>=
+for (int it = Nx_start; it < Nx_end; it++) {
+	struct node_t *y = nodes + Aj[it];
 	y->class->marks++;
 }
 
 
 @ If a class is properly split, we create its ``companion'' split class and
-insert it \emph{right} of the original in the doubly linked list. (we thus
-only obtain a modular partition and not a factorizing permutation). All marks
-are reset.
+insert it in the class list. (we thus only obtain a modular partition and not
+a factorizing permutation --- for this we would insert it either left or right
+of the original class). All [[marks]] are reset, and [[split]] is set. For
+each split class $\Y$, the companion class $\Y_a$ is immediately on the right
+in the class list.
 
 <<If $\Y$ is properly split, then create $\Y_a$>>=
-for (int px = Nx_start; px < Nx_end; px++) {
-	struct node_t *y = nodes + Aj[px];
+for (int it = Nx_start; it < Nx_end; it++) {
+	struct node_t *y = nodes + Aj[it];
 	struct class_t *Y = y->class;
 	if (Y != X && Y->marks > 0 && Y->marks < Y->size) {
 		// print_class(Y);
 		// printf(" is properly split by %d\n", x->vertex);
 		struct class_t *Ya = class_new();
-		class_insert(Y, Ya, RIGHT);
+		class_insert(Y, Ya);
 		Y->split = 1;
 	}
 	Y->marks = 0;
@@ -305,8 +394,8 @@ for (int px = Nx_start; px < Nx_end; px++) {
 @ And now, the ``meat'' of the refinement procedure.
 
 <<Transfer elements of $\Y$ belonging to $N(x)$ to $\Y_a$>>=
-for (int px = Nx_start; px < Nx_end; px++) {
-	struct node_t *y = nodes + Aj[px];
+for (int it = Nx_start; it < Nx_end; it++) {
+	struct node_t *y = nodes + Aj[it];
 	struct class_t *Y = y->class;
 	if (!Y->split)
 		continue;
@@ -314,33 +403,56 @@ for (int px = Nx_start; px < Nx_end; px++) {
 	transfer(Y, Ya, y);
 }
 
-@ \section{High-Level structure}
+@ \section{High-Level Structure of the Algorithm}
 
 We are now ready to write the whole algorithm. It maintains two ``work
 queues'' $L$ and $K$ with asymetric functions. $K$ must be a queue while $L$
-can be a stack. They both contain classes. Initially, $L$ is empty while $K$
-contains the initial partition.
+can be a stack. They both contain classes. The largest class of the initial
+partition is put in $K$ and the others in $L$ (this is the application of the
+so-called Hopcroft rule).
 
-<<Global variables>>=
+<<Extra fields of [[module_ctx_t]]>>=
 struct class_t ** L;
 struct class_t ** K;
-int L_size, K_lo, K_hi;
+int L_sp, K_lo, K_hi;
+
+@ The active part of $L$ is [[L[0:L_sp]]] while the active part of $K$ is
+[[K[K_lo:K_hi]]].
+
+<<$L = \emptyset$>>=
+ctx.L_sp == 0
+
+<<$L \neq \emptyset \wedge K \neq \emptyset$>>=
+ctx.L_sp > 0 || ctx.K_lo < ctx.K_hi
+
+
+<<Variables of [[modular_partition]]>>=
+struct module_ctx_t ctx;
 
 <<Setup data structures>>=
-L = spasm_malloc(n * sizeof(struct class_t *));
-K = spasm_malloc(n * sizeof(struct class_t *));
+ctx.A = A;
+ctx.nodes = nodes;
+ctx.L = spasm_malloc(n * sizeof(struct class_t *));
+ctx.K = spasm_malloc(n * sizeof(struct class_t *));
+ctx.L_sp = 0;
+ctx.K_lo = 0;
+ctx.K_hi = 0;
 <<Find largest class append it to $K$; add the others to $L$>>
+
+<<Clean-up in [[modular_partition]]>>=
+free(ctx.L);
+free(ctx.K);
 
 <<Find largest class append it to $K$; add the others to $L$>>=
 struct class_t *Z = class_head->next;
 for (struct class_t *X = Z; X != class_head; X = X->next)
 	if (X->size > Z->size) {
-		L[L_size++] = Z;
+		ctx.L[ctx.L_sp++] = Z;
 		Z = X;
 	} else {
-		L[L_size++] = X;
+		ctx.L[ctx.L_sp++] = X;
 	}
-K[K_hi++] = Z;
+ctx.K[ctx.K_hi++] = Z;
 
 
 @ The algorithm loops until both $L$ and $K$ are empty. It selects a set $S$
@@ -349,30 +461,37 @@ though: either $S$ is a whole class (when $L \neq \emptyset$) or $S$ is a
 singleton (when $L = \emptyset$). This prompt us to treat the two cases
 slighlty differently.
 
-<<Compute a modular partition>>=
-<<Setup data structures>>
-while (L_size > 0 || K_lo < K_hi) {
-	// print_partition();
-	if (L_size == 0) {
-		<<Pop $\X$ from $K$>>
-		// printf("Popped from K: ");
-		// print_class(X);
-		// printf("\n");
-		struct node_t * x = X->nodes->next;
-		refine(A, x);
-	} else {
-		<<Pop $\X$ from $L$>>
-		// printf("Popped from L: ");
-		// print_class(X);
-		// printf("\n");
-		for (struct node_t *x = X->nodes->next; x->vertex >= 0; x = x->next)
-			refine(A, x);
+<<Functions>>=
+void modular_partition(spasm *A, int *p, int n)
+{
+	<<Variables of [[modular_partition]]>>
+	<<Setup data structures>>
+	while (<<$L \neq \emptyset \wedge K \neq \emptyset$>>) {
+		// print_partition();
+		if (<<$L = \emptyset$>>) {
+			<<Dequeue $\X$ from $K$>>
+			// printf("Popped from K: ");
+			// print_class(X);
+			// printf("\n");
+			struct node_t * x = X->nodes->next;
+			refine(&ctx, x);
+		} else {
+			<<Pop $\X$ from $L$>>
+			// printf("Popped from L: ");
+			// print_class(X);
+			// printf("\n");
+			for (struct node_t *x = X->nodes->next; x->vertex >= 0; x = x->next)
+				refine(&ctx, x);
+		}
 	}
+	<<Accumulate statistics>>
+	<<Clean-up in [[modular_partition]]>>
 }
+
 
 @ We now have to deal with the update of the work queues after each refinement
 step. A quick look at the algorithm reveals that we must be able to tell if
-a class belongs to $L$ and/or to $K$. This calls for extra fields in the classes.
+a class belongs to $L$ or to $K$. This calls for extra fields in the classes.
 
 <<Extra fields of [[struct class_t]]>>=
 int Lpos;
@@ -382,20 +501,22 @@ int Kpos;
 C->Lpos = -1;
 C->Kpos = -1;
 
-<<Pop $\X$ from $K$>>=
-struct class_t *X = K[K_lo++];
+<<Dequeue $\X$ from $K$>>=
+struct class_t *X = ctx.K[ctx.K_lo++];
 X->Kpos = -1;
 
 <<Pop $\X$ from $L$>>=
-struct class_t *X = L[--L_size];
+struct class_t *X = ctx.L[--ctx.L_sp];
 X->Lpos = -1;
 
-@ Let's get down to it. We must process all classes $\Y$ that have been split.
-For this, we traverse $N(x)$ again and use the [[split]] flag.
+@ We are now ready to complete the [[refine]] function. Once a refinement step
+has been completed, we must iterate over all classes $\Y$ that have been split
+and add them to either $L$ or $K$. To identify them, we traverse $N(x)$ again
+and use the [[split]] flag, which we reset.
 
 <<Update work queues>>=
-for (int px = Nx_start; px < Nx_end; px++) {
-	struct node_t *y = nodes + Aj[px];
+for (int it = Nx_start; it < Nx_end; it++) {
+	struct node_t *y = nodes + Aj[it];
 	struct class_t *Y = y->class->prev;
 	if (Y->split) {
 		struct class_t *Ya = Y->next;
@@ -405,12 +526,22 @@ for (int px = Nx_start; px < Nx_end; px++) {
 		// print_class(Ya);
 		// printf("\n");
 		Y->split = 0;
-		<<Process $\Y$>>
+		<<Update work queues with split class $\Y$>>
 	}
 }
 
+@ The algorithm goes as follows: if $\Y$ was in $L$ before the refinement
+step, then both $\Y_a = \Y \cap N(x)$ and $\Y_b = \Y - N(x)$ must be in $L$
+after refinement. Because refinement works ``in place'', $\Y$ has become
+$\Y_b$, to it just remains to add $\Y_a$ to $L$.
 
-<<Process $\Y$>>=
+If $\Y$ was not in $L$ before, then we add the largest bewteen $\Y_a$ and
+$\Y_b$ to $K$ and the smallest to $L$. Now, we must be careful that $\Y$ could
+have been in $K$ before.
+
+<<Update work queues with split class $\Y$>>=
+struct class_t **L = ctx->L;
+struct class_t **K = ctx->K;
 <<If $\Y \in L$, then add $\Y_a$ to $L$ and [[continue]]>>
 struct class_t *Ymin, *Ymax;
 if (Y->size < Ya->size) {
@@ -429,11 +560,10 @@ if (Y->size < Ya->size) {
 <<If $\Y \in K$ then replace $\Y$ by $\Y_{\max}$ in $K$, else append $\Y_{\max}$ to $K$>>
 
 
-
 <<If $\Y \in L$, then add $\Y_a$ to $L$ and [[continue]]>>=
 if (Y->Lpos >= 0) {
-	Ya->Lpos = L_size;
-	L[L_size++] = Ya;
+	Ya->Lpos = ctx->L_sp;
+	L[ctx->L_sp++] = Ya;
 	// printf("Split class was already in L. Adding to L: ");
 	// print_class(Ya);
 	// printf("\n");
@@ -442,13 +572,13 @@ if (Y->Lpos >= 0) {
 
 <<Add $\Y_{\min}$ to $L$>>=
 // printf("Adding Ymin to L\n");
-Ymin->Lpos = L_size;
-L[L_size++] = Ymin;
+Ymin->Lpos = ctx->L_sp;
+L[ctx->L_sp++] = Ymin;
 
 
 @ Dealing with the replacement of $\Y$ by $\Y_{\max}$ in $K$ requires avoiding a
 potential mistake: $\Y$ has been transformed into $\Y_b$, and if $\Y_{\max} =
-Y_b$, then we must not do anything stupid.
+Y_b$, then we must not do anything.
 
 <<If $\Y \in K$ then replace $\Y$ by $\Y_{\max}$ in $K$, else append $\Y_{\max}$ to $K$>>=
 if (Y->Kpos >= 0) {
@@ -461,9 +591,9 @@ if (Y->Kpos >= 0) {
 		// printf("Split class was in K, and the largest part remains in K\n");
 	}
 } else {
-	// printf("Split class was not in K. Addind Ymax to K\n");
-	Ymax->Kpos = K_hi;
-	K[K_hi++] = Ymax;
+	// printf("Split class was not in K. Adding Ymax to K\n");
+	Ymax->Kpos = ctx->K_hi;
+	K[ctx->K_hi++] = Ymax;
 }
 
 @ \section{The Main Program}
@@ -475,30 +605,19 @@ if (Y->Kpos >= 0) {
 <<Functions>>
 <<The main program>>
 
-
-<<The main program>>=
-/* computes a chain partition into maximal strong modules. */
-int main() 
-{
-	<<Load matrix; set [[n]], [[Ap]], [[Aj]]>>
-	<<Compute a modular partition>>
-	<<Print meaningful stuff>>
-	spasm_csr_free(A);
-	return 0;
-}
-
 @ Loading the matrix is standard for \textsf{SpaSM} programs, however we
 directly load it in MatrixMarket format. The trick is that we want to remove
 diagonal entries (which corresponds to self-edges), so we have to make an
 additional pass at the data.
 
 <<Load matrix; set [[n]], [[Ap]], [[Aj]]>>=
-int prime = -1;
-spasm_triplet * T = spasm_load_mm(stdin, prime);
+spasm_triplet * T = spasm_load_mm(stdin, -1);
 assert (T->n == T->m);
 <<Remove self-edges>>
 spasm * A = spasm_compress(T);
 spasm_triplet_free(T);
+int *Ap = A->p;
+int *Aj = A->j;
 int n = A->n;
 
 <<Remove self-edges>>=
@@ -512,29 +631,30 @@ for (int px = 0; px < T->nz; px++) {
 	}
 }
 
-<<Print meaningful stuff>>=
-int trivial = 0;
-int nontrivial = 0;
-int nontrivial_size = 0;
-int largest = 0;
-for (struct class_t * X = class_head->next; X != class_head; X = X->next) {
+@ The whole point of the [[modular_partition]] function is to accumulate
+statistics on the modules, so that they can be printed in [[main]].
+
+<<Accumulate statistics>>=
+for (struct class_t * X = class_head->next; X != class_head; X = X->next)
 	if (X->size > 1) {
-		//print_class(X);
-		//printf("\n");
+		// printf("module : ");
+		// print_class(X);
+		// printf("\n");
 		nontrivial_size += X->size;
 		nontrivial++;
 		largest = spasm_max(largest, X->size);
 	} else {
 		trivial++;
 	}
-}
-printf("%d; %d; %d; %d\n", trivial, nontrivial, nontrivial_size, largest);
 
 <<Include files>>=
 #include <assert.h>
 #include <stdio.h>
 #include <getopt.h>
 #include "spasm.h"
+
+<<Clean-up in [[main]]>>=
+spasm_csr_free(A);
 
 @
 
