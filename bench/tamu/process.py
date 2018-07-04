@@ -36,10 +36,7 @@ def chain_decomposition(mtx_file):
         result = subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL)
         return list(map(int, result.decode().split(";")))
     except subprocess.CalledProcessError as e:
-        if e.returncode == 42: # graph is not connected
-            return -1, -1
-        else:
-            return -42, -42
+        return -42, -42, -42
 
 def modular_decomposition(mtx_file):
     """
@@ -48,20 +45,21 @@ def modular_decomposition(mtx_file):
     cmd = "cat {} |  ~/spasm/build/bench/modules".format(mtx_file)
     try:
         result = subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL)
-        trivial, nontrivial, size, largest = map(int, result.decode().split(";"))
+        cc, trivial, nontrivial, size, largest = map(int, result.decode().split(";"))
         if nontrivial > 0:
             size /= nontrivial
-        return trivial, nontrivial, size, largest
+        return cc, trivial, nontrivial, size, largest
     except subprocess.CalledProcessError as e:
-            return -42, -42, -42, -42
+            return -42, -42, -42, -42, -42
 
 
 
+print("id; name; year; size; nnz; kind; CC; link; cut; bridge; CCbis; trivial; nontrivial; size; largest")
 for x in tree.getroot():
     id = x.find("td[@class='column-id']").text
     name = x.find("td[@class='column-name']").text
     year = x.find("td[@class='column-date']").text
-    size = x.find("td[@class='column-num_rows']").text
+    nrows = x.find("td[@class='column-num_rows']").text
     nnz = x.find("td[@class='column-nonzeros']").text
     kind = x.find("td[@class='column-kind']").text
     links = x.findall("td/a")
@@ -73,10 +71,10 @@ for x in tree.getroot():
 
     try:
         mtx_file = ensure_mtx_file(link)
-        # cut, bridge = chain_decomposition(mtx_file)
-        # trivial, nontrivial, size, largest = modular_decomposition(mtx_file)
-        # print("{} -> {} cut vertex, {} bridge, {} trivial modules, {} non-trivial modules (avg size={:.1f} / largest={})"
-        #     .format(link, cut, bridge, trivial, nontrivial, size, largest))
+        cc, cut, bridge = chain_decomposition(mtx_file)
+        cc_bis, trivial, nontrivial, size, largest = modular_decomposition(mtx_file)
+        #cc_bis, trivial, nontrivial, size, largest = [-1, -1, -1, -1, -1]
+        print("{}; {}; {}; {}; {}; {}; {}; {}; {}; {}; {}; {}; {}; {:.1f}; {}"
+             .format(id, name, year, nrows, nnz, kind, link, cc, cut, bridge, cc_bis, trivial, nontrivial, size, largest))
+    except ValueError:
         pass
-    except:
-        print("\n\n\n\n\n")
