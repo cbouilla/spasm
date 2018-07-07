@@ -10,7 +10,7 @@ void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x) {
 	int prime = T->prime;
 
 	if (T->nz == T->nzmax)
-		spasm_triplet_realloc(T, 2 * T->nzmax);
+		spasm_triplet_realloc(T, 1 + 2 * T->nzmax);
 	if (T->x != NULL) {
 		x_p = ((x % prime) + prime) % prime;
 		if (x_p == 0)
