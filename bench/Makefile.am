@@ -6,13 +6,21 @@ LDADD = -lm $(top_builddir)/src/libspasm.la $(FFLAS_FFPACK_LIBS) $(GIVARO_LIBS)
 bin_PROGRAMS = rank_gplu dm bitmap pluq kernel transpose stack \
                schur_complement rank_hybrid vertical_swap maximum_matching \
                rank_dense find_pivots uetree mtx_reader rref echelonize u_checker \
-               rref_gplu chains modules complement_cc
+               rref_gplu chains modules complement_cc lemon
+
+lemon_SOURCES = lemon.cpp
+
+lemon_LDFLAGS = -lemon
+
 
 if SPASM_HAVE_METIS
-bin_PROGRAMS += metis
-metis_SOURCES = metis.c
-metis_LDFLAGS = $(METIS_LIBS)
-metis_CFLAGS = $(METIS_CFLAGS)
+bin_PROGRAMS += metis_symmetric metis_asymmetric
+metis_symmetric_SOURCES = metis_symmetric.c
+metis_asymmetric_SOURCES = metis_asymmetric.c
+metis_symmetric_LDFLAGS = $(METIS_LIBS)
+metis_symmetric_CFLAGS = $(METIS_CFLAGS)
+metis_asymmetric_LDFLAGS = $(METIS_LIBS)
+metis_asymmetric_CFLAGS = $(METIS_CFLAGS)
 endif
 
 if SPASM_HAVE_LINBOX
