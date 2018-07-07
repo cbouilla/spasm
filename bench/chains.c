@@ -137,7 +137,7 @@ int main()
 			continue;
 		int prev = top;
 		top = dfs(A, i, top, stack, vmark, itstack, parent);
-		fprintf(stderr, "|CC| = %d\n", prev - top);
+		//fprintf(stderr, "|CC| = %d\n", prev - top);
 		CC++;
 	}
 	/**************** Permute & Isolate CC ****************/
@@ -217,7 +217,7 @@ int main()
 			}
 	printf("%d; %d ; %d\n", CC, n_cut_vertex, n_bridge);
 	exit(0);
-	
+
 	/****************** build the graph with bridges removed *************/
 	spasm_triplet *TT = spasm_triplet_alloc(n, n, G->nzmax, G->prime, 0);
 	for (int u = 0; u < n; u++)
@@ -241,7 +241,7 @@ int main()
 			continue;
 		int prev = top;
 		top = dfs(B, i, top, stack, vmark, itstack, NULL);
-		fprintf(stderr, "|biCC| = %d\n", prev - top);
+		//fprintf(stderr, "|biCC| = %d\n", prev - top);
 	}
 
 	spasm_csr_free(B);
