@@ -103,7 +103,9 @@ spasm_triplet *spasm_load_mm(FILE * f, int prime) {
 		errx(1, "Matrix Market type: [%s] not supported", mm_typecode_to_str(matcode));
 	
 	int symmetric = mm_is_symmetric(matcode);
-	if (!mm_is_general(matcode) && !symmetric)
+	int skew = mm_is_skew(matcode);
+
+	if (!mm_is_general(matcode) && !symmetric && !skew)
 		errx(1, "Matrix market type [%s] not supported",  mm_typecode_to_str(matcode));
 
 	if (mm_read_mtx_crd_size(f, &n, &m, &nnz) != 0)
@@ -111,7 +113,7 @@ spasm_triplet *spasm_load_mm(FILE * f, int prime) {
 
 	fprintf(stderr, "[IO] loading %d x %d MTX [%s] modulo %d...", n, m, mm_typecode_to_str(matcode), prime);
 	fflush(stderr);
-	if (symmetric)
+	if (symmetric || skew)
 		nnz *= 2;
 
 	if (mm_is_pattern(matcode))
@@ -140,10 +142,11 @@ spasm_triplet *spasm_load_mm(FILE * f, int prime) {
 		}
 	}
 	if (symmetric) {
+		int mult = skew ? -1 : 1;
 		int nz = T->nz;
 		for (int px = 0; px < nz; px++)
 			if (T->j[px] != T->i[px])
-				spasm_add_entry(T, T->j[px], T->i[px], (T->x != NULL) ? T->x[px] : 1);
+				spasm_add_entry(T, T->j[px], T->i[px], (T->x != NULL) ? (mult * T->x[px]) : 1);
 	}
 
 	char s_nnz[16];
