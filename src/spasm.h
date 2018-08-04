@@ -24,33 +24,33 @@
 typedef int spasm_GFp;
 
 typedef struct {                /* matrix in compressed-sparse row format */
-  int nzmax;                    /* maximum number of entries */
-  int n;                        /* number of rows */
-  int m;                        /* number of columns */
-  int *p;                       /* row pointers (size n+1) */
-  int *j;                       /* column indices, size nzmax */
-  spasm_GFp *x;                 /* numerical values, size nzmax (optional) */
-  int prime;
+	int nzmax;                    /* maximum number of entries */
+	int n;                        /* number of rows */
+	int m;                        /* number of columns */
+	int *p;                       /* row pointers (size n+1) */
+	int *j;                       /* column indices, size nzmax */
+	spasm_GFp *x;                 /* numerical values, size nzmax (optional) */
+	int prime;
 }      spasm;
 
 typedef struct {                /* matrix in triplet form */
-  int nzmax;                    /* maximum number of entries */
-  int nz;                       /* # entries */
-  int n;                        /* number of rows */
-  int m;                        /* number of columns */
-  int *i;                       /* row indices, size nzmax */
-  int *j;                       /* column indices (size nzmax) */
-  spasm_GFp *x;                 /* numerical values, size nzmax (optional) */
-  int prime;
+	int nzmax;                    /* maximum number of entries */
+	int nz;                       /* # entries */
+	int n;                        /* number of rows */
+	int m;                        /* number of columns */
+	int *i;                       /* row indices, size nzmax */
+	int *j;                       /* column indices (size nzmax) */
+	spasm_GFp *x;                 /* numerical values, size nzmax (optional) */
+	int prime;
 }      spasm_triplet;
 
 
 /* example (this is Matrix/t1)
 
-    [ 4.5  0.0  3.2  0.0 ]
-    [ 3.1  2.9  0.0  0.9 ]
+		[ 4.5  0.0  3.2  0.0 ]
+		[ 3.1  2.9  0.0  0.9 ]
 A = [ 0.0  1.7  3.0  0.0 ]
-    [ 3.5  0.4  0.0  1.0 ]
+		[ 3.5  0.4  0.0  1.0 ]
 
 Triplet form (nz != -1) :
 
@@ -71,29 +71,29 @@ In particular, the actual number of nnz is p[n]. Coefficients of a row need not 
 The numerical values are optional (useful for storing a sparse graph, or the pattern of a matrix). */
 
 typedef struct {                /* a PLUQ factorisation */
-  spasm *L;
-  spasm *U;
-  int *qinv;                    /* the inverse Q is stored */
-  int *p;
+	spasm *L;
+	spasm *U;
+	int *qinv;                    /* the inverse Q is stored */
+	int *p;
 }      spasm_lu;
 
 typedef struct {                /* a dense LU factorization */
-  int n;                        /* number of rows */
-  int m;                        /* number of columns */
-  int prime; 
-  int *p;                       /* positions of pivots in allocated rows */
-  spasm_GFp **x;                /* pointers to the rows */
+	int n;                        /* number of rows */
+	int m;                        /* number of columns */
+	int prime; 
+	int *p;                       /* positions of pivots in allocated rows */
+	spasm_GFp **x;                /* pointers to the rows */
 }      spasm_dense_lu;
 
 
 typedef struct {      /**** a Dulmage-Mendelson decomposition */
-        int *p;       /* size n, row permutation */
-        int *q;       /* size m, column permutation */
-        int *r;       /* size nb+1, block k is rows r[k] to r[k+1]-1 in A(p,q) */
-        int *c;       /* size nb+1, block k is cols s[k] to s[k+1]-1 in A(p,q) */
-        int nb;       /* # of blocks in fine decomposition */
-        int rr[5];    /* coarse row decomposition */
-        int cc[5];    /* coarse column decomposition */
+				int *p;       /* size n, row permutation */
+				int *q;       /* size m, column permutation */
+				int *r;       /* size nb+1, block k is rows r[k] to r[k+1]-1 in A(p,q) */
+				int *c;       /* size nb+1, block k is cols s[k] to s[k+1]-1 in A(p,q) */
+				int nb;       /* # of blocks in fine decomposition */
+				int rr[5];    /* coarse row decomposition */
+				int cc[5];    /* coarse column decomposition */
 }      spasm_dm;
 
 
@@ -240,21 +240,21 @@ int *spasm_tree_topological_postorder(const spasm *A, const int *parent);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {
-  return (a > b) ? a : b;
+	return (a > b) ? a : b;
 }
 
 static inline int spasm_min(int a, int b) {
-  return (a < b) ? a : b;
+	return (a < b) ? a : b;
 }
 
 static inline void spasm_swap(int *a, int i, int j) {
-  int x = a[i];
-  a[i] = a[j];
-  a[j] = x;
+	int x = a[i];
+	a[i] = a[j];
+	a[j] = x;
 }
 
 static inline int spasm_row_weight(const spasm * A, int i) {
-  int *Ap = A->p;
-  return Ap[i + 1] - Ap[i];
+	int *Ap = A->p;
+	return Ap[i + 1] - Ap[i];
 }
 #endif
