@@ -111,11 +111,9 @@ spasm_triplet *spasm_load_mm(FILE * f, int prime) {
 	if (mm_read_mtx_crd_size(f, &n, &m, &nnz) != 0)
 		errx(1, "Cannot read matrix size");
 
-	fprintf(stderr, "[IO] loading %d x %d MTX [%s] modulo %d...", n, m, mm_typecode_to_str(matcode), prime);
+	fprintf(stderr, "[IO] loading %d x %d MTX [%s] modulo %d, %d nnz...", n, m, mm_typecode_to_str(matcode), prime, nnz);
 	fflush(stderr);
-	if (symmetric || skew)
-		nnz *= 2;
-
+	
 	if (mm_is_pattern(matcode))
 		prime = -1;
 
@@ -126,21 +124,29 @@ spasm_triplet *spasm_load_mm(FILE * f, int prime) {
 		double x, y;
 
 		if (mm_is_pattern(matcode)) {
-			fscanf(f, "%d %d\n", &u, &v);
+			if (2 != fscanf(f, "%d %d\n", &u, &v))
+				errx(1, "parse error entry %d\n", i);
 			spasm_add_entry(T, u - 1, v - 1, 1);
 		} else if (mm_is_integer(matcode)) {
-			fscanf(f, "%d %d %d\n", &u, &v, &w);
+			if (3 != fscanf(f, "%d %d %d\n", &u, &v, &w))
+				errx(1, "parse error entry %d\n", i);
 			spasm_add_entry(T, u - 1, v - 1, w);
 		} else if (mm_is_real(matcode)) {
-			fscanf(f, "%d %d %lg\n", &u, &v, &x);
+			if (3 != fscanf(f, "%d %d %lg\n", &u, &v, &x))
+				errx(1, "parse error entry %d\n", i);
 			spasm_add_entry(T, u - 1, v - 1, (int) (100000 * x));
 		} else if (mm_is_complex(matcode)) {
-			fscanf(f, "%d %d %lg %lg\n", &u, &v, &y, &x);
+			if (4 != fscanf(f, "%d %d %lg %lg\n", &u, &v, &y, &x))
+				errx(1, "parse error entry %d\n", i);
 			spasm_add_entry(T, u - 1, v - 1, (int) (1000 * (y + 100 * x)));
 		} else {
 			errx(1, "Don't know how to read matrix");
 		}
 	}
+
+	if (symmetric || skew)
+		nnz *= 2;
+
 	if (symmetric) {
 		int mult = skew ? -1 : 1;
 		int nz = T->nz;
