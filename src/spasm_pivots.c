@@ -313,10 +313,10 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 				w[Aj[px]] = 0;
 			for (int px = 0; px < tail; px++)
 				w[queue[px]] = 0;
-		}		/* end for */
+		} /* end for */
 		free(w);
 		free(queue);
-	}			/* end of omp parallel */
+	} /* end of omp parallel */
 
 	fprintf(stderr, "\r[pivots] greedy alternating cycle-free search: %d pivots found [%.1fs]\n", npiv - npiv_start, spasm_wtime() - start);
 	return npiv;
