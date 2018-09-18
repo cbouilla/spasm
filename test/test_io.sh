@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 1..4
+echo 1..2
 
 INPUT_MATRIX=$srcdir/Matrix/t1.sms
 
@@ -26,28 +26,4 @@ if diff -w $OUT $EXPECTED >/dev/null ; then
   echo 'ok 2 - reading a matrix, converting it to CSR and writing it'
 else
   echo 'not ok 2 -  reading a matrix, converting it to CSR and writing it'
-fi
-
-# test 3 : GBLA old format input
-INPUT_MATRIX=$srcdir/Matrix/small.gbla.old
-OUT=$srcdir/Output/io.3
-EXPECTED=$srcdir/Expected/io.3
-
-cat $INPUT_MATRIX | ./gbla_in_old | cut -d ' ' -f 1,2 > $OUT
-if diff -w $OUT $EXPECTED >/dev/null ; then
-  echo 'ok 3 - reading a matrix in old GBLA format, and writing it in SMS format'
-else
-  echo 'not ok 3 -  reading a matrix in old GBLA format, and writing it in SMS format'
-fi
-
-# test 4 : GBLA new format input
-INPUT_MATRIX=$srcdir/Matrix/small.gbla.new
-OUT=$srcdir/Output/io.4
-EXPECTED=$srcdir/Expected/io.3
-
-cat $INPUT_MATRIX | ./gbla_in_new | cut -d ' ' -f 1,2 > $OUT
-if diff -w $OUT $EXPECTED >/dev/null ; then
-  echo 'ok 4 - reading a matrix in new GBLA format, and writing it in SMS format'
-else
-  echo 'not ok 4 -  reading a matrix in new GBLA format, and writing it in SMS format'
 fi

@@ -19,8 +19,7 @@ int main(int argc, char **argv) {
   n = A->n;
   m = A->m;
 
-  A_t = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
-  K = spasm_kernel(A_t, SPASM_IDENTITY_PERMUTATION);
+  K = spasm_kernel(A, -1);
   spasm_csr_free(A_t);
   k = K->n;
   Kp = K->p;

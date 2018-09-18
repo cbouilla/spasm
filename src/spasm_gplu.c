@@ -9,53 +9,6 @@ uint64_t data_shuffling = 0;
 
 #define DEBUG
 
-/*
- * /!\ the ``row_permutation'' argument is NOT embedded in P. This means that
- * : a) L is ***really*** lower-(triangular/trapezoidal) b) PLUQ =
- * row_permutation*A
- * 
- * TODO : change this.
- */
-spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L) {
-	int k;
-	spasm *LL;
-	
-	int m = A->m;
-	spasm_lu *N = spasm_GPLU(A, row_permutation, keep_L);
-	spasm *L = N->L;
-	spasm *U = N->U;
-	int r = U->n;
-	int *Up = U->p;
-	int *Uj = U->j;
-	int *qinv = N->qinv;
-
-	k = 1;
-	for (int j = 0; j < m; j++)
-		if (qinv[j] == -1) {
-			qinv[j] = m - k;
-			k++;
-		}
-
-	/*
-	 * permute the columns of U in place. U becomes really
-	 * upper-trapezoidal.
-	 */
-	for (int i = 0; i < r; i++)
-		for (int px = Up[i]; px < Up[i + 1]; px++)
-			Uj[px] = qinv[Uj[px]];
-
-	if (keep_L) {
-		/*
-		 * permute the rows of L (not in place). L becomes really
-		 * lower-trapezoidal.
-		 */
-		LL = spasm_permute(L, N->p, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
-		N->L = LL;
-		spasm_csr_free(L);
-	}
-	return N;
-}
-
 /* eliminate everything in the (dense) vector x using the pivots found in A */
 void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp * x) {
 	int *Aj = A->j;
