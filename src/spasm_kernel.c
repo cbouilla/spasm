@@ -1,24 +1,16 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_kernel.c */
 #include <assert.h>
 #include "spasm.h"
 
 /*
- * Returns a basis of the (left) kernel of A, i.e. a basis of the vector
- * space K = {x | x*A == 0 }.
- * 
- * A_t : the TRANSPOSE of A. column_permutation : an optional (may be NULL)
- * sparsity-preserving permutation of the columns
+ * Returns a basis of the RIGHT kernel of A, i.e. a basis of the vector
+ * space {x | A.x == 0 }.
  */
-spasm *spasm_kernel(const spasm * A_t, const int *column_permutation) {
-	spasm_lu *PLUQ;
-	spasm *L, *K;
-	int i, j, p, m, r, top, prime, nz;
-	int *xi, *Kp, *Kj, *Kx, *q;
-	spasm_GFp *x;
-
-	PLUQ = spasm_PLUQ(A_t, column_permutation, SPASM_DISCARD_L);
-
-	L = spasm_transpose(PLUQ->U, SPASM_WITH_NUMERICAL_VALUES);
+spasm *spasm_kernel(const spasm * A) 
+{
+#if 0	
+	spasm_lu *LU = spasm_echelonize(A, -1); // careful, this destroys *A
+	spasm *U = LU->U;
+	spasm *L = spasm_transpose(U, SPASM_WITH_NUMERICAL_VALUES);
 
 	m = L->n;
 	r = L->m;
@@ -26,10 +18,10 @@ spasm *spasm_kernel(const spasm * A_t, const int *column_permutation) {
 	q = spasm_pinv(PLUQ->qinv, m);
 
 	/* allocate result and workspace */
-	K = spasm_csr_alloc(m - r, m, L->nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
-	xi = malloc(3 * m * sizeof(int));
+	spasm *K = spasm_csr_alloc(m - r, m, L->nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
+	int *xi = malloc(3 * m * sizeof(int));
 	spasm_vector_zero(xi, 3 * m);
-	x = malloc(m * sizeof(spasm_GFp));
+	spasm_GFp * x = malloc(m * sizeof(spasm_GFp));
 
 	nz = 0;
 	Kp = K->p;
@@ -70,4 +62,5 @@ spasm *spasm_kernel(const spasm * A_t, const int *column_permutation) {
 	spasm_free_LU(PLUQ);
 	spasm_csr_free(L);
 	return K;
+#endif
 }

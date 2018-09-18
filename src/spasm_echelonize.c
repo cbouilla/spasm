@@ -2,13 +2,13 @@
 
 #include "spasm.h"
 
-/** produces a matrix U such that:
+/** returns a matrix U such that:
     *) rowspan(U) == rowspan(A) 
-    *) there exists a column permutation Q such that U.Q is upper-trapezoidal 
+    *) there exists a column permutation Q such that U.Q^(-1) is upper-trapezoidal 
 
-    THIS DESTROYS A.
+    THIS DESTROYS AND FREES A.
 */
-spasm * spasm_echelonize(spasm *A, int n_iteration)
+spasm_lu * spasm_echelonize(spasm *A, int n_iteration)
 {
 	if (n_iteration < 0)
 		n_iteration = 3;
@@ -31,12 +31,21 @@ spasm * spasm_echelonize(spasm *A, int n_iteration)
 
 	for (int iteration = 0; iteration < n_iteration; iteration++) {
 		/* TODO : do something if A is empty... */
-		
-		/* find new pivots */
+
+		/**** find new pivots */
+
+		/* TODO : this is stupid. We mutate A, which we shouldn't do.
+		          thus, we consider that we may as well destroy it.
+		          it would be better to a) find the pivots in A,
+		          b) copy them to U, c) make them unitary, d)
+		          compute the schur complements using them.
+		          This leaves A untouched. But then, spasm_schur 
+		          would have to be modified to take its pivots elsewhere...
+		*/
 		int npiv = spasm_find_pivots(A, p, qinv);
 		spasm_make_pivots_unitary(A, p, npiv);
 	
-		/* copy them into U */
+		/**** copy them into U */
 		int *Ap = A->p;
 		int *Aj = A->j;
 		int *Ax = A->x;	
@@ -58,7 +67,7 @@ spasm * spasm_echelonize(spasm *A, int n_iteration)
 		}
 		Up[u_n] = unz;
 
-		/* compute schur complement, update matrix */
+		/**** compute schur complement, update matrix */
 		spasm *B = spasm_schur(A, p, npiv, -1, 0, NULL);
 		spasm_csr_free(A);
 		A = B;
@@ -100,7 +109,10 @@ spasm * spasm_echelonize(spasm *A, int n_iteration)
 	spasm_human_format(spasm_nnz(U), nnz);
 	fprintf(stderr, "[echelonize] done in %.3f s. NNZ(U) = %s. rank = %d\n", spasm_wtime() - start_time, nnz, u_n);
 	
-	free(qinv);
-	free(p);
-	return U;
+	spasm_lu *result = spasm_malloc(sizeof(*result));
+	result->L = NULL;
+	result->U = U;
+	result->qinv = qinv;
+	result->p = p;
+	return result;
 }

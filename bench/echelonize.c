@@ -44,9 +44,11 @@ int main(int argc, char **argv)
 	spasm_human_format(spasm_nnz(A), nnz);
 	fprintf(stderr, "A is %d x %d (%s nnz)\n", n, m, nnz);
 
-	spasm *U = spasm_echelonize(A, n_times);
-	
-	spasm_save_csr(stdout, U);
-	spasm_csr_free(U);
+	int *qinv = spasm_malloc(m * sizeof(*qinv));
+	spasm_lu *LU = spasm_echelonize(A, n_times);
+	free(qinv);
+
+	spasm_save_csr(stdout, LU->U);
+	spasm_free_LU(LU);
 	return 0;
 }
