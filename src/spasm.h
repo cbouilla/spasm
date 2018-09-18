@@ -238,6 +238,8 @@ int * spasm_uetree(const spasm * A);
 int *spasm_tree_postorder(const spasm *A, const int *parent);
 int *spasm_tree_topological_postorder(const spasm *A, const int *parent);
 
+spasm * spasm_echelonize(spasm *A, int n_iteration);
+
 /* utilities */
 static inline int spasm_max(int a, int b) {
 	return (a > b) ? a : b;
