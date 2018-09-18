@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
 
 	/* sparse schur complement : GPLU */
 	if (gplu_final || (!dense_final && density < sparsity_threshold)) {
-		spasm_lu *LU = spasm_LU(A, p, SPASM_DISCARD_L);
+		spasm_lu *LU = spasm_GPLU(A, p, SPASM_DISCARD_L);
 		rank += LU->U->n;
 		spasm_free_LU(LU);
 	} else {

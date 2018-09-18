@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   u = malloc(n * sizeof(spasm_GFp));
   v = malloc(m * sizeof(spasm_GFp));
 
-  LU = spasm_LU(A, SPASM_IDENTITY_PERMUTATION, SPASM_KEEP_L);
+  LU = spasm_GPLU(A, SPASM_IDENTITY_PERMUTATION, SPASM_KEEP_L);
 
   for(i = 0; i < n; i++) {
     for(j = 0; j < n; j++) {

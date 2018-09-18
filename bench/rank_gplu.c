@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 			exit(2);
 		}
 	}
-	LU = spasm_LU(A, p, keep_L);
+	LU = spasm_GPLU(A, p, keep_L);
 	end_time = spasm_wtime();
 
 	U = LU->U;

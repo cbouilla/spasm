@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *L, *B;
   spasm_lu *N;
-  int n, m, test, top, *xi, *p, r;
+  int n, m, test, *xi, *p, r;
   spasm_GFp *x, *y;
 
   assert(argc == 2);
@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
   spasm_triplet_free(T);
   
   /* compute LU decomposition of B */
-  N = spasm_LU(B, SPASM_IDENTITY_PERMUTATION, 1);
+  N = spasm_GPLU(B, SPASM_IDENTITY_PERMUTATION, 1);
   r = N->U->n; //<-- matrix rank
   assert(r < spasm_min(B->n, B->m));
 
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   spasm_vector_zero(x, n);
   spasm_vector_zero(y, n);
 
-  top = spasm_sparse_backward_solve(L, B, 0, xi, x, p, 0);
+  spasm_sparse_backward_solve(L, B, 0, xi, x, p, 0);
 
   spasm_gaxpy(L, x, y);
   for(int j = m; j < n; j++)

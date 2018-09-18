@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
   p = spasm_malloc(n * sizeof(int));
   qinv = spasm_malloc(m * sizeof(int));
   spasm_find_pivots(A, p, qinv);
-  LU = spasm_LU(A, p, SPASM_KEEP_L);
+  LU = spasm_GPLU(A, p, SPASM_KEEP_L);
 
   for(i = 0; i < n; i++) {
     for(j = 0; j < n; j++) {

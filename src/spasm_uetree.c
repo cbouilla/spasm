@@ -28,12 +28,11 @@ int spasm_scc_for_uetree(const spasm * A, int maxn, int *p, int *rr, int * works
 	int index = 0;
 	rr[0] = 0;
 	for (int i = 0; i < maxn; i++) {
-		int head, top;
+		int top;
 		if (marks[i] >= 0)
 			continue;
 		
 		/* DFS */
-		head = 0;
 		top = 0;
 		stack[top] = i;
 		int j = i;

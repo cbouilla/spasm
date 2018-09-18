@@ -86,7 +86,7 @@ int spasm_LU_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x) {
 	qinv = spasm_malloc(m * sizeof(int));
 	p = spasm_malloc(n * sizeof(int));
 	spasm_find_pivots(A, p, qinv);
-	LU = spasm_LU(A, p, SPASM_KEEP_L);
+	LU = spasm_GPLU(A, p, SPASM_KEEP_L);
 	L = LU->L;
 	U = LU->U;
 

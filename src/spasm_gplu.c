@@ -21,7 +21,7 @@ spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L) {
 	spasm *LL;
 	
 	int m = A->m;
-	spasm_lu *N = spasm_LU(A, row_permutation, keep_L);
+	spasm_lu *N = spasm_GPLU(A, row_permutation, keep_L);
 	spasm *L = N->L;
 	spasm *U = N->U;
 	int r = U->n;
@@ -112,19 +112,20 @@ int spasm_early_abort(const spasm * A, const int *p, int k, const spasm * U, int
 }
 
 /*
- * compute a (somewhat) LU decomposition using the GPLU algorithm.
+ * compute a LU decomposition using the GPLU algorithm.
  * 
  * r = min(n, m) is an upper-bound on the rank of A
  * 
- * L n * r U is r * m
+ * L is n * r
+ * U is r * m
  * 
  * L*U == row_permutation*A
  * 
- * qinv[j] = i if the pivot on column j is on row i. -1 if no pivot (yet) found
- * on column j.
+ * qinv[j] = i if the pivot on column j is on row i. 
+ * qinv[j] = -1 if no pivot (yet) found on column j.
  * 
  */
-spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
+spasm_lu *spasm_GPLU(const spasm * A, const int *row_permutation, int keep_L) {
 	spasm *L, *U;
 	spasm_lu *N;
 	

@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 
 	double start_time = spasm_wtime();
 
-	spasm_lu *LU = spasm_LU(A, SPASM_IDENTITY_PERMUTATION, 1);
+	spasm_lu *LU = spasm_GPLU(A, SPASM_IDENTITY_PERMUTATION, 1);
 	fprintf(stderr, "(non-reduced) REF done in %.1fs\n", spasm_wtime() - start_time);
 	
 	spasm *U = spasm_transpose(LU->L, 1);
