@@ -1,4 +1,3 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_lu.c  */
 #include <assert.h>
 #include <stdbool.h>
 #include "spasm.h"
@@ -10,7 +9,8 @@ uint64_t data_shuffling = 0;
 #define DEBUG
 
 /* eliminate everything in the (dense) vector x using the pivots found in A */
-void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp * x) {
+void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp * x)
+{
 	int *Aj = A->j;
 	int *Ap = A->p;
 	spasm_GFp *Ax = A->x;
@@ -31,7 +31,8 @@ void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p
  *   returns TRUE iff it belongs to the row-space of U.
  *   This means that with proba >= 1-1/p, all pivots have been found.
  */
-int spasm_early_abort(const spasm * A, const int *p, int k, const spasm * U, int nu) {
+int spasm_early_abort(const spasm * A, const int *p, int k, const spasm * U, int nu) 
+{
 	int ok;
 	spasm_GFp *y;
 
@@ -78,7 +79,8 @@ int spasm_early_abort(const spasm * A, const int *p, int k, const spasm * U, int
  * qinv[j] = -1 if no pivot (yet) found on column j.
  * 
  */
-spasm_lu *spasm_GPLU(const spasm * A, const int *row_permutation, int keep_L) {
+spasm_lu *spasm_GPLU(const spasm * A, const int *row_permutation, int keep_L) 
+{
 	spasm *L, *U;
 	spasm_lu *N;
 	

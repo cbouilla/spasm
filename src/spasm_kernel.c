@@ -2,65 +2,96 @@
 #include "spasm.h"
 
 /*
- * Returns a basis of the RIGHT kernel of A, i.e. a basis of the vector
+ * Returns a matrix K whose rows span a basis of the RIGHT kernel of A, i.e. a basis of the vector
  * space {x | A.x == 0 }.
+ *
+ * So, in principle K . At == 0.
  */
-spasm *spasm_kernel(const spasm * A) 
+spasm *spasm_kernel(spasm * A) 
 {
-#if 0	
+	assert(A->x);
+
 	spasm_lu *LU = spasm_echelonize(A, -1); // careful, this destroys *A
 	spasm *U = LU->U;
 	spasm *L = spasm_transpose(U, SPASM_WITH_NUMERICAL_VALUES);
 
-	m = L->n;
-	r = L->m;
-	prime = L->prime;
-	q = spasm_pinv(PLUQ->qinv, m);
+	int n = L->n;
+	int m = L->m;
+	int *qinv = LU->qinv;
+	int prime = L->prime;
+
+	/* in L, pivots must be pushed to the first entry of pivotal rows for the sparse triangular solver */
+	int *Lp = L->p;
+	int *Lj = L->j;
+	spasm_GFp *Lx = L->x;
+	int *q = spasm_malloc(m * sizeof(*q));
+
+	for (int i = 0; i < m; i++) {
+		if (qinv[i] < 0)   /* non-pivotal row */
+			continue;
+		for (int it = Lp[i]; it < Lp[i + 1]; it++) {
+			int j = Lj[it];
+			if (qinv[i] == j) {
+				q[j] = i;
+				spasm_swap(Lj, it, Lp[i]);
+				spasm_swap(Lx, it, Lp[i]);
+				break;
+			}
+		}
+		assert(Lj[Lp[i]] == qinv[i]);
+		assert(Lx[Lp[i]] == 1);
+	}
 
 	/* allocate result and workspace */
-	spasm *K = spasm_csr_alloc(m - r, m, L->nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
-	int *xi = malloc(3 * m * sizeof(int));
-	spasm_vector_zero(xi, 3 * m);
-	spasm_GFp * x = malloc(m * sizeof(spasm_GFp));
+	spasm *K = spasm_csr_alloc(n - m, n, L->nzmax, prime, SPASM_WITH_NUMERICAL_VALUES);
+	int *xj = malloc(3 * m * sizeof(*xj));
+	for (int i = 0; i < 3*m; i++)
+		xj[i] = 0;
+	spasm_GFp * x = malloc(m * sizeof(*x));
 
-	nz = 0;
-	Kp = K->p;
-	for (i = r; i < m; i++) {
-		top = spasm_sparse_backward_solve(L, L, i, xi, x, SPASM_IDENTITY_PERMUTATION, 0);
+	int nz = 0;
+	int *Kp = K->p;
+	int *Kj = K->j;
+	spasm_GFp *Kx = K->x;
+	int Ki = 0;
+	for (int i = 0; i < n; i++) {
+		if (qinv[i] >= 0)
+			continue;   /* pivotal row */
+		int top = spasm_sparse_forward_solve(L, L, i, xj, x, q);
 
 		/* enlarge K if necessary */
 		if (nz + m - top + 1 > K->nzmax) {
 			spasm_csr_realloc(K, 2 * K->nzmax + m - top + 1);
+			Kp = K->p;
+			Kj = K->j;
+			Kx = K->x;
 		}
-		Kp = K->p;
-		Kj = K->j;
-		Kx = K->x;
-
+		
 		/* finalize previous row of K */
-		Kp[i - r] = nz;
+		Kp[Ki++] = nz;
 
-		for (p = top; p < m; p++) {
-			j = xi[p];
+		for (int it = top; it < m; it++) {
+			int j = xj[it];
 			if (x[j] != 0) {
 				Kj[nz] = q[j];
 				Kx[nz] = x[j];
 				nz++;
 			}
 		}
-		Kj[nz] = q[i];
+		/* add the extra entry for row i */
+		Kj[nz] = i;
 		Kx[nz] = prime - 1;
 		nz++;
 	}
 
 	/* finalize last row */
-	Kp[m - r] = nz;
+	Kp[Ki] = nz;
 
 	/* cleanup and return */
-	free(xi);
+	free(xj);
 	free(x);
 	free(q);
-	spasm_free_LU(PLUQ);
+	spasm_free_LU(LU);
 	spasm_csr_free(L);
 	return K;
-#endif
 }

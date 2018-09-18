@@ -152,8 +152,6 @@ spasm *spasm_transpose(const spasm * C, int keep_values);
 
 /* spasm_submatrix.c */
 spasm *spasm_submatrix(const spasm * A, int r_0, int r_1, int c_0, int c_1, int with_values);
-spasm *sorted_spasm_submatrix(const spasm * A, int r0, int r1, int c0, int c1, int *py, int with_values);
-spasm *spasm_rows_submatrix(const spasm * A, int i0, int i1, int with_values);
 
 /* spasm_permutation.c */
 void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n);
@@ -171,7 +169,8 @@ void spasm_scatter(const int *Aj, const spasm_GFp * Ax, int from, int to, spasm_
 
 /* spasm_reach.c */
 int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
-int spasm_reach(const spasm * G, const spasm * B, int k, int l, int *xi, const int *pinv);
+int spasm_reach(const spasm * A, const spasm * B, int k, int *xj, const int *qinv);
+
 
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp * y);
@@ -227,12 +226,7 @@ spasm_dm *spasm_strongly_connected_components(const spasm * A);
 spasm_dm *spasm_connected_components(const spasm * A, spasm * given_At);
 
 /* spasm_kernel.c */
-spasm *spasm_kernel(const spasm * A, int n_times);
-
-/* spasm_uetree.c */
-int * spasm_uetree(const spasm * A);
-int *spasm_tree_postorder(const spasm *A, const int *parent);
-int *spasm_tree_topological_postorder(const spasm *A, const int *parent);
+spasm *spasm_kernel(spasm * A);
 
 spasm_lu * spasm_echelonize(spasm *A, int n_iteration);
 

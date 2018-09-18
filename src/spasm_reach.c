@@ -18,56 +18,49 @@
  *
  * @param j column at which the traversal starts.
  *
- * @param G the graph to search
+ * @param A the matrix to search
  *
  * @param xj : size m. Used both as workspace and to return the result. At the end, the
  * list of traversed nodes is in xj[top:m]
  *
- * @param pstack size-n workspace. Used to count the neighbors already traversed.
+ * @param pstack size-m workspace. Used to count the neighbors already traversed.
  *
  * @marks : size-m workspace. Indicates which column nodes have been dealt with.
  *
  * @return top
  */
-int spasm_dfs(int j, const spasm * A, int top, int *xj, int *pstack, int *marks, const int *qinv) {
-	int px, p2, inew, head, *Ap, *Aj;
-
-	/* check inputs */
-	assert(A != NULL);
-	assert(xj != NULL);
-	assert(pstack != NULL);
-	assert(marks != NULL);
-
-	Ap = A->p;
-	Aj = A->j;
+int spasm_dfs(int j, const spasm * A, int top, int *xj, int *pstack, int *marks, const int *qinv) 
+{
+	int *Ap = A->p;
+	int *Aj = A->j;
+	
 	/*
 	 * initialize the recursion stack (rows waiting to be traversed). The
 	 * stack is held at the begining of xj, and has head elements.
 	 */
-	head = 0;
+	int head = 0;
 	xj[head] = j;
+	// TODO : enqueue
 
 	/* stack empty ? */
 	while (head >= 0) {
 		/* get j from the top of the recursion stack */
 		j = xj[head];
-		inew = (qinv != NULL) ? qinv[j] : j;
-
-		/*
-		 * has row i been seen before ? adjacent columns are Gj[
-		 * Gp[jnew]     : Gp[jnew + 1] ] UNSEEN columns are   Gj[
-		 * pstack[head] : Gp[jnew + 1] ]
-		 */
+		int inew = qinv[j];
 
 		if (!marks[j]) {
-			/* mark node i as seen and initialize pstack. This is done only once. */
+			/*
+			 * mark node i as seen and initialize pstack. This is done only once. 
+	 		 * TODO : move it to enqueing.
+			 */
 			marks[j] = 1;
 			pstack[head] = (inew < 0) ? 0 : Ap[inew];
 		}
 		/* index of last entry of row inew */
-		p2 = (inew < 0) ? 0 : Ap[inew + 1];
+		int p2 = (inew < 0) ? 0 : Ap[inew + 1];
 
 		/* examine all yet-unseen entries of row i */
+		int px;
 		for (px = pstack[head]; px < p2; px++) {
 			j = Aj[px];
 			if (marks[j])
@@ -84,6 +77,7 @@ int spasm_dfs(int j, const spasm * A, int top, int *xj, int *pstack, int *marks,
 			 * start a DFS from j
 			 */
 			xj[++head] = j;
+			// TODO : enqueue
 
 			/* node i is not done, exit the loop */
 			break;
@@ -102,37 +96,30 @@ int spasm_dfs(int j, const spasm * A, int top, int *xj, int *pstack, int *marks,
  * Compute the set of nodes from G reachable from any node in B[k] (used to
  * determine the pattern of a sparse triangular solve)
  * 
- * G : graph to search
+ * A : matrix to search
  * 
  * B : RHS (starting point of the search)
  * 
  * k : k-th row of B is used.
+ *  
+ * xj: size 3m. Used as workspace. Output in xj[top:m]
  * 
- * l : upper-bound on both dimensions of the matrix
- * 
- * xj: size 3l. Used as workspace. Output in xj[top:l]
- * 
- * pinv: mapping of rows to columns of G.
+ * qinv[j] == i   if pivot of column j is on row i, or -1 if no pivot on column j.
  * 
  * return value : top
  * 
- * xj [top...l-1] = nodes reachable from graph of G*P' via nodes in B(:,k).
+ * xj[top:m] = columns indices reachable from B[k] via pivots.
  * 
- * xj [l...3l-1] used as workspace
+ * xj[m:3m] used as workspace
  */
-int spasm_reach(const spasm * A, const spasm * B, int k, int l, int *xj, const int *qinv) {
-	int  top, *Bp, *Bj, *pstack, *marks;
-
-	/* check inputs */
-	assert(A != NULL);
-	assert(B != NULL);
-	assert(xj != NULL);
-
-	Bp = B->p;
-	Bj = B->j;
-	top = l;
-	pstack = xj + l;
-	marks = pstack + l;
+int spasm_reach(const spasm * A, const spasm * B, int k, int *xj, const int *qinv)
+{
+	int *Bp = B->p;
+	int *Bj = B->j;
+	int m = A->m;
+	int top = m;
+	int *pstack = xj + m;
+	int *marks = pstack + m;
 
 	/*
 	 * iterates over the k-th row of B.  For each column index j present
@@ -140,16 +127,19 @@ int spasm_reach(const spasm * A, const spasm * B, int k, int l, int *xj, const i
 	 * not, start a DFS from j and add to the pattern all columns
 	 * reachable from j.
 	 */
-	for (int px = Bp[k]; px < Bp[k + 1]; px++)
-		if (!marks[Bj[px]])
-			top = spasm_dfs(Bj[px], A, top, xj, pstack, marks, qinv);
+	for (int it = Bp[k]; it < Bp[k + 1]; it++) {
+		int j = Bj[it];
+		if (!marks[j])
+			top = spasm_dfs(j, A, top, xj, pstack, marks, qinv);
+	}
 
-	/* unmark all marked nodes. */
+	/* reset marks */
+	
 	/*
 	 * TODO : possible optimization : if stuff is marked "k", and
 	 * initialized with -1, then this is not necessary
 	 */
-	for (int px = top; px < l; px++)
+	for (int px = top; px < m; px++)
 		marks[xj[px]] = 0;
 
 	return top;

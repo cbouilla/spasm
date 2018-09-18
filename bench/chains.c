@@ -135,7 +135,6 @@ int main()
 	for (int i = 0; i < n; i++) {
 		if (vmark[i])
 			continue;
-		int prev = top;
 		top = dfs(A, i, top, stack, vmark, itstack, parent);
 		//fprintf(stderr, "|CC| = %d\n", prev - top);
 		CC++;
@@ -239,7 +238,6 @@ int main()
 	for (int i = 0; i < n; i++) {
 		if (vmark[i])
 			continue;
-		int prev = top;
 		top = dfs(B, i, top, stack, vmark, itstack, NULL);
 		//fprintf(stderr, "|biCC| = %d\n", prev - top);
 	}

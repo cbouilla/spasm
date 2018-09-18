@@ -5,7 +5,7 @@ LDADD = -lm $(top_builddir)/src/libspasm.la $(FFLAS_FFPACK_LIBS) $(GIVARO_LIBS)
 
 bin_PROGRAMS = rank_gplu dm bitmap kernel transpose stack \
                schur_complement rank_hybrid vertical_swap maximum_matching \
-               rank_dense find_pivots uetree mtx_reader rref echelonize u_checker \
+               rank_dense find_pivots mtx_reader rref echelonize u_checker \
                rref_gplu chains modules complement_cc lemon
 
 lemon_SOURCES = lemon.cpp

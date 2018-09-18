@@ -225,7 +225,7 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
 #endif
 
 	/* xj[top : m] = Reach(U, B[k]) */
-	top = spasm_reach(U, B, k, m, xj, qinv);
+	top = spasm_reach(U, B, k, xj, qinv);
 
 #ifdef SPASM_TIMING
 	reach += spasm_ticks() - start;

@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 
 	/* phase II: check the elimination coeffs */
 	int *p_out = spasm_malloc(Sn * sizeof(int));
-	S = spasm_schur(A, p, npiv, -1, 1, p_out);
+	S = spasm_schur(A, p, npiv, -1, 0, p_out);
 	Sp = S->p;
 	Sj = S->j;
 	spasm_GFp *Sx = S->x;

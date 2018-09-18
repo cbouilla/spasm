@@ -2,45 +2,43 @@
 #include <assert.h>
 #include "spasm.h"
 
-int main(int argc, char **argv) {
-  spasm_triplet *T;
-  spasm *U;
-  int i, n, m, root, *xi, *pstack, *marks, *pinv;
+int main(int argc, char **argv) 
+{
+	assert(argc > 1);
+	int root = atoi(argv[1]);
 
-  assert(argc > 1);
-  root = atoi(argv[1]);
+	/*
+	 * computes the list of reachable columns starting from column root. 
+	 * pivots are assumed to be on the diagonal.
+	 */
 
-  T = spasm_load_sms(stdin, 42013);
-  U = spasm_compress(T);
-  spasm_triplet_free(T);
+	spasm_triplet *T = spasm_load_sms(stdin, 42013);
+	spasm *U = spasm_compress(T);
+	spasm_triplet_free(T);
 
-  n = U->n;
-  m = U->m;
-  assert( n <= m );
+	int n = U->n;
+	int m = U->m;
+	assert(n <= m); /* why ? */
 
-  pstack = malloc(m * sizeof(int));
-  xi = malloc(m * sizeof(int));
-  marks = malloc(m * sizeof(int));
-  for(i = 0 ; i < m; i++) {
-    marks[i] = 0;
-  }
+	int *pstack = malloc(m * sizeof(int));
+	int *xj = malloc(m * sizeof(int));
+	int *marks = malloc(m * sizeof(int));
+	for (int j = 0 ; j < m; j++)
+		marks[j] = 0;
 
-  pinv = NULL;
-  if (n < m) { /* upper-trapezoidal */
-    pinv = malloc(m * sizeof(int));
-    for(i = 0; i < n; i++) {
-      pinv[i] = i;
-    }
-    for(i = n; i < m; i++) {
-      pinv[i] = -1;
-    }
-  }
+	int *qinv = malloc(m * sizeof(int));
+	for (int j = 0; j < n; j++)
+		qinv[j] = j;
+	for (int j = n; j < m; j++)
+		qinv[j] = -1;
 
-  i = spasm_dfs(root, U, m, xi, pstack, marks, pinv);
-  for( ; i < m; i++) {
-    printf("%d\n", xi[i]);
-  }
+	int top = spasm_dfs(root, U, m, xj, pstack, marks, qinv);
+	for( ; top < m; top++)
+		printf("%d\n", xj[top]);
 
-  spasm_csr_free(U);
-  return 0;
+	spasm_csr_free(U);
+	free(pstack);
+	free(xj);
+	free(marks);
+	return 0;
 }

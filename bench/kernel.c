@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
 	A_t = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
 	spasm_find_pivots(A_t, qinv, p);
 
-	K = spasm_kernel(A_t, qinv);
+	K = spasm_kernel(A_t);
 
 	r = K->n;
 	K_density = 100.0 * spasm_nnz(K) / (K->n * K->m);
