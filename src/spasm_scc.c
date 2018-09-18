@@ -10,7 +10,8 @@
 
 /* strategie : quand un noeud est retiré dans une SCC, mettre son index ou son lowlink à n+1 */
 
-spasm_dm *spasm_strongly_connected_components(const spasm * A) {
+spasm_dm *spasm_strongly_connected_components(const spasm * A) 
+{
 	int n = A->n;
 	int m = A->m;
 	int *Ap = A->p;

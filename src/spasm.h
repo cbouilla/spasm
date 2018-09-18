@@ -174,7 +174,6 @@ int spasm_reach(const spasm * A, const spasm * B, int k, int *xj, const int *qin
 
 /* spasm_gaxpy.c */
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp * y);
-int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi);
 
 /* spasm_triangular.c */
 int spasm_is_upper_triangular(const spasm * A);
@@ -184,11 +183,9 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, con
 int spasm_sparse_backward_solve(const spasm * L, const spasm * B, int k, int *xi, spasm_GFp * x, const int *pinv, int r_bound);
 int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xi, spasm_GFp * x, const int *pinv);
 
-/* spasm_gpu.c */
+/* spasm_gplu.c */
 spasm_lu *spasm_GPLU(const spasm * A, const int *row_permutation, int keep_L);
 void spasm_free_LU(spasm_lu * X);
-int spasm_find_pivot(int *xi, spasm_GFp * x, int top, spasm * U, spasm * L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n);
-void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp *x);
 
 /* spasm_schur.c */
 void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv);
@@ -203,7 +200,7 @@ void spasm_dense_LU_free(spasm_dense_lu * A);
 int spasm_dense_LU_process(spasm_dense_lu *A, spasm_GFp *y);
 
 /* spasm_solutions.c */
-int spasm_LU_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x);
+int spasm_LU_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x);
 
 /* spasm_pivots.c */
 int spasm_find_pivots(spasm * A, int *p, int *qinv);

@@ -9,7 +9,7 @@
  * 
  * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
  */
-int spasm_LU_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x) 
+int spasm_LU_solve(const spasm * A, const spasm_GFp * b, spasm_GFp * x) 
 {
 	spasm_GFp *y, *z, *w;
 	spasm_lu *LU;

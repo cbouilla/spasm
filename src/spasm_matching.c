@@ -1,7 +1,8 @@
 #include <assert.h>
 #include "spasm.h"
 
-void spasm_augment_matching(int head, int *istack, int *jstack, int *p, int *qinv) {
+void spasm_augment_matching(int head, int *istack, int *jstack, int *p, int *qinv) 
+{
 	for (int px = head; px >= 0; px--) {
 		int i = istack[px];
 		int j = jstack[px];
@@ -12,7 +13,8 @@ void spasm_augment_matching(int head, int *istack, int *jstack, int *p, int *qin
 
 /* lookahead: search for unmatched column in A[i,:]. If found, it completes the
  * alternating path in istack/jstack, so we augment the matching. */
-int spasm_lookahead(const spasm *A, int i, int head, int *plookahead, int *istack, int *jstack, int *p, int *qinv) {
+int spasm_lookahead(const spasm *A, int i, int head, int *plookahead, int *istack, int *jstack, int *p, int *qinv) 
+{
 	int *Ap = A->p;
 	int *Aj = A->j;
 			
@@ -42,7 +44,8 @@ int spasm_lookahead(const spasm *A, int i, int head, int *plookahead, int *istac
  * Because the matching increases monotonically (when row/column is matched, it
  * stays matched), is it useless to re-examine matched columns.
  */
-int spasm_augmenting_path(const spasm * A, int k, int *istack, int *jstack, int *pstack, int *marks, int *plookahead, int *p, int *qinv) {
+int spasm_augmenting_path(const spasm * A, int k, int *istack, int *jstack, int *pstack, int *marks, int *plookahead, int *p, int *qinv) 
+{
 	int head, px;
 	int *Ap, *Aj;
 
@@ -96,7 +99,8 @@ int spasm_augmenting_path(const spasm * A, int k, int *istack, int *jstack, int 
  * 
  * @return size of the matching
  */
-int spasm_maximum_matching(const spasm * A, int *p, int *qinv) {
+int spasm_maximum_matching(const spasm * A, int *p, int *qinv) 
+{
 	int n, m, r, k;
 	int *Ap, *istack, *jstack, *marks, *pstack, *plookahead;
 
@@ -140,7 +144,8 @@ int spasm_maximum_matching(const spasm * A, int *p, int *qinv) {
  * given a row-matching of A, returns a row_matching of P*A*Q --- the result
  * of spasm_permute(A, p, q).
  */
-int *spasm_permute_row_matching(int n, const int *jmatch, const int *p, const int *qinv) {
+int *spasm_permute_row_matching(int n, const int *jmatch, const int *p, const int *qinv) 
+{
 	int *jjmatch;
 	int i;
 
@@ -155,7 +160,8 @@ int *spasm_permute_row_matching(int n, const int *jmatch, const int *p, const in
 	return jjmatch;
 }
 
-int *spasm_permute_column_matching(int m, const int *imatch, const int *pinv, const int *q) {
+int *spasm_permute_column_matching(int m, const int *imatch, const int *pinv, const int *q) 
+{
 	int *iimatch;
 	int j;
 
@@ -175,7 +181,8 @@ int *spasm_permute_column_matching(int m, const int *imatch, const int *pinv, co
  * returns (a copy of) the matching match restricted to the submatrix M[a:b,
  * c:d]
  */
-int *spasm_submatching(const int *match, int a, int b, int c, int d) {
+int *spasm_submatching(const int *match, int a, int b, int c, int d) 
+{
 	int *pmatch;
 	int i;
 

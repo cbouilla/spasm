@@ -27,6 +27,7 @@ void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x) {
 	T->m = spasm_max(T->m, j + 1);
 }
 
+/* in-place */
 void spasm_triplet_transpose(spasm_triplet * T) {
 	int nz = T->nz;
 	int *Ti = T->i;

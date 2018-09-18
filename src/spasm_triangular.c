@@ -1,4 +1,3 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_triangular.c */
 #include <assert.h>
 #include "spasm.h"
 
@@ -8,7 +7,8 @@ uint64_t reach = 0, scatter = 0;
 #endif
 
 
-int spasm_is_upper_triangular(const spasm * A) {
+int spasm_is_upper_triangular(const spasm * A) 
+{
 	int i, p, n, m, *Aj, *Ap;
 	spasm_GFp *Ax;
 
@@ -39,7 +39,8 @@ int spasm_is_upper_triangular(const spasm * A) {
 }
 
 
-int spasm_is_lower_triangular(const spasm * A) {
+int spasm_is_lower_triangular(const spasm * A) 
+{
 	int i, n, m, p, *Aj, *Ap;
 	spasm_GFp *Ax;
 
@@ -90,7 +91,8 @@ int spasm_is_lower_triangular(const spasm * A) {
  * p[j] == i indicates if the "diagonal" entry on column j is on row i
  * 
  */
-void spasm_dense_back_solve(const spasm * L, spasm_GFp * b, spasm_GFp * x, const int *p) {
+void spasm_dense_back_solve(const spasm * L, spasm_GFp * b, spasm_GFp * x, const int *p) 
+{
 	int i, j, n, m, *Lp, *Lj, prime;
 	spasm_GFp *Lx;
 
@@ -141,7 +143,8 @@ void spasm_dense_back_solve(const spasm * L, spasm_GFp * b, spasm_GFp * x, const
  * 
  * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
  */
-int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, const int *q) {
+int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, const int *q) 
+{
 	int i, j, n, m, *Up, *Uj, prime;
 	spasm_GFp *Ux;
 

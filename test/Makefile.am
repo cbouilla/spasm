@@ -14,8 +14,7 @@ TESTS = test_io.sh GFp vec_perm test_perm.sh test_gaxpy.sh test_reach.sh \
 check_PROGRAMS = io GFp gaxpy reach dense_usolve dense_lsolve \
 	sparse_usolve lu permuted_lu lu_solve \
 	vec_perm mat_perm transpose dm submatrix cc scc \
-	kernel sparse_vect_matrix_prod \
-	dense_lu matching schur
+	kernel dense_lu matching schur
 
 
 AM_TESTS_ENVIRONMENT = env AM_TAP_AWK='$(AWK)'

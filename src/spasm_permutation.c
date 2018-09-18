@@ -1,4 +1,3 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_permutation.c */
 #include <assert.h>
 #include "spasm.h"
 
@@ -15,7 +14,8 @@
  * 
  * This means that x[k] <--- b[ p[k] ]
  */
-void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
+void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) 
+{
 	int k;
 	assert(x != NULL);
 	assert(b != NULL);
@@ -33,7 +33,8 @@ void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
  * 
  * The function is given p, not p^{-1}.
  */
-void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
+void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) 
+{
 	int k;
 	assert(x != NULL);
 	assert(b != NULL);
@@ -44,7 +45,8 @@ void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
 }
 
 /* compute the inverse permutation */
-int *spasm_pinv(int const *p, int n) {
+int *spasm_pinv(int const *p, int n) 
+{
 	int k, *pinv;
 	/* p = NULL denotes identity */
 	if (p == NULL) {
@@ -65,7 +67,8 @@ int *spasm_pinv(int const *p, int n) {
  * respectively.
  * 
  */
-spasm *spasm_permute(const spasm * A, const int *p, const int *qinv, int values) {
+spasm *spasm_permute(const spasm * A, const int *p, const int *qinv, int values) 
+{
 	int t, j, i, nz, m, n, *Ap, *Aj, *Cp, *Cj;
 	spasm_GFp *Cx, *Ax;
 	spasm *C;
@@ -104,7 +107,8 @@ spasm *spasm_permute(const spasm * A, const int *p, const int *qinv, int values)
 	return C;
 }
 
-int *spasm_random_permutation(int n) {
+int *spasm_random_permutation(int n) 
+{
 	int i, *p;
 
 	p = spasm_malloc(n * sizeof(int));
@@ -119,7 +123,8 @@ int *spasm_random_permutation(int n) {
 }
 
 /* in-place permute x[a:b] using p. Destroys p */
-void spasm_range_pvec(int *x, int a, int b, int *p) {
+void spasm_range_pvec(int *x, int a, int b, int *p) 
+{
 	int i;
 
 	for (i = 0; i < b - a; i++) {
