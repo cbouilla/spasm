@@ -9,7 +9,7 @@
 
 int main(int argc, char **argv) {
 	spasm_triplet *T;
-	spasm *A, *A_t, *K, *A_clean;
+	spasm *A, *A_t, *K;
 	int ch, output, prime, i, n, m, r, h, *p, *qinv;
 	double A_density, K_density;
 
@@ -53,24 +53,8 @@ int main(int argc, char **argv) {
 	n = A->n;
 	m = A->m;
 
-	/* remove zero rows */
 	p = spasm_malloc(n * sizeof(int));
 	qinv = spasm_malloc(m * sizeof(int));
-	spasm_find_pivots(A, p, qinv);	/* this does some useless stuff, but
-					 * pushes zero rows to the bottom */
-	A_clean = spasm_permute(A, p, SPASM_IDENTITY_PERMUTATION, SPASM_WITH_NUMERICAL_VALUES);
-	spasm_csr_free(A);
-
-	A = A_clean;
-	for (i = 0; i < n; i++) {
-		if (spasm_row_weight(A, i) == 0) {
-			fprintf(stderr, "[kernel] ignoring %d empty rows\n", n - i);
-			A->n = i;
-			n = i;
-			break;
-		}
-	}
-
 	A_t = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
 	spasm_find_pivots(A_t, qinv, p);
 
