@@ -57,6 +57,7 @@ int main() {
 	}
 
 	fprintf(stderr, "\nFinal rank = %d [%.1fs]\n", r, spasm_wtime() - start);
+	printf("rank of A = %d [%.1fs]\n", r, spasm_wtime() - start );
 	spasm_dense_LU_free(LU);
 	spasm_csr_free(A);
 	return 0;
