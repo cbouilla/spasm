@@ -4,7 +4,7 @@ SpaSM (Sparse direct Solver Modulo _p_)
 SpaSM is a software library devoted to sparse gaussian elimination modulo a small prime _p_. 
 It is available under the General Public License Version 2 or later (GPLv2+).
 
-The algorithms used in SpaSM are described in [CASC'16](http://cristal.univ-lille.fr/~bouillag/pub/CASC16.pdf) and [PASCO'17](http://cristal.univ-lille.fr/~bouillag/pub/PASCO17.pdf). For more information, consult the [SpaSM homepage](http://cristal.univ-lille.fr/~bouillag/spasm).
+The algorithms used in SpaSM are described in [CASC'16](http://www-almasty.lip6.fr/~bouillaguet/pub/CASC16.pdf) and [PASCO'17](http://www-almasty.lip6.fr/~bouillaguet/pub/PASCO17.pdf).
 
 Features
 --------
@@ -34,10 +34,14 @@ In brief:
 If you do not have the `configure` script, try:
 ```autoreconf -i```
 
+You can also build out-of-tree using (for instance):
+```mkdir build ; cd build ; ../configure && make && make check```
+
 SpaSM does not rely on any third-party software, but is capable of using:
   * [METIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview) to find row separators.
   * [FFLAS-FFPACK](https://github.com/linbox-team/fflas-ffpack) for dense rank computation.
   * [LinBox](https://github.com/linbox-team/linbox) for other rank algorithms.
+  * [Lemon](https://lemon.cs.elte.hu/trac/lemon) to find maximum matchings on non-bipartite graphs.
 
 SpaSM uses OpenMP to exploit multicore machines.
 
@@ -45,6 +49,7 @@ The most commonly used option include:
 - `--with-metis=<path>` : build the METIS interface
 - `--with-fflas-ffpack=<path>` : enable the tools relying on dense rank computation
 - `--with-linbox=<path>` : build the linbox wrappers (for comparison purpose)
+- `--with-lemon=<path>` : build the lemon matching tool
 
 Demonstration scripts
 ---------------------
@@ -94,4 +99,4 @@ note = {\url{http://github.com/cbouilla/spasm}}
 Contact and discussion
 ----------------------
 
-Please email <charles.bouillaguet@univ-lille1.fr> for any questions.
+Please email <charles.bouillaguet@lip6.fr> for any questions.
