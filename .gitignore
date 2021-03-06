@@ -35,3 +35,4 @@ bench/vertical_swap
 bench/jobs/*
 result/*
 build/*
+/src/config.h.in
