@@ -1,28 +1,39 @@
 #include <assert.h>
 #include "spasm.h"
 
-/* test if a pivot has already been found on row i (if so, it's the first entry of the row ) */
-int spasm_is_row_pivotal(const spasm * A, const int *qinv, const int i) {
-	int *Ap, *Aj;
+/*
+ * General convention: if a row is pivotal, then the pivot is the first entry of the row.
+ * If some pivots have been found, then they are passed from one routine to the other through
+ * three variables:
+ *   - npiv (int)             : the number of pivots found)
+ *   - p (array of size n)    : rows p[0], ..., p[npiv - 1] are pivotal
+ *   - qinv (array of size m) : if qinv[j] == -1, then column j is not pivotal;
+ *                                 otherwise, the pivot is on row qinv[j].
+ *
+ * 
+ */
 
-	Ap = A->p;
-	Aj = A->j;
+
+/* test if a pivot has already been found on row i (if so, it's the first entry of the row ) */
+int spasm_is_row_pivotal(const spasm * A, const int *qinv, const int i)
+{
+
+	int * Ap = A->p;
+	int * Aj = A->j;
 
 	/* test for empty row before reading Aj[px] */
 	if (Ap[i + 1] == Ap[i])
 		return 0;
-	assert(Aj[Ap[i]] >= 0);
-	return (qinv[Aj[Ap[i]]] == i);
+	int j = Aj[Ap[i]];  // first row entry
+	return (qinv[j] == i);
 }
 
 /* make pivot the first entry of the row */
-void spasm_prepare_pivot(spasm * A, const int i, const int px) {
-	int *Ap, *Aj;
-	spasm_GFp *Ax;
-
-	Ap = A->p;
-	Aj = A->j;
-	Ax = A->x;
+void spasm_prepare_pivot(spasm * A, const int i, const int px)
+{
+	int *Ap = A->p;
+	int *Aj = A->j;
+	spasm_GFp *Ax = A->x;
 
 	spasm_swap(Aj, Ap[i], px);
 	if (Ax != NULL)
@@ -33,23 +44,23 @@ void spasm_prepare_pivot(spasm * A, const int i, const int px) {
 /** Faugère-Lachartre pivot search.
  *
  * The leftmost entry of each row is a candidate pivot. Select the sparsest row
- * with a leftmost entry on the given column. Selected pivots are moved to the
- * front of the row.
+ * with a leftmost entry on the given column.
+
  * @param qinv must be initialized to -1
  * @param p can be arbitrary.
- * @return number of pivots found. */
-int spasm_find_FL_pivots(spasm * A, int *p, int *qinv) {
-	int n, m, idx_j, *Aj, *Ap, npiv;
-	double start;
-
-	n = A->n;
-	m = A->m;
-	Ap = A->p;
-	Aj = A->j;
-	start = spasm_wtime();
+ * @return number of pivots found. 
+ */
+int spasm_find_FL_pivots(spasm * A, int *p, int *qinv)
+{
+	int n = A->n;
+	int m = A->m;
+	int * Ap = A->p;
+	int * Aj = A->j;
+	double start = spasm_wtime();
 
 	for (int i = 0; i < n; i++) {
 		int j = -1;
+		int idx_j;
 		for (int px = Ap[i]; px < Ap[i + 1]; px++)
 			if (j == -1 || Aj[px] < j) {
 				j = Aj[px];
@@ -66,7 +77,7 @@ int spasm_find_FL_pivots(spasm * A, int *p, int *qinv) {
 	}
 
 	/* build p */
-	npiv = 0;
+	int npiv = 0;
 	for (int j = 0; j < m; j++)
 		if (qinv[j] != -1)
 			p[npiv++] = qinv[j];
@@ -84,19 +95,17 @@ int spasm_find_FL_pivots(spasm * A, int *p, int *qinv) {
  * w[j] = 1 <===> column j does not appear in a pivotal row
  * 
  */
-int spasm_find_FL_column_pivots(spasm * A, int *p, int *qinv, int npiv_fl) {
-	int n, m, *Aj, *Ap, npiv, *w;
-	double start;
-
-	n = A->n;
-	m = A->m;
-	Ap = A->p;
-	Aj = A->j;
-	npiv = npiv_fl;
-	w = spasm_malloc(m * sizeof(int));
+int spasm_find_FL_column_pivots(spasm * A, int *p, int *qinv, int npiv_fl)
+{
+	int n = A->n;
+	int m = A->m;
+	int * Ap = A->p;
+	int * Aj = A->j;
+	int npiv = npiv_fl;
+	int *w = spasm_malloc(m * sizeof(int));
 	spasm_vector_set(w, 0, m, 1);
 
-	start = spasm_wtime();
+	double start = spasm_wtime();
 
 	/* mark columns on previous pivot rows as obstructed */
 	for (int i = 0; i < npiv; i++) {
@@ -141,7 +150,8 @@ int spasm_find_FL_column_pivots(spasm * A, int *p, int *qinv, int npiv_fl) {
 
 
 
-int find_survivor(spasm * A, int i, char *w) {
+int find_survivor(spasm * A, int i, char *w) 
+{
 	int *Ap = A->p;
 	int *Aj = A->j;
 
@@ -159,13 +169,15 @@ int find_survivor(spasm * A, int i, char *w) {
  * provide already know pivots, and this looks for more. Updates qinv, but
  * DFS must be performed afterwards
  */
-static inline void BFS_enqueue(char *w, int *queue, int *surviving, int *tail, int j) {
+static inline void BFS_enqueue(char *w, int *queue, int *surviving, int *tail, int j)
+{
 	queue[(*tail)++] = j;
 	*surviving -= w[j];
 	w[j] = -1;
 }
 
-static inline void BFS_enqueue_row(char *w, int *queue, int *surviving, int *tail, const int *Ap, const int *Aj, int i) {
+static inline void BFS_enqueue_row(char *w, int *queue, int *surviving, int *tail, const int *Ap, const int *Aj, int i) 
+{
 	for (int px = Ap[i]; px < Ap[i + 1]; px++) {
 		/* this is the critical section */
 		int j = Aj[px];
@@ -174,19 +186,17 @@ static inline void BFS_enqueue_row(char *w, int *queue, int *surviving, int *tai
 	}
 }
 
-int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
-	int n, m, *Aj, *Ap, processed, v, npiv, retries;
-	double start;
-
-	n = A->n;
-	m = A->m;
-	Ap = A->p;
-	Aj = A->j;
-	v = spasm_max(1, spasm_min(1000, n / 100));
-	processed = 0;
-	retries = 0;
-	npiv = npiv_start;
-	start = spasm_wtime();
+int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start)
+{
+	int n = A->n;
+	int m = A->m;
+	int * Ap = A->p;
+	int * Aj = A->j;
+	int v = spasm_max(1, spasm_min(1000, n / 100));
+	int processed = 0;
+	int retries = 0;
+	int npiv = npiv_start;
+	double start = spasm_wtime();
 
 #pragma omp parallel
 	{
@@ -206,14 +216,16 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 			 * reachable from its entries by alternating paths.
 			 * Unreachable entries on the row can be chosen as
 			 * pivots. The w[] array is used for marking during
-			 * the graph traversal. Before the search: w[j] ==  1
-			 * for each non-pivotal entry j on the row w[j] ==  0
-			 * otherwise After the search: w[j] ==  1  for each
-			 * unreachable non-pivotal entry j on the row w[j] ==
-			 * -1  column j is reachable by an alternating path,
-			 * or is pivotal (has entered the queue at some
-			 * point) w[j] ==  0  column j was absent and is
-			 * unreachable
+			 * the graph traversal. 
+			 * Before the search: 
+			 *   w[j] == 1 for each non-pivotal entry j on the row 
+			 *   w[j] == 0 otherwise 
+			 * After the search: 
+			 *   w[j] ==  1  for each unreachable non-pivotal entry j on the row
+			 *                 (candidate pivot) 
+			 *   w[j] == -1  column j is reachable by an alternating path,
+			 *                 or is pivotal (has entered the queue at some point) 
+			 *   w[j] ==  0  column j was absent and is unreachable
 			 */
 			if ((tid == 0) && (i % v) == 0) {
 				fprintf(stderr, "\r[pivots] %d / %d --- found %d new", processed, n - npiv_start, npiv - npiv_start);
@@ -228,11 +240,7 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 			/* we start reading qinv: begining of transaction */
 #pragma omp atomic read
 			npiv_local = npiv;
-
-			/*
-			 * scatters columns of A[i] into w, enqueue pivotal
-			 * entries
-			 */
+			/* scatters columns of A[i] into w, enqueue pivotal entries */
 			head = 0;
 			tail = 0;
 			surviving = 0;
@@ -252,8 +260,7 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 				int j = queue[head++];
 				int I = qinv[j];
 				if (I == -1)
-					continue;	/* j is not pivotal:
-							 * nothing to do */
+					continue;	/* j is not pivotal: nothing to do */
 				BFS_enqueue_row(w, queue, &surviving, &tail, Ap, Aj, I);
 			}
 
@@ -263,8 +270,7 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 				int npiv_target = -1;
 
 				/*
-				 * si aucun nouveau pivot n'est arrivé,
-				 * ajouter
+				 * si aucun nouveau pivot n'est arrivé, ajouter ...
 				 */
 #pragma omp critical
 				{
@@ -323,19 +329,20 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start) {
 }
 
 /*
- * return the number of pivots found. @param p : row permutations. Pivotal
- * rows are first. @param qinv : inverse column permutation. q[j] is the row
+ * return the number of pivots found. 
+ * @param p : row permutations. Pivotal rows are first. 
+ * @param qinv : inverse column permutation. q[j] is the row
  * on which the pivot on column j is, or -1 if there is no pivot on column j.
+ *
  * both p and qinv must be preallocated
  */
-int spasm_find_pivots(spasm * A, int *p, int *qinv) {
-	int n, m, k, npiv, top;
-
-	n = A->n;
-	m = A->m;
+int spasm_find_pivots(spasm * A, int *p, int *qinv)
+{
+	int n = A->n;
+	int m = A->m;
 
 	spasm_vector_set(qinv, 0, m, -1);
-	npiv = spasm_find_FL_pivots(A, p, qinv);
+	int npiv = spasm_find_FL_pivots(A, p, qinv);
 	npiv = spasm_find_FL_column_pivots(A, p, qinv, npiv);
 	npiv = spasm_find_cycle_free_pivots(A, p, qinv, npiv);
 
@@ -349,11 +356,11 @@ int spasm_find_pivots(spasm * A, int *p, int *qinv) {
 
 	/* topological sort */
 	spasm_vector_set(marks, 0, m, 0);
-	top = m;
+	int top = m;
 	for (int j = 0; j < m; j++)
 		if (qinv[j] != -1 && !marks[j])
 			top = spasm_dfs(j, A, top, xj, pstack, marks, qinv);
-	k = 0;
+	int k = 0;
 	for (int j = top; j < m; j++) {
 		int i = qinv[xj[j]];
 		if (i != -1)
