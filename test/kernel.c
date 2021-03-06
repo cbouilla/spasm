@@ -2,38 +2,36 @@
 #include <assert.h>
 #include "spasm.h"
 
-int main(int argc, char **argv) {
-  spasm_triplet *T;
-  spasm *A, *A_t, *K;
-  spasm_GFp *x, *y, *Kx;
-  int i, j, n, m, k, test, p, nonzero;
-  int *Kp, *Kj;
-
+int main(int argc, char **argv)
+{
   assert(argc > 1);
-  test = atoi(argv[1]);
+  int test = atoi(argv[1]);
 
-  T = spasm_load_sms(stdin, 42013);
-  A = spasm_compress(T);
+  spasm_triplet *T = spasm_load_sms(stdin, 42013);
+  // assert(T->x != NULL);
+
+  spasm * A = spasm_compress(T);
+  // assert(A->x != NULL);
   spasm_triplet_free(T);
 
-  n = A->n;
-  m = A->m;
+  int n = A->n;
+  int m = A->m;
 
-  A_t = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
-  K = spasm_kernel(A_t, SPASM_IDENTITY_PERMUTATION);
+  spasm * A_t = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
+  spasm * K = spasm_kernel(A_t, SPASM_IDENTITY_PERMUTATION);
   spasm_csr_free(A_t);
-  k = K->n;
-  Kp = K->p;
-  Kj = K->j;
-  Kx = K->x;
+  int k = K->n;
+  int * Kp = K->p;
+  int * Kj = K->j;
+  spasm_GFp * Kx = K->x;
 
-  assert( K->m == A->n );
+  assert(K->m == A->n);
 
-  x = spasm_malloc(n * sizeof(spasm_GFp));
-  y = spasm_malloc(m * sizeof(spasm_GFp));
+  spasm_GFp * x = spasm_malloc(n * sizeof(spasm_GFp));
+  spasm_GFp * y = spasm_malloc(m * sizeof(spasm_GFp));
 
   /* test that they are really kernel vectors */
-  for(i = 0; i < k; i++) {
+  for (int i = 0; i < k; i++) {
     printf("# testing vector %d\n", i);
     spasm_vector_zero(x, n);
     spasm_vector_zero(y, m);
@@ -45,8 +43,8 @@ int main(int argc, char **argv) {
     }
 
     /* scatter K[i] into x */
-    nonzero = 0;
-    for(p = Kp[i]; p < Kp[i + 1]; p++) {
+    int nonzero = 0;
+    for (int p = Kp[i]; p < Kp[i + 1]; p++) {
       x[ Kj[p] ] = Kx[p];
       nonzero += (Kx[p] != 0);
     }
@@ -59,7 +57,7 @@ int main(int argc, char **argv) {
     /* y <-- x.A */
     spasm_gaxpy(A, x, y);
 
-    for(j = 0; j < m; j++) {
+    for (int j = 0; j < m; j++) {
       if (y[j] != 0) {
       printf("not ok %d - vector not in kernel\n", test);
       exit(0);

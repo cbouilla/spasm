@@ -63,7 +63,7 @@ spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, 
 	const int Sn = n - npiv;
 	const int verbose_step = spasm_max(1, n / 1000);
 	
-	assert(!keep_L);
+	assert(!keep_L); /* option presently unsupported */
 
 	/* initialize qinv */
 	int *Aj = A->j;

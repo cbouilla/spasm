@@ -10,7 +10,7 @@ void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp * y) {
 	const int *Aj = A->j;
 	const spasm_GFp *Ax = A->x;
 	const int prime = A->prime;
-	assert(Ax != NULL);
+	// assert(Ax != NULL);
 
 	for (int i = 0; i < n; i++)
 		spasm_scatter(Aj, Ax, Ap[i], Ap[i + 1], x[i], y, prime);
@@ -25,7 +25,8 @@ void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp * y) {
  * The result is scattered in y, its pattern is given by yi. The return value nz
  * is the number of non-zero entries in y.
  */
-int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi) {
+int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi)
+{
 	int p, i, j, k, m, nz, Mnz, prime, *Mp, *Mj, *w;
 	spasm_GFp *Mx;
 
