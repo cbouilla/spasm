@@ -1,30 +1,31 @@
-image: debian
-#image: gcc
+#image: debian
+image: gcc
 
 before_script:
   - apt update
-  - apt -y install gcc make autoconf automake libtool
+  - apt -y install make autoconf automake libtool
 
 
 stages:
-  - build
-  - test
+  - build_and_test
+  - longer_tests
 
 compile:
-  stage: build
+  stage: build_and_tests
   script:
     - autoreconf -i
     - mkdir build
     - cd build
     - ../configure
     - make
+    - make check
   artifacts:
     paths:
       - "build"
 
 
 run_test:
-    stage: test
+    stage: longer_tests
     script:
-      - cd build
-      - make check
+      - echo "we must rebuild everything"
+      - echo "and launch bigger tests"
