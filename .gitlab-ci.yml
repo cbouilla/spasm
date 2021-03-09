@@ -5,13 +5,12 @@ before_script:
   - apt update
   - apt -y install make autoconf automake libtool
 
-
 stages:
-  - build_and_test
-  - longer_tests
+  - build
+  - test
 
 compile:
-  stage: build_and_tests
+  stage: build
   script:
     - autoreconf -i
     - mkdir build
@@ -19,13 +18,10 @@ compile:
     - ../configure
     - make
     - make check
-  artifacts:
-    paths:
-      - "build"
 
 
 run_test:
-    stage: longer_tests
+    stage: test
     script:
       - echo "we must rebuild everything"
       - echo "and launch bigger tests"
