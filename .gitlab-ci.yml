@@ -1,8 +1,15 @@
-cunit:
+stages:
+  - build
+  - test
+
+compile:
+    stage: build
+    script:
+        - autoreconf -i
+	- ./configure
+	- make
+
+run_test:
     stage: test
     script:
-        - make && make check
-    artifacts: 
-        when: always
-        reports:
-            junit: ./make_check.xml
+        - make check
