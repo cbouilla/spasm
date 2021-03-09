@@ -6,10 +6,10 @@ compile:
     stage: build
     script:
         - autoreconf -i
-	- ./configure
-	- make
+        - ./configure
+        - make
 
 run_test:
     stage: test
     script:
-        - make check
+      - make check
