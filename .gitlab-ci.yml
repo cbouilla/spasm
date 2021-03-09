@@ -16,7 +16,7 @@ compile:
     - autoreconf -i
     - mkdir build
     - cd build
-    - ./configure
+    - ../configure
     - make
   artifacts:
     paths:
