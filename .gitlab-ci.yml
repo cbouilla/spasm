@@ -1,8 +1,8 @@
 cunit:
-	stage: test
-	script:
-		- make && make check
-	artifacts: 
-		   when: always
-		   reports:
-		   junit: ./make_check.xml
+    stage: test
+    script:
+        - make && make check
+    artifacts: 
+        when: always
+        reports:
+            junit: ./make_check.xml
