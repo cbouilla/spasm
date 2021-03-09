@@ -1,17 +1,30 @@
-#image: debian:build
+image: debian
+#image: gcc
+
+before_script:
+  - apt update
+  - apt -y install gcc make autoconf automake libtool
+
 
 stages:
   - build
   - test
 
 compile:
-    stage: build
-    script:
-        - autoreconf -i
-        - ./configure
-        - make
+  stage: build
+  script:
+    - autoreconf -i
+    - mkdir build
+    - cd build
+    - ./configure
+    - make
+  artifacts:
+    paths:
+      - "build"
+
 
 run_test:
     stage: test
     script:
+      - cd build
       - make check
