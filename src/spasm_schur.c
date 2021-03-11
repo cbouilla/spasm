@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <err.h>
 #include "spasm.h"
 
 /* make pivotal rows of A unitary */
