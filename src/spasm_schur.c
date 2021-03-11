@@ -80,6 +80,9 @@ spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, 
 	if (est_density < 0)
 		est_density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
 
+	long long size = (est_density * Sn) * Sm;
+	if (size > 2147483648)
+		errx(1, "Matrix too large (more than 2^31 entries)");
 	spasm *S = spasm_csr_alloc(Sn, Sm, (est_density*Sn)*Sm, A->prime, SPASM_WITH_NUMERICAL_VALUES);
 	int *Sp = S->p;
 	int *Sj = S->j;
