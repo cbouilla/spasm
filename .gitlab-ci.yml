@@ -1,0 +1,27 @@
+#image: debian
+image: gcc
+
+before_script:
+  - apt update
+  - apt -y install make autoconf automake libtool
+
+stages:
+  - build
+  - test
+
+compile:
+  stage: build
+  script:
+    - autoreconf -i
+    - mkdir build
+    - cd build
+    - ../configure
+    - make
+    - make check
+
+
+run_test:
+    stage: test
+    script:
+      - echo "we must rebuild everything"
+      - echo "and launch bigger tests"
