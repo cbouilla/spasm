@@ -6,7 +6,7 @@ LDADD = -lm $(top_builddir)/src/libspasm.la $(FFLAS_FFPACK_LIBS) $(GIVARO_LIBS)
 bin_PROGRAMS = rank_gplu dm bitmap pluq kernel transpose stack \
                schur_complement rank_hybrid vertical_swap maximum_matching \
                rank_dense find_pivots uetree mtx_reader rref echelonize u_checker \
-               rref_gplu chains modules complement_cc
+               rref_gplu chains complement_cc # modules
 
 if SPASM_HAVE_LEMON
 bin_PROGRAMS += lemon
@@ -45,5 +45,5 @@ endif
 %.png : %.pnm
 	convert $< $@
 
-%.c : %.nw
-	notangle -filter disambiguate -R$@ -L $< > $@ 
+# %.c : %.nw
+# 	notangle -filter disambiguate -R$@ -L $< > $@ 

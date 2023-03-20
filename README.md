@@ -58,27 +58,27 @@ All SpaSM demonstration scripts read a matrix in [SMS format](http://hpac.imag.f
 
 For instance, these commands (run inside the `bench/` folder) will compute the rank of several large matrices in a few seconds:
 ```
-curl http://hpac.imag.fr/Matrices/Margulies/kneser_10_4_1.sms.gz | gunzip - | ./rank_hybrid
-curl http://hpac.imag.fr/Matrices/Homology/mk13.b5.135135x270270.sms.gz | gunzip - | ./rank_hybrid
-curl http://hpac.imag.fr/Matrices/G5/IG5-17.sms.gz | gunzip - | ./rank_hybrid
+curl https://hpac.imag.fr/Matrices/Margulies/kneser_10_4_1.sms.gz | gunzip - | ./rank_hybrid
+curl https://hpac.imag.fr/Matrices/Homology/mk13.b5.135135x270270.sms.gz | gunzip - | ./rank_hybrid
+curl https://hpac.imag.fr/Matrices/G5/IG5-17.sms.gz | gunzip - | ./rank_hybrid
 ```
 
 It would be necessary to disable greedy pivot search for this one:
 ```
-curl http://hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D9.sms.gz | gunzip - | ./rank_hybrid
+curl https://hpac.imag.fr/Matrices/Mgn/M0,6.data/M0,6-D9.sms.gz | gunzip - | ./rank_hybrid
 ```
 
 When matrices have many empty rows/columns, they can/have to be removed with the `stack` utility:
 ```
-curl http://hpac.imag.fr/Matrices/Relat/relat8.sms.gz | gunzip - | ./stack | ./rank_hybrid
-curl http://hpac.imag.fr/Matrices/Relat/relat9.sms.gz | gunzip - | ./stack | ./rank_hybrid
+curl https://hpac.imag.fr/Matrices/Relat/relat8.sms.gz | gunzip - | ./stack | ./rank_hybrid
+curl https://hpac.imag.fr/Matrices/Relat/relat9.sms.gz | gunzip - | ./stack | ./rank_hybrid
 ```
 
 Finding good pivots is crucial for the performance of any kind of sparse elimination procedure. The pivot-finding code is still a bit naïve. Sometimes it will find much more pivots, much faster, if the matrices are flipped around a vertical axis with the `vertical_swap` utility:
 ```
-curl http://hpac.imag.fr/Matrices/GL7d/GL7d14.sms.gz | gunzip - | ./vertical_swap | ./rank_hybrid --sparse-threshold 0.01
+curl https://hpac.imag.fr/Matrices/GL7d/GL7d14.sms.gz | gunzip - | ./vertical_swap | ./rank_hybrid --sparse-threshold 0.01
 ...
-curl http://hpac.imag.fr/Matrices/GL7d/GL7d22.sms.gz | gunzip - | ./vertical_swap | ./rank_hybrid --sparse-threshold 0.01
+curl https://hpac.imag.fr/Matrices/GL7d/GL7d22.sms.gz | gunzip - | ./vertical_swap | ./rank_hybrid --sparse-threshold 0.01
 ```
 
 Citing SpaSM
