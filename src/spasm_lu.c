@@ -58,9 +58,9 @@ spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L) {
 
 /* eliminate everything in the (dense) vector x using the pivots found in A */
 void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp * x) {
-	int *Aj = A->j;
-	int *Ap = A->p;
-	spasm_GFp *Ax = A->x;
+	const int *Aj = A->j;
+	const int *Ap = A->p;
+	const spasm_GFp *Ax = A->x;
 	int prime = A->prime;
 
 	for (int i = 0; i < npiv; i++) {
