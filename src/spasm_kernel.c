@@ -1,5 +1,6 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_kernel.c */
+#include <stdlib.h>
 #include <assert.h>
+
 #include "spasm.h"
 
 /*

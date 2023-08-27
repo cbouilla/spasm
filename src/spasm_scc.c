@@ -1,6 +1,7 @@
 #include <assert.h>
-#include "spasm.h"
+#include <stdlib.h>
 
+#include "spasm.h"
 
 /*
  * returns the non-trivial strongly connected component of A (which must be
@@ -39,12 +40,11 @@ spasm_dm *spasm_strongly_connected_components(const spasm * A) {
 	int index = 0;
 	rr[n_scc] = 0;
 	for (int i = 0; i < n; i++) {
-		int head, top;
+		int top;
 		if (marks[i] >= 0)
 			continue;
 		
 		/* DFS */
-		head = 0;
 		top = 0;
 		stack[top] = i;
 		int j = i;

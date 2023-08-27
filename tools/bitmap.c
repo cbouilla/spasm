@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <getopt.h>
 #include <math.h>
 #include <err.h>
@@ -58,10 +59,10 @@ int main(int argc, char **argv) {
 		h = alpha * n;
 		fprintf(stderr, "[bitmap] targeting %.1f Mpixels ; w=%d, h=%d\n", mpix, w, h);
 	}
-	if (mpix < 0 && w < 0 & h > 0)
+	if ((mpix < 0) && (w < 0) && (h > 0))
 		w = m * (h / n);
 
-	if (mpix < 0 && w > 0 & h < 0)
+	if ((mpix < 0) && (w > 0) && (h < 0))
 		h = n * (w / m);
 
 	w = spasm_min(w, m);

@@ -1,11 +1,8 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_lu.c  */
 #include <assert.h>
 #include <stdbool.h>
-#include "spasm.h"
+#include <stdlib.h>
 
-#ifdef SPASM_TIMING
-uint64_t data_shuffling = 0;
-#endif
+#include "spasm.h"
 
 #define DEBUG
 

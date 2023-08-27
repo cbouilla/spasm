@@ -1,12 +1,6 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_triangular.c */
 #include <assert.h>
+
 #include "spasm.h"
-
-#ifdef SPASM_TIMING
-#include "cycleclock.h"
-uint64_t reach = 0, scatter = 0;
-#endif
-
 
 int spasm_is_upper_triangular(const spasm * A) {
 	int i, p, n, m, *Aj, *Ap;
@@ -220,16 +214,8 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
 	Bj = B->j;
 	Bx = B->x;
 
-#ifdef SPASM_TIMING
-	start = spasm_ticks();
-#endif
-
 	/* xj[top : m] = Reach(U, B[k]) */
 	top = spasm_reach(U, B, k, m, xj, qinv);
-
-#ifdef SPASM_TIMING
-	reach += spasm_ticks() - start;
-#endif
 
 	/* clear x */
 	for (int px = top; px < m; px++)
@@ -238,10 +224,6 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
 	/* scatter B[k] into x */
 	for (int px = Bp[k]; px < Bp[k + 1]; px++)
 		x[Bj[px]] = Bx[px];
-
-#ifdef SPASM_TIMING
-	start = spasm_ticks();
-#endif
 
 	/* iterate over the (precomputed) pattern of x (= the solution) */
 	for (int px = top; px < m; px++) {
@@ -260,11 +242,6 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
 		assert(Ux[Up[i]] == 1);
 		spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[j], x, prime);
 	}
-
-#ifdef SPASM_TIMING
-	scatter += spasm_ticks() - start;
-#endif
-
 	return top;
 }
 
@@ -286,10 +263,6 @@ int spasm_sparse_backward_solve(const spasm * L, const spasm * B, int k, int *xi
 	int i, I, p, px, top, n, m, prime, *Lp, *Lj, *Bp, *Bj, tmp;
 	spasm_GFp *Lx, *Bx;
 
-#ifdef SPASM_TIMING
-	uint64_t start;
-#endif
-
 	assert(L != NULL);
 	assert(B != NULL);
 	assert(xi != NULL);
@@ -306,15 +279,8 @@ int spasm_sparse_backward_solve(const spasm * L, const spasm * B, int k, int *xi
 	Bj = B->j;
 	Bx = B->x;
 
-#ifdef SPASM_TIMING
-	start = spasm_ticks();
-#endif
 	/* xi[top : m] = Reach( L, B[k] ) */
 	top = spasm_reach(L, B, k, n, xi, pinv);
-
-#ifdef SPASM_TIMING
-	reach += spasm_ticks() - start;
-#endif
 
 	/* clear x */
 	for (p = top; p < n; p++) {
@@ -327,10 +293,6 @@ int spasm_sparse_backward_solve(const spasm * L, const spasm * B, int k, int *xi
 	}
 
 	/* iterate over the (precomputed) pattern of x (= the solution) */
-#ifdef SPASM_TIMING
-	start = spasm_ticks();
-#endif
-
 	for (px = top; px < n; px++) {
 		/* x[i] is nonzero */
 		i = xi[px];
@@ -355,10 +317,5 @@ int spasm_sparse_backward_solve(const spasm * L, const spasm * B, int k, int *xi
 		x[xi[px]] = tmp;
 
 	}
-
-#ifdef SPASM_TIMING
-	scatter += spasm_ticks() - start;
-#endif
-
 	return top;
 }

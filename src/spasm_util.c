@@ -1,5 +1,9 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include <sys/time.h>
 #include <err.h>
+#include <inttypes.h>
+
 #include "spasm.h"
 
 int spasm_get_num_threads() {
@@ -33,7 +37,7 @@ int spasm_nnz(const spasm * A) {
 /* return a string representing n in 4 bytes */
 void spasm_human_format(int64_t n, char *target) {
 	if (n < 1000) {
-		sprintf(target, "%lld", n);
+		sprintf(target, "%" PRId64, n);
 		return;
 	}
 	if (n < 1000000) {

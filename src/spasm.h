@@ -1,13 +1,9 @@
 #ifndef _SPASM_H
 #define _SPASM_H
 
-#include <stdlib.h>
-#include <limits.h>
-#include <math.h>
-#include <stdio.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <assert.h>
+#include <stddef.h>           // size_t
+#include <inttypes.h>         // int64_t
+#include <stdio.h>            // FILE
 
 #ifdef _OPENMP
 #include <omp.h>

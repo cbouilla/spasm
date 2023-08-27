@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include <math.h>
 #include <err.h>
@@ -393,9 +395,9 @@ void spasm_save_pnm(const spasm * A, FILE * f, int x, int y, int mode, spasm_dm 
 	    {0xFFFFFF, 0xFFFFFF, 0x33CC00}
 	};
 
-	int limits_h[2];
-	int limits_v[2];
-	int *r, *c;
+	int limits_h[2] = {};
+	int limits_v[2] = {};
+	int *r = NULL, *c = NULL;
 
 	if (DM != NULL) {
 		int *rr = DM->rr;
@@ -429,7 +431,6 @@ void spasm_save_pnm(const spasm * A, FILE * f, int x, int y, int mode, spasm_dm 
 				break;
 			case 3:
 				/* find out which blocks we are in */
-				;
 				int block_h = 0;
 				int block_v = 0;
 				if (limits_v[0] <= i)

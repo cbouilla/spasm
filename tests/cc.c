@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
+#include <stdlib.h>
+
 #include "spasm.h"
 
 int main(int argc, char **argv) {

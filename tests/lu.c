@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
+
 #include "spasm.h"
 
 int main(int argc, char **argv) {
@@ -7,7 +9,7 @@ int main(int argc, char **argv) {
   spasm *A;
   spasm_lu *LU;
   spasm_GFp *x, *y, *u, *v;
-  int n, m, test, i, j;
+  int n, m, i, j;
 
   T = spasm_load_sms(stdin, 42013);
   A = spasm_compress(T);

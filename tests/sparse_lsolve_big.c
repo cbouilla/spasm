@@ -1,14 +1,15 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
+
 #include "spasm.h"
 
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *L, *B;
-  int i, j, n, m, test, top, *xi;
+  int i, j, n, m, *xi;
   spasm_GFp *x, *y;
-  test = 0;
 
   // load matrix
   T = spasm_load_sms(stdin, 32003);
@@ -35,7 +36,7 @@ int main(int argc, char **argv) {
   spasm_vector_zero(x, n);
   spasm_vector_zero(y, n);
 
-  top = spasm_sparse_backward_solve(L, B, 0, xi, x, SPASM_IDENTITY_PERMUTATION, 0);
+  spasm_sparse_backward_solve(L, B, 0, xi, x, SPASM_IDENTITY_PERMUTATION, 0);
 
   spasm_gaxpy(L, x, y);
   for(j = m; j < n; j++) {

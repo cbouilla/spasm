@@ -2,6 +2,8 @@
 #include <assert.h>
 #include "spasm.h"
 
+/* dead code ? */
+
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A;

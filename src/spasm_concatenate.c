@@ -1,4 +1,3 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_concatenate.c */
 #include <assert.h>
 #include "spasm.h"
 

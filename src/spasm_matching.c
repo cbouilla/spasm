@@ -1,4 +1,6 @@
+#include <stdlib.h>
 #include <assert.h>
+
 #include "spasm.h"
 
 void spasm_augment_matching(int head, int *istack, int *jstack, int *p, int *qinv) {

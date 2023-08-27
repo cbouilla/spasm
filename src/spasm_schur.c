@@ -1,5 +1,7 @@
+#include <stdlib.h>
 #include <assert.h>
 #include <err.h>
+
 #include "spasm.h"
 
 /* make pivotal rows of A unitary */
@@ -365,4 +367,5 @@ int spasm_schur_dense(const spasm *A, const int *p, const int *qinv, const int n
 	}
 	fprintf(stderr, "\n[schur/dense] Time: %.1fs\n", spasm_wtime() - start);
 	free(q);
+	return 42;
 }

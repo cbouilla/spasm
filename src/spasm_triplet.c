@@ -1,5 +1,6 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_triplet.c */
 #include <assert.h>
+#include <stdlib.h>
+
 #include "spasm.h"
 
 /* add an entry to a triplet matrix; enlarge it if necessary */

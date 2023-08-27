@@ -1,6 +1,9 @@
+#include <stdlib.h>
+
 #include "spasm.h"
 
-spasm *spasm_transpose(const spasm * C, int keep_values) {
+spasm *spasm_transpose(const spasm * C, int keep_values)
+{
 	int sum, *w;
 	spasm *T;
 

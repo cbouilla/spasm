@@ -3,6 +3,8 @@
 #include <getopt.h>
 #include <err.h>
 #include <math.h>
+#include <stdlib.h>
+
 #include "spasm.h"
 
 /** computes a Dulmage-Mendelson decomposition */

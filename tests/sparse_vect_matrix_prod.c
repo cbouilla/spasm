@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
+
 #include "spasm.h"
 
 
@@ -7,7 +9,7 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *C;
   spasm_GFp *x, *y, *z;
-  int i, n, m, nz, xnz, *xi, *yi;
+  int i, n, m, xnz, *xi, *yi;
 
   T = spasm_load_sms(stdin, 277);
   C = spasm_compress(T);
@@ -41,7 +43,7 @@ int main(int argc, char **argv) {
  xi[1] = n/2;
  xi[2] = n-1;
 
- nz = spasm_sparse_vector_matrix_prod(C, x, xi, xnz, y, yi);
+ spasm_sparse_vector_matrix_prod(C, x, xi, xnz, y, yi);
 
  spasm_gaxpy(C, x, z);
  for (i = 0; i < m; i++) {

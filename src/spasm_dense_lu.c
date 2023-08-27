@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "spasm.h"
 
 spasm_dense_lu *spasm_dense_LU_alloc(int m, int prime) {

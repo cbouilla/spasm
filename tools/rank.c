@@ -1,7 +1,9 @@
-#include <assert.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include "spasm.h"
+#include <assert.h>
 #include <getopt.h>
+
+#include "spasm.h"
 
 /** Computes the rank of the input matrix using the hybrid strategy described in [PASCO'17] */
 int main(int argc, char **argv) {

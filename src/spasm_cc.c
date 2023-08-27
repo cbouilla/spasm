@@ -1,4 +1,6 @@
+#include <stdlib.h>
 #include <assert.h>
+
 #include "spasm.h"
 
 /*

@@ -1,5 +1,5 @@
-/* indent -nfbs -i2 -nip -npsl -di0 -nut spasm_GFp.c */
 #include <assert.h>
+
 #include "spasm.h"
 
 spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime) {

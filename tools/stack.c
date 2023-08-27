@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
+#include <stdlib.h>
+
 #include "spasm.h"
 
 /** permute a matrix so that all empty rows and columns are removed. */

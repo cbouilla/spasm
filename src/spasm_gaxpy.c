@@ -1,4 +1,6 @@
+#include <stdlib.h>
 #include <assert.h>
+
 #include "spasm.h"
 
 /*
@@ -48,10 +50,8 @@ int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const 
 	nz = 0;
 	for (k = 0; k < xnz; k++) {
 		i = xi[k];
-
 		for (p = Mp[i]; p < Mp[i + 1]; p++) {
 			j = Mj[p];
-
 			if (w[j] == 0) {
 				w[j] = 1;
 				yi[nz] = j;
