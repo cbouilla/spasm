@@ -9,6 +9,9 @@ target_link_libraries(dm PUBLIC libspasm)
 add_executable(vertical_swap vertical_swap.c)
 target_link_libraries(vertical_swap PUBLIC libspasm)
 
+add_executable(stack stack.c)
+target_link_libraries(stack PUBLIC libspasm)
+
 add_executable(transpose transpose.c)
 target_link_libraries(transpose PUBLIC libspasm)
 
