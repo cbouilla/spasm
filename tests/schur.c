@@ -4,24 +4,6 @@
 
 #include "spasm.h"
 
-/* 
-liste globale de pivots qinv, qui contient tous ceux qui sont connus.
-
-INVARIANT: 
-i)  les lignes avec des pivots sont en haut.
-ii) Ces pivots sont éliminés dans toutes les lignes du dessous. 
-    Les lignes du dessous contiennent les coefficients d'élimination sur 
-    les colonnes avec pivot (si on en a envie).
-
-Jusque-là, N pivots ont été identifiés et l'invariant est respecté.
-on identifie k nouveaux pivots structurels.
-
-Pour les incorporer:
-
-On les pousse vers le haut, puis sur les lignes qui restent on effectue uniquement l'élimination des nouveaux pivots trouvés.
-*/
-
-
 int main(int argc, char **argv) 
 {
 	int prime = 42013;
@@ -38,7 +20,7 @@ int main(int argc, char **argv)
 	int npiv = spasm_find_pivots(A, p, qinv);
 	spasm_make_pivots_unitary(A, p, npiv);
 
-	spasm *S = spasm_schur(A, p, npiv, -1, 0, NULL);
+	spasm *S = spasm_schur(A, p, npiv, A, qinv, -1, SPASM_DISCARD_L, NULL);
 	int Sn = S->n;
 	int *Sp = S->p;
 	int *Sj = S->j;

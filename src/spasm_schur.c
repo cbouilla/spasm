@@ -5,7 +5,8 @@
 #include "spasm.h"
 
 /* make pivotal rows of A unitary */
-void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
+void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv)
+{
 	int prime = A->prime;
 	int *Ap = A->p;
 	spasm_GFp *Ax = A->x;
@@ -16,7 +17,6 @@ void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv) {
 		spasm_GFp diag = Ax[Ap[inew]];
 		if (diag == 1)
 			continue;
-
 		spasm_GFp alpha = spasm_GFp_inverse(diag, prime);
 		for (int px = Ap[inew]; px < Ap[inew + 1]; px++)
 			Ax[px] = (alpha * Ax[px]) % prime;
@@ -45,16 +45,20 @@ void spasm_stack_nonpivotal_columns(spasm *A, int *qinv)
 
 
 /*
- * Computes the Schur complement, by eliminating the pivots located on rows
- * p[0:n_pivots] of input matrix A.
+ * Computes the Schur complement.
+ * Eliminating the pivots located on rows p[0:n_pivots] of A.
  * non-pivotal rows are p[npiv:n]
  * The pivots must be the first entries on the rows.
  * The pivots must be unitary.	
  * This returns a sparse representation of S. 
  *
+ * the Schur complement is computed from rows p[npiv:n] of A
+ * qinv describes the location of pivots in U. qinv[j] == i --> pivot on col j is on row i / -1 if none)
+ * note that it is possible to have U == A.
+ *
  * If the estimated density is unknown, set it to -1: it will be evaluated
  */
-spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, int *p_out)
+spasm *spasm_schur(const spasm * A, const int *p, int npiv, const spasm *U, const int *qinv, double est_density, int keep_L, int *p_out)
 {
 	assert(!keep_L); /* option presently unsupported */
 	
@@ -63,21 +67,9 @@ spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, 
 	const int Sm = m;
 	const int Sn = n - npiv;
 	const int verbose_step = spasm_max(1, n / 1000);
-	int *Aj = A->j;
-	int *Ap = A->p;
 	
-	/* initialize qinv (qinv[j] == i --> pivot on col j is on row i / -1 if none) */
-	int *qinv = spasm_malloc(m * sizeof(int));
-	for (int j = 0; j < m; j++)
-		qinv[j] = -1;
-	for (int k = 0; k < npiv; k++) {
-		int i = p[k];
-		int j = Aj[Ap[i]];
-		qinv[j] = i;
-	}
-
 	if (est_density < 0)
-		est_density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
+		est_density = spasm_schur_probe_density(A, p, npiv, U, qinv, 100);
 	long long size = (est_density * Sn) * Sm;
 	if (size > 2147483648)
 		errx(1, "Matrix too large (more than 2^31 entries)");
@@ -100,8 +92,8 @@ spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, 
 
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (int i = npiv; i < n; i++) {
-			const int inew = p[i];
-			const int top = spasm_sparse_forward_solve(A, A, inew, xj, x, qinv);
+			int inew = p[i];
+			int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
 
 			row_snz = 0;
 			for (int px = top; px < m; px++) {
@@ -136,7 +128,7 @@ spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, 
 			/* write the new row in S */
 			Sp[row_k] = row_px;
 			for (int px = top; px < m; px++) {
-				const int j = xj[px];
+				int j = xj[px];
 				if ((keep_L || (qinv[j] < 0)) && (x[j] != 0)) {
 					Sj[row_px] = j;
 					Sx[row_px++] = x[j];
@@ -160,8 +152,6 @@ spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, 
 	spasm_csr_realloc(S, -1);
 	double density = 1.0 * snz / (1.0 * Sm * Sn);
 	fprintf(stderr, "\rSchur complement: %d * %d [%d NNZ / density= %.3f], %.1fs\n", Sn, Sm, snz, density, spasm_wtime() - start);
-	
-	free(qinv);
 	return S;
 }
 
@@ -170,11 +160,11 @@ spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, 
 * and return the number that are non-zero (these rows of A are linearly independent from the pivots).
 * The pivots must be unitary.
 */
-double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R) {
+double spasm_schur_probe_density(const spasm * A, const int *p, int npiv, const spasm *U, const int *qinv, int R)
+{
 	int nnz = 0;
-	const int m = A->m;
-	const int n = A->n;
-
+	int m = A->m;
+	int n = A->n;
 	if (m == npiv || n == npiv)
 		return 0.0;
 
@@ -188,7 +178,7 @@ double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const
 		for (int i = 0; i < R; i++) {
 			/* pick a random row in S, check if non-zero */
 			int inew = p[npiv + (rand() % (n - npiv))];
-			int top = spasm_sparse_forward_solve(A, A, inew, xj, x, qinv);
+			int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
 			for (int px = top; px < m; px++) {
 				int j = xj[px];
 				if (qinv[j] < 0 && x[j] != 0)
@@ -205,7 +195,7 @@ double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const
  * computes the rank of the schur complement, but not the schur complement
  * itself. The pivots must be unitary.
  */
-int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
+int spasm_schur_rank_old(spasm * A, const int *p, const int *qinv, const int npiv) {
 	int Sm, m, n, k, r, prime, step, threads, searched, prev_r;
 	int *q, *Ap, *Aj;
 	double start;
@@ -316,8 +306,9 @@ int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv) {
 
 
 /*
- * Computes the dense schur complement. Writes S[lo:hi]. 
+ * Computes the dense schur complement. Generates rows [lo:hi] of the schur complement. 
  * Usual conditions on pivots apply.
+ * returns the number of rows written to S.
  * S implicitly has dimension (hi - lo) x (m - npiv), row major, lds == m-npiv.
  */
 int spasm_schur_dense(const spasm *A, const int *p, const int *qinv, const int npiv, 
@@ -327,7 +318,9 @@ int spasm_schur_dense(const spasm *A, const int *p, const int *qinv, const int n
 	int m = A->m;
 	int Sm = m - npiv;                                   /* #columns of S */
 	int Sn = hi - lo;
-	assert(npiv + hi < n);                               /* validate args */
+	assert(0 <= lo);                                     /* validate args */
+	assert(lo <= hi);
+	assert(hi <= n - npiv);
 
 	/* q sends columns of S to non-pivotal columns of A */
 	int *q = spasm_malloc(Sm * sizeof(*q));
@@ -339,6 +332,7 @@ int spasm_schur_dense(const spasm *A, const int *p, const int *qinv, const int n
 	fprintf(stderr, "Dense schur complement (rows [%d:%d]...\n", lo, hi);
 	double start = spasm_wtime();
 	int verbose_step = spasm_max(1, Sn / 1000);
+	int r = 0;
 
 	#pragma omp parallel
 	{
@@ -349,14 +343,26 @@ int spasm_schur_dense(const spasm *A, const int *p, const int *qinv, const int n
 		int tid = spasm_get_thread_num();
 
 		#pragma omp for schedule(dynamic, verbose_step)
-		for (int k = 0; k < Sn; k++) {
-			int i = p[npiv + lo + k];   /* corresponding row of A */
+		for (int k = lo; k < hi; k++) {
+			int i = p[npiv + k];   /* corresponding row of A */
+			
 			/* eliminate known sparse pivots, put result in x */
+			for (int j = 0; j < Sm; j++)
+				x[q[j]] = 0;
 			int top = spasm_sparse_forward_solve(A, A, i, xj, x, qinv);
-			/* could check if empty row with top == m */
-			/* gather into S */
-			for (int j = 0; j < Sm; j++)	
-				S[k * Sm + j] = x[q[j]];
+			if (top == m)
+				continue;       /* skip empty row */
+			
+			/* acquire the next row of S */
+			int t;
+			#pragma omp atomic capture
+			{ t = r; r += 1; }
+
+			/* gather x into S[t] */
+			for (int j = 0; j < Sm; j++)
+				S[t * Sm + j] = x[q[j]];
+
+			/* verbosity */
 			if (tid == 0 && (i % verbose_step) == 0) {
 				fprintf(stderr, "\rSchur complement (dense): %d/%d", k, Sn);
 				fflush(stderr);
@@ -367,5 +373,26 @@ int spasm_schur_dense(const spasm *A, const int *p, const int *qinv, const int n
 	}
 	fprintf(stderr, "\n[schur/dense] Time: %.1fs\n", spasm_wtime() - start);
 	free(q);
+	return r;
+}
+
+int spasm_schur_rank(const spasm * A, const int *p, const int *qinv, const int npiv)
+{
+	int n = A->n;
+	int m = A->m;
+	/* Get Workspace */
+	size_t Sm = m - npiv;
+	size_t Sn = spasm_min(n - npiv, m - npiv);   /* upper-bound on the rank of the schur complement */
+	double *S = spasm_malloc(Sn * Sm * sizeof(*S));
+
+	size_t *Q = spasm_malloc(Sm * sizeof(*Q));
+
+	for (int lo = 0; lo < n - npiv; lo += Sn) {
+		int hi = spasm_min(n - npiv, lo + Sn);
+		int r = spasm_schur_dense(A, p, qinv, npiv, lo, hi, S);
+		fprintf(stderr, "processed A[%d:%d], rank <= %d (out of %zd rows)\n", lo, hi, r, Sn);
+		int rr = spasm_dense_echelonize(A->prime, r, Sm, S, m, Q);
+		fprintf(stderr, "processed A[%d:%d], actual rank = %d\n", lo, hi, rr);
+	}
 	return 42;
 }

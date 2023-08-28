@@ -80,15 +80,14 @@ void *spasm_realloc(void *ptr, size_t size) {
 }
 
 /* allocate a sparse matrix (compressed-row form) */
-spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
-	spasm *A;
-
+spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values)
+{
 	if (prime > 46337) {
 		prime = 46337;
 		fprintf(stderr, "WARNING: modulus has been set to 46337.\n");
 	}
-	A = spasm_malloc(sizeof(spasm));	/* allocate the cs struct */
-	A->m = m;		/* define dimensions and nzmax */
+	spasm *A = spasm_malloc(sizeof(spasm));
+	A->m = m;
 	A->n = n;
 	A->nzmax = nzmax;
 	A->prime = prime;
@@ -96,7 +95,6 @@ spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values) {
 	A->j = spasm_malloc(nzmax * sizeof(int));
 	A->x = with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL;
 	return A;
-
 }
 
 /* allocate a sparse matrix (triplet form) */

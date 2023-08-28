@@ -6,5 +6,5 @@ add_library(libspasm spasm_util.c mmio.c spasm_io.c spasm_triplet.c
 	spasm_concatenate.c spasm_dense_lu.c spasm_schur.c spasm_ffpack.cpp)
 target_link_libraries(libspasm PUBLIC OpenMP::OpenMP_C)
 target_link_libraries(libspasm PUBLIC m)
-target_link_libraries(libspasm PUBLIC givaro)
-
+target_link_libraries(libspasm PUBLIC PkgConfig::GIVARO)
+target_link_libraries(libspasm PUBLIC PkgConfig::FFLAS_FFPACK)

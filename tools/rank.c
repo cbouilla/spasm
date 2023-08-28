@@ -6,11 +6,9 @@
 #include "spasm.h"
 
 /** Computes the rank of the input matrix using the hybrid strategy described in [PASCO'17] */
-int main(int argc, char **argv) {
-
-	/* charge la matrice depuis l'entrée standard */
-	int prime, n_times, rank, npiv, n, m, dense_final, gplu_final,
-	    allow_transpose, ch;
+int main(int argc, char **argv)
+{
+	int prime, n_times, rank, npiv, n, m, dense_final, gplu_final, allow_transpose, ch;
 	double start_time, end_time;
 	spasm_triplet *T;
 	spasm *A, *B;
@@ -64,7 +62,7 @@ int main(int argc, char **argv) {
 	argc -= optind;
 	argv += optind;
 
-
+	/* load matrix from standard input */
 	T = spasm_load_sms(stdin, prime);
 	if (allow_transpose && (T->n < T->m)) {
 		fprintf(stderr, "[rank] transposing matrix : ");
@@ -87,7 +85,7 @@ int main(int argc, char **argv) {
 	rank = 0;
 	npiv = spasm_find_pivots(A, p, qinv);
 	spasm_make_pivots_unitary(A, p, npiv);
-	density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
+	density = spasm_schur_probe_density(A, p, npiv, A, qinv, 100);
 
 	for (int i = 0; i < n_times; i++) {
 		int64_t nnz = (density * (n - npiv)) * (m - npiv);
@@ -99,7 +97,7 @@ int main(int argc, char **argv) {
 			break;
 
 		/* compute schur complement, update matrix */
-		B = spasm_schur(A, p, npiv, density, 0, NULL);
+		B = spasm_schur(A, p, npiv, A, qinv, density, 0, NULL);
 		spasm_stack_nonpivotal_columns(B, qinv);
 
 		spasm_csr_free(A);
@@ -110,7 +108,7 @@ int main(int argc, char **argv) {
 
 		npiv = spasm_find_pivots(A, p, qinv);
 		spasm_make_pivots_unitary(A, p, npiv);
-		density = spasm_schur_probe_density(A, p, qinv, npiv, 100);
+		density = spasm_schur_probe_density(A, p, npiv, A, qinv, 100);
 	}
 
 	/* ---- final step ---------- */

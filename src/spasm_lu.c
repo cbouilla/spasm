@@ -235,11 +235,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 		int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
 
 		/* --- Find pivot and dispatch coeffs into L and U ------ */
-#ifdef SPASM_TIMING
-		start = spasm_ticks();
-#endif
 		int jpiv = -1;	/* column index of best pivot so far. */
-
 
 		for (int px = top; px < m; px++) {
 			/* x[j] is (generically) nonzero */

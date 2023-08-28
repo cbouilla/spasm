@@ -62,6 +62,7 @@ spasm_declare_test(permuted_pluq)
 spasm_declare_test(lu_solve)
 spasm_declare_test(pluq_solve)
 spasm_declare_test(dense_lu)
+spasm_declare_test(dense_lu_ffpack)
 
 set(LU_TEST_MATRICES
     small.sms
@@ -70,13 +71,14 @@ set(LU_TEST_MATRICES
     rectangular_h.sms
     rectangular_l.sms
 )
-spasm_run_tests(lu            "${LU_TEST_MATRICES}")
-spasm_run_tests(pluq          "${LU_TEST_MATRICES}")
-spasm_run_tests(permuted_lu   "${LU_TEST_MATRICES}")
-spasm_run_tests(permuted_pluq "${LU_TEST_MATRICES}")
-spasm_run_tests(lu_solve      "${LU_TEST_MATRICES}")
-spasm_run_tests(pluq_solve    "${LU_TEST_MATRICES}")
-spasm_run_tests(dense_lu      "${LU_TEST_MATRICES}")
+spasm_run_tests(lu              "${LU_TEST_MATRICES}")
+spasm_run_tests(pluq            "${LU_TEST_MATRICES}")
+spasm_run_tests(permuted_lu     "${LU_TEST_MATRICES}")
+spasm_run_tests(permuted_pluq   "${LU_TEST_MATRICES}")
+spasm_run_tests(lu_solve        "${LU_TEST_MATRICES}")
+spasm_run_tests(pluq_solve      "${LU_TEST_MATRICES}")
+spasm_run_tests(dense_lu        "${LU_TEST_MATRICES}")
+spasm_run_tests(dense_lu_ffpack "${LU_TEST_MATRICES}")
 
 
 ############ transpose

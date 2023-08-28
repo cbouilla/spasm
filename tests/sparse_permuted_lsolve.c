@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *L, *B;
   spasm_lu *N;
-  int n, m, top, *xi, *p, r;
+  int n, m, *xi, *p, r;
   spasm_GFp *x, *y;
 
   /* load a rank defficient matrix */
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
   spasm_vector_zero(x, n);
   spasm_vector_zero(y, n);
 
-  top = spasm_sparse_backward_solve(L, B, 0, xi, x, p, 0);
+  spasm_sparse_backward_solve(L, B, 0, xi, x, p, 0);
 
   spasm_gaxpy(L, x, y);
   for(int j = m; j < n; j++)

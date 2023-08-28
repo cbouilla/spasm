@@ -11,6 +11,9 @@
 
 /* --- primary SpaSM routines and data structures --- */
 
+// unfortunately we use "n" for #rows and "m" for #columns whereas the rest of the world (BLAS...)
+// does the opposite... 
+
 typedef int spasm_GFp;
 
 typedef struct {                /* matrix in compressed-sparse row format */
@@ -187,9 +190,9 @@ void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p
 /* spasm_schur.c */
 void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv);
 void spasm_stack_nonpivotal_columns(spasm *A, int *qinv);
-spasm *spasm_schur(spasm * A, int *p, int npiv, double est_density, int keep_L, int *p_out);
-int spasm_schur_rank(spasm * A, const int *p, const int *qinv, const int npiv);
-double spasm_schur_probe_density(spasm * A, const int *p, const int *qinv, const int npiv, const int R);
+spasm *spasm_schur(const spasm * A, const int *p, int npiv, const spasm *U, const int *qinv, double est_density, int keep_L, int *p_out);
+int spasm_schur_rank(const spasm * A, const int *p, const int *qinv, const int npiv);
+double spasm_schur_probe_density(const spasm * A, const int *p, int npiv, const spasm *U, const int *qinv, int R);
 
 /* spasm_dense_lu.c */
 spasm_dense_lu *spasm_dense_LU_alloc(int m, int prime);
@@ -223,10 +226,9 @@ spasm_dm *spasm_connected_components(const spasm * A, spasm * given_At);
 /* spasm_kernel.c */
 spasm *spasm_kernel(const spasm * A, const int *column_permutation);
 
-/* spasm_uetree.c */
-int * spasm_uetree(const spasm * A);
-int *spasm_tree_postorder(const spasm *A, const int *parent);
-int *spasm_tree_topological_postorder(const spasm *A, const int *parent);
+/* spasm_ffpack.cpp */
+void spasm_dense_setzero(int prime, int n, int m, double *A, int ldA);
+int spasm_dense_echelonize(int prime, int n, int m, double *A, int ldA, size_t *Q);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {
