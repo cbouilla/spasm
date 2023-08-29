@@ -121,60 +121,49 @@ int spasm_early_abort(const spasm * A, const int *p, int k, const spasm * U, int
  * on column j.
  * 
  */
-spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
-	spasm *L, *U;
-	spasm_lu *N;
-	
-
-#ifdef SPASM_TIMING
-	uint64_t start;
-#endif
-
+spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L)
+{
 	/* check inputs */
 	assert(A != NULL);
 
 	int n = A->n;
 	int m = A->m;
-	int *Ap = A->p;
-	int *Aj = A->j;
-	spasm_GFp *Ax = A->x;
+	// int *Ap = A->p;
+	// int *Aj = A->j;
+	// spasm_GFp *Ax = A->x;
 
 	int r = spasm_min(n, m);
 	int prime = A->prime;
 	int defficiency = 0;
 	int verbose_step = spasm_max(1, n / 1000);
 
-	/* educated guess of the size of L,U */
-	int lnz = 4 * spasm_nnz(A) + n;
-	int unz = 4 * spasm_nnz(A) + n;
-
-	/* workspace */
+	/* workspace for triangular solver */
 	int *x = spasm_malloc(m * sizeof(spasm_GFp));
 	int *xj = spasm_malloc(3 * m * sizeof(int));
+	spasm_vector_zero(xj, 3 * m);
 	
-
 	/* allocate result */
-	N = spasm_malloc(sizeof(spasm_lu));
-	N->L = L = (keep_L) ? spasm_csr_alloc(n, r, lnz, prime, true) : NULL;
-	N->U = U = spasm_csr_alloc(r, m, unz, prime, true);
-	N->qinv = spasm_malloc(m * sizeof(int));
-	N->p = spasm_malloc(n * sizeof(int));
-	int *qinv = N->qinv;
-	int *p = N->p;
+	int nzguess = 4 * spasm_nnz(A);   /* educated guess of the size of L,U */
+	spasm *L = (keep_L) ? spasm_csr_alloc(n, r, nzguess, prime, true) : NULL;
+	spasm *U = spasm_csr_alloc(r, m, nzguess, prime, true);
+	int *qinv = spasm_malloc(m * sizeof(*qinv));
+	int *p = spasm_malloc(n * sizeof(*p));
 	int *Lp = (keep_L) ? L->p : NULL;
 	int *Up = U->p;
-
+	int old_unz = 0;
+	int lnz = 0;
+	int unz = 0;
 	spasm_vector_set(qinv, 0, m, -1);
-	spasm_vector_zero(xj, 3 * m);
-	int old_unz = lnz = unz = 0;
 
 	/* initialize early abort */
 	int rows_since_last_pivot = 0;
 	int early_abort_done = 0;
 
-	/* --- Main loop : compute L[i] and U[i] ------------------- */
+	/* Main loop : compute L[i] and U[i] */
 	int i;
 	for (i = 0; i < n; i++) {
+		int inew = (row_permutation != NULL) ? row_permutation[i] : i;
+
 		if (!keep_L && i - defficiency == r) {
 			fprintf(stderr, "\n[LU] full rank reached ; early abort\n");
 			break;
@@ -189,12 +178,11 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 			}
 			early_abort_done = 1;
 		}
-		/* --- Triangular solve: x * U = A[i] ------------------ */
 		if (keep_L)
-			Lp[i] = lnz;	/* L[i] starts here */
-		Up[i - defficiency] = unz;	/* U[i] starts here */
+			Lp[i] = lnz;
+		Up[i - defficiency] = unz;
 
-		/* not enough room in L/U ? realloc twice the size */
+		/* ensure enough room in L/U for an extra row */
 		if (keep_L && lnz + m > L->nzmax)
 			spasm_csr_realloc(L, 2 * L->nzmax + m);
 		if (unz + m > U->nzmax)
@@ -204,8 +192,7 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 		int *Uj = U->j;
 		spasm_GFp *Ux = U->x;
 
-		int inew = (row_permutation != NULL) ? row_permutation[i] : i;
-
+		#if 0
 		/* check if the row can be taken directly into U */
 		int directly_pivotal = (Ap[inew + 1] > Ap[inew]) && (Ax[Ap[inew]] == 1);
 		if (directly_pivotal)
@@ -231,39 +218,29 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 			early_abort_done = 0;
 			continue;
 		}
+		#endif
 
+		/* Triangular solve: x * U = A[i] */
 		int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
 
-		/* --- Find pivot and dispatch coeffs into L and U ------ */
+		/* Find pivot and dispatch coeffs into L and U  */
 		int jpiv = -1;	/* column index of best pivot so far. */
-
 		for (int px = top; px < m; px++) {
-			/* x[j] is (generically) nonzero */
-			int j = xj[px];
-
-			/*
-			 * if x[j] == 0 (numerical cancelation), we just
-			 * ignore it
-			 */
+			int j = xj[px];        /* x[j] is (generically) nonzero */
 			if (x[j] == 0)
 				continue;
 			if (qinv[j] < 0) {
-				/* column j is not yet pivotal ? */
-
 				/* have found the pivot on row i yet ? */
 				if (jpiv == -1 || j < jpiv)
 					jpiv = j;
 			} else if (keep_L) {
-				/* column j is pivotal */
 				/* x[j] is the entry L[i, qinv[j] ] */
 				Lj[lnz] = qinv[j];
 				Lx[lnz] = x[j];
 				lnz++;
 			}
 		}
-
-		/* pivot found ? */
-		if (jpiv != -1) {
+		if (jpiv != -1) {         		/* pivot found ? */
 			old_unz = unz;
 
 			/* L[i,i] <--- x[jpiv]. Last entry of the row ! */
@@ -301,27 +278,17 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 			rows_since_last_pivot++;
 		}
 
-#ifdef SPASM_TIMING
-		data_shuffling += spasm_ticks() - start;
-#endif
-
 		if ((i % verbose_step) == 0) {
 			fprintf(stderr, "\rLU : %d / %d [|L| = %d / |U| = %d] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, lnz, unz, 1.0 * (m - top) / (m), 1.0 * (unz - old_unz) / m, i - defficiency);
 			fflush(stderr);
 		}
 	}
-
-	/*
-	 * --- Finalize L and U
-	 * -------------------------------------------------
-	 */
 	fprintf(stderr, "\n");
 
-	/* remove extra space from L and U */
+	/* Finalize L and U */
 	Up[i - defficiency] = unz;
 	spasm_csr_resize(U, i - defficiency, m);
 	spasm_csr_realloc(U, -1);
-
 	if (keep_L) {
 		Lp[n] = lnz;
 		spasm_csr_resize(L, n, n - defficiency);
@@ -329,7 +296,12 @@ spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L) {
 	}
 	free(x);
 	free(xj);
-	return N;
+	spasm_lu *R = spasm_malloc(sizeof(*R));
+	R->U = U;
+	R->L = L;
+	R->qinv = qinv;
+	R->p = p;
+	return R;
 }
 
 

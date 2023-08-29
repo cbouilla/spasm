@@ -94,6 +94,7 @@ spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values)
 	A->p = spasm_malloc((n + 1) * sizeof(int));
 	A->j = spasm_malloc(nzmax * sizeof(int));
 	A->x = with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL;
+	A->p[0] = 0;
 	return A;
 }
 
