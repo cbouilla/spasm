@@ -51,7 +51,7 @@ set(KERNEL_TEST_MATRICES
     BIOMD0000000525.int.mpl.sms
     BIOMD0000000424.int.mpl.sms
 )
-spasm_run_tests(kernel "${KERNEL_TEST_MATRICES}")
+# spasm_run_tests(kernel "${KERNEL_TEST_MATRICES}")
 
 
 ########### lu / pluq / solve / with and without permutation

@@ -45,8 +45,8 @@ void spasm_stack_nonpivotal_columns(spasm *A, int *qinv)
 
 
 /*
- * Computes the Schur complement.
- * Eliminating the pivots located on rows p[0:n_pivots] of A.
+ * Computes the Schur complement of A w.r.t. U
+ * Process rows p[npiv:n] of A.
  * non-pivotal rows are p[npiv:n]
  * The pivots must be the first entries on the rows.
  * The pivots must be unitary.	
@@ -95,6 +95,7 @@ spasm *spasm_schur(const spasm * A, const int *p, int npiv, const spasm *U, cons
 			int inew = p[i];
 			int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
 
+			/* count surviving coefficients */
 			row_snz = 0;
 			for (int px = top; px < m; px++) {
 				const int j = xj[px];

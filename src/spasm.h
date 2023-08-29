@@ -230,6 +230,10 @@ spasm *spasm_kernel(const spasm * A, const int *column_permutation);
 void spasm_dense_setzero(int prime, int n, int m, double *A, int ldA);
 int spasm_dense_echelonize(int prime, int n, int m, double *A, int ldA, size_t *Q);
 
+/* spasm_echelonize */
+spasm* spasm_echelonize(spasm *A, int *Uqinv);
+
+
 /* utilities */
 static inline int spasm_max(int a, int b) {
 	return (a > b) ? a : b;
