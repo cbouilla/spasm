@@ -250,8 +250,11 @@ struct echelonize_opts {
 	double low_rank_ratio;          /* if k rows have rank less than k * low_rank_ratio --> "tall-and-skinny"; <0 = don't */
 	double tall_and_skinny_ratio;   /* aspect ratio (#rows / #cols) higher than this --> "tall-and-skinny"; <0 = don't */
 };
-
 spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts);
+
+/* spasm_rref.c */
+spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv);
+
 
 /* utilities */
 static inline int spasm_max(int a, int b) {

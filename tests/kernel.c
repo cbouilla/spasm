@@ -6,69 +6,76 @@
 
 int main(int argc, char **argv)
 {
-  spasm_triplet *T = spasm_load_sms(stdin, 42013);
-  // assert(T->x != NULL);
+        spasm_triplet *T = spasm_load_sms(stdin, 42013);
+        spasm *A = spasm_compress(T);
+        spasm_triplet_free(T);
 
-  spasm * A = spasm_compress(T);
-  // assert(A->x != NULL);
-  spasm_triplet_free(T);
+        int n = A->n;
+        int m = A->m;
 
-  int n = A->n;
-  int m = A->m;
+        /* compute the RREF of A */
+        int *Uqinv = spasm_malloc(m * sizeof(int));
+        int *Rqinv = spasm_malloc(m * sizeof(int));
+        spasm *U = spasm_echelonize(A, Uqinv, NULL);   /* NULL = default options */
+        spasm *R = spasm_rref(U, Uqinv, Rqinv);
+        spasm_csr_free(U);
+        free(Uqinv);
+        int rank = R->n;
 
-  spasm * A_t = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
-  spasm * K = spasm_kernel(A_t, SPASM_IDENTITY_PERMUTATION);
-  spasm_csr_free(A_t);
-  int k = K->n;
-  int * Kp = K->p;
-  int * Kj = K->j;
-  spasm_GFp * Kx = K->x;
+        /* build kernel basis */
+        spasm *K = spasm_kernel(R, Rqinv);
+        
+        /* rows of K form a basis of the left-kernel of At */
+        assert(K->m == m);
+        assert(K->n == m - rank);
+        spasm_csr_free(R);
+        free(Rqinv);
+        
+        /* test that they are really kernel vectors */
+        spasm *At = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
+        spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+        spasm_GFp *y = spasm_malloc(n * sizeof(*y));
+        const int *Kp = K->p;
+        const int *Kj = K->j;
+        const spasm_GFp *Kx = K->x;
+        for (int i = 0; i < K->n; i++) {
+                printf("# testing vector %d\n", i);
+                spasm_vector_zero(x, m);
+                spasm_vector_zero(y, n);
 
-  assert(K->m == A->n);
+                /* check that vector is not zero */
+                if (spasm_row_weight(K, i) == 0) {
+                        printf("not ok - empty vector in kernel\n");
+                        exit(1);
+                }
 
-  spasm_GFp * x = spasm_malloc(n * sizeof(spasm_GFp));
-  spasm_GFp * y = spasm_malloc(m * sizeof(spasm_GFp));
+                /* scatter K[i] into x */
+                int nonzero = 0;
+                for (int p = Kp[i]; p < Kp[i + 1]; p++) {
+                        int j = Kj[p];
+                        x[j] = Kx[p];
+                        nonzero += (Kx[p] != 0);
+                }
+                if (nonzero == 0) {
+                        printf("not ok - zero vector in kernel\n");
+                        exit(1);
+                }
 
-  /* test that they are really kernel vectors */
-  for (int i = 0; i < k; i++) {
-    printf("# testing vector %d\n", i);
-    spasm_vector_zero(x, n);
-    spasm_vector_zero(y, m);
+                /* y <-- x.A */
+                spasm_gaxpy(At, x, y);
 
-    /* check that vector is not zero */
-    if (spasm_row_weight(K, i) == 0) {
-      printf("not ok - empty vector in kernel\n");
-      exit(1);
-    }
+                for (int i = 0; i < n; i++) {
+                        if (y[i] != 0) {
+                                printf("not ok - vector not in kernel\n");
+                                exit(1);
+                        }
+                }
+        }
 
-    /* scatter K[i] into x */
-    int nonzero = 0;
-    for (int p = Kp[i]; p < Kp[i + 1]; p++) {
-      x[ Kj[p] ] = Kx[p];
-      nonzero += (Kx[p] != 0);
-    }
-
-    if (nonzero == 0) {
-      printf("not ok - zero vector in kernel\n");
-      exit(1);
-    }
-
-    /* y <-- x.A */
-    spasm_gaxpy(A, x, y);
-
-    for (int j = 0; j < m; j++) {
-      if (y[j] != 0) {
-      printf("not ok - vector not in kernel\n");
-      exit(1);
-      }
-    }
-  }
-
-  printf("ok - (left-)kernel basis\n");
-
-  spasm_csr_free(A);
-  spasm_csr_free(K);
-  free(x);
-  free(y);
-  exit(EXIT_SUCCESS);
+        printf("ok - (right-)kernel basis\n");
+        spasm_csr_free(A);
+        spasm_csr_free(K);
+        free(x);
+        free(y);
+        exit(EXIT_SUCCESS);
 }

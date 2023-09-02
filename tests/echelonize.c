@@ -31,6 +31,25 @@ void echelon_form_check(const spasm *U, int *qinv)
 }
 
 
+void rref_check(const spasm *U, int *qinv)
+{
+	int *Up = U->p;
+	int *Uj = U->j;
+	spasm_GFp *Ux = U->x;
+	
+	printf("# Checking that R is really in RREF...\n");
+	for (int i = 0; i < U->n; i++) {
+		assert(Up[i] < Up[i + 1]);
+		int j = Uj[Up[i]];
+		assert(qinv[j] == i);
+		assert(Ux[Up[i]] == 1);
+		for (int px = Up[i] + 1; px < Up[i + 1]; px++) {
+			int j = Uj[px];
+			assert(qinv[j] < 0);
+		}
+	}
+}
+
 void deterministic_inclusion_test(const spasm *A, const spasm *U, const int *qinv)
 {
 	printf("# Checking that rowspan(A) is included in rowspan(U) [deterministic]...\n");
@@ -124,31 +143,29 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 /** given an arbitrary matrix A and an echelonized matrix U, check that rowspan(A) == rowspan(U). */
 int main(int argc, char **argv)
 {
-	int prime = 42013;
-	int deterministic = 0;
-
 	spasm_triplet *T = spasm_load_sms(stdin, 42013);
 	spasm *A = spasm_compress(T);
 	spasm_triplet_free(T);
 
 	int m = A->m;
-	int *qinv = spasm_malloc(m * sizeof(int));
-	spasm *U = spasm_echelonize(A, qinv, NULL);   /* NULL = default options */
+	int *Uqinv = spasm_malloc(m * sizeof(int));
+	int *Rqinv = spasm_malloc(m * sizeof(int));
+	spasm *U = spasm_echelonize(A, Uqinv, NULL);   /* NULL = default options */
 	
 	assert(A->m == U->m);
 	assert(U->n <= A->n);
 	assert(U->n <= U->m);
 
-	echelon_form_check(U, qinv);
-	//if (deterministic)
-	deterministic_inclusion_test(A, U, qinv);
-	// else
-	// 	probabilistic_inclusion_test(A, U, 100);
-	
-	// probabilistic_rank_check(A, U, qinv, 100);
+	echelon_form_check(U, Uqinv);
+	deterministic_inclusion_test(A, U, Uqinv);
 
+	spasm *R = spasm_rref(U, Uqinv, Rqinv);
+	rref_check(R, Rqinv);
+	deterministic_inclusion_test(A, R, Rqinv);	
 	spasm_csr_free(A);
 	spasm_csr_free(U);
-	free(qinv);
+	spasm_csr_free(R);
+	free(Uqinv);
+	free(Rqinv);
 	exit(EXIT_SUCCESS);
 }
