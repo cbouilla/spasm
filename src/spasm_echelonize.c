@@ -1,74 +1,323 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "spasm.h"
 
-/** NOT DRY WRT spasm_schur
- * Samples R rows at random in the schur complement of A w.r.t. U, and return the average density.
- * rows p[0:npiv] of A are pivotal and must be excluded.
- * qinv locates the pivots in U.
+/*
+ * There are 3 possible finalization strategies
+ *   1. GPLU (without computing the sparse schur complement --- GPLU will do it on the fly)
+ *   2. dense schur generation + dense factorization
+ *   3. low-rank dense (including "tall and skinny") --- pick random linear combinations
+ *
+ * all echelonization function should have prototype: 
+ *     echelonize_XXX(spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts);
+ *
+ * passing NULL as the options leads to default choices. 
+ * U must be preallocated with sufficiently many rows (e.g. with A->n rows to be ready for the worst case).
+ *
+ * presently, this does not provide a way to store L; we will do something about this later on.
  */
-double estimate_schur_density(const spasm * A, int npiv, const int *p, const spasm *U, const int *qinv, int R)
+
+
+/* provide sensible defaults */
+void echelonize_init_opts(struct echelonize_opts *opts)
+{
+	opts->enable_tall_and_skinny = 1;
+	opts->enable_dense = 1;
+	opts->enable_GPLU = 1;
+
+	// options of the main procedure
+	opts->min_pivot_proportion = 0.05;
+	opts->max_round = 3;
+	opts->sparsity_threshold = 0.05;
+	opts->tall_and_skinny_ratio = 5;
+
+	opts->dense_block_size = 1000;
+	opts->low_rank_ratio = 0.5;
+}
+
+bool spasm_echelonize_test_completion(spasm *A, const int *p, int n, spasm *U, int *Uqinv)
 {
 	int m = A->m;
-	int n = A->n;
-	int nnz = 0;
-	assert(npiv < m);
+	int Sm = m - U->n;
+	int Sn = ceil(128 / log2(A->prime));
+	double *S = spasm_malloc(Sn * Sm * sizeof(*S));
+	int *q = spasm_malloc(Sm * sizeof(*q));
+	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
+	fprintf(stderr, "[echelonize/completion] Testing completion with %d random linear combinations (rank %d)\n", Sn, U->n);
+	fflush(stderr);
+	spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, q, Sn, 0);
+	int rr = spasm_ffpack_echelonize(A->prime, Sn, Sm, S, Sm, Sp);
+	free(S);
+	free(Sp);
+	free(q);
+	return (rr == 0);
+}
 
-	#pragma omp parallel
-	{
-		/* per-thread scratch space */
-		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
-		int *xj = spasm_malloc(3 * m * sizeof(*xj));
-		spasm_vector_zero(xj, 3 * m);
 
-		#pragma omp for reduction(+:nnz) schedule(dynamic)
-		for (int i = 0; i < R; i++) {
-			/* pick a random non-pivotal row in A */
-			int inew = p[npiv + (rand() % (n - npiv))];
-			int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
-			for (int px = top; px < m; px++) {
-				int j = xj[px];
-				if (qinv[j] < 0 && x[j] != 0)
-					nnz += 1;
+/* not dry w.r.t. spasm_LU() */
+void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, struct echelonize_opts *opts)
+{
+	int m = A->m;
+	int prime = A->prime;
+	int verbose_step = spasm_max(1, n / 1000);
+
+	/* workspace for triangular solver */
+	int *x = spasm_malloc(m * sizeof(spasm_GFp));
+	int *xj = spasm_malloc(3 * m * sizeof(int));
+	spasm_vector_zero(xj, 3 * m);
+	
+	/* allocate result */
+	int *Up = U->p;
+	int unz = spasm_nnz(U);
+	int r = spasm_min(n, m);  /* upper-bound on rank */
+
+	/* initialize early abort */
+	int rows_since_last_pivot = 0;
+	bool early_abort_done = 0;
+
+	/* Main loop : compute L[i] and U[i] */
+	int i;
+	for (i = 0; i < n; i++) {
+		/* test for early abort */
+		if (U->n == r) {
+			fprintf(stderr, "\n[echelonize/GPLU] full rank reached\n");
+			break;
+		}
+		/* TODO: make these hard-coded values options */
+		if (!early_abort_done && rows_since_last_pivot > 10 && (rows_since_last_pivot > (n / 100))) {
+			fprintf(stderr, "\n[echelonize/GPLU] testing for early abort...");
+			if (spasm_echelonize_test_completion(A, p, n, U, qinv))
+				break;
+			// if (spasm_early_abort(A, p, i, U, U->n)) {
+			// 	fprintf(stderr, "SUCCESS\n");
+			// 	break;
+			// } else {
+			// 	fprintf(stderr, "FAILED\n");
+			// }
+			early_abort_done = 1;
+		}
+
+		/* Triangular solve: x * U = A[i] */
+		int inew = (p != NULL) ? p[i] : i;
+		int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
+
+		/* Find pivot column; current poor strategy= choose leftmost */
+		int jpiv = -1;	          /* column index of best pivot so far. */
+		for (int px = top; px < m; px++) {
+			int j = xj[px];        /* x[j] is (generically) nonzero */
+			if (x[j] == 0)
+				continue;
+			if (qinv[j] < 0) {
+				/* have found the pivot on row i yet ? */
+				if (jpiv == -1 || j < jpiv)
+					jpiv = j;
 			}
 		}
-		free(x);
-		free(xj);
+		if (jpiv < 0) {
+			/* no pivot found */
+			rows_since_last_pivot += 1;
+			continue;
+		}
+
+		/* ensure enough room in U for an extra row */
+		if (unz + m > U->nzmax)
+			spasm_csr_realloc(U, 2 * U->nzmax + m);
+		int *Uj = U->j;
+		spasm_GFp *Ux = U->x;
+
+		/* store new pivotal row into U */
+		qinv[jpiv] = U->n;
+		int old_unz = unz;
+		Uj[unz] = jpiv;
+		Ux[unz] = 1;
+		unz += 1;
+		spasm_GFp beta = spasm_GFp_inverse(x[jpiv], prime);
+		for (int px = top; px < m; px++) {
+			int j = xj[px];
+			if (qinv[j] < 0) {
+				Uj[unz] = j;
+				Ux[unz] = (x[j] * beta) % prime;
+				unz += 1;
+			}
+		}
+		U->n += 1;
+		Up[U->n] = unz;
+
+		/* TODO: switch to dense */
+
+		/* reset early abort */
+		rows_since_last_pivot = 0;
+		early_abort_done = 0;
+		
+		if ((i % verbose_step) == 0) {
+			fprintf(stderr, "\r[echelonize/GPLU] %d / %d [|U| = %d] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, unz, 1.0 * (m - top) / (m), 1.0 * (unz - old_unz) / m, U->n);
+			fflush(stderr);
+		}
 	}
-	return ((double) nnz) / (m - npiv) / R;
+	/* cleanup */
+	fprintf(stderr, "\n");
+	free(x);
+	free(xj);
 }
+
+
+static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size_t *Sp, const int *q, int *Uqinv)
+{
+	int extra_nnz = (2*Sm + 1 - rr) * rr / 2;     /* maximum size increase */
+        int unz = spasm_nnz(U);
+	spasm_csr_realloc(U, unz + extra_nnz);
+	int *Up = U->p;
+	int *Uj = U->j;
+	spasm_GFp *Ux = U->x;
+        for (int i = 0; i < rr; i++) {
+                int j = Sp[i];   /* column (of S) with the pivot on row i of S; the pivot is implicitly 1 */
+        	Uj[unz] = q[j];  /* column of A with the pivot */
+        	Ux[unz] = 1;
+        	unz += 1;
+        	Uqinv[q[j]] = U->n;
+        	for (int k = j + 1; k < Sm; k++) {
+        		if (S[i * Sm + k] == 0)
+        			continue;   /* don't store zero */
+        		Uj[unz] = q[k];
+        		Ux[unz] = S[i * Sm + k];
+        		unz += 1;
+        	}
+        	U->n += 1;
+        	Up[U->n] = unz;
+        }
+}
+
+
+void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts)
+{
+	assert(opts->dense_block_size > 0);
+	int m = A->m;
+	int Sm = m - U->n;
+
+	double *S = spasm_malloc(opts->dense_block_size * Sm * sizeof(*S));
+	int *q = spasm_malloc(Sm * sizeof(*q));
+	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
+	double start = spasm_wtime();
+	int old_un = U->n;
+	int round = 0;
+	fprintf(stderr, "[echelonize/dense/low-rank] processing dense schur complement of dimension %d x %d\n", n, Sm);
+	
+	int w = 1;
+	// TODO: guess w
+	for (;;) {
+		/* compute a chunk of the schur complement, then echelonize with FFPACK */
+		int rank_ub = spasm_min(n, Sm);
+		int Sn = spasm_min(rank_ub, opts->dense_block_size);
+		if (Sn <= 0)
+			break;		
+		fprintf(stderr, "[echelonize/dense/low-rank] Round %d. Weight %d. Processing chunk (%d x %d)\n", round, w, Sn, Sm);
+		spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, q, Sn, w);
+		int rr = spasm_ffpack_echelonize(A->prime, Sn, Sm, S, Sm, Sp);
+
+		if (rr == 0) {
+			if (spasm_echelonize_test_completion(A, p, n, U, Uqinv))
+				break;
+			fprintf(stderr, "[echelonize/dense/low-rank] Failed termination test; switching to full linear combinations\n");
+			w = 0;
+			Sn = omp_get_max_threads();
+		}
+		if (rr < 0.9 * Sn) {
+			w *= 2;
+			fprintf(stderr, "[echelonize/dense/low-rank] Not enough pivots, increasing weight to %d\n", w);
+		}
+		dense_update_U(U, rr, Sm, S, Sp, q, Uqinv);
+		n -= rr;
+		Sm -= rr;
+        	round += 1;
+        	fprintf(stderr, "[echelonize/dense/low-rank] found %d new pivots (%d new since beginning)\n", rr,  U->n - old_un);
+        }
+        fprintf(stderr, "[echelonize/dense/low-rank] completed in %.1fs. %d new pivots found\n", spasm_wtime() - start, U->n - old_un);
+        free(S);
+        free(q);
+        free(Sp);
+}
+
+/* 
+ * the schur complement (on non-pivotal rows of A) w.r.t. U is dense.
+ * process A[npiv:n]
+ */
+void spasm_echelonize_dense(spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts)
+{
+	assert(opts->dense_block_size > 0);
+	int m = A->m;
+	int Sm = m - U->n;
+
+	double *S = spasm_malloc(opts->dense_block_size * Sm * sizeof(*S));
+	int *q = spasm_malloc(Sm * sizeof(*q));
+	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
+	int processed = 0;
+	double start = spasm_wtime();
+	int old_un = U->n;
+	int round = 0;
+	fprintf(stderr, "[echelonize/dense] processing dense schur complement of dimension %d x %d\n", n, Sm);
+	bool lowrank_mode = 0;
+
+	for (;;) {
+		/* compute a chunk of the schur complement, then echelonize with FFPACK */
+		int rank_ub = spasm_min(n, Sm);
+		int Sn = spasm_min(rank_ub, opts->dense_block_size);
+		if (Sn <= 0)
+			break;
+		
+		fprintf(stderr, "[echelonize/dense] Round %d. processing S[%d:%d] (%d x %d)\n", round, processed, processed + Sn, Sn, Sm);	
+		int r = spasm_schur_dense(A, p, Sn, U, Uqinv, S, q);
+		int rr = spasm_ffpack_echelonize(A->prime, r, Sm, S, Sm, Sp);
+		
+		/* update U */
+		dense_update_U(U, rr, Sm, S, Sp, q, Uqinv);
+
+        	/* move on to the next chunk */
+        	round += 1;
+        	processed += Sn;
+        	p += Sn;
+        	n -= Sn;
+        	Sm = m - U->n;
+        	fprintf(stderr, "[echelonize/dense] found %d new pivots\n", rr);
+
+		/* switch to low-rank mode ? */
+		if (opts->enable_tall_and_skinny && (rr < opts->low_rank_ratio * Sn)) {
+			fprintf(stderr, "[echelonize/dense] Too few pivots; switching to low-rank mode\n");
+			lowrank_mode = 1;
+			break;
+		}
+        }
+        free(S);
+        free(q);
+        free(Sp);
+        if (lowrank_mode) {
+		spasm_echelonize_dense_lowrank(A, p, n, U, Uqinv, opts);
+        } else {
+        	fprintf(stderr, "[echelonize/dense] completed in %.1fs. %d new pivots found\n", spasm_wtime() - start, U->n - old_un);
+        }
+}
+
 
 /*
- * Returns the row echelon form of A. Initializes qinv (must be of size m, #columns(A)).
- * Modifies A (permutes entries only)
+ * (main entry point)
+ * Returns the row echelon form of A. 
+ * Initializes Uqinv (must be preallocated of size m [==#columns of A]).
+ * Modifies A (permutes entries in rows)
  */
-static const double sparsity_threshold = 0.05;
-
-/* for debugging purposes */
-void validate_pivots(const spasm *A, int npiv, const int *qinv, const int *p)
+spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 {
-	int *Ap = A->p;
-	int *Aj = A->j;
-	spasm_GFp *Ax = A->x;
-	for (int k = 0; k < npiv; k++) {
-		int i = (p != NULL) ? p[k] : k;
-		int j = Aj[Ap[i]];
-		assert(Ax[Ap[i]] == 1);
-		assert(qinv[j] == i); 
+	struct echelonize_opts default_opts;
+	if (opts == NULL) {
+		opts = &default_opts;
+		echelonize_init_opts(opts);
 	}
-}
-
-
-
-spasm* spasm_echelonize(spasm *A, int *Uqinv)
-{
 	int n = A->n;
 	int m = A->m;
 	int prime = A->prime;
 	
-	int *qinv = spasm_malloc(n * sizeof(int));  /* for pivot search */
+	int *qinv = spasm_malloc(m * sizeof(int));  /* for pivot search */
 	int *p = spasm_malloc(n * sizeof(int));
 
 	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
@@ -77,29 +326,20 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv)
 	for (int j = 0; j < m; j++)
 		Uqinv[j] = -1;
 
+	fprintf(stderr, "[echelonize] Start on %d x %d matrix with %d nnz\n", n, m, spasm_nnz(A));
 	double start = spasm_wtime();
-	int round = 0;
 	double density = -1;
-	for (;;) {
+	double aspect_ratio = -1;
+	int npiv = 0;
+
+	for (int round = 0; round < opts->max_round; round++) {
+		fprintf(stderr, "[echelonize] round %d\n", round);
 	 	int *Ap = A->p;
 		int *Aj = A->j;
 		spasm_GFp *Ax = A->x;
 
-		/* invariant: A does not have coefficients on pivotal columns */
-		for (int i = 0; i < n; i++)
-			for (int px = Ap[i]; px < Ap[i + 1]; px++) {
-				int j = Aj[px];
-				assert(Uqinv[j] < 0);
-			}
-
 		/* find structural pivots in A */
-		int npiv = spasm_find_pivots(A, p, qinv);
-
-		if (npiv < 0.01 * spasm_min(n, m)) {
-			fprintf(stderr, "not enough pivots found\n");
-			/* TODO: echelonize A, take all the new pivots into U */
-			break;     /* not enough pivots found */
-		}
+		npiv = spasm_find_pivots(A, p, qinv);
 
 		/* compute total pivot nnz and reallocate U if necessary */
 		int pivot_nnz = 0;
@@ -107,14 +347,13 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv)
 			int i = p[k];
 			pivot_nnz += spasm_row_weight(A, i);
 		}
-		if (spasm_nnz(U) + pivot_nnz >= U->nzmax)
+		if (spasm_nnz(U) + pivot_nnz > U->nzmax)
 			spasm_csr_realloc(U, spasm_nnz(U) + pivot_nnz);
 
 		/* copy pivotal rows to U and make them unitary; update Uqinv */
 		int *Up = U->p;
 		int *Uj = U->j;
 		spasm_GFp *Ux = U->x;
-
 		for (int k = 0; k < npiv; k++) {
 			int i = p[k];
 			int j = Aj[Ap[i]];
@@ -129,60 +368,52 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv)
 			U->n += 1;
 			Up[U->n] = Unz;
 		}
+		assert(Unz <= U->nzmax);
 		spasm_make_pivots_unitary(U, SPASM_IDENTITY_PERMUTATION, U->n); /* reprocess previous pivots; shame */
-		validate_pivots(U, U->n, Uqinv, NULL);
 
-		density = estimate_schur_density(A, npiv, p, U, Uqinv, 100);
-		if (density > sparsity_threshold) {
-			fprintf(stderr, "Schur complement is dense (esitmated %.2f%%)\n", 100 * density);
-			/* TODO: compute the dense schur complement and echelonize it */
-			break;     /* schur complement is not sparse enough */
+		/* decide whether to move on to the next iteration */
+		if (npiv < opts->min_pivot_proportion * spasm_min(n, m)) {
+			fprintf(stderr, "not enough pivots found; stopping\n");
+			break;     /* not enough pivots found */
+		}
+//		aspect_ratio = (double) (n - npiv) / (m - npiv);
+//		if (density > opts->sparsity_threshold && aspect_ratio > opts->tall_and_skinny_ratio) {
+//			fprintf(stderr, "Schur complement is dense,tall and skinny (#rows / #cols = %.1f)\n", aspect_ratio);
+//			break;
+//		}
+		density = spasm_schur_estimate_density(A, p + npiv, n - npiv, U, Uqinv, 100);
+		if (density > opts->sparsity_threshold) {
+			fprintf(stderr, "Schur complement is dense (estimated %.2f%%)\n", 100 * density);
+			break;
 		}
 
+		/* compute the next schur complement */
 		int64_t nnz = (density * (n - npiv)) * (m - npiv);
-		char tmp[6];
+		char tmp[8];
 		spasm_human_format(sizeof(int) * (n - npiv + nnz) + sizeof(spasm_GFp) * nnz, tmp);
-		fprintf(stderr, "round %d. Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", round, n - npiv, m - npiv, density, tmp);
-
-		/* compute the schur complement */
-		spasm *S = spasm_schur(A, p, npiv, U, Uqinv, density, SPASM_DISCARD_L, NULL);
+		fprintf(stderr, "Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", n - npiv, m - npiv, density, tmp);
+		spasm *S = spasm_schur(A, p + npiv, n - npiv, U, Uqinv, density, SPASM_DISCARD_L, NULL);
+		if (round > 0)
+			spasm_csr_free(A);       /* only if it is not the input argument */
 		A = S;
 		n = A->n;
 		round += 1;
 	}
+	free(qinv);
 
-	/* Final step: echelonize A, rows p[npiv:n] */
+	/* finish */
+	if (opts->enable_tall_and_skinny && aspect_ratio > opts->tall_and_skinny_ratio)
+		spasm_echelonize_dense_lowrank(A, p + npiv, n - npiv, U, Uqinv, opts);
+	else if (opts->enable_dense && density > opts->sparsity_threshold)
+		spasm_echelonize_dense(A, p + npiv, n - npiv, U, Uqinv, opts);
+	else if (opts->enable_GPLU)
+		spasm_echelonize_GPLU(A, p + npiv, n - npiv, U, Uqinv, opts);
+	else
+		fprintf(stderr, "[echelonize] Cannot finish (no valid method enabled). Incomplete echelonization returned\n");
 
-	/* sparse schur complement : GPLU */
-	if (1 || density < sparsity_threshold) {
-		spasm_lu *LU = spasm_LU(A, p, SPASM_DISCARD_L);
-		spasm *UU = LU->U; 
-		int *UUp = UU->p;
-		int *UUj = UU->j;
-		spasm_GFp *UUx = UU->x;
-		int *qinv = LU->qinv;
-		// concatenate UU to U;
-		spasm_csr_realloc(U, spasm_nnz(U) + spasm_nnz(UU));
-		int *Up = U->p;
-		int *Uj = U->j;
-		spasm_GFp *Ux = U->x;
-		for (int i = 0; i < UU->n; i++) {
-			int j = UUj[UUp[i]];
-			assert(qinv[j] == i);
-			Uqinv[j] = U->n;
-			for (int px = UUp[i]; px < UUp[i + 1]; px++) {
-				Uj[Unz] = UUj[px];
-				Ux[Unz] = UUx[px];
-				Unz += 1;
-			}
-			U->n += 1;
-			Up[U->n] = Unz;   /* finalization */
-		}
-		spasm_free_LU(LU);
-	}// else {
-//		/* dense schur complement */
-//		int r = spasm_schur_rank(A, p, qinv, npiv);
-//		fprintf(stderr, "rank = %d + %d\n", npiv, r);
-	//}
+	free(p);
+	fprintf(stderr, "[echelonize] Done in %.1fs. Rank %d, %d nnz in basis\n", spasm_wtime() - start, U->n, spasm_nnz(U));
+	spasm_csr_resize(U, U->n, m);
+	spasm_csr_realloc(U, -1);
 	return U;
 }

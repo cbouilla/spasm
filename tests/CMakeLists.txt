@@ -199,3 +199,21 @@ spasm_test_expected_output(gaxpy m1.sms gaxpy.1)
 
 spasm_declare_test(submatrix)
 spasm_test_expected_output(submatrix singular.sms submatrix.1)
+
+######### echelonization
+
+spasm_declare_test(echelonize)
+
+set(ECHELONIZE_TEST_MATRICES
+    void.sms
+    medium.sms
+    rectangular_l.sms
+    rectangular_h.sms
+    BIOMD0000000525.int.mpl.sms
+    BIOMD0000000424.int.mpl.sms
+    singular.sms
+    singular2.sms
+    singular3.sms
+    mat364.sms
+)
+spasm_run_tests(echelonize       "${ECHELONIZE_TEST_MATRICES}")

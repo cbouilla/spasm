@@ -71,33 +71,27 @@ void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p
 
 
 /**
- *   Computes a random linear combination of A[k:].
+ *   Computes a random linear combination of (P*A)[k:].
  *   returns TRUE iff it belongs to the row-space of U.
  *   This means that with proba >= 1-1/p, all pivots have been found.
  */
 int spasm_early_abort(const spasm * A, const int *p, int k, const spasm * U, int nu) {
-	int ok;
-	spasm_GFp *y;
-
 	int n = A->n;
 	int m = A->m;
 	int prime = A->prime;
 	int *Aj = A->j;
 	int *Ap = A->p;
 	spasm_GFp *Ax = A->x;
-
-	y = spasm_malloc(m * sizeof(spasm_GFp));
-
+	spasm_GFp *y = spasm_malloc(m * sizeof(*y));
 	spasm_vector_set(y, 0, m, 0);
 	for (int i = k; i < n; i++) {
 		int inew = (p != NULL) ? p[i] : i;
 		spasm_scatter(Aj, Ax, Ap[inew], Ap[inew + 1], rand() % prime, y, prime);
 	}
-
 	spasm_eliminate_sparse_pivots(U, nu, SPASM_IDENTITY_PERMUTATION, y);
 
 	/* if y != 0, then y does not belong to the row space of U */
-	ok = 1;
+	bool ok = 1;
 	for (int j = 0; j < m; j++) {
 		if (y[j] != 0) {
 			ok = 0;

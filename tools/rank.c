@@ -47,13 +47,13 @@ int main(int argc, char **argv)
 	spasm_triplet_free(T);
 	int n = A->n;
 	int m = A->m;
-	char hnnz[6];
+	char hnnz[8];
 	spasm_human_format(spasm_nnz(A), hnnz);
 	fprintf(stderr, "start. A is %d x %d (%s nnz)\n", n, m, hnnz);
 
 	int *qinv = spasm_malloc(m * sizeof(int));
 	double start_time = spasm_wtime();
-	spasm *U = spasm_echelonize(A, qinv);
+	spasm *U = spasm_echelonize(A, qinv, NULL);   /* NULL = default options */
 	double end_time = spasm_wtime();
 	fprintf(stderr, "done in %.3f s rank = %d\n", end_time - start_time, U->n);
 	spasm_csr_free(A);

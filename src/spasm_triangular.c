@@ -196,34 +196,29 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, con
  *
  * top is the return value.
  */
-int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj, spasm_GFp * x, const int *qinv) {
-	int top, m, prime, *Up, *Uj, *Bp, *Bj;
-	spasm_GFp *Ux, *Bx;
+int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj, spasm_GFp * x, const int *qinv)
+{
+	int m = U->m;
+	const int *Up = U->p;
+	const int *Uj = U->j;
+	const spasm_GFp *Ux = U->x;
+	int prime = U->prime;
+	const int *Bp = B->p;
+	const int *Bj = B->j;
+	const spasm_GFp *Bx = B->x;
 
-#ifdef SPASM_TIMING
-	uint64_t start;
-#endif
+	/* compute non-zero pattern of x --- xj[top:m] = Reach(U, B[k]) */
+	int top = spasm_reach(U, B, k, m, xj, qinv);
 
-	m = U->m;
-	Up = U->p;
-	Uj = U->j;
-	Ux = U->x;
-	prime = U->prime;
-
-	Bp = B->p;
-	Bj = B->j;
-	Bx = B->x;
-
-	/* xj[top : m] = Reach(U, B[k]) */
-	top = spasm_reach(U, B, k, m, xj, qinv);
-
-	/* clear x */
-	for (int px = top; px < m; px++)
-		x[xj[px]] = 0;
-
-	/* scatter B[k] into x */
-	for (int px = Bp[k]; px < Bp[k + 1]; px++)
-		x[Bj[px]] = Bx[px];
+	/* clear x and scatter B[k] into x*/
+	for (int px = top; px < m; px++) {
+		int j = xj[px];
+		x[j] = 0;
+	}
+	for (int px = Bp[k]; px < Bp[k + 1]; px++) {
+		int j = Bj[px];
+		x[j] = Bx[px];
+	}
 
 	/* iterate over the (precomputed) pattern of x (= the solution) */
 	for (int px = top; px < m; px++) {
@@ -235,11 +230,9 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
 		if (i < 0)
 			continue;
 
-		/*
-		 * the pivot entry on row i is 1, so we just have to multiply
-		 * by -x[j]
-		 */
+		/* the pivot entry on row i is 1, so we just have to multiply by -x[j] */
 		assert(Ux[Up[i]] == 1);
+		assert(i < U->n);
 		spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[j], x, prime);
 	}
 	return top;

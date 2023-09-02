@@ -34,7 +34,7 @@ int spasm_nnz(const spasm * A) {
 	return A->p[A->n];
 }
 
-/* return a string representing n in 4 bytes */
+/* return a string representing n in 8 bytes */
 void spasm_human_format(int64_t n, char *target) {
 	if (n < 1000) {
 		sprintf(target, "%" PRId64, n);
@@ -121,6 +121,8 @@ spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_
 void spasm_csr_realloc(spasm * A, int nzmax) {
 	if (nzmax < 0)
 		nzmax = spasm_nnz(A);
+	if (spasm_nnz(A) > nzmax)
+		errx(1, "spasm_csr_realloc with too small nzmax");
 	A->j = spasm_realloc(A->j, nzmax * sizeof(int));
 	if (A->x != NULL)
 		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));

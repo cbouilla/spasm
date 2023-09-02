@@ -18,7 +18,7 @@ int main(int argc, char **argv)
         spasm_GFp *Ax = A->x;
 
         double *M = spasm_malloc(m * n * sizeof(*M));
-        spasm_dense_setzero(prime, n, m, M, m);
+        spasm_ffpack_setzero(prime, n, m, M, m);
         for (int i = 0; i < n*m; i++)
                 assert(M[i] == 0);
 
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         // }
 
         size_t *Q = spasm_malloc(m * sizeof(*Q));
-        int rank = spasm_dense_echelonize(prime, n, m, M, m, Q);
+        int rank = spasm_ffpack_echelonize(prime, n, m, M, m, Q);
         printf("# echelonized ; rank = %d\n", rank);
 
         /* dump output */

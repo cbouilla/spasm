@@ -4,6 +4,7 @@
 #include <stddef.h>           // size_t
 #include <inttypes.h>         // int64_t
 #include <stdio.h>            // FILE
+#include <stdbool.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -184,15 +185,15 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xi,
 spasm_lu *spasm_PLUQ(const spasm * A, const int *row_permutation, int keep_L);
 spasm_lu *spasm_LU(const spasm * A, const int *row_permutation, int keep_L);
 void spasm_free_LU(spasm_lu * X);
-int spasm_find_pivot(int *xi, spasm_GFp * x, int top, spasm * U, spasm * L, int *unz_ptr, int *lnz_ptr, int i, int *deff_ptr, int *qinv, int *p, int n);
 void spasm_eliminate_sparse_pivots(const spasm * A, const int npiv, const int *p, spasm_GFp *x);
+int spasm_early_abort(const spasm * A, const int *p, int k, const spasm * U, int nu);
 
 /* spasm_schur.c */
 void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv);
-void spasm_stack_nonpivotal_columns(spasm *A, int *qinv);
 spasm *spasm_schur(const spasm * A, const int *p, int npiv, const spasm *U, const int *qinv, double est_density, int keep_L, int *p_out);
-int spasm_schur_rank(const spasm * A, const int *p, const int *qinv, const int npiv);
-double spasm_schur_probe_density(const spasm * A, const int *p, int npiv, const spasm *U, const int *qinv, int R);
+double spasm_schur_estimate_density(const spasm * A, const int *p, int n, const spasm *U, const int *qinv, int R);
+int spasm_schur_dense(const spasm *A, const int *p, int k, const spasm *U, const int *qinv, double *S, int *q);
+void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q, int N, int w);
 
 /* spasm_dense_lu.c */
 spasm_dense_lu *spasm_dense_LU_alloc(int m, int prime);
@@ -227,12 +228,30 @@ spasm_dm *spasm_connected_components(const spasm * A, spasm * given_At);
 spasm *spasm_kernel(const spasm * A, const int *column_permutation);
 
 /* spasm_ffpack.cpp */
-void spasm_dense_setzero(int prime, int n, int m, double *A, int ldA);
-int spasm_dense_echelonize(int prime, int n, int m, double *A, int ldA, size_t *Q);
+void spasm_ffpack_setzero(int prime, int n, int m, double *A, int ldA);
+int spasm_ffpack_echelonize(int prime, int n, int m, double *A, int ldA, size_t *Q);
 
 /* spasm_echelonize */
-spasm* spasm_echelonize(spasm *A, int *Uqinv);
+struct echelonize_opts {
+	/* TODO: also put here parameters of the pivot search algorithms */
+	int enable_tall_and_skinny;
+	int enable_dense;
+	int enable_GPLU;
 
+	/* Parameters of the "root" echelonization procedure itself */
+	double min_pivot_proportion;    /* minimum number of pivots found to keep going; < 0 = keep going */
+	int max_round;                  /* maximum number of rounds; < 0 = keep going */
+ 
+ 	/* Parameters that determine the choice of a finalization strategy */
+ 	double sparsity_threshold;      /* denser than this --> dense method; < 0 = keep going */
+
+	/* options of dense methods */
+	int dense_block_size;           /* #rows processed in each batch; determine memory consumption */
+	double low_rank_ratio;          /* if k rows have rank less than k * low_rank_ratio --> "tall-and-skinny"; <0 = don't */
+	double tall_and_skinny_ratio;   /* aspect ratio (#rows / #cols) higher than this --> "tall-and-skinny"; <0 = don't */
+};
+
+spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts);
 
 /* utilities */
 static inline int spasm_max(int a, int b) {
