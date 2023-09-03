@@ -22,8 +22,10 @@
 
 
 /* provide sensible defaults */
-void echelonize_init_opts(struct echelonize_opts *opts)
+void spasm_echelonize_init_opts(struct echelonize_opts *opts)
 {
+	opts->enable_greedy_pivot_search = 1;
+	
 	opts->enable_tall_and_skinny = 1;
 	opts->enable_dense = 1;
 	opts->enable_GPLU = 1;
@@ -311,7 +313,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 	struct echelonize_opts default_opts;
 	if (opts == NULL) {
 		opts = &default_opts;
-		echelonize_init_opts(opts);
+		spasm_echelonize_init_opts(opts);
 	}
 	int n = A->n;
 	int m = A->m;
@@ -339,7 +341,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 		spasm_GFp *Ax = A->x;
 
 		/* find structural pivots in A */
-		npiv = spasm_find_pivots(A, p, qinv);
+		npiv = spasm_find_pivots(A, p, qinv, opts);
 
 		/* compute total pivot nnz and reallocate U if necessary */
 		int pivot_nnz = 0;

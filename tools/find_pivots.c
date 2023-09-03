@@ -20,7 +20,7 @@ int main() {
 
 	int *p = spasm_malloc(n * sizeof(int));
 	int *qinv = spasm_malloc(m * sizeof(int));
-	int npiv = spasm_find_pivots(A, p, qinv);
+	int npiv = spasm_find_pivots(A, p, qinv, NULL);
 	spasm *B = spasm_permute_pivots(A, p, qinv, npiv);
 
 	spasm_save_csr(stdout, B);

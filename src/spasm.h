@@ -90,6 +90,27 @@ typedef struct {      /**** a Dulmage-Mendelson decomposition */
 				int cc[5];    /* coarse column decomposition */
 }      spasm_dm;
 
+struct echelonize_opts {
+	/* pivot search sub-algorithms */
+	bool enable_greedy_pivot_search;
+
+	/* echelonization sub-algorithms */
+	bool enable_tall_and_skinny;
+	bool enable_dense;
+	bool enable_GPLU;
+
+	/* Parameters of the "root" echelonization procedure itself */
+	double min_pivot_proportion;    /* minimum number of pivots found to keep going; < 0 = keep going */
+	int max_round;                  /* maximum number of rounds; < 0 = keep going */
+ 
+ 	/* Parameters that determine the choice of a finalization strategy */
+ 	double sparsity_threshold;      /* denser than this --> dense method; < 0 = keep going */
+
+	/* options of dense methods */
+	int dense_block_size;           /* #rows processed in each batch; determine memory consumption */
+	double low_rank_ratio;          /* if k rows have rank less than k * low_rank_ratio --> "tall-and-skinny"; <0 = don't */
+	double tall_and_skinny_ratio;   /* aspect ratio (#rows / #cols) higher than this --> "tall-and-skinny"; <0 = don't */
+};
 
 #define SPASM_IDENTITY_PERMUTATION NULL
 #define SPASM_IGNORE NULL
@@ -205,7 +226,7 @@ int spasm_PLUQ_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x);
 int spasm_LU_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x);
 
 /* spasm_pivots.c */
-int spasm_find_pivots(spasm * A, int *p, int *qinv);
+int spasm_find_pivots(spasm * A, int *p, int *qinv, struct echelonize_opts *opts);
 spasm * spasm_permute_pivots(const spasm *A, const int *p, int *qinv, int npiv);
 
 /* spasm_matching.c */
@@ -232,24 +253,7 @@ void spasm_ffpack_setzero(int prime, int n, int m, double *A, int ldA);
 int spasm_ffpack_echelonize(int prime, int n, int m, double *A, int ldA, size_t *Q);
 
 /* spasm_echelonize */
-struct echelonize_opts {
-	/* TODO: also put here parameters of the pivot search algorithms */
-	int enable_tall_and_skinny;
-	int enable_dense;
-	int enable_GPLU;
-
-	/* Parameters of the "root" echelonization procedure itself */
-	double min_pivot_proportion;    /* minimum number of pivots found to keep going; < 0 = keep going */
-	int max_round;                  /* maximum number of rounds; < 0 = keep going */
- 
- 	/* Parameters that determine the choice of a finalization strategy */
- 	double sparsity_threshold;      /* denser than this --> dense method; < 0 = keep going */
-
-	/* options of dense methods */
-	int dense_block_size;           /* #rows processed in each batch; determine memory consumption */
-	double low_rank_ratio;          /* if k rows have rank less than k * low_rank_ratio --> "tall-and-skinny"; <0 = don't */
-	double tall_and_skinny_ratio;   /* aspect ratio (#rows / #cols) higher than this --> "tall-and-skinny"; <0 = don't */
-};
+void spasm_echelonize_init_opts(struct echelonize_opts *opts);
 spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts);
 
 /* spasm_rref.c */

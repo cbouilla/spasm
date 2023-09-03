@@ -333,8 +333,13 @@ int spasm_find_cycle_free_pivots(spasm * A, int *p, int *qinv, int npiv_start)
  *
  * Both p and qinv must be preallocated
  */
-int spasm_find_pivots(spasm * A, int *p, int *qinv)
+int spasm_find_pivots(spasm * A, int *p, int *qinv, struct echelonize_opts *opts)
 {
+	struct echelonize_opts default_opts;
+	if (opts == NULL) {
+		opts = &default_opts;
+		spasm_echelonize_init_opts(opts);
+	}
 	int n = A->n;
 	int m = A->m;
 

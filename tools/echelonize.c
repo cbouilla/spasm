@@ -9,11 +9,14 @@
 int prime = 42013;
 bool rref = 0;
 
+struct echelonize_opts opts;
+
 void parse_command_line_options(int argc, char **argv)
 {
 	struct option longopts[] = {
 		{"modulus", required_argument, NULL, 'p'},
 		{"rref", no_argument, NULL, 'r'},
+		{"no-greedy-pivot-search", no_argument, NULL, 'n'},
 		{NULL, 0, NULL, 0}
 	};
 	char ch;
@@ -25,6 +28,9 @@ void parse_command_line_options(int argc, char **argv)
 		case 'r':
 			rref = 1;
 			break;
+		case 'g':
+			opts.enable_greedy_pivot_search = 0;
+			break;
 		default:
 			errx(1, "Unknown option\n");
 		}
@@ -33,6 +39,7 @@ void parse_command_line_options(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+	spasm_echelonize_init_opts(&opts);
 	parse_command_line_options(argc, argv);
 
         spasm_triplet *T = spasm_load_sms(stdin, prime);
@@ -42,7 +49,7 @@ int main(int argc, char **argv)
 
         /* echelonize A */
         int *Uqinv = spasm_malloc(m * sizeof(int));
-        spasm *U = spasm_echelonize(A, Uqinv, NULL);   /* NULL = default options */
+        spasm *U = spasm_echelonize(A, Uqinv, &opts);
         spasm_csr_free(A);
 
         if (rref) {
