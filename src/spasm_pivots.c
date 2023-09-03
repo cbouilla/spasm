@@ -346,7 +346,8 @@ int spasm_find_pivots(spasm * A, int *p, int *qinv, struct echelonize_opts *opts
 	spasm_vector_set(qinv, 0, m, -1);
 	int npiv = spasm_find_FL_pivots(A, p, qinv);
 	npiv = spasm_find_FL_column_pivots(A, p, qinv, npiv);
-	npiv = spasm_find_cycle_free_pivots(A, p, qinv, npiv);
+	if (opts->enable_greedy_pivot_search)
+		npiv = spasm_find_cycle_free_pivots(A, p, qinv, npiv);
 
 	/*
 	 * build row permutation. Pivotal rows go first in topological order,
