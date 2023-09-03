@@ -63,13 +63,13 @@ int spasm_dfs(int j, const spasm * A, int top, int *xj, int *pstack, int *marks,
 		if (!marks[j]) {
 			/* mark node i as seen and initialize pstack. This is done only once. */
 			marks[j] = 1;
-			pstack[head] = (inew < 0) ? 0 : Ap[inew];
+			pstack[head] = (inew < 0) ? -1 : 0;
 		}
-		/* index of last entry of row inew */
-		p2 = (inew < 0) ? 0 : Ap[inew + 1];
+		/* #entries in row inew */
+		p2 = (inew < 0) ? -1 : Ap[inew + 1];
 
 		/* examine all yet-unseen entries of row i */
-		for (px = pstack[head]; px < p2; px++) {
+		for (px = Ap[inew] + pstack[head]; px < p2; px++) {
 			j = Aj[px];
 			if (marks[j])
 				continue;
@@ -78,7 +78,7 @@ int spasm_dfs(int j, const spasm * A, int top, int *xj, int *pstack, int *marks,
 			 * and deal with column j instead. Save status of row
 			 * inew in the stack.
 			 */
-			pstack[head] = px + 1;
+			pstack[head] += 1;
 
 			/*
 			 * push column j onto the recursion stack. This will
