@@ -16,7 +16,7 @@ void parse_command_line_options(int argc, char **argv)
 	struct option longopts[] = {
 		{"modulus", required_argument, NULL, 'p'},
 		{"rref", no_argument, NULL, 'r'},
-		{"no-greedy-pivot-search", no_argument, NULL, 'n'},
+		{"no-greedy-pivot-search", no_argument, NULL, 'g'},
 		{NULL, 0, NULL, 0}
 	};
 	char ch;
