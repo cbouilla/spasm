@@ -17,7 +17,7 @@ void parse_command_line_options(int argc, char **argv)
 		{"modulus", required_argument, NULL, 'p'},
 		{"rref", no_argument, NULL, 'r'},
 		{"no-greedy-pivot-search", no_argument, NULL, 'g'},
-		{"dense-block-size", required, NULL, 'd'},
+		{"dense-block-size", required_argument, NULL, 'd'},
 		{NULL, 0, NULL, 0}
 	};
 	char ch;
