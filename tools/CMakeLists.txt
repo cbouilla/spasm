@@ -20,3 +20,6 @@ target_link_libraries(rank PUBLIC libspasm)
 
 add_executable(mtx_reader mtx_reader.c)
 target_link_libraries(mtx_reader PUBLIC libspasm)
+
+add_executable(kernel kernel.c)
+target_link_libraries(kernel PUBLIC libspasm)
