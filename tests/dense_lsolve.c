@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "spasm.h"
+#include "test_tools.h"
 
 int main(int argc, char **argv) {
   spasm_triplet *T;
