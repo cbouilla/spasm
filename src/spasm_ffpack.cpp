@@ -35,7 +35,7 @@ int spasm_ffpack_echelonize(int prime, int n, int m, double *A, int ldA, size_t 
 		P[i] = 0;
 	for (int j = 0; j < m; j++)
 		Qt[j] = 0;
-	size_t rank = FFPACK::ReducedRowEchelonForm(GFp, n, m, A, ldA, P, Qt, 0, FFPACK::FfpackTileRecursive);
+	size_t rank = FFPACK::pReducedRowEchelonForm(GFp, n, m, A, ldA, P, Qt);
 	fprintf(stderr, "done in %.1fs. Rank %zd\n", spasm_wtime() - start, rank);
 	start = spasm_wtime();
 	fprintf(stderr, "[ffpack/echelonize] permuting... ");
@@ -44,7 +44,6 @@ int spasm_ffpack_echelonize(int prime, int n, int m, double *A, int ldA, size_t 
 	// FFPACK::getReducedEchelonForm(GFp, FFLAS::FflasUpper,  n, m, rank, Qt, A, ldA, FFPACK::FfpackTileRecursive);
 	/* Qt is in LAPACK representation; convert */
 	FFPACK::LAPACKPerm2MathPerm (qinv, Qt, m);
-	// FFPACK::LAPACKPerm2MathPerm (p, P, n);
 	FFLAS::fflas_delete(P);
 	FFLAS::fflas_delete(Qt);
 	fprintf(stderr, "%.1fs\n", spasm_wtime() - start);
