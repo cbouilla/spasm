@@ -160,7 +160,7 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 }
 
 
-static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size_t *Sp, const int *q, int *Uqinv)
+static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size_t *Sqinv, const int *q, int *Uqinv)
 {
 	i64 extra_nnz = ((i64) (2*Sm + 1 - rr)) * rr / 2;     /* maximum size increase */
         i64 unz = spasm_nnz(U);
@@ -170,23 +170,23 @@ static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size
 	int *Uj = U->j;
 	spasm_GFp *Ux = U->x;
         for (i64 i = 0; i < rr; i++) {
-                int j = Sp[i];   /* column (of S) with the pivot on row i of S; the pivot is implicitly 1 */
+                int j = Sqinv[i];   /* column (of S) with the pivot on row i of S; the pivot is implicitly 1 */
         	Uj[unz] = q[j];  /* column of A with the pivot */
         	Ux[unz] = 1;
         	unz += 1;
         	Uqinv[q[j]] = U->n;
-        	for (i64 k = j + 1; k < Sm; k++) {
-        		if (S[i * Sm + k] == 0)
+        	for (i64 k = rr; k < Sm; k++) {
+        		i64 j = Sqinv[k];
+        		if (S[i * Sm + j] == 0)
         			continue;   /* don't store zero */
-        		Uj[unz] = q[k];
-        		Ux[unz] = S[i * Sm + k];
+        		Uj[unz] = q[j];
+        		Ux[unz] = S[i * Sm + j];
         		unz += 1;
         	}
         	U->n += 1;
         	Up[U->n] = unz;
         }
 }
-
 
 void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts)
 {
