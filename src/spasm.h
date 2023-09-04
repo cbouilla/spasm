@@ -212,7 +212,7 @@ spasm_dm *spasm_strongly_connected_components(const spasm * A);
 
 /* spasm_ffpack.cpp */
 void spasm_ffpack_setzero(int prime, int n, int m, double *A, int ldA);
-int spasm_ffpack_echelonize(int prime, int n, int m, double *A, int ldA, size_t *Q);
+int spasm_ffpack_echelonize(int prime, int n, int m, double *A, int ldA, size_t *qinv);
 
 /* spasm_echelonize */
 void spasm_echelonize_init_opts(struct echelonize_opts *opts);

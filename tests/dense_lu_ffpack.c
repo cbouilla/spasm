@@ -29,15 +29,16 @@ int main(int argc, char **argv)
                         M[i * m + j] = Ax[k];
                 }
 
-        // for (int i = 0; i < n; i++) {
-        //         printf("# ");
-        //         for (int j = 0; j < m; j++)
-        //                 printf("%6.0f ", M[i * m + j]);
-        //         printf("\n");
-        // }
+        for (int i = 0; i < n; i++) {
+                printf("# ");
+                for (int j = 0; j < m; j++)
+                        printf("%6.0f ", M[i * m + j]);
+                printf("\n");
+        }
 
-        size_t *Q = spasm_malloc(m * sizeof(*Q));
-        int rank = spasm_ffpack_echelonize(prime, n, m, M, m, Q);
+        size_t *p = spasm_malloc(m * sizeof(*p));
+        size_t *qinv = spasm_malloc(m * sizeof(*qinv));
+        int rank = spasm_ffpack_echelonize(prime, n, m, M, m, qinv);
         printf("# echelonized ; rank = %d\n", rank);
 
         /* dump output */
@@ -50,18 +51,8 @@ int main(int argc, char **argv)
 
         // for (int j = 0; j < n; j++)
         //         printf("# P[%d] = %d\n", j, P[j]);
-        // for (int j = 0; j < m; j++)
-        //         printf("# Q[%d] = %zd\n", j, Q[j]);
-
-        /* check if really triangular */
-        for (int i = 0; i < rank; i++) {
-                int pivot_col = Q[i];
-                // printf("# Q[%d] = %zd\n", i, Q[i]);
-                assert(pivot_col >= i);
-                // for (int j = 0; j < pivot_col; j++)
-                //         assert(M[i*m + j] == 0);
-                // assert(M[i*m + pivot_col] == 1);
-        }
+        for (int j = 0; j < m; j++)
+                printf("# Qt[%d] = %zd\n", j, qinv[j]);
 
         /* check that all rows of the input matrix belong to the row-space of U */  
         spasm_GFp *x = spasm_malloc(m * sizeof(*x));
@@ -72,14 +63,20 @@ int main(int argc, char **argv)
                         x[j] = Ax[px];
                 }
                 for (int k = 0; k < rank; k++) {
-                        int j = Q[k];
+                        int j = qinv[k];        /* column with the pivot */
                         int alpha = x[j];
                         x[j] = 0;
-                        for (int l = j + 1; l < m; l++)
-                                x[l] = (int) (x[l] - alpha * M[k * m + l]) % prime;
+                        for (int l = rank; l < m; l++) {
+                                int j = qinv[l];
+                                x[j] = (int) (x[j] - alpha * M[k * m + l]) % prime;
+                        }
                 }
+                printf("# row %2d --> (", i);
                 for (int j = 0; j < m; j++)
-                        assert(x[j] == 0);
+                        printf("%8d", x[j]);
+                printf(")\n");
+                for (int j = 0; j < m; j++)
+                         assert(x[j] == 0);
         }
         printf("ok - rowspan(A) contained in rowspan(U)\n");
         // spasm_csr_free(A);

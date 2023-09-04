@@ -22,12 +22,12 @@ int main(int argc, char **argv)
 
 	spasm *S = spasm_schur(A, p, npiv, A, qinv, -1, SPASM_DISCARD_L, NULL);
 	int Sn = S->n;
-	int *Sp = S->p;
+	i64 *Sp = S->p;
 	int *Sj = S->j;
 
 	/* checking that nothing remains under the pivots when we don't want it */
 	for (int i = 0; i < Sn; i++) {
-		for (int px = Sp[i]; px < Sp[i + 1]; px++)
+		for (i64 px = Sp[i]; px < Sp[i + 1]; px++)
 			if (qinv[Sj[px]] >= 0) {
 				printf("not ok - coeff (%d, %d) is below a pivot\n", i, Sj[px]);
 				exit(1);

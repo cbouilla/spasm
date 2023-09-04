@@ -23,20 +23,30 @@ void spasm_ffpack_setzero(int prime, int n, int m, double *A, int ldA)
  * It is implicit that U[i, 0:Q[i]] == 0 and U[i, 0:Q[i]] == 1.
  * M[i, Q[i]:m] contain the actual data.
  */ 
-int spasm_ffpack_echelonize(int prime, int n, int m, double *A, int ldA, size_t *Q)
+int spasm_ffpack_echelonize(int prime, int n, int m, double *A, int ldA, size_t *qinv)
 {
 	double start = spasm_wtime();
 	fprintf(stderr, "[ffpack/echelonize] Matrix of dimension %d x %d mod %d... ", n, m, prime);
 	fflush(stderr);
 	Givaro::ModularBalanced<double> GFp(prime);
+	size_t *Qt = FFLAS::fflas_new<size_t>(m);
 	size_t *P = FFLAS::fflas_new<size_t>(n);
-	for (int j = 0; j < n; j++)
-		P[j] = 0;
+	for (int i = 0; i < n; i++)
+		P[i] = 0;
 	for (int j = 0; j < m; j++)
-		Q[j] = 0;
-	size_t rank = FFPACK::RowEchelonForm(GFp, n, m, A, m, P, Q, 0, FFPACK::FfpackSlabRecursive);
-	// FFPACK::getEchelonForm (GFp, FFLAS::FflasUpper, FFLAS::FflasUnit, n, m, rank, Q, A, m, FFPACK::FfpackSlabRecursive);
-	FFLAS::fflas_delete(P);
+		Qt[j] = 0;
+	size_t rank = FFPACK::ReducedRowEchelonForm(GFp, n, m, A, ldA, P, Qt, 0, FFPACK::FfpackTileRecursive);
 	fprintf(stderr, "done in %.1fs. Rank %zd\n", spasm_wtime() - start, rank);
+	start = spasm_wtime();
+	fprintf(stderr, "[ffpack/echelonize] permuting... ");
+	fflush(stderr);
+	// FFPACK::getEchelonForm (GFp, FFLAS::FflasUpper, FFLAS::FflasUnit, n, m, rank, Qt, A, ldA, FFPACK::FfpackTileRecursive);
+	// FFPACK::getReducedEchelonForm(GFp, FFLAS::FflasUpper,  n, m, rank, Qt, A, ldA, FFPACK::FfpackTileRecursive);
+	/* Qt is in LAPACK representation; convert */
+	FFPACK::LAPACKPerm2MathPerm (qinv, Qt, m);
+	// FFPACK::LAPACKPerm2MathPerm (p, P, n);
+	FFLAS::fflas_delete(P);
+	FFLAS::fflas_delete(Qt);
+	fprintf(stderr, "%.1fs\n", spasm_wtime() - start);
 	return rank;
 }
