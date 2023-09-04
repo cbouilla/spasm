@@ -191,7 +191,7 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 	fprintf(stderr, "[schur/dense] dimension %d x %d...\n", n, Sm);
 	double start = spasm_wtime();
 	int verbose_step = spasm_max(1, n / 1000);
-	int r = 0;
+	i64 r = 0;
 
 	#pragma omp parallel
 	{
@@ -213,12 +213,12 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 				continue;       /* skip empty row */
 			
 			/* acquire the next row of S */
-			int t;
+			i64 t;
 			#pragma omp atomic capture
 			{ t = r; r += 1; }
 
 			/* gather x into S[t] */
-			for (int j = 0; j < Sm; j++)
+			for (i64 j = 0; j < Sm; j++)
 				S[t * Sm + j] = x[q[j]];
 
 			/* verbosity */
@@ -230,7 +230,7 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 		free(x);
 		free(xj);
 	}
-	fprintf(stderr, "\n[schur/dense] finished in %.1fs, rank <= %d\n", spasm_wtime() - start, r);
+	fprintf(stderr, "\n[schur/dense] finished in %.1fs, rank <= %" PRId64 "\n", spasm_wtime() - start, r);
 	return r;
 }
 
@@ -270,7 +270,7 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 		// int tid = spasm_get_thread_num();
 
 		#pragma omp for schedule(dynamic, verbose_step)
-		for (int k = 0; k < N; k++) {
+		for (i64 k = 0; k < N; k++) {
 			for (int j = 0; j < m; j++)
 				x[j] = 0;
 			if (w <= 0) {
@@ -297,12 +297,12 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 			}
 			
 			/* gather x into S[k] */
-			for (int j = 0; j < Sm; j++)
+			for (i64 j = 0; j < Sm; j++)
 				S[k * Sm + j] = x[q[j]];
 
 			/* verbosity */
 			if ((k % verbose_step) == 0) {
-				fprintf(stderr, "\r[schur/dense/random] %d/%d", k, N);
+				fprintf(stderr, "\r[schur/dense/random] %" PRId64 "/%d", k, N);
 				fflush(stderr);
 			}
 		}
