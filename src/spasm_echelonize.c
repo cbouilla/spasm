@@ -194,7 +194,8 @@ void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int
 	int m = A->m;
 	int Sm = m - U->n;
 
-	double *S = spasm_malloc(opts->dense_block_size * Sm * sizeof(*S));
+	i64 size_S = (i64) opts->dense_block_size * (i64) Sm * sizeof(double);
+	double *S = spasm_malloc(size_S);
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
 	double start = spasm_wtime();
@@ -202,7 +203,7 @@ void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int
 	int round = 0;
 	fprintf(stderr, "[echelonize/dense/low-rank] processing dense schur complement of dimension %d x %d\n", n, Sm);
 	
-	int w = 1;
+	int w = 2;
 	// TODO: guess w
 	for (;;) {
 		/* compute a chunk of the schur complement, then echelonize with FFPACK */
