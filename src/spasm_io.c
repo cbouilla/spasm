@@ -430,7 +430,7 @@ void spasm_save_pnm(const spasm * A, FILE * f, int x, int y, int mode, spasm_dm 
 				fprintf(f, "%.0f ", 255.0 * intensity);
 				break;
 			case 3:
-				/* find out which blocks we are in */
+			        ;/* find out which blocks we are in */
 				int block_h = 0;
 				int block_v = 0;
 				if (limits_v[0] <= i)
