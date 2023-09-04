@@ -17,6 +17,7 @@ void parse_command_line_options(int argc, char **argv)
 		{"modulus", required_argument, NULL, 'p'},
 		{"rref", no_argument, NULL, 'r'},
 		{"no-greedy-pivot-search", no_argument, NULL, 'g'},
+		{"no-low-rank-mode", no_argument, NULL, 'l'},
 		{"dense-block-size", required_argument, NULL, 'd'},
 		{NULL, 0, NULL, 0}
 	};
@@ -34,6 +35,9 @@ void parse_command_line_options(int argc, char **argv)
 			break;
 		case 'd':
 			opts.dense_block_size = atoi(optarg);
+			break;
+		case 'l':
+			opts.enable_tall_and_skinny = 0;
 			break;
 		default:
 			errx(1, "Unknown option\n");
