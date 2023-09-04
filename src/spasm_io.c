@@ -7,12 +7,12 @@
 #include "spasm.h"
 #include "mmio.h"
 
-
 /*
  * load a matrix in SMS format from f (an opened file). 
  * set prime == -1 to avoid loading values.
  */
-spasm_triplet *spasm_load_sms(FILE * f, int prime) {
+spasm_triplet *spasm_load_sms(FILE * f, int prime)
+{
 	int i, j;
 	spasm_GFp x;
 	char type;
@@ -44,56 +44,13 @@ spasm_triplet *spasm_load_sms(FILE * f, int prime) {
 	return T;
 }
 
-
-/*
- * load a matrix in CSR binary format from f (an opened file). 
- * set prime == -1 to avoid loading values.
- */
-spasm *spasm_load_bin(FILE * f, int prime) {
-	int n, m;
-
-	assert(prime == -1); /* values are not handled yet */
-	double start = spasm_wtime();
-
-	/* get rows */
-	if (fread(&n, sizeof(int), 1, f) != 1)
-		err(1, "error reading n");
-	/* get columns */
-	if (fread(&m, sizeof(int), 1, f) != 1)
-		err(1, "error reading m");
-
-	fprintf(stderr, "[IO] loading %d x %d binary matrix... ", n, m);
-	fflush(stderr);
-
-	spasm *M = spasm_csr_alloc(n, m, n+m, prime, SPASM_IGNORE_VALUES);
-	int * const Mp = M->p;
-	
-	/* read the row pointers */
-	size_t r = n + 1;
-	if (fread(Mp, sizeof(int), n+1, f) != r)
-		err(1, "error while reading the row lengths (read %zu items)", r);
-	
-	int nnz = Mp[n];
-	spasm_csr_realloc(M, nnz);
-	int * const Mj = M->j;
-
-	/* read columns indices */
-	r = nnz;
-	if (fread(&Mj[0], sizeof(int), nnz, f) != r)
-		err(1, "error while reading the compressed column ids (read %zu items)", r);
-
-	char nnz_s[16];
-	spasm_human_format(nnz, nnz_s);
-	fprintf(stderr, "%s NNZ [%.1fs]\n", nnz_s, spasm_wtime() - start);
-	return M;
-}
-
 /*
  * Load a matrix in MatrixMarket sparse format.
  * Heavily inspired by the example program:
  *     http://math.nist.gov/MatrixMarket/mmio/c/example_read.c
  */
-spasm_triplet *spasm_load_mm(FILE * f, int prime) {
+spasm_triplet *spasm_load_mm(FILE *f, int prime)
+{
 	MM_typecode matcode;
 	int n, m, nnz;
 
@@ -106,13 +63,10 @@ spasm_triplet *spasm_load_mm(FILE * f, int prime) {
 	
 	int symmetric = mm_is_symmetric(matcode);
 	int skew = mm_is_skew(matcode);
-
 	if (!mm_is_general(matcode) && !symmetric && !skew)
 		errx(1, "Matrix market type [%s] not supported",  mm_typecode_to_str(matcode));
-
 	if (mm_read_mtx_crd_size(f, &n, &m, &nnz) != 0)
 		errx(1, "Cannot read matrix size");
-
 	fprintf(stderr, "[IO] loading %d x %d MTX [%s] modulo %d, %d nnz...", n, m, mm_typecode_to_str(matcode), prime, nnz);
 	fflush(stderr);
 	
@@ -163,169 +117,22 @@ spasm_triplet *spasm_load_mm(FILE * f, int prime) {
 	return T;
 }
 
-/* load a matrix in old GBLA format */
-spasm *spasm_load_gbla_old(FILE * f, int with_values) {
-	int m, n, p;
-	long long int nnz;
-	spasm *M;
-
-	/* get rows */
-	if (fread(&n, sizeof(uint32_t), 1, f) != 1)
-		err(1, "error reading m");
-
-	/* get columns */
-	if (fread(&m, sizeof(uint32_t), 1, f) != 1)
-		err(1, "error reading n");
-
-	if ((fread(&p, sizeof(uint32_t), 1, f) != 1))
-		err(1, "error reading p");
-
-	/* get number of nonzero elements */
-	if (fread(&nnz, sizeof(uint64_t), 1, f) != 1)
-		err(1, "error reading nnz");
-
-	if (nnz >> 31ull)
-		errx(2, "more than 2^31 NNZ. You are going to hit limitations of spasm... Sorry\n");
-
-	M = spasm_csr_alloc(n, m, nnz, p, with_values);
-	int * const Mp = M->p;
-	int * const Mj = M->j;
-	spasm_GFp * const Mx = M->x;
-
-	/*
-	 * dirty hack : we load the 16-bit coefficient in the area dedicated
-	 * to storing the column indices (unused at this point). This avoids
-	 * allocating extra memory
-	 */
-	uint16_t *buffer = (uint16_t *) M->j;
-	size_t r = nnz;
-	if (fread(buffer, sizeof(uint16_t), nnz, f) != r)
-		err(1, "error while reading the coefficients");
-	if (with_values)
-		for (int i = 0; i < nnz; i++)
-			Mx[i] = buffer[i];
-	/* read the column indices */
-	r = nnz;
-	if (fread(Mj, sizeof(uint32_t), nnz, f) != r)
-		err(1, "error while reading the column indices");
-	/* read the row lengths */
-	r = n;
-	if (fread(&Mp[1], sizeof(uint32_t), n, f) != r)
-		err(1, "error while reading the row lengths (read %zu items)", r);
-	/* sum-prefix */
-	Mp[0] = 0;
-	for (int i = 1; i <= n; i++)
-		Mp[i] += Mp[i - 1];
-	return M;
-}
-
-
-#define VERMASK (1U<<31)
-
-/*
- * load a matrix in new GBLA format. Only the pattern is loaded, not the
- * values.
- */
-spasm *spasm_load_gbla_new(FILE * f) {
-	unsigned int i, j, m, n;
-	uint64_t nnz;
-	uint16_t p;
-	spasm *M;
-	uint32_t b;
-
-	/* get header */
-	if (fread(&b, sizeof(uint32_t), 1, f) != 1)
-		err(1, "error reading b");
-	if ((b & VERMASK) != VERMASK)
-		errx(1, "wrong format version");
-	b = b ^ VERMASK;
-	if (((b >> 1) & 3) != 1)
-		errx(1, "field elements are not on 16 bits");
-	/* get rows */
-	if (fread(&n, sizeof(uint32_t), 1, f) != 1)
-		err(1, "error reading m");
-	/* get columns */
-	if (fread(&m, sizeof(uint32_t), 1, f) != 1)
-		err(1, "error reading n");
-	if ((fread(&p, sizeof(uint16_t), 1, f) != 1))
-		err(1, "error reading p");
-	/* get number of nonzero elements */
-	if (fread(&nnz, sizeof(uint64_t), 1, f) != 1)
-		err(1, "error reading nnz");
-	if (nnz >> 31ull)
-		errx(2, "more than 2^31 NNZ. You are going to hit limitations of spasm... Sorry\n");
-	M = spasm_csr_alloc(n, m, nnz, (int)p, SPASM_IGNORE_VALUES);
-	int * const Mp = M->p;
-	int * const Mj = M->j;
-
-	/* read the row lengths */
-	size_t r = n;
-	if (fread(&Mp[1], sizeof(uint32_t), n, f) != r)
-		err(1, "error while reading the row lengths (read %zu items)", r);
-	/* sum-prefix */
-	Mp[0] = 0;
-	for (unsigned int i = 1; i <= n; i++)
-		Mp[i] += Mp[i - 1];
-
-	/*
-	 * read (and ignore) the polmaps. Dirty hack: we send them to the
-	 * area for the column indices
-	 */
-	r = n;
-	if (fread(Mj, sizeof(uint32_t), n, f) != r)
-		err(1, "error while reading the polmaps (read %zu items)", r);
-
-	uint64_t k;
-	/* get number of compressed columns element */
-	if (fread(&k, sizeof(uint64_t), 1, f) != 1)
-		err(1, "error reading k");
-
-	/* read compressed columns indices */
-	uint32_t *buffer = spasm_malloc(k * sizeof(uint32_t));
-	r = k;
-	if (fread(buffer, sizeof(uint32_t), k, f) != r)
-		err(1, "error while reading the compressed column ids (read %zu items)", r);
-
-	/* uncompress columns indices */
-	i = 0;
-	j = 0;
-	const uint32_t MASK = 0x80000000;
-	while (i < k) {
-		uint32_t col = buffer[i++];
-
-		if (col & MASK) {	/* single column */
-			Mj[j++] = col ^ MASK;
-		} else {
-			uint32_t x = buffer[i++];
-			for (p = 0; p < x; p++) {
-				Mj[j++] = col + p;
-			}
-		}
-	}
-	assert(i == k);
-	assert(j == nnz);
-	free(buffer);
-
-	return M;
-}
-
-
 /*
  * save a matrix in SMS format. TODO : change name to spasm_csr_save
  */
-void spasm_save_csr(FILE * f, const spasm * A) {
+void spasm_save_csr(FILE *f, const spasm *A)
+{
 	assert(f != NULL);
-
-	int *Aj = A->j;
-	int *Ap = A->p;
-	spasm_GFp *Ax = A->x;
+	const int *Aj = A->j;
+	const i64 *Ap = A->p;
+	const spasm_GFp *Ax = A->x;
 	int n = A->n;
 	int m = A->m;
 	int prime = A->prime;
 
 	fprintf(f, "%d %d M\n", n, m);
 	for (int i = 0; i < n; i++)
-		for (int px = Ap[i]; px < Ap[i + 1]; px++) {
+		for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
 			spasm_GFp x = (Ax != NULL) ? Ax[px] : 1;
 			x = (x > prime / 2) ? x - prime : x;
 			fprintf(f, "%d %d %d\n", i + 1, Aj[px] + 1, x);
@@ -336,16 +143,15 @@ void spasm_save_csr(FILE * f, const spasm * A) {
 /*
  * save a matrix in SMS format. TODO : change name to spasm_triplet_save
  */
-void spasm_save_triplet(FILE * f, const spasm_triplet * A) {
+void spasm_save_triplet(FILE *f, const spasm_triplet *A)
+{
 	assert(f != NULL);
-
-	int *Ai = A->i;
-	int *Aj = A->j;
-	spasm_GFp *Ax = A->x;
-	int nz = A->nz;
-
+	const int *Ai = A->i;
+	const int *Aj = A->j;
+	const spasm_GFp *Ax = A->x;
+	i64 nz = A->nz;
 	fprintf(f, "%d %d M\n", A->n, A->m);
-	for (int px = 0; px < nz; px++)
+	for (i64 px = 0; px < nz; px++)
 		fprintf(f, "%d %d %d\n", Ai[px] + 1, Aj[px] + 1, (Ax != NULL) ? Ax[px] : 1);
 	fprintf(f, "0 0 0\n");
 }
@@ -355,19 +161,18 @@ void spasm_save_triplet(FILE * f, const spasm_triplet * A) {
  *       2 --> create a PGM file (gray levels) 
  *       3 --> create a PNM file (colors)
  */
-void spasm_save_pnm(const spasm * A, FILE * f, int x, int y, int mode, spasm_dm *DM) {
-	int *Aj = A->j;
-	int *Ap = A->p;
+void spasm_save_pnm(const spasm *A, FILE *f, int x, int y, int mode, spasm_dm *DM)
+{
+	const int *Aj = A->j;
+	const i64 *Ap = A->p;
 	int n = A->n;
 	int m = A->m;
 	x = spasm_min(x, m);
 	y = spasm_min(y, n);
 	int *w = spasm_malloc(x * y * sizeof(int));
-	
 	assert(f != NULL);
 	assert((mode-1)*(mode-2)*(mode-3) == 0);
 	assert((mode != 3) || (DM != NULL));
-
 	spasm_vector_zero(w, x * y);
 
 	fprintf(f, "P%d\n", mode);
@@ -375,13 +180,12 @@ void spasm_save_pnm(const spasm * A, FILE * f, int x, int y, int mode, spasm_dm 
 	if (mode > 1)
 		fprintf(f, "255\n");
 
-
-	for (int i = 0; i < n; i++) {
-		int k = ((long long int) i) * ((long long int) y) / ((long long int) n);
+	for (i64 i = 0; i < n; i++) {
+		i64 k = i * y / n;
 		int *ww = w + k * x;
-		for (int px = Ap[i]; px < Ap[i + 1]; px++) {
-			int t = ((long long int) Aj[px]) * ((long long int) x) / ((long long int) m);
-			ww[t]++;
+		for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
+			int t = ((i64) Aj[px]) * x / m;
+			ww[t] += 1;
 		}
 	}
 

@@ -20,7 +20,7 @@ int main(int argc, char **argv)
         spasm *R = spasm_rref(U, Uqinv, Rqinv);
         spasm_csr_free(U);
         free(Uqinv);
-        int rank = R->n;
+        int rank = R->n; 
 
         /* build kernel basis */
         spasm *K = spasm_kernel(R, Rqinv);
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
         spasm *At = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
         spasm_GFp *x = spasm_malloc(m * sizeof(*x));
         spasm_GFp *y = spasm_malloc(n * sizeof(*y));
-        const int *Kp = K->p;
+        const i64 *Kp = K->p;
         const int *Kj = K->j;
         const spasm_GFp *Kx = K->x;
         for (int i = 0; i < K->n; i++) {
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
                 /* scatter K[i] into x */
                 int nonzero = 0;
-                for (int p = Kp[i]; p < Kp[i + 1]; p++) {
+                for (i64 p = Kp[i]; p < Kp[i + 1]; p++) {
                         int j = Kj[p];
                         x[j] = Kx[p];
                         nonzero += (Kx[p] != 0);

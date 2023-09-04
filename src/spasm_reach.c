@@ -30,69 +30,59 @@
  *
  * @return top
  */
-int spasm_dfs(int j, const spasm * A, int top, int *xj, int *pstack, int *marks, const int *qinv) {
-	int px, p2, inew, head, *Ap, *Aj;
-
+int spasm_dfs(int start, const spasm *A, int top, int *xj, int *pstack, int *marks, const int *qinv)
+{
 	/* check inputs */
 	assert(A != NULL);
 	assert(xj != NULL);
 	assert(pstack != NULL);
 	assert(marks != NULL);
+	assert(qinv != NULL);
 
-	Ap = A->p;
-	Aj = A->j;
+	const i64 *Ap = A->p;
+	const int *Aj = A->j;
 	/*
-	 * initialize the recursion stack (rows waiting to be traversed). The
-	 * stack is held at the begining of xj, and has head elements.
+	 * initialize the recursion stack (columns waiting to be traversed).
+	 * The stack is held at the begining of xj, and has head elements.
 	 */
-	head = 0;
-	xj[head] = j;
+	int head = 0;
+	xj[head] = start;
 
 	/* stack empty ? */
 	while (head >= 0) {
 		/* get j from the top of the recursion stack */
-		j = xj[head];
-		inew = (qinv != NULL) ? qinv[j] : j;
-
-		/*
-		 * has row i been seen before ? adjacent columns are Gj[
-		 * Gp[jnew]     : Gp[jnew + 1] ] UNSEEN columns are   Gj[
-		 * pstack[head] : Gp[jnew + 1] ]
-		 */
+		int j = xj[head];
+		int i = qinv[j];       /* row with the pivot on column j, or -1 if none */
 
 		if (!marks[j]) {
-			/* mark node i as seen and initialize pstack. This is done only once. */
+			/* mark column j as seen and initialize pstack. This is done only once. */
 			marks[j] = 1;
-			pstack[head] = (inew < 0) ? -1 : 0;
+			pstack[head] = 0;
 		}
-		/* #entries in row inew */
-		p2 = (inew < 0) ? -1 : Ap[inew + 1];
+
+		if (i < 0) {
+			/* push initial column in the output stack and pop it from the recursion stack*/
+			xj[--top] = xj[head--];
+			continue;
+		}
+
+		/* size of row i */
+		int p2 = spasm_row_weight(A, i);
 
 		/* examine all yet-unseen entries of row i */
-		for (px = Ap[inew] + pstack[head]; px < p2; px++) {
-			j = Aj[px];
+		int k;
+		for (k = pstack[head]; k < p2; k++) {
+			i64 px = Ap[i] + k;
+			int j = Aj[px];
 			if (marks[j])
 				continue;
-			/*
-			 * interrupt the enumeration of entries of row inew,
-			 * and deal with column j instead. Save status of row
-			 * inew in the stack.
-			 */
-			pstack[head] += 1;
-
-			/*
-			 * push column j onto the recursion stack. This will
-			 * start a DFS from j
-			 */
-			xj[++head] = j;
-
-			/* node i is not done, exit the loop */
+			/* interrupt the enumeration of entries of row i, and start DFS from column j */
+			pstack[head] = k + 1;   /* Save status of row i in the stack. */
+			xj[++head] = j;         /* push column j onto the recursion stack */
 			break;
 		}
-
-		/* depth-first search at node i done ? */
-		if (px == p2)
-			/* push initial column in the output stack and pop it from the recursion stack*/
+		if (k == p2)
+			/* row i fully examined; push initial column in the output stack and pop it from the recursion stack */
 			xj[--top] = xj[head--];
 	}
 	return top;
@@ -121,19 +111,19 @@ int spasm_dfs(int j, const spasm * A, int top, int *xj, int *pstack, int *marks,
  * 
  * xj [l...3l-1] used as workspace
  */
-int spasm_reach(const spasm * A, const spasm * B, int k, int l, int *xj, const int *qinv) {
-	int  top, *Bp, *Bj, *pstack, *marks;
-
+int spasm_reach(const spasm *A, const spasm *B, int k, int l, int *xj, const int *qinv)
+{
 	/* check inputs */
 	assert(A != NULL);
 	assert(B != NULL);
 	assert(xj != NULL);
+	assert(qinv != NULL);
 
-	Bp = B->p;
-	Bj = B->j;
-	top = l;
-	pstack = xj + l;
-	marks = pstack + l;
+	const i64 *Bp = B->p;
+	const int *Bj = B->j;
+	int top = l;
+	int *pstack = xj + l;
+	int *marks = pstack + l;
 
 	/*
 	 * iterates over the k-th row of B.  For each column index j present
@@ -141,17 +131,20 @@ int spasm_reach(const spasm * A, const spasm * B, int k, int l, int *xj, const i
 	 * not, start a DFS from j and add to the pattern all columns
 	 * reachable from j.
 	 */
-	for (int px = Bp[k]; px < Bp[k + 1]; px++)
-		if (!marks[Bj[px]])
-			top = spasm_dfs(Bj[px], A, top, xj, pstack, marks, qinv);
+	for (i64 px = Bp[k]; px < Bp[k + 1]; px++) {
+		int j = Bj[px];
+		if (!marks[j])
+			top = spasm_dfs(j, A, top, xj, pstack, marks, qinv);
+	}
 
 	/* unmark all marked nodes. */
 	/*
 	 * TODO : possible optimization : if stuff is marked "k", and
 	 * initialized with -1, then this is not necessary
 	 */
-	for (int px = top; px < l; px++)
-		marks[xj[px]] = 0;
-
+	for (int px = top; px < l; px++) {
+		int j = xj[px];
+		marks[j] = 0;
+	}
 	return top;
 }

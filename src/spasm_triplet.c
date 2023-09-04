@@ -4,71 +4,63 @@
 #include "spasm.h"
 
 /* add an entry to a triplet matrix; enlarge it if necessary */
-void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_GFp x) {
-	spasm_GFp x_p;
-
+void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x)
+{
 	assert((i >= 0) && (j >= 0));
 	int prime = T->prime;
 
-	if (T->nz == T->nzmax)
+	i64 px = T->nz;
+	if (px == T->nzmax)
 		spasm_triplet_realloc(T, 1 + 2 * T->nzmax);
 	if (T->x != NULL) {
-		x_p = ((x % prime) + prime) % prime;
+		spasm_GFp x_p = ((x % prime) + prime) % prime;
 		if (x_p == 0)
 			return;
-		T->x[T->nz] = x_p;
+		T->x[px] = x_p;
 	}
 
-	// fprintf(stderr, "Adding (%d, %d, %d)\n", i, j, x);
-
-	T->i[T->nz] = i;
-	T->j[T->nz] = j;
+	T->i[px] = i;
+	T->j[px] = j;
 	T->nz += 1;
 	T->n = spasm_max(T->n, i + 1);
 	T->m = spasm_max(T->m, j + 1);
 }
 
-void spasm_triplet_transpose(spasm_triplet * T) {
-	int nz = T->nz;
-	int *Ti = T->i;
-	int *Tj = T->j;
-#pragma omp parallel for schedule(static)
-	for (int k = 0; k < nz; k++) {
-		int i = Ti[k];
-		int j = Tj[k];
-		Tj[k] = i;
-		Ti[k] = j;
-	}
-	int tmp = T->m;
+void spasm_triplet_transpose(spasm_triplet *T)
+{
+	int *foo = T->i;
+	T->i = T->j;
+	T->j = foo;
+	int bar = T->m;
 	T->m = T->n;
-	T->n = tmp;
+	T->n = bar;
 }
 
-
 /* in-place */
-void spasm_deduplicate(spasm * A) {
+void spasm_deduplicate(spasm *A)
+{
 	int m = A->m;
 	int n = A->n;
-	int *Ap = A->p;
+	i64 *Ap = A->p;
 	int *Aj = A->j;
 	spasm_GFp *Ax = A->x;
 	int prime = A->prime;
 
-	int *v = spasm_malloc(m * sizeof(*v));
+	i64 *v = spasm_malloc(m * sizeof(*v));
 	for (int j = 0; j < m; j++)
 		v[j] = -1;
 
-	int nz = 0;
+	i64 nz = 0;
 	for (int i = 0; i < n; i++) {
-		int p = nz;
-		for (int it = Ap[i]; it < Ap[i + 1]; it++) {
+		i64 p = nz;
+		for (i64 it = Ap[i]; it < Ap[i + 1]; it++) {
 			int j = Aj[it];
 			if (v[j] < p) { /* occurs in previous row */
 				v[j] = nz;
 				Aj[nz] = j;
 				if (Ax)
 					Ax[nz] = Ax[it];
-				nz++;
+				nz += 1;
 			} else {
 				if (Ax)
 					Ax[v[j]] = (Ax[v[j]] + Ax[it]) % prime;
@@ -82,10 +74,11 @@ void spasm_deduplicate(spasm * A) {
 }
 
 /* C = compressed-row form of a triplet matrix T */
-spasm *spasm_compress(const spasm_triplet * T) {
+spasm *spasm_compress(const spasm_triplet * T)
+{
 	int m = T->m;
 	int n = T->n;
-	int nz = T->nz;
+	i64 nz = T->nz;
 	int *Ti = T->i;
 	int *Tj = T->j;
 	spasm_GFp *Tx = T->x;
@@ -98,17 +91,19 @@ spasm *spasm_compress(const spasm_triplet * T) {
 	spasm *C = spasm_csr_alloc(n, m, nz, T->prime, Tx != NULL);
 
 	/* get workspace */
-	int *w = spasm_calloc(n, sizeof(int));
-	int *Cp = C->p;
+	i64 *w = spasm_calloc(n, sizeof(*w));
+	i64 *Cp = C->p;
 	int *Cj = C->j;
 	spasm_GFp *Cx = C->x;
 
 	/* compute row counts */
-	for (int it = 0; it < nz; it++)
-		w[Ti[it]]++;
+	for (int it = 0; it < nz; it++) {
+		int i = Ti[it];
+		w[i] += 1;
+	}
 
 	/* compute row pointers (in both Cp and w) */
-	int sum = 0;
+	i64 sum = 0;
 	for (int k = 0; k < n; k++) {
 		Cp[k] = sum;
 		sum += w[k];
@@ -117,8 +112,10 @@ spasm *spasm_compress(const spasm_triplet * T) {
 	Cp[n] = sum;
 
 	/* dispatch entries */
-	for (int k = 0; k < nz; k++) {
-		int px = w[Ti[k]]++;
+	for (i64 k = 0; k < nz; k++) {
+		int i = Ti[k];
+		i64 px = w[i];
+		w[i] += 1;
 		Cj[px] = Tj[k];
 		if (Cx != NULL)
 			Cx[px] = Tx[k];
@@ -130,6 +127,6 @@ spasm *spasm_compress(const spasm_triplet * T) {
 	char mem[16];
 	int size = sizeof(int) * (n + nz) + sizeof(spasm_GFp) * ((Cx != NULL) ? nz : 0);
 	spasm_human_format(size, mem);
-	fprintf(stderr, "%d actual NZ, Mem usage = %sbyte [%.2fs]\n", spasm_nnz(C), mem, spasm_wtime() - start);
+	fprintf(stderr, "%" PRId64 " actual NZ, Mem usage = %sbyte [%.2fs]\n", spasm_nnz(C), mem, spasm_wtime() - start);
 	return C;
 }

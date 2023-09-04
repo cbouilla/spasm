@@ -2,69 +2,6 @@
 
 #include "spasm.h"
 
-int spasm_is_upper_triangular(const spasm * A) {
-	int i, p, n, m, *Aj, *Ap;
-	spasm_GFp *Ax;
-
-	n = A->n;
-	m = A->m;
-	if (n > m) {
-		return 0;
-	}
-	Ap = A->p;
-	Aj = A->j;
-	Ax = A->x;
-	for (i = 0; i < n; i++) {
-		/* check diagonal */
-		if (Aj[Ap[i]] != i) {
-			return 0;
-		}
-		if (Ax[Ap[i]] != 1) {
-			return 0;
-		}
-		/* check other entries */
-		for (p = Ap[i] + 1; p < Ap[i + 1]; p++) {
-			if (Aj[p] < i) {
-				return 0;
-			}
-		}
-	}
-	return 1;
-}
-
-
-int spasm_is_lower_triangular(const spasm * A) {
-	int i, n, m, p, *Aj, *Ap;
-	spasm_GFp *Ax;
-
-	n = A->n;
-	m = A->m;
-	if (n < m) {
-		return 0;
-	}
-	Ap = A->p;
-	Aj = A->j;
-	Ax = A->x;
-	for (i = 0; i < m; i++) {
-
-		/* check diagonal */
-		if (Aj[Ap[i + 1] - 1] != i) {
-			return 0;
-		}
-		if (Ax[Ap[i + 1] - 1] == 0) {
-			return 0;
-		}
-		/* check other entries */
-		for (p = Ap[i]; p < Ap[i + 1] - 1; p++) {
-			if (Aj[p] > i) {
-				return 0;
-			}
-		}
-	}
-	return 1;
-}
-
-
 /*
  * Solving triangular systems, dense RHS
  */
@@ -84,32 +21,27 @@ int spasm_is_lower_triangular(const spasm * A) {
  * p[j] == i indicates if the "diagonal" entry on column j is on row i
  * 
  */
-void spasm_dense_back_solve(const spasm * L, spasm_GFp * b, spasm_GFp * x, const int *p) {
-	int i, j, n, m, *Lp, *Lj, prime;
-	spasm_GFp *Lx;
-
+void spasm_dense_back_solve(const spasm *L, spasm_GFp *b, spasm_GFp *x, const int *p)
+{
 	/* check inputs */
 	assert(b != NULL);
 	assert(x != NULL);
 	assert(L != NULL);
+	int n = L->n;
+	int m = L->m;
+	const i64 *Lp = L->p;
+	const int *Lj = L->j;
+	const spasm_GFp *Lx = L->x;
+	int prime = L->prime;
 
-	n = L->n;
-	m = L->m;
-	Lp = L->p;
-	Lj = L->j;
-	Lx = L->x;
-	prime = L->prime;
-
-	for (i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++)
 		x[i] = 0;
-	}
 
-	for (j = m - 1; j >= 0; j--) {
-		i = (p != SPASM_IDENTITY_PERMUTATION) ? p[j] : j;
+	for (int j = m - 1; j >= 0; j--) {
+		int i = (p != SPASM_IDENTITY_PERMUTATION) ? p[j] : j;
 
 		/* pivot on the j-th column is on the i-th row */
 		const spasm_GFp diagonal_entry = Lx[Lp[i + 1] - 1];
-		//assert(diagonal_entry == 1);
 
 		/* axpy - inplace */
 		x[i] = (b[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
@@ -135,30 +67,24 @@ void spasm_dense_back_solve(const spasm * L, spasm_GFp * b, spasm_GFp * x, const
  * 
  * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
  */
-int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, const int *q) {
-	int i, j, n, m, *Up, *Uj, prime;
-	spasm_GFp *Ux;
-
+int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp *x, const int *q)
+{
 	/* check inputs */
 	assert(b != NULL);
 	assert(x != NULL);
 	assert(U != NULL);
-
-	n = U->n;
-	m = U->m;
+	int n = U->n;
+	int m = U->m;
 	assert(n <= m);
-
-	Up = U->p;
-	Uj = U->j;
-	Ux = U->x;
-	prime = U->prime;
-
-	for (i = 0; i < n; i++) {
+	const i64 *Up = U->p;
+	const int *Uj = U->j;
+	const spasm_GFp *Ux = U->x;
+	int prime = U->prime;
+	for (int i = 0; i < n; i++)
 		x[i] = 0;
-	}
 
-	for (i = 0; i < n; i++) {
-		j = (q != SPASM_IDENTITY_PERMUTATION) ? q[i] : i;
+	for (int i = 0; i < n; i++) {
+		int j = (q != SPASM_IDENTITY_PERMUTATION) ? q[i] : i;
 		if (b[j] != 0) {
 			/* check diagonal entry */
 			const spasm_GFp diagonal_entry = Ux[Up[i]];
@@ -170,13 +96,9 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, con
 			b[j] = 0;
 		}
 	}
-
-	for (i = 0; i < m; i++) {
-		if (b[i] != 0) {
+	for (int i = 0; i < m; i++) 
+		if (b[i] != 0)
 			return SPASM_NO_SOLUTION;
-		}
-	}
-
 	return SPASM_SUCCESS;
 }
 
@@ -196,14 +118,14 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, con
  *
  * top is the return value.
  */
-int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj, spasm_GFp * x, const int *qinv)
+int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_GFp * x, const int *qinv)
 {
 	int m = U->m;
-	const int *Up = U->p;
+	const i64 *Up = U->p;
 	const int *Uj = U->j;
 	const spasm_GFp *Ux = U->x;
 	int prime = U->prime;
-	const int *Bp = B->p;
+	const i64 *Bp = B->p;
 	const int *Bj = B->j;
 	const spasm_GFp *Bx = B->x;
 
@@ -215,7 +137,7 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
 		int j = xj[px];
 		x[j] = 0;
 	}
-	for (int px = Bp[k]; px < Bp[k + 1]; px++) {
+	for (i64 px = Bp[k]; px < Bp[k + 1]; px++) {
 		int j = Bj[px];
 		x[j] = Bx[px];
 	}
@@ -234,81 +156,6 @@ int spasm_sparse_forward_solve(const spasm * U, const spasm * B, int k, int *xj,
 		assert(Ux[Up[i]] == 1);
 		assert(i < U->n);
 		spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[j], x, prime);
-	}
-	return top;
-}
-
-
-
-/*************** Triangular solving with sparse RHS
- *
- * solve x * L = B[k], where L is (permuted) lower triangular.
- *
- * x has size m (number of columns of L).
- *
- * when this function returns, the solution is scattered in x, and its pattern
- * is given in xi[top : n].
- *
- * top is the return value.
- *
- */
-int spasm_sparse_backward_solve(const spasm * L, const spasm * B, int k, int *xi, spasm_GFp * x, const int *pinv, int r_bound) {
-	int i, I, p, px, top, n, m, prime, *Lp, *Lj, *Bp, *Bj, tmp;
-	spasm_GFp *Lx, *Bx;
-
-	assert(L != NULL);
-	assert(B != NULL);
-	assert(xi != NULL);
-	assert(x != NULL);
-
-	n = L->n;
-	m = L->m;
-	Lp = L->p;
-	Lj = L->j;
-	Lx = L->x;
-	prime = L->prime;
-
-	Bp = B->p;
-	Bj = B->j;
-	Bx = B->x;
-
-	/* xi[top : m] = Reach( L, B[k] ) */
-	top = spasm_reach(L, B, k, n, xi, pinv);
-
-	/* clear x */
-	for (p = top; p < n; p++) {
-		x[xi[p]] = 0;
-	}
-
-	/* scatter B[k] into x */
-	for (p = Bp[k]; p < Bp[k + 1]; p++) {
-		x[Bj[p]] = Bx[p];
-	}
-
-	/* iterate over the (precomputed) pattern of x (= the solution) */
-	for (px = top; px < n; px++) {
-		/* x[i] is nonzero */
-		i = xi[px];
-
-		/* i maps to row I of L */
-		I = (pinv == SPASM_IDENTITY_PERMUTATION) ? i : pinv[i];
-
-		if (i >= m) {
-			/* column I is part of an implicit identity matrix */
-			spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1], prime - x[i], x, prime);
-		} else if (i >= r_bound) {
-			/* get L[i,i] */
-			const spasm_GFp diagonal_entry = Lx[Lp[I + 1] - 1];
-			assert(diagonal_entry != 0);
-			/* axpy-in-place */
-			x[i] = (x[I] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-			spasm_scatter(Lj, Lx, Lp[I], Lp[I + 1] - 1, prime - x[i], x, prime);
-		}
-		xi[px] = I;
-		tmp = x[i];
-		x[i] = 0;
-		x[xi[px]] = tmp;
-
 	}
 	return top;
 }

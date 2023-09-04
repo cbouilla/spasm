@@ -13,7 +13,7 @@ int main(int argc, char **argv)
   
         int n = A->n;
         int m = A->m;
-        int *Ap = A->p;
+        i64 *Ap = A->p;
         int *Aj = A->j;
         spasm_GFp *Ax = A->x;
 
@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 
         /* scatter A into M */
         for (int i = 0; i < n; i++)
-                for (int k = Ap[i]; k < Ap[i + 1]; k++) {
+                for (i64 k = Ap[i]; k < Ap[i + 1]; k++) {
                         int j = Aj[k];
                         M[i * m + j] = Ax[k];
                 }
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
         spasm_GFp *x = spasm_malloc(m * sizeof(*x));
         for (int i = 0; i < n; i++) {
                 spasm_vector_zero(x, m);
-                for (int px = Ap[i]; px < Ap[i + 1]; px++) {
+                for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
                         int j = Aj[px];
                         x[j] = Ax[px];
                 }

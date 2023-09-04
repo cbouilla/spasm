@@ -3,7 +3,8 @@
 
 #include "spasm.h"
 
-void spasm_augment_matching(int head, int *istack, int *jstack, int *p, int *qinv) {
+void spasm_augment_matching(int head, const int *istack, const int *jstack, int *p, int *qinv)
+{
 	for (int px = head; px >= 0; px--) {
 		int i = istack[px];
 		int j = jstack[px];
@@ -12,29 +13,29 @@ void spasm_augment_matching(int head, int *istack, int *jstack, int *p, int *qin
 	}
 }
 
-/* lookahead: search for unmatched column in A[i,:]. If found, it completes the
+/* lookahead: search for unmatched column in row i. If found, it completes the
  * alternating path in istack/jstack, so we augment the matching. */
-int spasm_lookahead(const spasm *A, int i, int head, int *plookahead, int *istack, int *jstack, int *p, int *qinv) {
-	int *Ap = A->p;
-	int *Aj = A->j;
-			
-	for (int px = plookahead[i]; px < Ap[i + 1]; px++) {
+int spasm_lookahead(const spasm *A, int i, int head, int *plookahead, int *istack, int *jstack, int *p, int *qinv)
+{
+	const i64 *Ap = A->p;
+	const int *Aj = A->j;	
+	for (i64 px = Ap[i] + plookahead[i]; px < Ap[i + 1]; px++) {
 		int j = Aj[px];
 		if (qinv[j] < 0) {
-			plookahead[i] = px + 1;
+			plookahead[i] = px - Ap[i];
 			jstack[head] = j;
 			spasm_augment_matching(head, istack, jstack, p, qinv);
 			return 1;
 		}	
 	}
 	/* all column on A[i,:] are matched. start the DFS */
-	plookahead[i] = Ap[i + 1];
+	plookahead[i] = Ap[i + 1] - Ap[i];
 	return 0;
 }
 
 /**
- * Search an augmenting path w.r.t. the matching, starting from row k (i.e. a
- * path from an unmatched row to an unmatched column).
+ * Search an augmenting path w.r.t. the matching, starting from row istart 
+ * (i.e. a path from an unmatched row to an unmatched column).
  *
  * This does a DFS starting from row k, and memorizes the path in (row_stack / 
  * col_stack). When looking for an unmatched column reachable from a row, the 
@@ -44,42 +45,43 @@ int spasm_lookahead(const spasm *A, int i, int head, int *plookahead, int *istac
  * Because the matching increases monotonically (when row/column is matched, it
  * stays matched), is it useless to re-examine matched columns.
  */
-int spasm_augmenting_path(const spasm * A, int k, int *istack, int *jstack, int *pstack, int *marks, int *plookahead, int *p, int *qinv) {
-	int head, px;
-	int *Ap, *Aj;
-
-	Ap = A->p;
-	Aj = A->j;
+int spasm_augmenting_path(const spasm *A, int istart, int *istack, int *jstack, int *pstack, int *marks, int *plookahead, int *p, int *qinv)
+{
+	const i64 *Ap = A->p;
+	const int *Aj = A->j;
 
 	/* initialize the DFS */
-	head = 0;
-	istack[head] = k;
+	int head = 0;
+	istack[head] = istart;
 
 	/* stack empty ? */
 	while (head >= 0) {
-		/* search an unmatched column reachable from row i */
+		/* search an unmatched column reachable from (unmatched) row i */
 		int i = istack[head];
 
-		if (marks[i] != k) {
-			marks[i] = k;
+		if (marks[i] != istart) {
+			marks[i] = istart;
 			if (spasm_lookahead(A, i, head, plookahead, istack, jstack, p, qinv))
 				return 1;
 			/* nothing on row i: we have to start the DFS */
-			pstack[head] = Ap[i];
+			pstack[head] = 0;
 		}
 		
-		/* Depth-first-search of columns adjacent to row i */
-		for (px = pstack[head]; px < Ap[i + 1]; px++) {
+		/* Depth-first-search of (matched) columns adjacent to row i */
+		i64 px;
+		for (px = Ap[i] + pstack[head]; px < Ap[i + 1]; px++) {
 			int j = Aj[px];
 			int inew = qinv[j];
-			if (marks[inew] == k)
+			assert(inew != -1);   /* because we did the lookahead, we now that all columns adjacent to row i are matched */
+			if (marks[inew] == istart)
 				continue;
 			/* pause DFS of row i, start DFS of row inew. */
-			pstack[head] = px + 1;
+			pstack[head] += 1;
 			jstack[head] = j;
 			istack[++head] = inew;
 			break;
 		}
+		
 		/* row i is done: pop it from stack */
 		if (px == Ap[i + 1])
 			head--;
@@ -98,29 +100,26 @@ int spasm_augmenting_path(const spasm * A, int k, int *istack, int *jstack, int 
  * 
  * @return size of the matching
  */
-int spasm_maximum_matching(const spasm * A, int *p, int *qinv) {
-	int n, m, r, k;
-	int *Ap, *istack, *jstack, *marks, *pstack, *plookahead;
-
-	n = A->n;
-	m = A->m;
-	r = spasm_min(n, m); /* the matching cant' be bigger than this */
-	Ap = A->p;
+int spasm_maximum_matching(const spasm *A, int *p, int *qinv)
+{
+	int n = A->n;
+	int m = A->m;
+	int r = spasm_min(n, m); /* the matching cant' be bigger than this */
 
 	/* get workspace */
-	istack = spasm_malloc(n * sizeof(int));
-	jstack = spasm_malloc(n * sizeof(int));
-	pstack = spasm_malloc(n * sizeof(int));
-	marks  = spasm_malloc(n * sizeof(int));
-	plookahead = spasm_malloc(n * sizeof(int));
+	int *istack = spasm_malloc(n * sizeof(int));
+	int *jstack = spasm_malloc(n * sizeof(int));
+	int *pstack = spasm_malloc(n * sizeof(int));
+	int *marks  = spasm_malloc(n * sizeof(int));
+	int *plookahead = spasm_malloc(n * sizeof(int));
 
 	spasm_vector_set(qinv, 0, m, -1);
 	spasm_vector_set(p, 0, n, -1);
 	spasm_vector_set(marks, 0, n, -1);
 	for (int i = 0; i < n; i++)
-		plookahead[i] = Ap[i];
+		plookahead[i] = 0;
 
-	k = 0;
+	int k = 0;
 	double start = spasm_wtime();
 	for (int i = 0; (i < n) && (k < r); i++) {
 		if (p[i] < 0)
@@ -129,7 +128,6 @@ int spasm_maximum_matching(const spasm * A, int *p, int *qinv) {
 		fflush(stderr);
 	}
 	fprintf(stderr, " [%.1f s]\n", spasm_wtime() - start);
-
 	free(istack);
 	free(jstack);
 	free(pstack);

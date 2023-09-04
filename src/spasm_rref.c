@@ -14,13 +14,13 @@ spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv)
 	fprintf(stderr, "[rref] start. U is %d x %d (%s nnz)\n", n, m, hnnz);
 	double start_time = spasm_wtime();
 	spasm *R = spasm_csr_alloc(n, m, spasm_nnz(U), U->prime, SPASM_WITH_NUMERICAL_VALUES);
-	int *Rp = R->p;
+	i64 *Rp = R->p;
 	int *Rj = R->j;
 	int *Rx = R->x;
 	int Rn = 0;         /* #rows in R */
-	int nnz = 0;        /* entries in R */
+	i64 nnz = 0;        /* entries in R */
 	int writing = 0;
-	const int *Up = U->p;
+	const i64 *Up = U->p;
 	const int *Uj = U->j;
 
 	#pragma omp parallel
@@ -57,7 +57,8 @@ spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv)
 					row_nz += 1;
 			}
 
-			int local_i, local_nnz;
+			int local_i;
+			i64 local_nnz;
 			#pragma omp critical(rref)
 			{
 				/* not enough room in R ? realloc twice the size */
@@ -135,12 +136,12 @@ spasm * spasm_kernel(const spasm *R, const int *qinv)
 	assert(n <= m);
 	int prime = R->prime;
 	spasm *Rt = spasm_transpose(R, SPASM_WITH_NUMERICAL_VALUES);
-	const int *Rtp = Rt->p;
+	const i64 *Rtp = Rt->p;
 	const int *Rtj = Rt->j;
 	const spasm_GFp *Rtx = Rt->x;
 
 	int *p = spasm_malloc(n * sizeof(*p));    /* what row of Rt (column of R) contains the pivot on col i.*/
-	const int *Rp = R->p;
+	const i64 *Rp = R->p;
 	const int *Rj = R->j;
 	for (int i = 0; i < n; i++) {
 		int px = Rp[i];
@@ -149,17 +150,17 @@ spasm * spasm_kernel(const spasm *R, const int *qinv)
 	}
 	spasm *K = spasm_csr_alloc(m - n, m, spasm_nnz(R) - n + m - n, prime, SPASM_WITH_NUMERICAL_VALUES);
 	K->n = 0;
-	int *Kp = K->p;
+	i64 *Kp = K->p;
 	int *Kj = K->j;
 	spasm_GFp *Kx = K->x;
-	int nnz = 0;      /* #entries in K */
+	i64 nnz = 0;      /* #entries in K */
 	for (int j = 0; j < m; j++) {
 		if (qinv[j] >= 0)
 			continue;           /* skip pivotal columns of R */
 		Kj[nnz] = j;
 		Kx[nnz] = prime - 1;
 		nnz += 1;
-		for (int px = Rtp[j]; px < Rtp[j + 1]; px++) {
+		for (i64 px = Rtp[j]; px < Rtp[j + 1]; px++) {
 			int i = Rtj[px];
 			Kj[nnz] = p[i];
 			Kx[nnz] = Rtx[px];

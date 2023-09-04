@@ -11,7 +11,7 @@
 void echelon_form_check(const spasm *U, int *qinv)
 {
 	int m = U->m;
-	int *Up = U->p;
+	i64 *Up = U->p;
 	int *Uj = U->j;
 	spasm_GFp *Ux = U->x;
 	
@@ -33,7 +33,7 @@ void echelon_form_check(const spasm *U, int *qinv)
 
 void rref_check(const spasm *U, int *qinv)
 {
-	int *Up = U->p;
+	i64 *Up = U->p;
 	int *Uj = U->j;
 	spasm_GFp *Ux = U->x;
 	
@@ -98,10 +98,10 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 	int n = A->n;
 	int m = A->m;
 	int r = U->n;
-	int *Ap = A->p;
+	i64 *Ap = A->p;
 	int *Aj = A->j;
 	spasm_GFp *Ax = A->x;
-	int *Up = U->p;
+	i64 *Up = U->p;
 	int *Uj = U->j;
 	spasm_GFp *Ux = U->x;
 

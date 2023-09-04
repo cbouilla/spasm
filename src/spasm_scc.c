@@ -11,10 +11,11 @@
 
 /* strategie : quand un noeud est retiré dans une SCC, mettre son index ou son lowlink à n+1 */
 
-spasm_dm *spasm_strongly_connected_components(const spasm * A) {
+spasm_dm *spasm_strongly_connected_components(const spasm *A)
+{
 	int n = A->n;
 	int m = A->m;
-	int *Ap = A->p;
+	i64 *Ap = A->p;
 	int *Aj = A->j;
 	assert(n == m);
 
@@ -33,33 +34,32 @@ spasm_dm *spasm_strongly_connected_components(const spasm * A) {
 	for (int i = 0; i < n; i++) {
 		marks[i] = -1;
 		prev[i] = -1;
-		pstack[i] = Ap[i];
+		pstack[i] = 0;
 	}
 
 	int n_scc = 0;
 	int index = 0;
 	rr[n_scc] = 0;
 	for (int i = 0; i < n; i++) {
-		int top;
 		if (marks[i] >= 0)
 			continue;
 		
 		/* DFS */
-		top = 0;
-		stack[top] = i;
+		int top = 0;
+		stack[top] = i;    /* start DFS from node i */
 		int j = i;
 		while (j >= 0) {
 			/* get j from the top of the recursion stack */
-			int px, px2;
 			if (marks[j] < 0) {
 				/* init */
 				lowlink[j] = index;
 				marks[j] = index++;
 			}
-			px2 = Ap[j + 1];
+			int px2 = spasm_row_weight(A, j);
+			int px;
 			for (px = pstack[j]; px < px2; px++) {
-				int k = Aj[px];
-
+				int p = Ap[j] + px;
+				int k = Aj[p];
 				if (marks[k] >= 0) {
 					/* update */
 					lowlink[j] = spasm_min(lowlink[j], lowlink[k]);
@@ -83,7 +83,6 @@ spasm_dm *spasm_strongly_connected_components(const spasm * A) {
 					p[p_top++] = j;
 					lowlink[j] = n;
 					top--;
-
 					rr[++n_scc] = p_top;
 				}
 
@@ -102,17 +101,12 @@ spasm_dm *spasm_strongly_connected_components(const spasm * A) {
 	int *cc = P->c;
 	for (int i = 0; i < n; i++)
 		q[i] = p[n - 1 - i];
-
 	for (int i = 0; i < n; i++)
 		p[i] = q[i];
-
 	for (int i = 0; i <= n_scc; i++)
 		cc[i] = n - rr[n_scc - i];
-
 	for (int i = 0; i <= n_scc; i++)
 		rr[i] = cc[i];
-
-
 	P->nb = n_scc;
 
 	free(stack);

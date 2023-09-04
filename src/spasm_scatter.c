@@ -6,8 +6,8 @@
  * 
  * This is where all the heavy lifting should take place.
  */
-void spasm_scatter(const int *Aj, const spasm_GFp * Ax, int from, int to, spasm_GFp beta, spasm_GFp * x, int prime) {
-	for (int px = from; px < to; px++) {
+void spasm_scatter(const int *Aj, const spasm_GFp * Ax, i64 from, i64 to, spasm_GFp beta, spasm_GFp * x, int prime) {
+	for (i64 px = from; px < to; px++) {
 		int j = Aj[px];
 		x[j] = (x[j] + ((beta * Ax[px]))) % prime; /* ultra-naive */ 
 	}

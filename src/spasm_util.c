@@ -23,19 +23,22 @@ int spasm_get_thread_num() {
 }
 
 
-double spasm_wtime() {
+double spasm_wtime()
+{
 	struct timeval ts;
 	gettimeofday(&ts, NULL);
 	return (double)ts.tv_sec + ts.tv_usec / 1E6;
 }
 
 
-int spasm_nnz(const spasm * A) {
+i64 spasm_nnz(const spasm * A)
+{
 	return A->p[A->n];
 }
 
 /* return a string representing n in 8 bytes */
-void spasm_human_format(int64_t n, char *target) {
+void spasm_human_format(i64 n, char *target)
+{
 	if (n < 1000) {
 		sprintf(target, "%" PRId64, n);
 		return;
@@ -58,21 +61,24 @@ void spasm_human_format(int64_t n, char *target) {
 	}
 }
 
-void *spasm_malloc(size_t size) {
+void *spasm_malloc(i64 size)
+{
 	void *x = malloc(size);
 	if (x == NULL)
 		err(1, "malloc failed");
 	return x;
 }
 
-void *spasm_calloc(size_t count, size_t size) {
+void *spasm_calloc(i64 count, i64 size)
+{
 	void *x = calloc(count, size);
 	if (x == NULL)
 		err(1, "calloc failed");
 	return x;
 }
 
-void *spasm_realloc(void *ptr, size_t size) {
+void *spasm_realloc(void *ptr, i64 size)
+{
 	void *x = realloc(ptr, size);
 	if (ptr != NULL && x == NULL && size != 0)
 		err(1, "realloc failed");
@@ -80,7 +86,7 @@ void *spasm_realloc(void *ptr, size_t size) {
 }
 
 /* allocate a sparse matrix (compressed-row form) */
-spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values)
+spasm *spasm_csr_alloc(int n, int m, i64 nzmax, int prime, int with_values)
 {
 	if (prime > 46337) {
 		prime = 46337;
@@ -91,7 +97,7 @@ spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values)
 	A->n = n;
 	A->nzmax = nzmax;
 	A->prime = prime;
-	A->p = spasm_malloc((n + 1) * sizeof(int));
+	A->p = spasm_malloc((n + 1) * sizeof(i64));
 	A->j = spasm_malloc(nzmax * sizeof(int));
 	A->x = with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL;
 	A->p[0] = 0;
@@ -99,10 +105,9 @@ spasm *spasm_csr_alloc(int n, int m, int nzmax, int prime, int with_values)
 }
 
 /* allocate a sparse matrix (triplet form) */
-spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_values) {
-	spasm_triplet *A;
-
-	A = spasm_malloc(sizeof(spasm_triplet));
+spasm_triplet *spasm_triplet_alloc(int n, int m, i64 nzmax, int prime, int with_values)
+{
+	spasm_triplet *A = spasm_malloc(sizeof(spasm_triplet));
 	A->m = m;
 	A->n = n;
 	A->nzmax = nzmax;
@@ -110,7 +115,7 @@ spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_
 	A->nz = 0;
 	A->i = spasm_malloc(nzmax * sizeof(int));
 	A->j = spasm_malloc(nzmax * sizeof(int));
-	A->x = (with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL);
+	A->x = with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL;
 	return A;
 }
 
@@ -118,7 +123,8 @@ spasm_triplet *spasm_triplet_alloc(int n, int m, int nzmax, int prime, int with_
  * change the max # of entries in a sparse matrix. If nzmax < 0, then the
  * matrix is trimmed to its current nnz.
  */
-void spasm_csr_realloc(spasm * A, int nzmax) {
+void spasm_csr_realloc(spasm *A, i64 nzmax)
+{
 	if (nzmax < 0)
 		nzmax = spasm_nnz(A);
 	if (spasm_nnz(A) > nzmax)
@@ -133,7 +139,8 @@ void spasm_csr_realloc(spasm * A, int nzmax) {
  * change the max # of entries in a sparse matrix. If nzmax < 0, then the
  * matrix is trimmed to its current nnz.
  */
-void spasm_triplet_realloc(spasm_triplet * A, int nzmax) {
+void spasm_triplet_realloc(spasm_triplet * A, i64 nzmax)
+{
 	if (nzmax < 0)
 		nzmax = A->nz;
 	A->i = spasm_realloc(A->i, nzmax * sizeof(int));
@@ -144,7 +151,8 @@ void spasm_triplet_realloc(spasm_triplet * A, int nzmax) {
 }
 
 /* free a sparse matrix */
-void spasm_csr_free(spasm * A) {
+void spasm_csr_free(spasm *A)
+{
 	if (A == NULL)
 		return;
 	free(A->p);
@@ -153,30 +161,30 @@ void spasm_csr_free(spasm * A) {
 	free(A);
 }
 
-void spasm_triplet_free(spasm_triplet * A) {
+void spasm_triplet_free(spasm_triplet *A)
+{
 	free(A->i);
 	free(A->j);
 	free(A->x);		/* trick : free does nothing on NULL pointer */
 	free(A);
 }
 
-void spasm_csr_resize(spasm * A, int n, int m) {
+void spasm_csr_resize(spasm *A, int n, int m)
+{
 	A->m = m;
-	/* in case of a column shrink, check that no entries are left outside */
-	A->p = spasm_realloc(A->p, (n + 1) * sizeof(int));
-
+	/* TODO: in case of a shrink, check that no entries are left outside */
+	A->p = spasm_realloc(A->p, (n + 1) * sizeof(i64));
 	if (A->n < n) {
-		int *Ap = A->p;
+		i64 *Ap = A->p;
 		for (int i = A->n; i < n + 1; i++)
 			Ap[i] = Ap[A->n];
 	}
 	A->n = n;
 }
 
-spasm_dm * spasm_dm_alloc(int n, int m) {
-	spasm_dm *P;
-
-	P = spasm_malloc(sizeof(spasm_dm));
+spasm_dm * spasm_dm_alloc(int n, int m)
+{
+	spasm_dm *P = spasm_malloc(sizeof(spasm_dm));
 	P->p = spasm_malloc(n * sizeof(int));
 	P->q = spasm_malloc(m * sizeof(int));
 	P->r = spasm_malloc((n + 6) * sizeof(int));
@@ -189,7 +197,8 @@ spasm_dm * spasm_dm_alloc(int n, int m) {
 	return P;
 }
 
-void spasm_dm_free(spasm_dm * P) {
+void spasm_dm_free(spasm_dm *P)
+{
 	free(P->p);
 	free(P->q);
 	free(P->r);
@@ -197,12 +206,14 @@ void spasm_dm_free(spasm_dm * P) {
 	free(P);
 }
 
-void spasm_vector_zero(spasm_GFp * x, int n) {
+void spasm_vector_zero(spasm_GFp *x, int n)
+{
 	for (int i = 0; i < n; i++)
 		x[i] = 0;
 }
 
-void spasm_vector_set(spasm_GFp * x, int a, int b, spasm_GFp alpha) {
+void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha)
+{
 	for (int i = a; i < b; i++)
 		x[i] = alpha;
 }
