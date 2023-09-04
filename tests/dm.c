@@ -58,11 +58,11 @@ int main(int argc, char **argv)
 	free(qinv);
 	spasm_csr_free(B);
 
-	int *Cp = C->p;
+	i64 *Cp = C->p;
 	int *Cj = C->j;
 	
 	for (int i = rr[1]; i < rr[2]; i++)
-		for (int px = Cp[i]; px < Cp[i + 1]; px++) {
+		for (i64 px = Cp[i]; px < Cp[i + 1]; px++) {
 			int j = Cj[px];
 			if (j < cc[2]) {
 				printf("not ok - DM(A) - row %d (in R_2) has entries in C_0 or C_1\n", i);
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 		}
 
 	for (int i = rr[2]; i < rr[4]; i++)
-		for (int px = Cp[i]; px < Cp[i + 1]; px++) {
+		for (i64 px = Cp[i]; px < Cp[i + 1]; px++) {
 			int j = Cj[px];
 			if (j < cc[3]) {
 				printf("not ok - DM(A) - row %d (in R_3 or R_0) has entries in C_0, C_1 or C_2\n", i);

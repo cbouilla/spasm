@@ -9,7 +9,7 @@
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp * y)
 {
 	int n = A->n;
-	const int *Ap = A->p;
+	const i64 *Ap = A->p;
 	const int *Aj = A->j;
 	const spasm_GFp *Ax = A->x;
 	int prime = A->prime;
@@ -28,40 +28,37 @@ void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp * y)
  */
 int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi)
 {
-	int p, i, j, k, m, nz, Mnz, prime, *Mp, *Mj, *w;
-	spasm_GFp *Mx;
-
 	/* check inputs */
-	Mnz = spasm_nnz(M);
+	i64 Mnz = spasm_nnz(M);
 	assert(x != NULL);
 	assert(Mnz != 0);
 
-	m = M->m;
-	Mp = M->p;
-	Mj = M->j;
-	Mx = M->x;
-	prime = M->prime;
+	int m = M->m;
+	i64 *Mp = M->p;
+	int *Mj = M->j;
+	spasm_GFp *Mx = M->x;
+	int prime = M->prime;
 
 	/* get workspace, initialize w */
-	w = spasm_calloc(m, sizeof(int));
+	int *w = spasm_calloc(m, sizeof(*w));
 
 	/* find pattern of result */
-	nz = 0;
-	for (k = 0; k < xnz; k++) {
-		i = xi[k];
-		for (p = Mp[i]; p < Mp[i + 1]; p++) {
-			j = Mj[p];
+	int nz = 0;
+	for (i64 k = 0; k < xnz; k++) {
+		int i = xi[k];
+		for (i64 p = Mp[i]; p < Mp[i + 1]; p++) {
+			int j = Mj[p];
 			if (w[j] == 0) {
 				w[j] = 1;
 				yi[nz] = j;
-				nz++;
+				nz += 1;
 			}
 		}
 	}
 
 	/* form result */
-	for (k = 0; k < xnz; k++) {
-		i = xi[k];
+	for (int k = 0; k < xnz; k++) {
+		int i = xi[k];
 		spasm_scatter(Mj, Mx, Mp[i], Mp[i + 1], x[i], y, prime);
 	}
 

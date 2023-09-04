@@ -16,13 +16,13 @@
  * 
  * This means that x[k] <--- b[ p[k] ]
  */
-void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
-	int k;
+void spasm_pvec(const int *p, const spasm_GFp *b, spasm_GFp *x, int n)
+{
 	assert(x != NULL);
 	assert(b != NULL);
-
-	for (k = 0; k < n; k++) {
-		x[k] = b[(p != SPASM_IDENTITY_PERMUTATION) ? p[k] : k];
+	for (int i = 0; i < n; i++) {
+		int j = (p != SPASM_IDENTITY_PERMUTATION) ? p[i] : i;
+		x[i] = b[j];
 	}
 }
 
@@ -34,29 +34,29 @@ void spasm_pvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
  * 
  * The function is given p, not p^{-1}.
  */
-void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n) {
-	int k;
+void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n)
+{
 	assert(x != NULL);
 	assert(b != NULL);
 
-	for (k = 0; k < n; k++) {
-		x[(p != SPASM_IDENTITY_PERMUTATION) ? p[k] : k] = b[k];
+	for (int i = 0; i < n; i++) {
+		int j = (p != SPASM_IDENTITY_PERMUTATION) ? p[i] : i;
+		x[j] = b[i];
 	}
 }
 
 /* compute the inverse permutation */
-int *spasm_pinv(int const *p, int n) {
-	int k, *pinv;
+int *spasm_pinv(int const *p, int n)
+{
 	/* p = NULL denotes identity */
 	if (p == NULL) {
 		return NULL;
 	}
 	/* allocate result */
-	pinv = spasm_malloc(n * sizeof(int));
+	int *pinv = spasm_malloc(n * sizeof(*pinv));
 	/* invert the permutation */
-	for (k = 0; k < n; k++) {
+	for (int k = 0; k < n; k++)
 		pinv[p[k]] = k;
-	}
 	return pinv;
 }
 
@@ -64,44 +64,40 @@ int *spasm_pinv(int const *p, int n) {
 /*
  * C = P.A.Q^-1 where P and Q^-1 are permutations of 0..n-1 and 0..m-1
  * respectively.
- * 
  */
-spasm *spasm_permute(const spasm * A, const int *p, const int *qinv, int values) {
-	int t, j, i, nz, m, n, *Ap, *Aj, *Cp, *Cj;
-	spasm_GFp *Cx, *Ax;
-	spasm *C;
-
+spasm *spasm_permute(const spasm *A, const int *p, const int *qinv, int values)
+{
 	/* check inputs */
 	assert(A != NULL);
-
-	n = A->n;
-	m = A->m;
-	Ap = A->p;
-	Aj = A->j;
-	Ax = A->x;
+	int n = A->n;
+	int m = A->m;
+	const i64 *Ap = A->p;
+	const int *Aj = A->j;
+	const spasm_GFp *Ax = A->x;
 
 	/* alloc result */
-	C = spasm_csr_alloc(n, m, A->nzmax, A->prime, values && (Ax != NULL));
-	Cp = C->p;
-	Cj = C->j;
-	Cx = C->x;
-	nz = 0;
+	spasm *C = spasm_csr_alloc(n, m, A->nzmax, A->prime, values && (Ax != NULL));
+	i64 *Cp = C->p;
+	int *Cj = C->j;
+	spasm_GFp *Cx = C->x;
+	i64 nnz = 0;
 
-	for (i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++) {
 		/* row i of C is row p[i] of A (denoted by j) */
-		Cp[i] = nz;
-		j = (p != NULL) ? p[i] : i;
-		for (t = Ap[j]; t < Ap[j + 1]; t++) {
+		Cp[i] = nnz;
+		int j = (p != NULL) ? p[i] : i;
+		for (i64 t = Ap[j]; t < Ap[j + 1]; t++) {
 			/* col j of A is col qinv[j] of C */
-			Cj[nz] = (qinv != NULL) ? qinv[Aj[t]] : Aj[t];
-			if (Cx != NULL) {
-				Cx[nz] = Ax[t];
-			}
-			nz++;
+			int j = Aj[t];
+			int jj = (qinv != NULL) ? qinv[j] : j;
+			Cj[nnz] = jj;
+			if (Cx != NULL)
+				Cx[nnz] = Ax[t];
+			nnz += 1;
 		}
 	}
 	/* finalize the last row of C */
-	Cp[n] = nz;
+	Cp[n] = nnz;
 	return C;
 }
 

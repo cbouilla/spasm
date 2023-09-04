@@ -5,20 +5,21 @@
 #include "spasm.h"
 
 /* make pivotal rows of A unitary. FIXME: why is this not static? */
-void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv)
+void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv)
 {
 	int prime = A->prime;
-	int *Ap = A->p;
+	const i64 *Ap = A->p;
 	spasm_GFp *Ax = A->x;
 
 	#pragma omp parallel for
 	for (int i = 0; i < npiv; i++) {
 		int inew = p ? p[i] : i;
-		spasm_GFp diag = Ax[Ap[inew]];
+		i64 p = Ap[inew];
+		spasm_GFp diag = Ax[p];
 		if (diag == 1)
 			continue;
 		spasm_GFp alpha = spasm_GFp_inverse(diag, prime);
-		for (int px = Ap[inew]; px < Ap[inew + 1]; px++)
+		for (i64 px = Ap[inew]; px < Ap[inew + 1]; px++)
 			Ax[px] = (alpha * Ax[px]) % prime;
 	}
 }
@@ -27,11 +28,11 @@ void spasm_make_pivots_unitary(spasm * A, const int *p, const int npiv)
  * Samples R rows at random in the schur complement of (P*A)[0:n] w.r.t. U, and return the average density.
  * qinv locates the pivots in U.
  */
-double spasm_schur_estimate_density(const spasm * A, const int *p, int n, const spasm *U, const int *qinv, int R)
+double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, int R)
 {
 	assert(p != NULL);
 	int m = A->m;
-	int nnz = 0;
+	i64 nnz = 0;
 	if (n == 0)
 		return 0;
 
@@ -70,7 +71,7 @@ double spasm_schur_estimate_density(const spasm * A, const int *p, int n, const 
  *
  * If the estimated density is unknown, set it to -1: it will be evaluated
  */
-spasm *spasm_schur(const spasm * A, const int *p, int n, const spasm *U, const int *qinv, double est_density, int keep_L, int *p_out)
+spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double est_density, int keep_L, int *p_out)
 {
 	assert(!keep_L); /* option presently unsupported */
 	
@@ -82,10 +83,10 @@ spasm *spasm_schur(const spasm * A, const int *p, int n, const spasm *U, const i
 	if (size > 2147483648)
 		errx(1, "Matrix too large (more than 2^31 entries)");
 	spasm *S = spasm_csr_alloc(n, m, size, A->prime, SPASM_WITH_NUMERICAL_VALUES);
-	int *Sp = S->p;
+	i64 *Sp = S->p;
 	int *Sj = S->j;
 	spasm_GFp *Sx = S->x;
-	int nnz = 0;      /* nnz in S at the moment */
+	i64 nnz = 0;      /* nnz in S at the moment */
 	int Sn = 0;       /* #rows in S at the moment */
 	int writing = 0;
 	double start = spasm_wtime();
@@ -109,7 +110,8 @@ spasm *spasm_schur(const spasm * A, const int *p, int n, const spasm *U, const i
 					row_nnz += 1;
 			}
 
-			int local_i, local_nnz;
+			int local_i;
+			i64 local_nnz;
 			#pragma omp critical(schur_complement)
 			{
 				/* enough room in S? */
@@ -148,7 +150,7 @@ spasm *spasm_schur(const spasm * A, const int *p, int n, const spasm *U, const i
 
 			if (tid == 0 && (i % verbose_step) == 0) {
 				double density =  1.0 * nnz / (1.0 * m * Sn);
-				fprintf(stderr, "\rSchur complement: %d/%d [%d NNZ / density= %.3f]", Sn, n, nnz, density);
+				fprintf(stderr, "\rSchur complement: %d/%d [%" PRId64 " nz / density= %.3f]", Sn, n, nnz, density);
 				fflush(stderr);
 			}
 		}
@@ -158,7 +160,7 @@ spasm *spasm_schur(const spasm * A, const int *p, int n, const spasm *U, const i
 	/* finalize S */
 	spasm_csr_realloc(S, -1);
 	double density = 1.0 * nnz / (1.0 * m * n);
-	fprintf(stderr, "\rSchur complement: %d * %d [%d NNZ / density= %.3f], %.1fs\n", n, m, nnz, density, spasm_wtime() - start);
+	fprintf(stderr, "\rSchur complement: %d * %d [%" PRId64 " nz / density= %.3f], %.1fs\n", n, m, nnz, density, spasm_wtime() - start);
 	return S;
 }
 
@@ -247,10 +249,10 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 	assert(p != NULL);
 	int m = A->m;
 	int Sm = m - U->n;
-	const int *Ap = A->p;
+	const i64 *Ap = A->p;
 	const int *Aj = A->j;
 	const spasm_GFp *Ax = A->x;
-	const int *Up = U->p;
+	const i64 *Up = U->p;
 	const int *Uj = U->j;
 	const spasm_GFp *Ux = U->x;
 	prepare_q(m, qinv, q);

@@ -72,8 +72,8 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 	spasm_vector_zero(xj, 3 * m);
 	
 	/* allocate result */
-	int *Up = U->p;
-	int unz = spasm_nnz(U);
+	i64 *Up = U->p;
+	i64 unz = spasm_nnz(U);
 	int r = spasm_min(n, m);  /* upper-bound on rank */
 
 	/* initialize early abort */
@@ -93,12 +93,6 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 			fprintf(stderr, "\n[echelonize/GPLU] testing for early abort...");
 			if (spasm_echelonize_test_completion(A, p, n, U, qinv))
 				break;
-			// if (spasm_early_abort(A, p, i, U, U->n)) {
-			// 	fprintf(stderr, "SUCCESS\n");
-			// 	break;
-			// } else {
-			// 	fprintf(stderr, "FAILED\n");
-			// }
 			early_abort_done = 1;
 		}
 
@@ -132,7 +126,7 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 
 		/* store new pivotal row into U */
 		qinv[jpiv] = U->n;
-		int old_unz = unz;
+		i64 old_unz = unz;
 		Uj[unz] = jpiv;
 		Ux[unz] = 1;
 		unz += 1;
@@ -155,7 +149,7 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 		early_abort_done = 0;
 		
 		if ((i % verbose_step) == 0) {
-			fprintf(stderr, "\r[echelonize/GPLU] %d / %d [|U| = %d] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, unz, 1.0 * (m - top) / (m), 1.0 * (unz - old_unz) / m, U->n);
+			fprintf(stderr, "\r[echelonize/GPLU] %d / %d [|U| = %" PRId64 "] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, unz, 1.0 * (m - top) / (m), 1.0 * (unz - old_unz) / m, U->n);
 			fflush(stderr);
 		}
 	}
@@ -168,19 +162,19 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 
 static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size_t *Sp, const int *q, int *Uqinv)
 {
-	int extra_nnz = (2*Sm + 1 - rr) * rr / 2;     /* maximum size increase */
-        int unz = spasm_nnz(U);
+	i64 extra_nnz = (2*Sm + 1 - rr) * rr / 2;     /* maximum size increase */
+        i64 unz = spasm_nnz(U);
 	spasm_csr_realloc(U, unz + extra_nnz);
-	int *Up = U->p;
+	i64 *Up = U->p;
 	int *Uj = U->j;
 	spasm_GFp *Ux = U->x;
-        for (int i = 0; i < rr; i++) {
+        for (i64 i = 0; i < rr; i++) {
                 int j = Sp[i];   /* column (of S) with the pivot on row i of S; the pivot is implicitly 1 */
         	Uj[unz] = q[j];  /* column of A with the pivot */
         	Ux[unz] = 1;
         	unz += 1;
         	Uqinv[q[j]] = U->n;
-        	for (int k = j + 1; k < Sm; k++) {
+        	for (i64 k = j + 1; k < Sm; k++) {
         		if (S[i * Sm + k] == 0)
         			continue;   /* don't store zero */
         		Uj[unz] = q[k];
@@ -324,19 +318,18 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 
 	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
 	U->n = 0;
-	int Unz = 0;      /* #entries in U */
+	i64 Unz = 0;      /* #entries in U */
 	for (int j = 0; j < m; j++)
 		Uqinv[j] = -1;
 
-	fprintf(stderr, "[echelonize] Start on %d x %d matrix with %d nnz\n", n, m, spasm_nnz(A));
+	fprintf(stderr, "[echelonize] Start on %d x %d matrix with %" PRId64 " nnz\n", n, m, spasm_nnz(A));
 	double start = spasm_wtime();
 	double density = -1;
-	double aspect_ratio = -1;
 	int npiv = 0;
 
 	for (int round = 0; round < opts->max_round; round++) {
 		fprintf(stderr, "[echelonize] round %d\n", round);
-	 	int *Ap = A->p;
+	 	i64 *Ap = A->p;
 		int *Aj = A->j;
 		spasm_GFp *Ax = A->x;
 
@@ -353,7 +346,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 			spasm_csr_realloc(U, spasm_nnz(U) + pivot_nnz);
 
 		/* copy pivotal rows to U and make them unitary; update Uqinv */
-		int *Up = U->p;
+		i64 *Up = U->p;
 		int *Uj = U->j;
 		spasm_GFp *Ux = U->x;
 		for (int k = 0; k < npiv; k++) {
@@ -362,7 +355,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 			assert(Uqinv[j] < 0);
 			assert(qinv[j] == i);
 			Uqinv[j] = U->n;
-			for (int px = Ap[i]; px < Ap[i + 1]; px++) {
+			for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
 				Uj[Unz] = Aj[px];
 				Ux[Unz] = Ax[px];
 				Unz += 1;
@@ -378,7 +371,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 			fprintf(stderr, "not enough pivots found; stopping\n");
 			break;     /* not enough pivots found */
 		}
-//		aspect_ratio = (double) (n - npiv) / (m - npiv);
+//		
 //		if (density > opts->sparsity_threshold && aspect_ratio > opts->tall_and_skinny_ratio) {
 //			fprintf(stderr, "Schur complement is dense,tall and skinny (#rows / #cols = %.1f)\n", aspect_ratio);
 //			break;
@@ -390,7 +383,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 		}
 
 		/* compute the next schur complement */
-		int64_t nnz = (density * (n - npiv)) * (m - npiv);
+		i64 nnz = (density * (n - npiv)) * (m - npiv);
 		char tmp[8];
 		spasm_human_format(sizeof(int) * (n - npiv + nnz) + sizeof(spasm_GFp) * nnz, tmp);
 		fprintf(stderr, "Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", n - npiv, m - npiv, density, tmp);
@@ -404,6 +397,14 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 	free(qinv);
 
 	/* finish */
+	if (!opts->enable_tall_and_skinny)
+		fprintf(stderr, "[echelonize] dense low-rank mode disabled\n");
+	if (!opts->enable_dense)
+		fprintf(stderr, "[echelonize] regular dense mode disabled\n");
+	if (!opts->enable_GPLU)
+		fprintf(stderr, "[echelonize] GPLU mode disabled\n");
+	
+	double aspect_ratio = (double) (n - npiv) / (m - npiv);
 	if (opts->enable_tall_and_skinny && aspect_ratio > opts->tall_and_skinny_ratio)
 		spasm_echelonize_dense_lowrank(A, p + npiv, n - npiv, U, Uqinv, opts);
 	else if (opts->enable_dense && density > opts->sparsity_threshold)
@@ -414,7 +415,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 		fprintf(stderr, "[echelonize] Cannot finish (no valid method enabled). Incomplete echelonization returned\n");
 
 	free(p);
-	fprintf(stderr, "[echelonize] Done in %.1fs. Rank %d, %d nnz in basis\n", spasm_wtime() - start, U->n, spasm_nnz(U));
+	fprintf(stderr, "[echelonize] Done in %.1fs. Rank %d, %" PRId64 " nz in basis\n", spasm_wtime() - start, U->n, spasm_nnz(U));
 	spasm_csr_resize(U, U->n, m);
 	spasm_csr_realloc(U, -1);
 	return U;

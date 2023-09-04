@@ -18,9 +18,10 @@
  * breadth-first search for coarse decomposition. This determines R0,R3,C3
  * (or C0,C1,R1 when given the transpose of A).
  */
-static void bfs(const spasm * A, int *wi, int *wj, int *queue, const int *imatch, const int *jmatch, int mark) {
-	int *Ap = A->p;
-	int *Aj = A->j;
+static void bfs(const spasm * A, int *wi, int *wj, int *queue, const int *imatch, const int *jmatch, int mark)
+{
+	const i64 *Ap = A->p;
+	const int *Aj = A->j;
 	int n = A->n;
 	int head = 0;
 	int tail = 0;
@@ -30,17 +31,19 @@ static void bfs(const spasm * A, int *wi, int *wj, int *queue, const int *imatch
 		if (jmatch[i] >= 0)
 			continue;
 		wi[i] = 0;
-		queue[tail++] = i;
+		queue[tail] = i;
+		tail += 1;
 	}
 
 	while (head < tail) {
-		int i = queue[head++];
+		int i = queue[head];
+		head += 1;
 
 		/* mark adjacent nodes. This puts column in C3 (or rows in R1
 		 * when transposed). If matched, mark and enqueue matched node.
 		 * This puts rows in R3 (or columns in C1 when transposed). 
 		 */
-		for (int px = Ap[i]; px < Ap[i + 1]; px++) {
+		for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
 			int j = Aj[px];
 			if (wj[j] >= 0)
 				continue;
@@ -49,14 +52,16 @@ static void bfs(const spasm * A, int *wi, int *wj, int *queue, const int *imatch
 			if (wi[I] >= 0)
 				continue;
 			wi[I] = mark;
-			queue[tail++] = I;
+			queue[tail] = I;
+			tail += 1;
 		}
 	}
 }
 
 
 /* collect unmatched rows into the permutation vector p */
-static void collect_unmatched(int n, const int *wi, int *p, int *rr, int set) {
+static void collect_unmatched(int n, const int *wi, int *p, int *rr, int set)
+{
 	int kr = rr[set];
 	for (int i = 0; i < n; i++)
 		if (wi[i] == 0)
@@ -67,7 +72,8 @@ static void collect_unmatched(int n, const int *wi, int *p, int *rr, int set) {
 
 
 /* collect matched rows and columns into p and q */
-static void collect_matched(int n, const int *wj, const int *imatch, int *p, int *q, int *cc, int *rr, int set, int mark) {
+static void collect_matched(int n, const int *wj, const int *imatch, int *p, int *q, int *cc, int *rr, int set, int mark)
+{
 	int kc = cc[set];
 	int kr = rr[set - 1];
 	for (int j = 0; j < n; j++) {
@@ -81,14 +87,14 @@ static void collect_matched(int n, const int *wj, const int *imatch, int *p, int
 }
 
 
-spasm_dm *spasm_dulmage_mendelsohn(const spasm * A) {
+spasm_dm *spasm_dulmage_mendelsohn(const spasm *A)
+{
 	int n = A->n;
 	int m = A->m;
 
 	/* --- Maximum matching ----------------------------------------- */
 	int *jmatch = spasm_malloc(n * sizeof(int));
 	int *imatch = spasm_malloc(m * sizeof(int));
-
 	spasm * A_t = spasm_transpose(A, SPASM_IGNORE_VALUES);
 
 	if (n < m) {
