@@ -73,5 +73,6 @@ int main(int argc, char **argv)
         	free(Rqinv);        
         }
         free(Uqinv);
+		spasm_save_csr(stdout, U);
         exit(EXIT_SUCCESS);
 }

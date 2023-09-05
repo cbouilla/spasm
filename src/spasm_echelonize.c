@@ -187,6 +187,7 @@ static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size
         	U->n += 1;
         	Up[U->n] = unz;
         }
+        assert(unz == spasm_nnz(U));
 }
 
 void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts)
@@ -222,7 +223,8 @@ void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int
 		int Sn = spasm_min(rank_ub, opts->dense_block_size);
 		if (Sn <= 0)
 			break;		
-		fprintf(stderr, "[echelonize/dense/low-rank] Round %d. Weight %d. Processing chunk (%d x %d)\n", round, w, Sn, Sm);
+		fprintf(stderr, "[echelonize/dense/low-rank] Round %d. Weight %d. Processing chunk (%d x %d), |U| = %"PRId64"\n", 
+			round, w, Sn, Sm, spasm_nnz(U));
 		spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, q, Sn, w);
 		int rr = spasm_ffpack_echelonize(A->prime, Sn, Sm, S, Sm, Sp);
 
