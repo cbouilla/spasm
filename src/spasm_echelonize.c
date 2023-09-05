@@ -38,6 +38,7 @@ void spasm_echelonize_init_opts(struct echelonize_opts *opts)
 
 	opts->dense_block_size = 1000;
 	opts->low_rank_ratio = 0.5;
+	opts->low_rank_start_weight = -1;
 }
 
 bool spasm_echelonize_test_completion(spasm *A, const int *p, int n, spasm *U, int *Uqinv)
@@ -203,11 +204,21 @@ void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int
 	int round = 0;
 	fprintf(stderr, "[echelonize/dense/low-rank] processing dense schur complement of dimension %d x %d\n", n, Sm);
 	
-	int w = 2;
-	// TODO: guess w
+	/* 
+	 * stupid algorithm to decide a starting weight:
+	 * - estimate the number of passes as rank_ub / opts->dense_block_size
+         * - thus rank_ub * w rows are selected in total
+         * - a single row is never selected with proba (1 - 1/n) ** (rank_ub * w)
+	 * - choose w such that this is less than 0.01
+	 * - this leads to w >= log 0.01 / log (1 - 1/n) / rank_ub
+	 * - this is approximately w >= log 0.01 * n / rank_ub
+	 */
+	int rank_ub = spasm_min(n, Sm);
+	int w = (opts->low_rank_start_weight < 0) ? ceil(log(0.01) * n / rank_ub) : opts->low_rank_start_weight;
+	
 	for (;;) {
 		/* compute a chunk of the schur complement, then echelonize with FFPACK */
-		int rank_ub = spasm_min(n, Sm);
+		rank_ub = spasm_min(n, Sm);
 		int Sn = spasm_min(rank_ub, opts->dense_block_size);
 		if (Sn <= 0)
 			break;		

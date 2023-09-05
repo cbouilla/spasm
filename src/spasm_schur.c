@@ -223,7 +223,7 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 
 			/* verbosity */
 			if (tid == 0 && (i % verbose_step) == 0) {
-				fprintf(stderr, "\r[schur/dense] %d/%d", k, n);
+				fprintf(stderr, "\r[schur/dense] %" PRId64 "/%d", r, n);
 				fflush(stderr);
 			}
 		}

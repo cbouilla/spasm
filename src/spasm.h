@@ -102,6 +102,8 @@ struct echelonize_opts {
 	int dense_block_size;           /* #rows processed in each batch; determine memory consumption */
 	double low_rank_ratio;          /* if k rows have rank less than k * low_rank_ratio --> "tall-and-skinny"; <0 = don't */
 	double tall_and_skinny_ratio;   /* aspect ratio (#rows / #cols) higher than this --> "tall-and-skinny"; <0 = don't */
+	double low_rank_start_weight;   /* compute random linear combinations of this many rows; -1 = auto-select */
+
 };
 
 #define SPASM_IDENTITY_PERMUTATION NULL
