@@ -214,8 +214,8 @@ void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int
 	 * - this is approximately w >= log 0.01 * n / rank_ub
 	 */
 	int rank_ub = spasm_min(n, Sm);
-	int w = (opts->low_rank_start_weight < 0) ? ceil(log(0.01) * n / rank_ub) : opts->low_rank_start_weight;
-	
+	int w = (opts->low_rank_start_weight < 0) ? ceil(-log(0.01) * n / rank_ub) : opts->low_rank_start_weight;
+
 	for (;;) {
 		/* compute a chunk of the schur complement, then echelonize with FFPACK */
 		rank_ub = spasm_min(n, Sm);
