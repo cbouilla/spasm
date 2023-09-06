@@ -41,7 +41,7 @@ spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv)
 	  		int pivot = Uj[Up[i]];
 	  		assert(qinv_local[pivot] == i);
 	  		qinv_local[pivot] = -1;
-	  		int top = spasm_sparse_forward_solve(U, U, i, xj, x, qinv_local);
+	  		int top = spasm_sparse_triangular_solve(U, U, i, xj, x, qinv_local);
 	  		
 			/* ensure R has the "pivot first" property */
 			for (int px = top + 1; px < m; px++)

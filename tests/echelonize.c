@@ -66,7 +66,7 @@ void deterministic_inclusion_test(const spasm *A, const spasm *U, const int *qin
 	  
 	  	#pragma omp for schedule(dynamic, 10)
 	  	for (int i = 0; i < n; i++) {
-	  		int top = spasm_sparse_forward_solve(U, A, i, xj, x, qinv);
+	  		int top = spasm_sparse_triangular_solve(U, A, i, xj, x, qinv);
 	  		
 			for (int px = top; px < m; px++) {
 				int j = xj[px];

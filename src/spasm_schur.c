@@ -47,7 +47,7 @@ double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const s
 		for (int i = 0; i < R; i++) {
 			/* pick a random non-pivotal row in A */
 			int inew = p[rand() % n];
-			int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
+			int top = spasm_sparse_triangular_solve(U, A, inew, xj, x, qinv);
 			for (int px = top; px < m; px++) {
 				int j = xj[px];
 				if ((qinv[j] < 0) && (x[j] != 0))
@@ -101,7 +101,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm *U, const in
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (int i = 0; i < n; i++) {
 			int inew = (p != NULL) ? p[i] : i;
-			int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
+			int top = spasm_sparse_triangular_solve(U, A, inew, xj, x, qinv);
 
 			int row_nnz = 0;             /* #nz coefficients in the row */
 			for (int px = top; px < m; px++) {
@@ -208,7 +208,7 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 			/* eliminate known sparse pivots, put result in x */
 			for (int j = 0; j < Sm; j++)
 				x[q[j]] = 0;
-			int top = spasm_sparse_forward_solve(U, A, i, xj, x, qinv);
+			int top = spasm_sparse_triangular_solve(U, A, i, xj, x, qinv);
 			if (top == m)
 				continue;       /* skip empty row */
 			

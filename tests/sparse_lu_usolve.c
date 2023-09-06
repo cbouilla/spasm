@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	int *xj = malloc(3*m * sizeof(*xj));
 	spasm_vector_zero(xj, 3*m);
 	spasm_GFp *x = malloc(m * sizeof(spasm_GFp));
-	int top = spasm_sparse_forward_solve(U, B, 0, xj, x, qinv);
+	int top = spasm_sparse_triangular_solve(U, B, 0, xj, x, qinv);
 
 	for (int px = top; px < m; px++) {
 		int j = xj[px];

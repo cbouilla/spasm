@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 	int *xi = malloc(3*r * sizeof(*xi));
 	spasm_vector_zero(xi, 3*r);
 	spasm_GFp *x = malloc(m * sizeof(spasm_GFp));
-	int top = spasm_sparse_forward_solve(Ut, B, 0, xi, x, pinv);
+	int top = spasm_sparse_triangular_solve(Ut, B, 0, xi, x, pinv);
 
 	for (int px = top; px < r; px++)
 		printf("# x[%d] = %d\n", xi[px], x[xi[px]]);

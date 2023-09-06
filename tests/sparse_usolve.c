@@ -38,7 +38,7 @@ int main(int argc, char **argv)
                 qinv[j] = j;
         for (int j = n; j < m; j++)
                 qinv[j] = -1;
-        spasm_sparse_forward_solve(U, B, 0, xi, x, qinv);
+        spasm_sparse_triangular_solve(U, B, 0, xi, x, qinv);
 
         /* check solution */
         spasm_gaxpy(U, x, y);

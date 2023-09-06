@@ -99,7 +99,7 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 
 		/* Triangular solve: x * U = A[i] */
 		int inew = (p != NULL) ? p[i] : i;
-		int top = spasm_sparse_forward_solve(U, A, inew, xj, x, qinv);
+		int top = spasm_sparse_triangular_solve(U, A, inew, xj, x, qinv);
 
 		/* Find pivot column; current poor strategy= choose leftmost */
 		int jpiv = -1;	          /* column index of best pivot so far. */

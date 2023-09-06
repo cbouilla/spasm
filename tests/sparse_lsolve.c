@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         int *qinv = malloc(m * sizeof(int));
         for (int j = 0; j < m; j++)
                 qinv[j] = j;
-        spasm_sparse_forward_solve(L, B, 0, xi, x, qinv);
+        spasm_sparse_triangular_solve(L, B, 0, xi, x, qinv);
 
         /* check solution */
         spasm_gaxpy(L, x, y);

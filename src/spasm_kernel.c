@@ -38,7 +38,6 @@ spasm * spasm_kernel(const spasm *Ut, const int *qinv)
 	#pragma omp parallel
 	{
 		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
-		spasm_GFp *y = spasm_malloc(n * sizeof(*x));
 		int *xj = spasm_malloc(3 * n * sizeof(int));
 		spasm_vector_zero(xj, 3 * n);
 		int tid = spasm_get_thread_num();
@@ -47,20 +46,14 @@ spasm * spasm_kernel(const spasm *Ut, const int *qinv)
 	  	for (int j = 0; j < m; j++) {
 	  		if (qinv[j] >= 0)
 	  			continue;         /* skip pivotal row */
-	  		int top = spasm_sparse_backward_solve(Ut, Ut, j, xj, x, Utqinv);
+	  		int top = spasm_sparse_triangular_solve(Ut, Ut, j, xj, x, Utqinv);
 
 	  		/* debug */
 	  		for (int k = top; k < n; k++) {
 	  			int j = xj[k];
 	  			assert(j < m);
-	  			assert(qinv[j] >= 0);
+	  			assert(Utqinv[j] >= 0);   /* check that Ut[j] belongs to the rowspan */
 	  		}
-	  		/* debug: check the product */
-			spasm_vector_zero(y, n);
-			spasm_gaxpy(Ut, x, y);
-        	spasm_scatter(Ut->j, Ut->x, Ut->p[j], Ut->p[j + 1], prime - 1, y, prime);
-        	for (int i = 0; i < n; i++)
-				assert(y[i] == 0);
 
 	  		/* count the NZ in the new row */
 	  		int row_nz = 1;
@@ -104,7 +97,8 @@ spasm * spasm_kernel(const spasm *Ut, const int *qinv)
 			for (int px = top; px < n; px++) {
 				int j = xj[px];
 				if (x[j] != 0) {
-					Kj[local_nnz] = xj[px];
+					int i = Utqinv[j];
+					Kj[local_nnz] = i;
 					Kx[local_nnz] = x[j];
 					local_nnz += 1;
 				}
