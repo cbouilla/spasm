@@ -6,7 +6,7 @@
 /*
  * (dense vector) * (sparse) Matrix y <--- y + x*A
  */
-void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp * y)
+void spasm_gaxpy(const spasm *A, const spasm_GFp *x, spasm_GFp *y)
 {
 	int n = A->n;
 	const i64 *Ap = A->p;

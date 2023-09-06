@@ -7,7 +7,8 @@ add_library(libspasm
 	spasm_reach.c spasm_triangular.c 
 	
 	# core algo: echelonization
-	spasm_pivots.c spasm_schur.c spasm_ffpack.cpp spasm_echelonize.c spasm_rref.c
+	spasm_pivots.c spasm_schur.c spasm_ffpack.cpp 
+	spasm_echelonize.c spasm_rref.c spasm_kernel.c
 	
 	# core algo: dulmage-mendelson
 	spasm_submatrix.c spasm_matching.c spasm_dm.c spasm_scc.c 

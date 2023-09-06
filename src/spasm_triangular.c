@@ -103,20 +103,23 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp *x, const
 }
 
 
-
-/*************** Triangular solving with sparse RHS
+/*
+ * solve x * U = B[k], where U is (permuted) upper-triangular.
  *
- * solve x * U = B[k], where U is (permuted) upper triangular.
+ * x must have size m (#columns of U); it does not need to be initialized.
+ * xj must be preallocated of size 3*m and zero-initialized (it remains OK)
+ * qinv locates the pivots in U.
  *
- * x has size m (number of columns of U, paradoxically).
+ * On output, the solution is scattered in x, and its pattern is given in xj[top:m].
+ * The precise semantics is as follows. Define:
+ *         x_a = { j in [0:m] : qinv[j] < 0 }
+ *         x_b = { j in [0:m] : qinv[j] >= 0 }
+ * Then x_b * U + x_a == B[k].  It follows that x * U == y has a solution iff x_a is empty.
+ * 
+ * top is the return value
  *
- * when this function returns, the solution is scattered in x, and its pattern
- * is given in xj[top : m].
- *
- * xj must be zero-initialized on the first call (and it stays OK)
- * x does not need to be initialized.
- *
- * top is the return value.
+ * This does not require the pivots to be the first entry of the row.
+ * This requires that the pivots in U are all equal to 1. 
  */
 int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_GFp * x, const int *qinv)
 {
@@ -144,8 +147,7 @@ int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xj, s
 
 	/* iterate over the (precomputed) pattern of x (= the solution) */
 	for (int px = top; px < m; px++) {
-		/* x[j] is nonzero */
-		int j = xj[px];
+		int j = xj[px];          /* x[j] is generically nonzero, (i.e., barring numerical cancelation) */
 
 		/* locate corresponding pivot if there is any */
 		int i = (qinv != NULL) ? (qinv[j]) : j;
@@ -153,9 +155,69 @@ int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xj, s
 			continue;
 
 		/* the pivot entry on row i is 1, so we just have to multiply by -x[j] */
-		assert(Ux[Up[i]] == 1);
-		assert(i < U->n);
-		spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[j], x, prime);
+		spasm_GFp backup = x[j];
+		spasm_scatter(Uj, Ux, Up[i], Up[i + 1], prime - x[j], x, prime);
+		assert(x[j] == 0);
+		x[j] = backup;
+	}
+	return top;
+}
+
+/*
+ * solve x * L = B[k], where U is (permuted) lower-triangular.
+ *
+ * x must have size m (#rows of L); it does not need to be initialized.
+ * xj must be preallocated of size 3*m and zero-initialized (it remains OK)
+ * qinv locates the pivots in L.
+ *
+ * On output, the solution is scattered in x, and its pattern is given in xj[top:m].
+ * The precise semantics is as follows. Define:
+ * ...
+ * Then x_b * L + x_a == B[k].  It follows that x * U == y has a solution iff x_a is empty.
+ * 
+ * top is the return value
+ *
+ * This does not require the pivots to be the first entry of the row.
+ * This requires that the pivots in L are all equal to 1. 
+ */
+int spasm_sparse_backward_solve(const spasm *L, const spasm *B, int k, int *xj, spasm_GFp * x, const int *qinv)
+{
+	int m = L->m;
+	const i64 *Lp = L->p;
+	const int *Lj = L->j;
+	const spasm_GFp *Lx = L->x;
+	int prime = L->prime;
+	const i64 *Bp = B->p;
+	const int *Bj = B->j;
+	const spasm_GFp *Bx = B->x;
+
+	/* compute non-zero pattern of x --- xj[top:m] = Reach(U, B[k]) */
+	int top = spasm_reach(L, B, k, m, xj, qinv);
+
+	/* clear x and scatter B[k] into x*/
+	for (int px = top; px < m; px++) {
+		int j = xj[px];
+		x[j] = 0;
+	}
+	for (i64 px = Bp[k]; px < Bp[k + 1]; px++) {
+		int j = Bj[px];
+		x[j] = Bx[px];
+	}
+
+	/* iterate over the (precomputed) pattern of x (= the solution) */
+	for (int px = top; px < m; px++) {
+		int j = xj[px];          /* x[j] is generically nonzero, (i.e., barring numerical cancelation) */
+
+		/* locate corresponding pivot if there is any */
+		int i = (qinv != NULL) ? (qinv[j]) : j;
+		if (i < 0)
+			continue;
+
+		/* the pivot entry on row i is 1, so we just have to multiply by -x[j] */
+		spasm_GFp backup = x[j];
+		spasm_scatter(Lj, Lx, Lp[i], Lp[i + 1], prime - x[j], x, prime);
+		assert(x[j] == 0);
+		x[i] = backup;
 	}
 	return top;
 }

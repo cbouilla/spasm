@@ -65,7 +65,7 @@ void *spasm_malloc(i64 size)
 {
 	void *x = malloc(size);
 	if (x == NULL)
-		err(1, "malloc failed");
+		err(1, "malloc failed (size %" PRId64 ")", size);
 	return x;
 }
 
@@ -127,8 +127,8 @@ void spasm_csr_realloc(spasm *A, i64 nzmax)
 {
 	if (nzmax < 0)
 		nzmax = spasm_nnz(A);
-	if (spasm_nnz(A) > nzmax)
-		errx(1, "spasm_csr_realloc with too small nzmax");
+	// if (spasm_nnz(A) > nzmax)
+	// 	errx(1, "spasm_csr_realloc with too small nzmax (contains %" PRId64 " nz, asking nzmax=%" PRId64 ")", spasm_nnz(A), nzmax);
 	A->j = spasm_realloc(A->j, nzmax * sizeof(int));
 	if (A->x != NULL)
 		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));

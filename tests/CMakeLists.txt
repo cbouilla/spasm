@@ -54,7 +54,7 @@ set(KERNEL_TEST_MATRICES
     BIOMD0000000525.int.mpl.sms
     BIOMD0000000424.int.mpl.sms
 )
-# spasm_run_tests(kernel "${KERNEL_TEST_MATRICES}")
+spasm_run_tests(kernel "${KERNEL_TEST_MATRICES}")
 
 
 ########### lu / pluq / solve / with and without permutation
@@ -112,21 +112,23 @@ set(UPPER_TEST_MATRICES
 )
 
 spasm_declare_test(dense_lsolve)
-# spasm_declare_test(sparse_lsolve)
+spasm_declare_test(sparse_lsolve)
 # spasm_declare_test(sparse_lsolve_big)
 # spasm_declare_test(sparse_permuted_lsolve)
 spasm_declare_test(dense_usolve)
 spasm_declare_test(sparse_usolve)
-# spasm_declare_test(sparse_utsolve)
+spasm_declare_test(sparse_lu_usolve)
+spasm_declare_test(sparse_utsolve)
 
 spasm_run_tests(dense_lsolve "${LOWER_TEST_MATRICES}")
-# spasm_run_tests(sparse_lsolve "${LOWER_TEST_MATRICES}")
+spasm_run_tests(sparse_lsolve "${LOWER_TEST_MATRICES}")
 # spasm_run_test(sparse_lsolve_big lower_trapeze.sms)
 # spasm_run_test(sparse_permuted_lsolve singular2.sms)
 # spasm_run_test(sparse_permuted_lsolve singular3.sms)
 spasm_run_tests(dense_usolve "${UPPER_TEST_MATRICES}")
 spasm_run_tests(sparse_usolve "${UPPER_TEST_MATRICES}")
-# spasm_run_tests(sparse_utsolve "${UPPER_TEST_MATRICES}")
+spasm_run_tests(sparse_lu_usolve "${LU_TEST_MATRICES}")
+spasm_run_tests(sparse_utsolve "${LU_TEST_MATRICES}")
 
 ########## Dulmage-Mendelson / matching / SCC / etc.
 

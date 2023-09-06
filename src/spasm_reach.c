@@ -3,34 +3,22 @@
 #include "spasm.h"
 
 /**
- * depth-first-search of the graph of a matrix, starting at column j.
+ * Depth-first-search along alternating paths of a bipartite graph.
  *
- * The traversal works as follow : starting from a column j, find the
- * row containing the pivot on this column (row "inew"). If there is not pivot on column j, stop.
+ * If a column j is pivotal (qinv[j] != -1), then move to the row (call it i)
+ * containing the pivot; explore columns adjacent to row i, depth-first. 
+ * The traversal starts at column jstart.
  *
- * When a pivot row has been found, append its next unseen entry to the stack, and restart.
+ * qinv[j] indicates the row on which the j-th column pivot can be found.
+ * qinv[j] == -1 means that there is no pivot on column j.
  *
- * @param qinv
- *           qinv[j] indicates the row on which the j-th column pivot can be found.
- *           qinv[j] == -1 means that there is no pivot on column j.
+ * xj is of size m (#columns). Used both as workspace and to return the result.
+ * At the end, the list of traversed nodes is in xj[top:m].  This returns top.
  *
- * The matrix need not be square. If n < m, then qinv must be non-NULL, and
- * qinv[j] = -1 that there is no pivot on column j
- *
- * @param j column at which the traversal starts.
- *
- * @param G the graph to search
- *
- * @param xj : size m. Used both as workspace and to return the result. At the end, the
- * list of traversed nodes is in xj[top:m]
- *
- * @param pstack size-n workspace. Used to count the neighbors already traversed.
- *
- * @marks : size-m workspace. Indicates which column nodes have been dealt with.
- *
- * @return top
+ * pstack : size-m workspace (used to count the neighbors already traversed)
+ * marks  : size-m workspace (indicates which columns have been seen already)
  */
-int spasm_dfs(int start, const spasm *A, int top, int *xj, int *pstack, int *marks, const int *qinv)
+int spasm_dfs(int jstart, const spasm *A, int top, int *xj, int *pstack, int *marks, const int *qinv)
 {
 	/* check inputs */
 	assert(A != NULL);
@@ -46,7 +34,7 @@ int spasm_dfs(int start, const spasm *A, int top, int *xj, int *pstack, int *mar
 	 * The stack is held at the begining of xj, and has head elements.
 	 */
 	int head = 0;
-	xj[head] = start;
+	xj[head] = jstart;
 
 	/* stack empty ? */
 	while (head >= 0) {
@@ -90,26 +78,17 @@ int spasm_dfs(int start, const spasm *A, int top, int *xj, int *pstack, int *mar
 
 
 /*
- * Compute the set of nodes from G reachable from any node in B[k] (used to
- * determine the pattern of a sparse triangular solve)
+ * Reachability along alternating paths of a bipartite graph.
+ * Compute the set of columns of A reachable from all columns indices in B[k]
+ * (this is used to determine the pattern of a sparse triangular solve)
  * 
- * G : graph to search
- * 
- * B : RHS (starting point of the search)
- * 
- * k : k-th row of B is used.
- * 
- * l : upper-bound on both dimensions of the matrix
- * 
- * xj: size 3l. Used as workspace. Output in xj[top:l]
- * 
- * pinv: mapping of rows to columns of G.
- * 
- * return value : top
- * 
- * xj [top...l-1] = nodes reachable from graph of G*P' via nodes in B(:,k).
- * 
- * xj [l...3l-1] used as workspace
+ * xj must be preallocated of size 3*m and zeroed out on entry.
+ * On output, the set of reachable columns is in xj[top:m].
+ * This returns top.  xj remains in a usable state (no need to zero it out again)
+ *
+ * qinv locates the pivots in A.
+ *
+ * This function does not require the pivots to be the first entries of the rows.
  */
 int spasm_reach(const spasm *A, const spasm *B, int k, int l, int *xj, const int *qinv)
 {
@@ -121,9 +100,10 @@ int spasm_reach(const spasm *A, const spasm *B, int k, int l, int *xj, const int
 
 	const i64 *Bp = B->p;
 	const int *Bj = B->j;
-	int top = l;
-	int *pstack = xj + l;
-	int *marks = pstack + l;
+	int m = A->m;
+	int top = m;
+	int *pstack = xj + m;
+	int *marks = pstack + m;
 
 	/*
 	 * iterates over the k-th row of B.  For each column index j present

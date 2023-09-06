@@ -163,7 +163,7 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 
 static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size_t *Sqinv, const int *q, int *Uqinv)
 {
-	i64 extra_nnz = ((i64) (2*Sm + 1 - rr)) * rr / 2;     /* maximum size increase */
+	i64 extra_nnz = ((i64) (1 + Sm - rr)) * rr;     /* maximum size increase */
         i64 unz = spasm_nnz(U);
         fprintf(stderr, "[dense update] enlarging U from %" PRId64 " to %" PRId64 " entries\n", unz, unz + extra_nnz);
 	spasm_csr_realloc(U, unz + extra_nnz);

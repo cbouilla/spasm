@@ -182,6 +182,7 @@ int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const 
 void spasm_dense_back_solve(const spasm *L, spasm_GFp *b, spasm_GFp *x, const int *p);
 int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, const int *q);
 int spasm_sparse_forward_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_GFp * x, const int *qinv);
+int spasm_sparse_backward_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_GFp * x, const int *qinv);
 
 /* spasm_schur.c */
 void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv);
@@ -222,8 +223,9 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts);
 
 /* spasm_rref.c */
 spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv);
-spasm * spasm_kernel(const spasm *R, const int *qinv);
 
+/* spasm_kernel.c */
+spasm * spasm_kernel(const spasm *Ut, const int *qinv);
 
 /* utilities */
 static inline int spasm_max(int a, int b)

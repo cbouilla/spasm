@@ -14,22 +14,19 @@ int main(int argc, char **argv)
         int m = A->m;
 
         /* compute the RREF of A */
-        int *Uqinv = spasm_malloc(m * sizeof(int));
-        int *Rqinv = spasm_malloc(m * sizeof(int));
-        spasm *U = spasm_echelonize(A, Uqinv, NULL);   /* NULL = default options */
-        spasm *R = spasm_rref(U, Uqinv, Rqinv);
-        spasm_csr_free(U);
-        free(Uqinv);
-        int rank = R->n; 
-
+        int *qinv = spasm_malloc(m * sizeof(int));
+        spasm *U = spasm_echelonize(A, qinv, NULL);   /* NULL = default options */
+        spasm *Ut = spasm_transpose(U, SPASM_WITH_NUMERICAL_VALUES);
+        
         /* build kernel basis */
-        spasm *K = spasm_kernel(R, Rqinv);
+        spasm *K = spasm_kernel(Ut, qinv);
         
         /* rows of K form a basis of the left-kernel of At */
         assert(K->m == m);
-        assert(K->n == m - rank);
-        spasm_csr_free(R);
-        free(Rqinv);
+        assert(K->n == m - U->n);
+        spasm_csr_free(U);
+        spasm_csr_free(Ut);
+        free(qinv);
         
         /* test that they are really kernel vectors */
         spasm *At = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);

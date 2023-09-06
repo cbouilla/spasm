@@ -4,7 +4,10 @@
 
 #include "spasm.h"
 
-/* build the RREF. This code is similar to src/spasm_schur.c ---> in bad need of factorization */
+/* 
+ * build the RREF from an echelonized matrix. 
+ * This code is similar to src/spasm_schur.c ---> in bad need of factorization
+ */
 spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv)
 {
 	int n = U->n;
@@ -125,53 +128,4 @@ spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv)
 	spasm_human_format(spasm_nnz(R), hnnz);
 	fprintf(stderr, "[rref] done in %.1fs. NNZ(R) = %s\n", spasm_wtime() - start_time, hnnz);
 	return R;
-}
-
-/* given an echelonized matrix, return a basis of its right kernel */
-spasm * spasm_kernel(const spasm *R, const int *qinv)
-{
-	assert(qinv != NULL);
-	int n = R->n;
-	int m = R->m;
-	assert(n <= m);
-	int prime = R->prime;
-	spasm *Rt = spasm_transpose(R, SPASM_WITH_NUMERICAL_VALUES);
-	const i64 *Rtp = Rt->p;
-	const int *Rtj = Rt->j;
-	const spasm_GFp *Rtx = Rt->x;
-
-	int *p = spasm_malloc(n * sizeof(*p));    /* what row of Rt (column of R) contains the pivot on col i.*/
-	const i64 *Rp = R->p;
-	const int *Rj = R->j;
-	for (int i = 0; i < n; i++) {
-		int px = Rp[i];
-		int j = Rj[px];
-		p[i] = j;
-	}
-	spasm *K = spasm_csr_alloc(m - n, m, spasm_nnz(R) - n + m - n, prime, SPASM_WITH_NUMERICAL_VALUES);
-	K->n = 0;
-	i64 *Kp = K->p;
-	int *Kj = K->j;
-	spasm_GFp *Kx = K->x;
-	i64 nnz = 0;      /* #entries in K */
-	for (int j = 0; j < m; j++) {
-		if (qinv[j] >= 0)
-			continue;           /* skip pivotal columns of R */
-		Kj[nnz] = j;
-		Kx[nnz] = prime - 1;
-		nnz += 1;
-		for (i64 px = Rtp[j]; px < Rtp[j + 1]; px++) {
-			int i = Rtj[px];
-			Kj[nnz] = p[i];
-			Kx[nnz] = Rtx[px];
-			nnz += 1;
-		}
-		K->n += 1;
-		Kp[K->n] = nnz;
-	}
-	assert(K->n == m - n);
-	assert(nnz == spasm_nnz(R) - n + m - n);
-	free(p);
-	spasm_csr_free(Rt);
-	return K;
 }
