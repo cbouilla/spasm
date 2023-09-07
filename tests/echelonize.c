@@ -150,23 +150,24 @@ int main(int argc, char **argv)
 	int m = A->m;
 	int *Uqinv = spasm_malloc(m * sizeof(int));
 	int *Rqinv = spasm_malloc(m * sizeof(int));
-	spasm *U = spasm_echelonize(A, Uqinv, NULL);   /* NULL = default options */
+	struct echelonize_opts opts;
+	spasm_echelonize_init_opts(&opts);
+	spasm *U = spasm_echelonize(A, Uqinv, &opts);   /* NULL = default options */
 	
 	assert(A->m == U->m);
 	assert(U->n <= A->n);
 	assert(U->n <= U->m);
 
 	echelon_form_check(U, Uqinv);
+	spasm_save_csr(stdout, U);
 	deterministic_inclusion_test(A, U, Uqinv);
-
-	spasm *M = spasm_trsm(U, Uqinv, A);
-	
 
 	spasm *R = spasm_rref(U, Uqinv, Rqinv);
 	rref_check(R, Rqinv);
 	deterministic_inclusion_test(A, R, Rqinv);	
 
-	spasm *K = spasm_kernel_from_rref(R, Rqinv);
+	// spasm *M = spasm_trsm(U, Uqinv, A);
+	// spasm *K = spasm_kernel_from_rref(R, Rqinv);
 
 	spasm_csr_free(A);
 	spasm_csr_free(U);

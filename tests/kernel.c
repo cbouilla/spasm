@@ -18,15 +18,9 @@ int main(int argc, char **argv)
         int *qinv = spasm_malloc(n * sizeof(*qinv));
         struct echelonize_opts opts;
         spasm_echelonize_init_opts(&opts);
-        opts.enable_tall_and_skinny = 0;
-        opts.enable_dense = 0;
         spasm *U = spasm_echelonize(At, qinv, &opts);
         spasm *Ut = spasm_transpose(U, SPASM_WITH_NUMERICAL_VALUES);
         spasm *K = spasm_kernel(U, qinv);
-        
-        // At == M*U, donc A*St == Ut * Mt
-        // Si x*Ut == 0, alors x*A*St == 0. 
-        // Donc ou bien x*A == 0, ou bien (x*A) * St == 0
 
         /* rows of K form a basis of the right-kernel of At, hence the left kernel of A */
         
@@ -55,10 +49,6 @@ int main(int argc, char **argv)
                 assert(Ut->n == n);
                 assert(Ut->m <= m);
 
-                // A  : n x m
-                // At : m x n
-                // U  : r x n      rowspan(U) == rowspan(At) ----> colspan(Ut) == colspan(A)
-                // Ut : n x r      
 
                 /* y <-- x.Ut */
                 spasm_vector_zero(y, m);

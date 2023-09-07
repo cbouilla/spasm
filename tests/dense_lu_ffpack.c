@@ -57,6 +57,7 @@ int main(int argc, char **argv)
         /* check that all rows of the input matrix belong to the row-space of U */  
         spasm_GFp *x = spasm_malloc(m * sizeof(*x));
         for (int i = 0; i < n; i++) {
+                // scatter A[i] into x
                 spasm_vector_zero(x, m);
                 for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
                         int j = Aj[px];

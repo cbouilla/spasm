@@ -40,7 +40,6 @@ spasm * spasm_kernel(const spasm *U, const int *qinv)
 	#pragma omp parallel
 	{
 		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
-		spasm_GFp *y = spasm_malloc(n * sizeof(*y));
 		int *xj = spasm_malloc(3 * n * sizeof(int));
 		spasm_vector_zero(xj, 3 * n);
 		int tid = spasm_get_thread_num();
@@ -50,13 +49,6 @@ spasm * spasm_kernel(const spasm *U, const int *qinv)
 	  		if (qinv[j] >= 0)
 	  			continue;         /* skip pivotal row */
 	  		int top = spasm_sparse_triangular_solve(Ut, Ut, j, xj, x, Utqinv);
-
-	  		/* debug */
-	  		for (int k = top; k < n; k++) {
-	  			int j = xj[k];
-	  			assert(j < m);
-	  			assert(Utqinv[j] >= 0);   /* check that Ut[j] belongs to the rowspan */
-	  		}
 
 	  		/* count the NZ in the new row */
 	  		int row_nz = 1;
@@ -101,24 +93,12 @@ spasm * spasm_kernel(const spasm *U, const int *qinv)
 				int jj = xj[px];
 				if (x[jj] != 0) {
 					int ii = Utqinv[jj];
-					assert(ii != j);
 					Kj[local_nnz] = ii;
 					Kx[local_nnz] = x[jj];
 					local_nnz += 1;
 				}
 			}
 			Kp[local_i + 1] = local_nnz;
-
-                	/* scatter K[i] into x */
-                	spasm_vector_zero(x, m);
-                	for (i64 px = Kp[local_i]; px < Kp[local_i + 1]; px++) {
-                	        int j = Kj[px];
-                	        x[j] = Kx[px];
-                	}
-                	spasm_vector_zero(y, n);
-                	spasm_xApy(x,  Ut, y);
-                	for (int i = 0; i < n; i++)
-                	        assert (y[i] == 0);
 
 			/* we're done writing */
 			#pragma omp atomic update
@@ -132,23 +112,7 @@ spasm * spasm_kernel(const spasm *U, const int *qinv)
 	  		}
 		}
 	  	free(x);
-	  	free(y);
 		free(xj);
-	}
-
-	spasm_GFp *x = spasm_malloc(m * sizeof(*x));
-	spasm_GFp *y = spasm_malloc(n * sizeof(*y));
-	for (int i = 0; i < K->n; i++) {
-		/* scatter K[i] into x */
-		spasm_vector_zero(x, m);
-		for (i64 px = K->p[i]; px < K->p[i + 1]; px++) {
-			int j = K->j[px];
-			x[j] = K->x[px];
-		}
-		spasm_vector_zero(y, n);
-		spasm_xApy(x, Ut, y);
-		for (int i = 0; i < n; i++)
-			assert (y[i] == 0);
 	}
 
 	fprintf(stderr, "\n");

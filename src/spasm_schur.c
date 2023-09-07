@@ -185,6 +185,7 @@ static void prepare_q(int m, const int *qinv, int *q)
  */
 int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q)
 {
+	assert(p != NULL);
 	int m = A->m;
 	int Sm = m - U->n;                                   /* #columns of S */
 	prepare_q(m, qinv, q);
@@ -203,7 +204,7 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (int k = 0; k < n; k++) {
-			int i = (p != NULL) ? p[k] : k;          /* corresponding row of A */
+			int i = p[k];          /* corresponding row of A */
 			
 			/* eliminate known sparse pivots, put result in x */
 			for (int j = 0; j < Sm; j++)

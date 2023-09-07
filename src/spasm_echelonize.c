@@ -67,6 +67,8 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 	int prime = A->prime;
 	int verbose_step = spasm_max(1, n / 1000);
 
+	fprintf(stderr, "[echelonize/GPLU] processing matrix of dimension %d x %d\n", n, m);
+
 	/* workspace for triangular solver */
 	int *x = spasm_malloc(m * sizeof(spasm_GFp));
 	int *xj = spasm_malloc(3 * m * sizeof(int));
@@ -75,7 +77,7 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 	/* allocate result */
 	i64 *Up = U->p;
 	i64 unz = spasm_nnz(U);
-	int r = spasm_min(n, m);  /* upper-bound on rank */
+	int r = spasm_min(A->n, m);  /* upper-bound on rank */
 
 	/* initialize early abort */
 	int rows_since_last_pivot = 0;
@@ -178,10 +180,10 @@ static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size
         	Uqinv[q[j]] = U->n;
         	for (i64 k = rr; k < Sm; k++) {
         		i64 j = Sqinv[k];
-        		if (S[i * Sm + j] == 0)
+        		if (S[i * Sm + k] == 0)
         			continue;   /* don't store zero */
         		Uj[unz] = q[j];
-        		Ux[unz] = S[i * Sm + j];
+        		Ux[unz] = S[i * Sm + k];
         		unz += 1;
         	}
         	U->n += 1;
@@ -253,7 +255,7 @@ void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int
 
 /* 
  * the schur complement (on non-pivotal rows of A) w.r.t. U is dense.
- * process A[npiv:n]
+ * process (P*A)[0:n]
  */
 void spasm_echelonize_dense(spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts)
 {
@@ -273,8 +275,8 @@ void spasm_echelonize_dense(spasm *A, const int *p, int n, spasm *U, int *Uqinv,
 
 	for (;;) {
 		/* compute a chunk of the schur complement, then echelonize with FFPACK */
-		int rank_ub = spasm_min(n, Sm);
-		int Sn = spasm_min(rank_ub, opts->dense_block_size);
+		int rank_ub = spasm_min(A->n - U->n, A->m - U->n);
+		int Sn = spasm_min(n - processed, spasm_min(rank_ub, opts->dense_block_size));
 		if (Sn <= 0)
 			break;
 		
