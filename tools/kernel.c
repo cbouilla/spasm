@@ -35,7 +35,7 @@ void parse_command_line_options(int argc, char **argv)
 			break;
 		case 'd':
 			opts.dense_block_size = atoi(optarg);
-			fprintf(stderr, "Using dense block size %d\n", opts.dense_block_size)
+			fprintf(stderr, "Using dense block size %d\n", opts.dense_block_size);
 			break;
 		case 'l':
 			opts.enable_tall_and_skinny = 0;

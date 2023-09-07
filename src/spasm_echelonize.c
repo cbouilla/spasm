@@ -205,7 +205,8 @@ void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int
 	double start = spasm_wtime();
 	int old_un = U->n;
 	int round = 0;
-	fprintf(stderr, "[echelonize/dense/low-rank] processing dense schur complement of dimension %d x %d\n", n, Sm);
+	fprintf(stderr, "[echelonize/dense/low-rank] processing dense schur complement of dimension %d x %d; block size=%d\n", 
+		n, Sm, opts->dense_block_size);
 	
 	/* 
 	 * stupid algorithm to decide a starting weight:
@@ -270,7 +271,8 @@ void spasm_echelonize_dense(spasm *A, const int *p, int n, spasm *U, int *Uqinv,
 	double start = spasm_wtime();
 	int old_un = U->n;
 	int round = 0;
-	fprintf(stderr, "[echelonize/dense] processing dense schur complement of dimension %d x %d\n", n, Sm);
+	fprintf(stderr, "[echelonize/dense] processing dense schur complement of dimension %d x %d; block size=%d\n", 
+		n, Sm, opts->dense_block_size);
 	bool lowrank_mode = 0;
 
 	for (;;) {
@@ -323,7 +325,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 {
 	struct echelonize_opts default_opts;
 	if (opts == NULL) {
-		fprintf(sdterr, "[echelonize] using default settings\n");
+		fprintf(stderr, "[echelonize] using default settings\n");
 		opts = &default_opts;
 		spasm_echelonize_init_opts(opts);
 	}
@@ -426,8 +428,8 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 	if (!opts->enable_GPLU)
 		fprintf(stderr, "[echelonize] GPLU mode disabled\n");
 	
-	fprintf("finishing; density = %.3f; aspect ratio = %.1f\n", density, aspect_ratio);
 	double aspect_ratio = (double) (n - npiv) / (m - npiv);
+	fprintf(stderr, "[echelonize] finishing; density = %.3f; aspect ratio = %.1f\n", density, aspect_ratio);
 	if (opts->enable_tall_and_skinny && aspect_ratio > opts->tall_and_skinny_ratio)
 		spasm_echelonize_dense_lowrank(A, p + npiv, n - npiv, U, Uqinv, opts);
 	else if (opts->enable_dense && density > opts->sparsity_threshold)
