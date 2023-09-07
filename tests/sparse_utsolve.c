@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 			xx[j] = x[i];
 		}
 	}
-	spasm_gaxpy(Ut, xx, yy);
+	spasm_xApy(xx, Ut, yy);
 	for (int i = 0; i < r; i++)
 		printf("# y[%d] = %d\n", i, yy[i]);
 

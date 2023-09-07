@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 
  spasm_sparse_vector_matrix_prod(C, x, xi, xnz, y, yi);
 
- spasm_gaxpy(C, x, z);
+ spasm_xApy(x, C, z);
  for (i = 0; i < m; i++) {
    z[i] = z[i] - y[i];
    if (z[i] != 0) {

@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 			printf("x[%d] <-- %d\n", i, x[j]);
 		}
 	}
-	spasm_gaxpy(U, xx, yy);
+	spasm_xApy(xx, U, yy);
 	for (int i = 0; i < m; i++)
 		printf("# y[%d] = %d\n", i, yy[i]);
 

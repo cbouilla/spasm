@@ -4,21 +4,22 @@
 #include "spasm.h"
 
 /* 
- * given the transpose of an echelonized matrix (not necessarily in RREF), return a basis of its right kernel
- * This code is similar to src/spasm_schur.c and src/spasm_rref.c ---> in bad need of factorization
- * qinv locates the pivots in Ut.
+ * return a basis of the right kernel of U.  U must be echelonized.
  */
-spasm * spasm_kernel(const spasm *Ut, const int *qinv)
+spasm * spasm_kernel(const spasm *U, const int *qinv)
 {
-	int m = Ut->n;
-	int n = Ut->m;
-	int prime = Ut->prime;
+	int m = U->m;
+	int n = U->n;
 	assert(n <= m);
+	int prime = U->prime;
 	char hnnz[8];
-	spasm_human_format(spasm_nnz(Ut), hnnz);
-	fprintf(stderr, "[kernel] start. U is %d x %d (%s nnz)\n", n, m, hnnz);
+	spasm_human_format(spasm_nnz(U), hnnz);
+	fprintf(stderr, "[kernel] start. U is %d x %d (%s nnz). Transposing U\n", n, m, hnnz);
 	double start_time = spasm_wtime();
-	spasm *K = spasm_csr_alloc(m-n, m, spasm_nnz(Ut), prime, SPASM_WITH_NUMERICAL_VALUES);
+
+	spasm *Ut = spasm_transpose(U, SPASM_WITH_NUMERICAL_VALUES);
+	
+	spasm *K = spasm_csr_alloc(m-n, m, spasm_nnz(U), prime, SPASM_WITH_NUMERICAL_VALUES);
 	i64 *Kp = K->p;
 	int *Kj = K->j;
 	spasm_GFp *Kx = K->x;
@@ -26,18 +27,20 @@ spasm * spasm_kernel(const spasm *Ut, const int *qinv)
 	i64 nnz = 0;        /* entries in R */
 	int writing = 0;
 
-	int *Utqinv = spasm_malloc(n * sizeof(*Utqinv));
+	int *Utqinv = spasm_malloc(n * sizeof(*Utqinv)); /* locate pivots in Ut */
 	for (int j = 0; j < m; j++) {
 		int i = qinv[j];
-		if (i >= 0) {
-			assert(i < n);
+		if (i >= 0)
 			Utqinv[i] = j;
-		}
 	}
 
+	/*
+	 * The following code is simiar to spasm_schur and spasm_rref (needs factorization...)
+	 */
 	#pragma omp parallel
 	{
 		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+		spasm_GFp *y = spasm_malloc(n * sizeof(*y));
 		int *xj = spasm_malloc(3 * n * sizeof(int));
 		spasm_vector_zero(xj, 3 * n);
 		int tid = spasm_get_thread_num();
@@ -95,15 +98,27 @@ spasm * spasm_kernel(const spasm *Ut, const int *qinv)
 			Kx[local_nnz] = prime - 1;
 			local_nnz += 1;
 			for (int px = top; px < n; px++) {
-				int j = xj[px];
-				if (x[j] != 0) {
-					int i = Utqinv[j];
-					Kj[local_nnz] = i;
-					Kx[local_nnz] = x[j];
+				int jj = xj[px];
+				if (x[jj] != 0) {
+					int ii = Utqinv[jj];
+					assert(ii != j);
+					Kj[local_nnz] = ii;
+					Kx[local_nnz] = x[jj];
 					local_nnz += 1;
 				}
 			}
 			Kp[local_i + 1] = local_nnz;
+
+                	/* scatter K[i] into x */
+                	spasm_vector_zero(x, m);
+                	for (i64 px = Kp[local_i]; px < Kp[local_i + 1]; px++) {
+                	        int j = Kj[px];
+                	        x[j] = Kx[px];
+                	}
+                	spasm_vector_zero(y, n);
+                	spasm_xApy(x,  Ut, y);
+                	for (int i = 0; i < n; i++)
+                	        assert (y[i] == 0);
 
 			/* we're done writing */
 			#pragma omp atomic update
@@ -117,17 +132,37 @@ spasm * spasm_kernel(const spasm *Ut, const int *qinv)
 	  		}
 		}
 	  	free(x);
+	  	free(y);
 		free(xj);
 	}
+
+	spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+	spasm_GFp *y = spasm_malloc(n * sizeof(*y));
+	for (int i = 0; i < K->n; i++) {
+		/* scatter K[i] into x */
+		spasm_vector_zero(x, m);
+		for (i64 px = K->p[i]; px < K->p[i + 1]; px++) {
+			int j = K->j[px];
+			x[j] = K->x[px];
+		}
+		spasm_vector_zero(y, n);
+		spasm_xApy(x, Ut, y);
+		for (int i = 0; i < n; i++)
+			assert (y[i] == 0);
+	}
+
 	fprintf(stderr, "\n");
 	free(Utqinv);
+	spasm_csr_free(Ut);
 	spasm_human_format(spasm_nnz(K), hnnz);
 	fprintf(stderr, "[kernel] done in %.1fs. NNZ(K) = %s\n", spasm_wtime() - start_time, hnnz);
 	return K;
 }
 
-
-/* given an echelonized matrix (in RREF), return a basis of its right kernel */
+/* 
+ * given an echelonized matrix (in RREF), return a basis of its right kernel.
+ * This is less computationnaly expensive than from a non-RREF matrix
+ */
 spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv)
 {
 	assert(qinv != NULL);

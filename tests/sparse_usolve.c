@@ -41,7 +41,7 @@ int main(int argc, char **argv)
         spasm_sparse_triangular_solve(U, B, 0, xi, x, qinv);
 
         /* check solution */
-        spasm_gaxpy(U, x, y);
+        spasm_xApy(x, U, y);
         for (int j = n; j < m; j++)
                 y[j] = (y[j] + x[j]) % B->prime;
 

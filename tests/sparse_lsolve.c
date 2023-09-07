@@ -40,7 +40,7 @@ int main(int argc, char **argv)
         spasm_sparse_triangular_solve(L, B, 0, xi, x, qinv);
 
         /* check solution */
-        spasm_gaxpy(L, x, y);
+        spasm_xApy(x, L, y);
         spasm_scatter(B->j, B->x, B->p[0], B->p[1], prime - 1, y, prime);
         for (int i = 0; i < m; i++)
                 if (y[i] != 0) {

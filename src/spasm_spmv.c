@@ -4,9 +4,10 @@
 #include "spasm.h"
 
 /*
- * (dense vector) * (sparse) Matrix y <--- y + x*A
+ * (dense) vector * (sparse) Matrix
+ * y <--- x*A + y
  */
-void spasm_gaxpy(const spasm *A, const spasm_GFp *x, spasm_GFp *y)
+void spasm_xApy(const spasm_GFp *x, const spasm *A, spasm_GFp *y)
 {
 	int n = A->n;
 	const i64 *Ap = A->p;
@@ -14,11 +15,31 @@ void spasm_gaxpy(const spasm *A, const spasm_GFp *x, spasm_GFp *y)
 	const spasm_GFp *Ax = A->x;
 	int prime = A->prime;
 	for (int i = 0; i < n; i++)
-		spasm_scatter(Aj, Ax, Ap[i], Ap[i + 1], x[i], y, prime);
+		for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
+			int j = Aj[px];
+			y[j] = (y[j] + x[i] * Ax[px]) % prime;
+		}
 }
 
+/*
+ * (sparse) Matrix * (dense) vector
+ * y <--- A*x + y
+ */
+void spasm_Axpy(const spasm *A, const spasm_GFp *x, spasm_GFp *y)
+{
+	int n = A->n;
+	const i64 *Ap = A->p;
+	const int *Aj = A->j;
+	const spasm_GFp *Ax = A->x;
+	int prime = A->prime;
+	for (int i = 0; i < n; i++)
+		for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
+			int j = Aj[px];
+			y[i] = (y[i] + Ax[px] * x[j]) % prime;
+		}
+}
 
-
+#if 0
 /*
  * (sparse vector) * (sparse) Matrix Compute y = x * M, where x and M are
  * sparse.
@@ -66,3 +87,4 @@ int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const 
 	free(w);
 	return nz;
 }
+#endif

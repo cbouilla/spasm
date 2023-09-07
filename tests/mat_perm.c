@@ -41,10 +41,10 @@ int main(int argc, char **argv) {
     }
     x[i] = 1;
 
-    spasm_gaxpy(A, x, y); // y <--- x.A
+    spasm_xApy(x, A, y); // y <--- x.A
 
     spasm_pvec(p, x, u, n); // u <--- x.P
-    spasm_gaxpy(B, u, v); // v <--- (x.P).B
+    spasm_xApy(u, B, v); // v <--- (x.P).B
     spasm_pvec(q, v, w, m); // w <--- ((x.P).B).Q
 
     for(j = 0; j < m; j++) {

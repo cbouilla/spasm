@@ -174,7 +174,10 @@ void spasm_scatter(const int *Aj, const spasm_GFp * Ax, i64 from, i64 to, spasm_
 int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);
 int spasm_reach(const spasm * A, const spasm * B, int k, int l, int *xj, const int *qinv);
 
-/* spasm_gaxpy.c */
+/* spasm_spmv.c */
+void spasm_xApy(const spasm_GFp *x, const spasm *A, spasm_GFp *y);
+void spasm_Axpy(const spasm *A, const spasm_GFp *x, spasm_GFp *y);
+
 void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp * y);
 int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi);
 
@@ -224,7 +227,8 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts);
 spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv);
 
 /* spasm_kernel.c */
-spasm * spasm_kernel(const spasm *Ut, const int *qinv);
+spasm * spasm_kernel(const spasm *U, const int *qinv);
+spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv);
 
 /* utilities */
 static inline int spasm_max(int a, int b)

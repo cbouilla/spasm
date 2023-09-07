@@ -382,8 +382,13 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 		spasm_make_pivots_unitary(U, SPASM_IDENTITY_PERMUTATION, U->n); /* reprocess previous pivots; shame */
 
 		/* decide whether to move on to the next iteration */
+		if (npiv == spasm_min(n, m)) {
+			fprintf(stderr, "[echelonize] full rank reached\n");			
+			break;
+		}
+
 		if (npiv < opts->min_pivot_proportion * spasm_min(n, m)) {
-			fprintf(stderr, "not enough pivots found; stopping\n");
+			fprintf(stderr, "[echelonize] not enough pivots found; stopping\n");
 			break;     /* not enough pivots found */
 		}
 //		
@@ -393,7 +398,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 //		}
 		density = spasm_schur_estimate_density(A, p + npiv, n - npiv, U, Uqinv, 100);
 		if (density > opts->sparsity_threshold) {
-			fprintf(stderr, "Schur complement is dense (estimated %.2f%%)\n", 100 * density);
+			fprintf(stderr, "[echelonize] Schur complement is dense (estimated %.2f%%)\n", 100 * density);
 			break;
 		}
 

@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
   for(j = 0; j < m; j++) {
     b[j] = 0;
   }
-  spasm_gaxpy(G, x, b);
+  spasm_xApy(x, G, b);
   for(j = 0; j < m; j++) {
     y[j] = b[j];
   }
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   for(j = 0; j < m; j++) {
     y[j] = 0;
   }
-  spasm_gaxpy(G, x, y);
+  spasm_xApy(x, G, y);
   for(i = 0; i < m; i++) {
     if (y[i] != b[i]) {
       printf("not ok - dense forward-substitution triangular solver [incorrect solution found]\n");

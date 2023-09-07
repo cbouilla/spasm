@@ -162,6 +162,9 @@ int main(int argc, char **argv)
 	spasm *R = spasm_rref(U, Uqinv, Rqinv);
 	rref_check(R, Rqinv);
 	deterministic_inclusion_test(A, R, Rqinv);	
+
+	spasm *K = spasm_kernel_from_rref(R, Rqinv);
+
 	spasm_csr_free(A);
 	spasm_csr_free(U);
 	spasm_csr_free(R);

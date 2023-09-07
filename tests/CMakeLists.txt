@@ -179,19 +179,19 @@ spasm_run_test(mat_perm upper_trapeze.sms)
 
 ######### GEMV
 
-spasm_declare_test(sparse_vect_matrix_prod)
+# spasm_declare_test(sparse_vect_matrix_prod)
 
 set(SPMV_TEST_MATRICES
     m1.sms
     medium.sms
     rectangular_l.sms
 )
-spasm_run_tests(sparse_vect_matrix_prod       "${SPMV_TEST_MATRICES}")
+# spasm_run_tests(sparse_vect_matrix_prod       "${SPMV_TEST_MATRICES}")
 
 ######### misc
 
-spasm_declare_test(gaxpy)
-spasm_test_expected_output(gaxpy m1.sms gaxpy.1)
+spasm_declare_test(spmv)
+spasm_test_expected_output(spmv m1.sms gaxpy.1)
 
 spasm_declare_test(submatrix)
 spasm_test_expected_output(submatrix singular.sms submatrix.1)

@@ -1,7 +1,7 @@
 add_library(libspasm 
 	# common stuff, IO, utilities
 	spasm_util.c mmio.c spasm_io.c spasm_triplet.c spasm_GFp.c spasm_scatter.c
-	spasm_gaxpy.c spasm_transpose.c spasm_permutation.c
+	spasm_spmv.c spasm_transpose.c spasm_permutation.c
 
 	# core algo: triangular solver
 	spasm_reach.c spasm_triangular.c 

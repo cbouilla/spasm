@@ -22,7 +22,7 @@ int main() {
     x[i] = i + 1;
     y[i] = 0;
   }
-  spasm_gaxpy(C, x, y);
+  spasm_xApy(x, C, y);
   for(i = 0; i < n; i++) {
     printf("%d\n", y[i]);
   }
