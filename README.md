@@ -4,29 +4,32 @@ SpaSM (Sparse direct Solver Modulo _p_)
 SpaSM is a software library devoted to sparse gaussian elimination modulo a small prime _p_. 
 It is available under the General Public License Version 3 or later (GPLv3+).
 
-The algorithms used in SpaSM are described in [CASC'16](http://www-almasty.lip6.fr/~bouillaguet/pub/CASC16.pdf) and [PASCO'17](http://www-almasty.lip6.fr/~bouillaguet/pub/PASCO17.pdf).
-
+This is "research-quality" software. While we try to make sure that it actually works, we cannot make any promises.
 
 Features
 --------
 
-The core of the library is an implementation of the GPLU algorithm, heavily inspired by 
-[Tim Davis](http://faculty.cse.tamu.edu/davis/)'s [CSparse](http://faculty.cse.tamu.edu/davis/publications_files/CSparse.zip), and 
-adapted to the context of exact computation. On top of this, we designed new strategies to search for structural pivots. 
-This allows several kind of useful operations on sparse matrices:
-  * LU and PLUQ factorization
-  * Rank computation
-  * Solution of linear systems
-  * Kernel basis
-  * Permutation to block triangular form
-  * Reduced Row-Echelon Form
+The core of the library is a multithreaded function that computes the row echelon form of a sparse matrix modulo a word-sized prime. 
+This enables several of useful computations on sparse matrices modulo _p_:
+  * Basis of the row space
+  * Basis of the kernel
+  * Reduced Row Echelon form
+  * Rank
 
-Finally, the library does I/O of matrices in [SMS format](http://hpac.imag.fr/), which makes it 
-somewhat compatible with [LinBox](http://linalg.org/).
+In addition, SpaSM contains code to compute the Dulmage-Mendelson decomposition (permutation of a matrice to block triangular form) and several other useful functions.
 
-It is also capable of reading the [MatrixMarket format](https://math.nist.gov/MatrixMarket/), which is arguably better.
+The following algorithms algorithms are used in SpaSM:
+  * [Gilbert-Peierls sparse triangular solving with sparse right-hand side](https://doi.org/10.1137/0909058)
+  * [Faugère-Lachartre pivot selection](http://www-almasty.lip6.fr/~bouillaguet/pub/CASC16.pdf)
+  * [Improved greedy pivot selection](http://www-almasty.lip6.fr/~bouillaguet/pub/PASCO17.pdf).
 
-A set of demonstration programs is provided (see the `tools/` folder).
+Initial versions of SpaSM were heavily influence by
+[Tim Davis](http://faculty.cse.tamu.edu/davis/)'s [CSparse](http://faculty.cse.tamu.edu/davis/publications_files/CSparse.zip). 
+
+Spasm does I/O of matrices in [SMS format](http://hpac.imag.fr/), which makes it 
+somewhat compatible with [LinBox](http://linalg.org/).  It is also capable of reading the [MatrixMarket format](https://math.nist.gov/MatrixMarket/), which is arguably better.
+
+A set of demonstration programs is provided (see the `tools/` folder). They can be used to compute the rank, the RREF, a kernel basis, or a Dumlage-Mendelson decomposition of a sparse matrix.
 
 
 Installation
@@ -37,19 +40,11 @@ In brief:
 
 This requires [cmake](https://cmake.org). The executables can be found in `build/tools`.
 
-SpaSM does not rely on any third-party software, but is capable of using:
-  * [METIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview) to find row separators.
-  * [FFLAS-FFPACK](https://github.com/linbox-team/fflas-ffpack) for dense rank computation.
-  * [LinBox](https://github.com/linbox-team/linbox) for other rank algorithms.
-  * [Lemon](https://lemon.cs.elte.hu/trac/lemon) to find maximum matchings on non-bipartite graphs.
-
+SpaSM relies on two third-party libraries, which are required at compile-time:
+  * [Givaro](https://github.com/linbox-team/givaro)
+  * [FFLAS-FFPACK](https://github.com/linbox-team/fflas-ffpack)
+  
 SpaSM uses OpenMP to exploit multicore machines.
-
-The most commonly used option include:
-- `--with-metis=<path>` : build the METIS interface
-- `--with-fflas-ffpack=<path>` : enable the tools relying on dense rank computation
-- `--with-linbox=<path>` : build the linbox wrappers (for comparison purpose)
-- `--with-lemon=<path>` : build the lemon matching tool
 
 Demonstration scripts
 ---------------------

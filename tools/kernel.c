@@ -35,6 +35,7 @@ void parse_command_line_options(int argc, char **argv)
 			break;
 		case 'd':
 			opts.dense_block_size = atoi(optarg);
+			fprintf(stderr, "Using dense block size %d\n", opts.dense_block_size)
 			break;
 		case 'l':
 			opts.enable_tall_and_skinny = 0;
@@ -62,10 +63,10 @@ int main(int argc, char **argv)
 	spasm_triplet_free(T);
 	int m = A->m;
 
-        /* echelonize A */
-        int *qinv = spasm_malloc(m * sizeof(*qinv));
-        spasm *U = spasm_echelonize(A, qinv, &opts);
-        spasm_csr_free(A);
+	/* echelonize A */
+	int *qinv = spasm_malloc(m * sizeof(*qinv));
+	spasm *U = spasm_echelonize(A, qinv, &opts);
+	spasm_csr_free(A);
 
         spasm *K = spasm_kernel(U, qinv);
 	spasm_save_csr(stdout, K);

@@ -221,7 +221,7 @@ void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int
 
 	for (;;) {
 		/* compute a chunk of the schur complement, then echelonize with FFPACK */
-		rank_ub = spasm_min(n, Sm);
+		rank_ub = spasm_min(A->n - U->n, A->m - U->n);
 		int Sn = spasm_min(rank_ub, opts->dense_block_size);
 		if (Sn <= 0)
 			break;		
@@ -323,6 +323,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 {
 	struct echelonize_opts default_opts;
 	if (opts == NULL) {
+		fprintf(sdterr, "[echelonize] using default settings\n");
 		opts = &default_opts;
 		spasm_echelonize_init_opts(opts);
 	}
@@ -392,12 +393,11 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 		if (npiv < opts->min_pivot_proportion * spasm_min(n, m)) {
 			fprintf(stderr, "[echelonize] not enough pivots found; stopping\n");
 			break;     /* not enough pivots found */
-		}
-//		
-//		if (density > opts->sparsity_threshold && aspect_ratio > opts->tall_and_skinny_ratio) {
-//			fprintf(stderr, "Schur complement is dense,tall and skinny (#rows / #cols = %.1f)\n", aspect_ratio);
-//			break;
-//		}
+		}		
+		// if (density > opts->sparsity_threshold && aspect_ratio > opts->tall_and_skinny_ratio) {
+		// 	fprintf(stderr, "Schur complement is dense,tall and skinny (#rows / #cols = %.1f)\n", aspect_ratio);
+		// 	break;
+		// }
 		density = spasm_schur_estimate_density(A, p + npiv, n - npiv, U, Uqinv, 100);
 		if (density > opts->sparsity_threshold) {
 			fprintf(stderr, "[echelonize] Schur complement is dense (estimated %.2f%%)\n", 100 * density);
@@ -426,6 +426,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 	if (!opts->enable_GPLU)
 		fprintf(stderr, "[echelonize] GPLU mode disabled\n");
 	
+	fprintf("finishing; density = %.3f; aspect ratio = %.1f\n", density, aspect_ratio);
 	double aspect_ratio = (double) (n - npiv) / (m - npiv);
 	if (opts->enable_tall_and_skinny && aspect_ratio > opts->tall_and_skinny_ratio)
 		spasm_echelonize_dense_lowrank(A, p + npiv, n - npiv, U, Uqinv, opts);
