@@ -195,9 +195,9 @@ spasm *spasm_trsm(const spasm *U, const int *qinv, const spasm *B)
 			int row_nnz = 0;             /* #nz coefficients in the row */
 			for (int px = top; px < m; px++) {
 				int j = xj[px];
-				assert(qinv[j] >= 0);   /* otherwise, solution does not exist */
 				if (x[j] == 0)
 					continue;
+				assert(qinv[j] >= 0);   /* otherwise, solution does not exist */
 				row_nnz += 1;
 			}
 
