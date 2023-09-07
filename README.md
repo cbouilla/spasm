@@ -44,6 +44,8 @@ SpaSM relies on two third-party libraries, which are required at compile-time:
   * [Givaro](https://github.com/linbox-team/givaro)
   * [FFLAS-FFPACK](https://github.com/linbox-team/fflas-ffpack)
   
+Under Debian linux or ubuntu, installing the `fflas-ffpack` package is sufficient to compile.
+
 SpaSM uses OpenMP to exploit multicore machines.
 
 Demonstration scripts
@@ -76,6 +78,13 @@ curl http://hpac.imag.fr/Matrices/GL7d/GL7d14.sms.gz | gunzip - | ./vertical_swa
 curl http://hpac.imag.fr/Matrices/GL7d/GL7d22.sms.gz | gunzip - | ./vertical_swap | ./rank --sparse-threshold 0.01
 ```
 
+Dealing with large matrices
+---------------------------
+
+Sparse Gaussian elimination is more an art than a science.  In some cases, it will inevitably fail (the matrix will fill during the process). 
+
+However, with some expertise, it may be possible to deal with potentially larger problems than what the auto-pilot is capable. Don't hesitate to get in touch.
+
 Citing SpaSM
 ------------
 
@@ -84,7 +93,7 @@ If by any luck your research depends on the SpaSM library, please consider citin
 ```
 @manual{spasm,
 title = {{SpaSM}: a Sparse direct Solver Modulo $p$},
-author = {The SpaSM group},
+author = {Charles Bouillaguet},
 edition = {v1.3},
 year = {2023},
 note = {\url{http://github.com/cbouilla/spasm}}
