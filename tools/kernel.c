@@ -1,37 +1,77 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <getopt.h>
+#include <err.h>
 
 #include "spasm.h"
 
+int prime = 42013;
+struct echelonize_opts opts;
+bool left = 0;
+
+void parse_command_line_options(int argc, char **argv)
+{
+	struct option longopts[] = {
+		{"modulus", required_argument, NULL, 'p'},
+		{"left", no_argument, NULL, 'L'},
+		{"no-greedy-pivot-search", no_argument, NULL, 'g'},
+		{"no-low-rank-mode", no_argument, NULL, 'l'},
+		{"dense-block-size", required_argument, NULL, 'd'},
+		{"low-rank-start-weight", required_argument, NULL, 'w'},
+		{NULL, 0, NULL, 0}
+	};
+	char ch;
+	while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
+		switch (ch) {
+		case 'p':
+			prime = atoi(optarg);
+			break;
+		case 'L':
+			left = 1;
+			break;
+		case 'g':
+			opts.enable_greedy_pivot_search = 0;
+			break;
+		case 'd':
+			opts.dense_block_size = atoi(optarg);
+			break;
+		case 'l':
+			opts.enable_tall_and_skinny = 0;
+			break;
+		case 'w':
+			opts.low_rank_start_weight = atoi(optarg);
+			break;
+		default:
+			errx(1, "Unknown option\n");
+		}
+	}
+}
+
 int main(int argc, char **argv)
 {
-        spasm_triplet *T = spasm_load_sms(stdin, 42013);
-        spasm *A = spasm_compress(T);
-        spasm_triplet_free(T);
-        int m = A->m;
+	spasm_echelonize_init_opts(&opts);
+	parse_command_line_options(argc, argv);
+
+	spasm_triplet *T = spasm_load_sms(stdin, prime);
+	if (left) {
+		fprintf(stderr, "Left-kernel, transposing\n");
+		spasm_triplet_transpose(T);
+	}
+	spasm *A = spasm_compress(T);
+	spasm_triplet_free(T);
+	int m = A->m;
 
         /* echelonize A */
-        int *Uqinv = spasm_malloc(m * sizeof(int));
-        spasm *U = spasm_echelonize(A, Uqinv, NULL);   /* NULL = default options */
+        int *qinv = spasm_malloc(m * sizeof(*qinv));
+        spasm *U = spasm_echelonize(A, qinv, &opts);
         spasm_csr_free(A);
 
-        /* compute the RREF */
-        int *Rqinv = spasm_malloc(m * sizeof(int));
-        spasm *R = spasm_rref(U, Uqinv, Rqinv);
-        spasm_csr_free(U);
-        free(Uqinv);
-        
-        /* build kernel basis from the RREF */
-        spasm *K = spasm_kernel(R, Rqinv);
-        char hnnz[8];
-        spasm_human_format(spasm_nnz(K), hnnz);
-        fprintf(stderr, "Saving kernel basis (%d x %d with %s nnz)\n", K->n, K->m, hnnz);
-        spasm_save_csr(stdout, K);
-        
-        /* rows of K form a basis of the left-kernel of At */
-        spasm_csr_free(K);
-        spasm_csr_free(R);
-        free(Rqinv);        
+        spasm *K = spasm_kernel(U, qinv);
+	spasm_save_csr(stdout, K);
+	fprintf(stderr, "Kernel basis matrix is %d x %d with %" PRId64 " nz\n", K->n, K->m, spasm_nnz(K));
+	free(qinv);
+	spasm_csr_free(U);
+	spasm_csr_free(K);
         exit(EXIT_SUCCESS);
 }
