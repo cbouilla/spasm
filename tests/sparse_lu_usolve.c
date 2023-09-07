@@ -21,8 +21,10 @@ int main(int argc, char **argv)
 	// make RHS
 	T = spasm_triplet_alloc(1, m, 10, prime, true);
 	spasm_add_entry(T, 0, 0, 1);
-	spasm_add_entry(T, 0, m / 2, 2);
-	spasm_add_entry(T, 0, m - 1, 3);
+	if (m > 0) {
+		spasm_add_entry(T, 0, m / 2, 2);
+		spasm_add_entry(T, 0, m - 1, 3);
+	}
 	spasm *B = spasm_compress(T);
 	spasm_triplet_free(T);
 

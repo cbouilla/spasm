@@ -24,10 +24,9 @@ int main(int argc, char **argv)
         spasm *Ut = spasm_transpose(U, SPASM_WITH_NUMERICAL_VALUES);
         spasm *K = spasm_kernel(U, qinv);
         
-        // S*At == M*U, donc A*St == Ut * Mt
-        // Si x*Ut == 0, alors x*A*St == 0. Donc ce n'est pas normal que ça échoue.
-        // Si x*A  == 0, alors x*Ut * Mt == 0, donc ou bien x*Ut == 0, ou bien (x*Ut) * Mt == 0
-        // cette dernière chose est assez improbable
+        // At == M*U, donc A*St == Ut * Mt
+        // Si x*Ut == 0, alors x*A*St == 0. 
+        // Donc ou bien x*A == 0, ou bien (x*A) * St == 0
 
         /* rows of K form a basis of the right-kernel of At, hence the left kernel of A */
         

@@ -178,13 +178,11 @@ int spasm_reach(const spasm * A, const spasm * B, int k, int l, int *xj, const i
 void spasm_xApy(const spasm_GFp *x, const spasm *A, spasm_GFp *y);
 void spasm_Axpy(const spasm *A, const spasm_GFp *x, spasm_GFp *y);
 
-void spasm_gaxpy(const spasm * A, const spasm_GFp * x, spasm_GFp * y);
-int spasm_sparse_vector_matrix_prod(const spasm * M, const spasm_GFp * x, const int *xi, int xnz, spasm_GFp * y, int *yi);
-
 /* spasm_triangular.c */
 void spasm_dense_back_solve(const spasm *L, spasm_GFp *b, spasm_GFp *x, const int *p);
 int spasm_dense_forward_solve(const spasm * U, spasm_GFp * b, spasm_GFp * x, const int *q);
 int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_GFp * x, const int *qinv);
+spasm *spasm_trsm(const spasm *U, const int *qinv, const spasm *B);
 
 /* spasm_schur.c */
 void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv);

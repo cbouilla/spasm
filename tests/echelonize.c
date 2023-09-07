@@ -159,6 +159,9 @@ int main(int argc, char **argv)
 	echelon_form_check(U, Uqinv);
 	deterministic_inclusion_test(A, U, Uqinv);
 
+	spasm *M = spasm_trsm(U, Uqinv, A);
+	
+
 	spasm *R = spasm_rref(U, Uqinv, Rqinv);
 	rref_check(R, Rqinv);
 	deterministic_inclusion_test(A, R, Rqinv);	

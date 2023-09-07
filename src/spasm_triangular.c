@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <assert.h>
 
 #include "spasm.h"
@@ -160,4 +161,95 @@ int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj
 		x[j] = backup;
 	}
 	return top;
+}
+
+/*
+ * Solves X * U == B
+ * Serious similarity with spasm_schur, spasm_rref, spasm_kernel, ...
+ */
+spasm *spasm_trsm(const spasm *U, const int *qinv, const spasm *B)
+{
+	assert(U->m == B->m);
+	int m = B->m;
+	int n = B->n;
+	spasm *X = spasm_csr_alloc(n, m, spasm_nnz(B), B->prime, SPASM_WITH_NUMERICAL_VALUES);
+	i64 *Xp = X->p;
+	int *Xj = X->j;
+	spasm_GFp *Xx = X->x;
+	i64 nnz = 0;      /* nnz in X at the moment */
+	int Xn = 0;       /* #rows in X at the moment */
+	int writing = 0;
+	double start = spasm_wtime();
+
+	#pragma omp parallel
+	{
+		spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
+		int *xj = spasm_malloc(3 * m * sizeof(int));
+		spasm_vector_zero(xj, 3 * m);
+		int tid = spasm_get_thread_num();
+
+		#pragma omp for schedule(guided)
+		for (int i = 0; i < n; i++) {
+			int top = spasm_sparse_triangular_solve(U, B, i, xj, x, qinv);
+
+			int row_nnz = 0;             /* #nz coefficients in the row */
+			for (int px = top; px < m; px++) {
+				int j = xj[px];
+				assert(qinv[j] >= 0);   /* otherwise, solution does not exist */
+				if (x[j] == 0)
+					continue;
+				row_nnz += 1;
+			}
+
+			int local_i;
+			i64 local_nnz;
+			#pragma omp critical(schur_complement)
+			{
+				/* enough room in X? */
+				if (nnz + row_nnz > X->nzmax) {
+					/* wait until other threads stop writing into it */
+					#pragma omp flush(writing)
+					while (writing > 0) {
+						#pragma omp flush(writing)
+					}
+					spasm_csr_realloc(X, 2 * X->nzmax + m);
+					Xj = X->j;
+					Xx = X->x;
+				}
+				/* save row Xn */
+				local_i = Xn;
+				Xn += 1;
+				local_nnz = nnz;
+				nnz += row_nnz;
+				#pragma omp atomic update
+				writing += 1;    /* register as a writing thread */
+			}
+			
+			/* write the new row in X */
+			for (int px = top; px < m; px++) {
+				int j = xj[px];
+				if (x[j] == 0)
+					continue;
+				Xj[local_nnz] = qinv[j];
+				Xx[local_nnz] = x[j];
+				local_nnz += 1;
+			}
+			Xp[local_i + 1] = local_nnz;
+
+			#pragma omp atomic update
+			writing -= 1;        /* unregister as a writing thread */
+
+			if (tid == 0) {
+				fprintf(stderr, "\r[trsm] %d/%d [%" PRId64 " nz]", Xn, n, nnz);
+				fflush(stderr);
+			}
+		}
+		free(x);
+		free(xj);
+	}
+	/* finalize X */
+	spasm_csr_realloc(X, -1);
+	double density = 1.0 * nnz / (1.0 * m * n);
+	fprintf(stderr, "\r[trsm] %d * %d [%" PRId64 " nz / density= %.3f], %.1fs\n", n, m, nnz, density, spasm_wtime() - start);
+	return X;
 }

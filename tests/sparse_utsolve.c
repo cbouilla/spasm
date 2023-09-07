@@ -43,13 +43,13 @@ int main(int argc, char **argv)
 	for (int i = 0; i < r; i++)
 		printf("# pinv[%d] = %d\n", i, pinv[i]);
 
-	int i = pinv[0];
-	const i64 *Utp = Ut->p;
-	const int *Utj = Ut->j;
-	printf("# U[%d] = ", i);
-	for (i64 px = Utp[i]; px < Utp[i + 1]; px++)
-		printf("%d ", Utj[px]);
-	printf("\n");
+	// int i = pinv[0];
+	// const i64 *Utp = Ut->p;
+	// const int *Utj = Ut->j;
+	// printf("# U[%d] = ", i);
+	// for (i64 px = Utp[i]; px < Utp[i + 1]; px++)
+	// 	printf("%d ", Utj[px]);
+	// printf("\n");
 
 	// triangular solve
 	int *xi = malloc(3*r * sizeof(*xi));

@@ -10,6 +10,8 @@ int spasm_is_upper_triangular(const spasm *A)
         const int *Aj = A->j;
         const spasm_GFp*Ax = A->x;
         for (int i = 0; i < n; i++) {
+                if (Ap[i] == Ap[i + 1])
+                        return 0;
                 /* check diagonal */
                 if (Aj[Ap[i]] != i)
                         return 0;
@@ -34,6 +36,8 @@ int spasm_is_lower_triangular(const spasm *A)
         const int *Aj = A->j;
         const spasm_GFp *Ax = A->x;
         for (int i = 0; i < m; i++) {
+                if (Ap[i] == Ap[i + 1])
+                        return 0;
                 /* check diagonal */
                 if (Aj[Ap[i + 1] - 1] != i)
                         return 0;

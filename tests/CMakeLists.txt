@@ -35,26 +35,46 @@ endfunction()
 
 ########################## now the actual tests ###############################
 
+set(ALL_TEST_MATRICES
+    BIOMD0000000424.int.mpl.sms
+    cc.sms
+    chains.sms 
+    dm.sms     
+    example.sms  
+    G2.sms  
+    lower_trapeze.sms  
+    mat364.sms  
+    p3.sms             
+    rectangular_l.sms  
+    scc3.sms  
+    singular2.sms  
+    singular.sms    
+    t1.sms         
+    # trefethen_2000.sms  
+    # tridiagonal.sms  
+    upper_trapeze.sms
+    BIOMD0000000525.int.mpl.sms  
+    chains2.sms  
+    dm2.sms     
+    empty.sms  
+    g1.sms       
+    l1.sms  
+    m1.sms             
+    medium.sms  
+    rectangular_h.sms  
+    scc2.sms           
+    scc.sms   
+    singular3.sms  
+    small.sms       
+    tree_test.sms  
+    trefethen_500.sms   
+    u1.sms           
+    void.sms
+)
 
 ######### GFp arith
 spasm_declare_test(GFp)
 add_test(NAME GFp COMMAND test_GFp)
-
-
-######### kernel
-spasm_declare_test(kernel)
-
-set(KERNEL_TEST_MATRICES
-    singular.sms
-    lower_trapeze.sms
-    upper_trapeze.sms
-    dm.sms
-    dm2.sms
-    void.sms
-    BIOMD0000000525.int.mpl.sms
-    BIOMD0000000424.int.mpl.sms
-)
-spasm_run_tests(kernel "${KERNEL_TEST_MATRICES}")
 
 
 ########### lu / pluq / solve / with and without permutation
@@ -67,17 +87,6 @@ spasm_run_tests(kernel "${KERNEL_TEST_MATRICES}")
 # spasm_declare_test(dense_lu)
 spasm_declare_test(dense_lu_ffpack)
 
-set(LU_TEST_MATRICES
-    small.sms
-    medium.sms
-    singular.sms
-    singular2.sms
-    singular3.sms
-    rectangular_h.sms
-    rectangular_l.sms
-    BIOMD0000000424.int.mpl.sms 
-    BIOMD0000000525.int.mpl.sms
-)
 # spasm_run_tests(lu              "${LU_TEST_MATRICES}")
 # spasm_run_tests(pluq            "${LU_TEST_MATRICES}")
 # spasm_run_tests(permuted_lu     "${LU_TEST_MATRICES}")
@@ -85,20 +94,13 @@ set(LU_TEST_MATRICES
 # spasm_run_tests(lu_solve        "${LU_TEST_MATRICES}")
 # spasm_run_tests(pluq_solve      "${LU_TEST_MATRICES}")
 # spasm_run_tests(dense_lu        "${LU_TEST_MATRICES}")
-spasm_run_tests(dense_lu_ffpack "${LU_TEST_MATRICES}")
+spasm_run_tests(dense_lu_ffpack   "${ALL_TEST_MATRICES}")
 
 
 ############ transpose
 spasm_declare_test(transpose)
 
-set(TRANSPOSE_TEST_MATRICES
-    medium.sms
-    upper_trapeze.sms
-    lower_trapeze.sms
-    u1.sms
-    l1.sms
-)
-spasm_run_tests(transpose "${TRANSPOSE_TEST_MATRICES}")
+spasm_run_tests(transpose "${ALL_TEST_MATRICES}")
 
 
 ########## triangular solvers
@@ -127,8 +129,8 @@ spasm_run_tests(sparse_lsolve "${LOWER_TEST_MATRICES}")
 # spasm_run_test(sparse_permuted_lsolve singular3.sms)
 spasm_run_tests(dense_usolve "${UPPER_TEST_MATRICES}")
 spasm_run_tests(sparse_usolve "${UPPER_TEST_MATRICES}")
-spasm_run_tests(sparse_lu_usolve "${LU_TEST_MATRICES}")
-spasm_run_tests(sparse_utsolve "${LU_TEST_MATRICES}")
+spasm_run_tests(sparse_lu_usolve "${ALL_TEST_MATRICES}")
+spasm_run_tests(sparse_utsolve "${ALL_TEST_MATRICES}")
 
 ########## Dulmage-Mendelson / matching / SCC / etc.
 
@@ -154,18 +156,17 @@ spasm_run_tests(dm       "${DM_TEST_MATRICES}")
 ########## schur complement
 
 spasm_declare_test(schur)
+spasm_run_tests(schur       "${ALL_TEST_MATRICES}")
 
-set(SCHUR_TEST_MATRICES
-    singular.sms
-    lower_trapeze.sms
-    upper_trapeze.sms
-    dm.sms
-    dm2.sms
-    void.sms
-    BIOMD0000000525.int.mpl.sms
-    BIOMD0000000424.int.mpl.sms
-)
-spasm_run_tests(schur       "${SCHUR_TEST_MATRICES}")
+######### echelonization
+
+spasm_declare_test(echelonize)
+spasm_run_tests(echelonize       "${ALL_TEST_MATRICES}")
+
+######### kernel
+
+spasm_declare_test(kernel)
+spasm_run_tests(kernel "${ALL_TEST_MATRICES}")
 
 ##### permutations
 
@@ -196,20 +197,3 @@ spasm_test_expected_output(spmv m1.sms gaxpy.1)
 spasm_declare_test(submatrix)
 spasm_test_expected_output(submatrix singular.sms submatrix.1)
 
-######### echelonization
-
-spasm_declare_test(echelonize)
-
-set(ECHELONIZE_TEST_MATRICES
-    void.sms
-    medium.sms
-    rectangular_l.sms
-    rectangular_h.sms
-    BIOMD0000000525.int.mpl.sms
-    BIOMD0000000424.int.mpl.sms
-    singular.sms
-    singular2.sms
-    singular3.sms
-    mat364.sms
-)
-spasm_run_tests(echelonize       "${ECHELONIZE_TEST_MATRICES}")
