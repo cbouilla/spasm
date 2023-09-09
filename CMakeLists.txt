@@ -45,7 +45,7 @@ else()
     add_compile_options(-Wall -Wextra -O3 -g)
 endif()
 
-add_link_options(-z noexecstack)
+#add_link_options(-z noexecstack)
 
 ########################################################################
 
