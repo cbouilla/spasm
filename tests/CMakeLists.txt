@@ -9,7 +9,7 @@ add_library(spasmtest test_tools.c)
 
 function(spasm_declare_test name)
     add_executable(test_${name} EXCLUDE_FROM_ALL ${name}.c)
-    target_link_libraries(test_${name} PUBLIC libspasm)
+    target_link_libraries(test_${name} PUBLIC spasm)
     target_link_libraries(test_${name} PUBLIC spasmtest)
     add_dependencies(check test_${name})
 endfunction()
