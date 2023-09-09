@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 
         /* check solution */
         spasm_xApy(x, L, y);
-        spasm_scatter(B->j, B->x, B->p[0], B->p[1], prime - 1, y, prime);
+        spasm_scatter(B, 0, prime - 1, y);
         for (int i = 0; i < m; i++)
                 if (y[i] != 0) {
                         printf("not ok - sparse triangular L-solve (y[%d] == %d)\n", i, y[i]);

@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	for (int i = 0; i < r; i++)
 		printf("# y[%d] = %d\n", i, yy[i]);
 
-        spasm_scatter(B->j, B->x, B->p[0], B->p[1], prime - 1, yy, prime);
+        spasm_scatter(B, 0, prime - 1, yy);
 	for (int i = 0; i < r; i++)
 		printf("# y[%d] = %d\n", i, yy[i]);
 

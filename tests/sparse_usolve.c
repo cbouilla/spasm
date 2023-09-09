@@ -47,7 +47,7 @@ int main(int argc, char **argv)
         for (int j = n; j < m; j++)
                 y[j] = (y[j] + x[j]) % B->prime;
 
-        spasm_scatter(B->j, B->x, B->p[0], B->p[1], B->prime - 1, y, B->prime);
+        spasm_scatter(B, 0, B->prime - 1, y);
 
         for (int i = 0; i < m; i++)
                 if (y[i] != 0) {

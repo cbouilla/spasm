@@ -146,7 +146,7 @@ void spasm_range_pvec(int *x, int a, int b, int *p);
 spasm_GFp spasm_GFp_inverse(spasm_GFp a, int prime);
 
 /* spasm_scatter.c */
-void spasm_scatter(const int *Aj, const spasm_GFp * Ax, i64 from, i64 to, spasm_GFp beta, spasm_GFp * x, int prime);
+void spasm_scatter(const spasm *A, int i, spasm_GFp beta, spasm_GFp * x);
 
 /* spasm_reach.c */
 int spasm_dfs(int i, const spasm * G, int top, int *xi, int *pstack, int *marks, const int *pinv);

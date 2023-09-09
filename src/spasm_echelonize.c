@@ -63,6 +63,7 @@ bool spasm_echelonize_test_completion(spasm *A, const int *p, int n, spasm *U, i
 /* not dry w.r.t. spasm_LU() */
 void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, struct echelonize_opts *opts)
 {
+	(void) opts;
 	int m = A->m;
 	int prime = A->prime;
 	int verbose_step = spasm_max(1, n / 1000);

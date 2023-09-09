@@ -98,12 +98,8 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 	int n = A->n;
 	int m = A->m;
 	int r = U->n;
-	i64 *Ap = A->p;
-	int *Aj = A->j;
-	spasm_GFp *Ax = A->x;
 	i64 *Up = U->p;
 	int *Uj = U->j;
-	spasm_GFp *Ux = U->x;
 
 	int done = 0;
 	#pragma omp parallel
@@ -117,12 +113,12 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 			for (int j = 0; j < m; j++)
 				x[j] = 0;
 			for (int i = 0; i < n; i++)
-				spasm_scatter(Aj, Ax, Ap[i], Ap[i + 1], rand() % prime, x, prime);
+				spasm_scatter(A, i, rand() % prime, x);
 			/* eliminate everything in x */
 			for (int i = 0; i < r; i++) {
 				int j = Uj[Up[i]];
 				if (x[j] != 0)
-					spasm_scatter(Uj, Ux, Up[i], Up[i + 1], prime - x[j], x, prime);
+					spasm_scatter(U, i, prime - x[j], x);
 			}
 			for (int j = 0; j < m; j++)
 				if ((x[j] != 0))

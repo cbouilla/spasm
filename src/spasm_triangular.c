@@ -31,7 +31,7 @@ void spasm_dense_back_solve(const spasm *L, spasm_GFp *b, spasm_GFp *x, const in
 	int n = L->n;
 	int m = L->m;
 	const i64 *Lp = L->p;
-	const int *Lj = L->j;
+	// const int *Lj = L->j;
 	const spasm_GFp *Lx = L->x;
 	int prime = L->prime;
 
@@ -46,7 +46,9 @@ void spasm_dense_back_solve(const spasm *L, spasm_GFp *b, spasm_GFp *x, const in
 
 		/* axpy - inplace */
 		x[i] = (b[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-		spasm_scatter(Lj, Lx, Lp[i], Lp[i + 1] - 1, prime - x[i], b, prime);
+		spasm_GFp backup = x[i];
+		spasm_scatter(L, i, prime - x[i], b);
+		x[i] = backup;
 	}
 }
 
@@ -77,9 +79,6 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp *x, const
 	int n = U->n;
 	int m = U->m;
 	assert(n <= m);
-	const i64 *Up = U->p;
-	const int *Uj = U->j;
-	const spasm_GFp *Ux = U->x;
 	int prime = U->prime;
 	for (int i = 0; i < n; i++)
 		x[i] = 0;
@@ -88,12 +87,14 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp *x, const
 		int j = (q != SPASM_IDENTITY_PERMUTATION) ? q[i] : i;
 		if (b[j] != 0) {
 			/* check diagonal entry */
-			const spasm_GFp diagonal_entry = Ux[Up[i]];
-			assert(diagonal_entry == 1);
+			// const spasm_GFp diagonal_entry = Ux[Up[i]];
+			// assert(diagonal_entry == 1);
 
 			/* axpy - inplace */
 			x[i] = b[j];
-			spasm_scatter(Uj, Ux, Up[i] + 1, Up[i + 1], prime - x[i], b, prime);
+			spasm_GFp backup = x[i];
+			spasm_scatter(U, i, prime - x[i], b);
+			x[i] = backup;
 			b[j] = 0;
 		}
 	}
@@ -124,13 +125,10 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp *x, const
 int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_GFp * x, const int *qinv)
 {
 	int m = U->m;
-	const i64 *Up = U->p;
-	const int *Uj = U->j;
-	const spasm_GFp *Ux = U->x;
 	int prime = U->prime;
-	const i64 *Bp = B->p;
-	const int *Bj = B->j;
-	const spasm_GFp *Bx = B->x;
+	// const i64 *Bp = B->p;
+	// const int *Bj = B->j;
+	// const spasm_GFp *Bx = B->x;
 
 	/* compute non-zero pattern of x --- xj[top:m] = Reach(U, B[k]) */
 	int top = spasm_reach(U, B, k, m, xj, qinv);
@@ -140,10 +138,11 @@ int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj
 		int j = xj[px];
 		x[j] = 0;
 	}
-	for (i64 px = Bp[k]; px < Bp[k + 1]; px++) {
-		int j = Bj[px];
-		x[j] = Bx[px];
-	}
+	spasm_scatter(B, k, 1, x);
+	// for (i64 px = Bp[k]; px < Bp[k + 1]; px++) {
+	// 	int j = Bj[px];
+	// 	x[j] = Bx[px];
+	// }
 
 	/* iterate over the (precomputed) pattern of x (= the solution) */
 	for (int px = top; px < m; px++) {
@@ -156,7 +155,7 @@ int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj
 
 		/* the pivot entry on row i is 1, so we just have to multiply by -x[j] */
 		spasm_GFp backup = x[j];
-		spasm_scatter(Uj, Ux, Up[i], Up[i + 1], prime - x[j], x, prime);
+		spasm_scatter(U, i, prime - x[j], x);
 		assert(x[j] == 0);
 		x[j] = backup;
 	}
