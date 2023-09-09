@@ -1,4 +1,4 @@
-add_library(libspasm 
+add_library(spasm SHARED
 	# common stuff, IO, utilities
 	spasm_util.c mmio.c spasm_io.c spasm_triplet.c spasm_GFp.c spasm_scatter.c
 	spasm_spmv.c spasm_transpose.c spasm_permutation.c
@@ -17,7 +17,7 @@ add_library(libspasm
 	# spasm_solutions.c
 )
 
-target_link_libraries(libspasm PUBLIC OpenMP::OpenMP_C)
-target_link_libraries(libspasm PUBLIC m)
-target_link_libraries(libspasm PUBLIC PkgConfig::GIVARO)
-target_link_libraries(libspasm PUBLIC PkgConfig::FFLAS_FFPACK)
+target_link_libraries(spasm PUBLIC OpenMP::OpenMP_C)
+target_link_libraries(spasm PUBLIC m)
+target_link_libraries(spasm PUBLIC PkgConfig::GIVARO)
+target_link_libraries(spasm PUBLIC PkgConfig::FFLAS_FFPACK)

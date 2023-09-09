@@ -45,7 +45,7 @@ else()
     add_compile_options(-Wall -O3 -Wno-pragmas -fopenmp -g)
 endif()
 
-add_link_options(-z noexecstack)
+#add_link_options(-z noexecstack)
 
 ########################################################################
 
