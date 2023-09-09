@@ -70,9 +70,10 @@ void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, s
 	fprintf(stderr, "[echelonize/GPLU] processing matrix of dimension %d x %d\n", n, m);
 
 	/* workspace for triangular solver */
-	int *x = spasm_malloc(m * sizeof(spasm_GFp));
-	int *xj = spasm_malloc(3 * m * sizeof(int));
-	spasm_vector_zero(xj, 3 * m);
+	spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+	int *xj = spasm_malloc(3 * m * sizeof(*xj));
+	for (int j = 0; j < 3*m; j++)
+		xj[j] = 0;
 	
 	/* allocate result */
 	i64 *Up = U->p;
@@ -334,8 +335,13 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 	int m = A->m;
 	int prime = A->prime;
 	
-	int *qinv = spasm_malloc(m * sizeof(int));  /* for pivot search */
-	int *p = spasm_malloc(n * sizeof(int));
+	int *qinv = spasm_malloc(m * sizeof(*qinv));  /* for pivot search */
+	int *p = spasm_malloc(n * sizeof(*p));
+	for (int j = 0; j < m; j++)
+		qinv[j] = -1;
+	for (int i = 0; i < n; i++)
+		p[i] = i;
+	int npiv = 0;
 
 	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
 	U->n = 0;
@@ -346,7 +352,6 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 	fprintf(stderr, "[echelonize] Start on %d x %d matrix with %" PRId64 " nnz\n", n, m, spasm_nnz(A));
 	double start = spasm_wtime();
 	double density = -1;
-	int npiv = 0;
 
 	for (int round = 0; round < opts->max_round; round++) {
 		fprintf(stderr, "[echelonize] round %d\n", round);

@@ -58,7 +58,8 @@ int main(int argc, char **argv)
         spasm_GFp *x = spasm_malloc(m * sizeof(*x));
         for (int i = 0; i < n; i++) {
                 // scatter A[i] into x
-                spasm_vector_zero(x, m);
+                for (int j = 0; j < m; j++)
+                        x[j] = 0;
                 for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
                         int j = Aj[px];
                         x[j] = Ax[px];

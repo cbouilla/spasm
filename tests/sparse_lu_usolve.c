@@ -30,7 +30,8 @@ int main(int argc, char **argv)
 
 	// triangular solve
 	int *xj = malloc(3*m * sizeof(*xj));
-	spasm_vector_zero(xj, 3*m);
+	for (int j = 0; j < 3 * m; j++)
+                xj[j] = 0;
 	spasm_GFp *x = malloc(m * sizeof(spasm_GFp));
 	int top = spasm_sparse_triangular_solve(U, B, 0, xj, x, qinv);
 
@@ -39,10 +40,12 @@ int main(int argc, char **argv)
 		printf("# x[%d] = %d / qinv[%d] = %d\n", j, x[j], j, qinv[j]);
 	}
 
-	spasm_GFp *xx = malloc(r * sizeof(spasm_GFp));
-	spasm_GFp *yy = malloc(m * sizeof(spasm_GFp));
-	spasm_vector_zero(xx, r);
-	spasm_vector_zero(yy, m);
+	spasm_GFp *xx = malloc(r * sizeof(*xx));
+	spasm_GFp *yy = malloc(m * sizeof(*yy));
+	for (int j = 0; j < r; j++)
+                xx[j] = -1;
+        for (int j = 0; j < m; j++)
+                yy[j] = -1;
 	for (int px = top; px < m; px++) {
 		int j = xj[px];
 		if (x[j] == 0)

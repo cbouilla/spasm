@@ -205,15 +205,3 @@ void spasm_dm_free(spasm_dm *P)
 	free(P->c);
 	free(P);
 }
-
-void spasm_vector_zero(spasm_GFp *x, int n)
-{
-	for (int i = 0; i < n; i++)
-		x[i] = 0;
-}
-
-void spasm_vector_set(spasm_GFp *x, int a, int b, spasm_GFp alpha)
-{
-	for (int i = a; i < b; i++)
-		x[i] = alpha;
-}

@@ -34,7 +34,8 @@ int main(int argc, char **argv)
                 printf("# testing vector %d\n", i);
 
                 /* scatter K[i] into x */
-                spasm_vector_zero(x, n);
+                for (int j = 0; j < n; j++)
+                        x[j] = 0;
                 int nonzero = 0;
                 for (i64 p = Kp[i]; p < Kp[i + 1]; p++) {
                         int j = Kj[p];
@@ -49,9 +50,9 @@ int main(int argc, char **argv)
                 assert(Ut->n == n);
                 assert(Ut->m <= m);
 
-
                 /* y <-- x.Ut */
-                spasm_vector_zero(y, m);
+                for (int j = 0; j < m; j++)
+                        y[j] = 0;
                 spasm_xApy(x, Ut, y);
                 for (int i = 0; i < m; i++) {
                         if (y[i] != 0) {
@@ -61,7 +62,8 @@ int main(int argc, char **argv)
                 }
 
                 /* y <-- x.A */
-                spasm_vector_zero(y, m);
+                for (int j = 0; j < m; j++)
+                        y[j] = 0;
                 spasm_xApy(x, A, y);
                 for (int i = 0; i < m; i++) {
                         if (y[i] != 0) {

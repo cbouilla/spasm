@@ -117,8 +117,10 @@ spasm_dm *spasm_dulmage_mendelsohn(const spasm *A)
 	int * wj = c;
 
 	/* unmark everything for bfs */
-	spasm_vector_set(wj, 0, m, -1);
-	spasm_vector_set(wi, 0, n, -1);
+	for (int j = 0; j < m; j++)
+		wj[j] = -1;
+	for (int i = 0; i < n; i++)
+		wi[i] = -1;
 
 	/* find R0, then R3, C3 */
 	bfs(A, wi, wj, p, imatch, jmatch, 3);

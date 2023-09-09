@@ -1,7 +1,7 @@
 include_directories (../src)
 
 add_custom_target(check ${CMAKE_CTEST_COMMAND})            # create "make check"
-
+add_compile_options(-Wno-unused-parameter)
 
 ############# custom functions to declare and run tests easily ################
 

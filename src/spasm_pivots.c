@@ -15,7 +15,7 @@
 
 
 /* test if a pivot has already been found on row i (if so, it's the first entry of the row ) */
-int spasm_is_row_pivotal(const spasm *A, const int *qinv, const int i)
+static bool spasm_is_row_pivotal(const spasm *A, const int *qinv, const int i)
 {
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;
@@ -26,14 +26,18 @@ int spasm_is_row_pivotal(const spasm *A, const int *qinv, const int i)
 }
 
 /* make pivot the first entry of the row */
-void spasm_prepare_pivot(spasm *A, const int i, const int px)
+static void spasm_prepare_pivot(spasm *A, const int i, const i64 px)
 {
 	i64 *Ap = A->p;
 	int *Aj = A->j;
 	spasm_GFp *Ax = A->x;
-	spasm_swap(Aj, Ap[i], px);
-	if (Ax != NULL)
-		spasm_swap(Ax, Ap[i], px);   /* FIXME, this assumes spasm_GFp == int */
+	// spasm_swap(Aj, Ap[i], px);
+	int foo = Aj[Ap[i]];
+	spasm_GFp bar = Ax[Ap[i]];
+	Aj[Ap[i]] = Aj[px];
+	Ax[Ap[i]] = Ax[px];
+	Aj[px] = foo;
+	Ax[px] = bar;
 }
 
 
@@ -97,8 +101,8 @@ int spasm_find_FL_column_pivots(spasm *A, int *p, int *qinv, int npiv_fl)
 	int *Aj = A->j;
 	int npiv = npiv_fl;
 	int *w = spasm_malloc(m * sizeof(int));
-	spasm_vector_set(w, 0, m, 1);
-
+	for (int j = 0; j < m; j++)
+		w[j] = 1;
 	double start = spasm_wtime();
 
 	/* mark columns on previous pivot rows as obstructed */
@@ -319,15 +323,11 @@ int spasm_find_cycle_free_pivots(spasm *A, int *p, int *qinv, int npiv_start)
  */
 int spasm_find_pivots(spasm * A, int *p, int *qinv, struct echelonize_opts *opts)
 {
-	struct echelonize_opts default_opts;
-	if (opts == NULL) {
-		opts = &default_opts;
-		spasm_echelonize_init_opts(opts);
-	}
 	int n = A->n;
 	int m = A->m;
 
-	spasm_vector_set(qinv, 0, m, -1);
+	for (int j = 0; j < m; j++)
+		qinv[j] = -1;
 	int npiv = spasm_find_FL_pivots(A, p, qinv);
 	npiv = spasm_find_FL_column_pivots(A, p, qinv, npiv);
 	if (opts->enable_greedy_pivot_search)
@@ -337,12 +337,13 @@ int spasm_find_pivots(spasm * A, int *p, int *qinv, struct echelonize_opts *opts
 	 * build row permutation. Pivotal rows go first in topological order,
 	 * then non-pivotal, non-zero rows, then zero rows
 	 */
-	int *xj = spasm_malloc(m * sizeof(int));
-	int *marks = spasm_malloc(m * sizeof(int));
-	int *pstack = spasm_malloc(n * sizeof(int));
+	int *xj = spasm_malloc(m * sizeof(*xj));
+	int *marks = spasm_malloc(m * sizeof(*marks));
+	int *pstack = spasm_malloc(n * sizeof(*pstack));
 
 	/* topological sort */
-	spasm_vector_set(marks, 0, m, 0);
+	for (int j = 0; j < m; j++)
+		marks[j] = 0;
 	int top = m;
 	for (int j = 0; j < m; j++)
 		if (qinv[j] != -1 && !marks[j])

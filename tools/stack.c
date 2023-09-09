@@ -26,16 +26,18 @@ int main() {
 	/* allocate result */
 	p = spasm_malloc(n * sizeof(int));
 	q = spasm_malloc(m * sizeof(int));
-	spasm_vector_set(p, 0, n, 0);
-	spasm_vector_set(q, 0, m, 0);
-
+	for (int i = 0; i < n; i++)
+		p[i] = 0;
+	for (int j = 0; j < m; j++)
+		q[j] = 0;
+	
 	/* mark non-empty rows/columns */
 	for (int k = 0; k < nz; k++) {
 		p[Ai[k]] = 1;
 		q[Aj[k]] = 1;
 	}
 
-	/* sum-prefix: p[i] = sum(p[k], k in range(i)) */
+	/* prefix-sum: p[i] = sum(p[k], k in range(i)) */
 	u = 0;
 	for (int i = 0; i < n; i++)
 		if (p[i] > 0)

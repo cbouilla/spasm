@@ -41,7 +41,8 @@ spasm * spasm_kernel(const spasm *U, const int *qinv)
 	{
 		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
 		int *xj = spasm_malloc(3 * n * sizeof(int));
-		spasm_vector_zero(xj, 3 * n);
+		for (int j = 0; j < 3 * n; j++)
+			xj[j] = 0;
 		int tid = spasm_get_thread_num();
 
 		#pragma omp for schedule(guided)

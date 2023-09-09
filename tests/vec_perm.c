@@ -20,8 +20,11 @@ int main() {
   }
 
   // generate random permutation
-  for(i = n-1; i > 0; i--) {
-    spasm_swap(p, i, rand() % i);
+  for (int i = n-1; i > 0; i--) {
+    int j = rand() % i;
+    int tmp = p[i];
+    p[i] = p[j];
+    p[j] = tmp;
   }
 
   // test 1 : apply permutation

@@ -52,10 +52,13 @@ int main(int argc, char **argv)
         spasm_GFp *z = spasm_malloc(m * sizeof(*z));
 
         for (int i = 0; i < n; i++) {
-                spasm_vector_zero(x, n);
-                spasm_vector_zero(y, m);
-                spasm_vector_zero(z, m);
+                for (int j = 0; j < n; j++)
+                        x[j] = 0;
                 x[i] = 1;
+                for (int j = 0; j < m; j++) {
+                        y[j] = 0;
+                        z[j] = 0;
+                }
                 spasm_xApy(x, A, y);
                 spasm_xApy(x, C, z);
 

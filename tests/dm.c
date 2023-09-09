@@ -31,8 +31,8 @@ int main(int argc, char **argv)
 	/* check that p and q are actually permutations */
 	int *x = spasm_malloc(n * sizeof(int));
 	int *y = spasm_malloc(m * sizeof(int));
-
-	spasm_vector_zero(x, n);
+	for (int i = 0; i < n; i++)
+		x[i] = 0;
 	for (int i = 0; i < n; i++)
 		x[p[i]]++;
 	for (int i = 0; i < n; i++)
@@ -41,7 +41,8 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 
-	spasm_vector_zero(y, m);
+	for (int i = 0; i < m; i++)
+		y[i] = 0;
 	for (int i = 0; i < m; i++)
 		y[q[i]]++;
 	for (int i = 0; i < m; i++)

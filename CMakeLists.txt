@@ -42,7 +42,7 @@ if (build_type STREQUAL cov)
     message(WARNING "special coverage options")
 else()
     # normal
-    add_compile_options(-Wall -O3 -Wno-pragmas -fopenmp -g)
+    add_compile_options(-Wall -Wextra -O3 -g)
 endif()
 
 add_link_options(-z noexecstack)

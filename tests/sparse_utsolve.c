@@ -17,6 +17,10 @@ int main(int argc, char **argv)
  	int *qinv = spasm_malloc(m * sizeof(*qinv));
  	spasm *U = spasm_echelonize(A, qinv, NULL);
 	int r = U->n;
+	if (r == 0) {
+		printf("rank zero # SKIP\n");
+		exit(EXIT_SUCCESS);
+	}
  	int *pinv = spasm_malloc(r * sizeof(*pinv));
  	for (int j = 0; j < r; j++)
  		pinv[j] = -1;
@@ -53,8 +57,9 @@ int main(int argc, char **argv)
 
 	// triangular solve
 	int *xi = malloc(3*r * sizeof(*xi));
-	spasm_vector_zero(xi, 3*r);
-	spasm_GFp *x = malloc(m * sizeof(spasm_GFp));
+	for (int j = 0; j < 3*r; j++)
+		xi[j] = 0;
+	spasm_GFp *x = malloc(m * sizeof(*x));
 	int top = spasm_sparse_triangular_solve(Ut, B, 0, xi, x, pinv);
 
 	for (int px = top; px < r; px++)
@@ -66,8 +71,10 @@ int main(int argc, char **argv)
 	// check
 	spasm_GFp *xx = malloc(m * sizeof(spasm_GFp));
 	spasm_GFp *yy = malloc(r * sizeof(spasm_GFp));
-	spasm_vector_zero(xx, m);
-	spasm_vector_zero(yy, r);
+	for (int j = 0; j < m; j++)
+		xx[j] = 0;
+	for (int j = 0; j < r; j++)
+		yy[j] = 0;
 	for (int px = top; px < r; px++) {
 		int i = xi[px];
 		if (x[i] == 0)

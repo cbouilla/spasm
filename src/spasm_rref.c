@@ -30,7 +30,8 @@ spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv)
 	{
 		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
 		int *xj = spasm_malloc(3 * m * sizeof(int));
-		spasm_vector_zero(xj, 3 * m);
+		for (int j = 0; j < 3 * m; j++)
+			xj[j] = 0;
 		int tid = spasm_get_thread_num();
 		int *qinv_local = spasm_malloc(m * sizeof(int));
 		for (int j = 0; j < m; j++)

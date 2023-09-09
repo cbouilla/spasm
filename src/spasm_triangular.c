@@ -185,7 +185,8 @@ spasm *spasm_trsm(const spasm *U, const int *qinv, const spasm *B)
 	{
 		spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
 		int *xj = spasm_malloc(3 * m * sizeof(int));
-		spasm_vector_zero(xj, 3 * m);
+		for (int j = 0; j < 3*m; j++)
+			xj[j] = 0;
 		int tid = spasm_get_thread_num();
 
 		#pragma omp for schedule(guided)

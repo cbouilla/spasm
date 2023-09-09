@@ -101,17 +101,17 @@ spasm *spasm_permute(const spasm *A, const int *p, const int *qinv, int values)
 	return C;
 }
 
-int *spasm_random_permutation(int n) {
-	int i, *p;
-
-	p = spasm_malloc(n * sizeof(int));
-	for (i = 0; i < n; i++) {
+int *spasm_random_permutation(int n)
+{
+	int *p = spasm_malloc(n * sizeof(int));
+	for (int i = 0; i < n; i++)
 		p[i] = i;
+	for (int i = n - 1; i > 0; i--) {
+		int j = rand() % i;
+		int tmp = p[i];
+		p[i] = p[j];
+		p[j] = tmp;
 	}
-	for (i = n - 1; i > 0; i--) {
-		spasm_swap(p, i, rand() % i);
-	}
-
 	return p;
 }
 

@@ -41,7 +41,8 @@ double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const s
 		/* per-thread scratch space */
 		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
 		int *xj = spasm_malloc(3 * m * sizeof(*xj));
-		spasm_vector_zero(xj, 3 * m);
+		for (int j = 0; j < 3 * m; j++)
+			xj[j] = 0;
 
 		#pragma omp for reduction(+:nnz) schedule(dynamic)
 		for (int i = 0; i < R; i++) {
@@ -74,6 +75,7 @@ double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const s
 spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double est_density, int keep_L, int *p_out)
 {
 	assert(!keep_L); /* option presently unsupported */
+	(void) p_out;
 	
 	int m = A->m;
 	int verbose_step = spasm_max(1, n / 1000);
@@ -93,9 +95,10 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm *U, const in
 
 	#pragma omp parallel
 	{
-		spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
-		int *xj = spasm_malloc(3 * m * sizeof(int));
-		spasm_vector_zero(xj, 3 * m);
+		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+		int *xj = spasm_malloc(3 * m * sizeof(*xj));
+		for (int j = 0; j < 3 * m; j++)
+			xj[j] = 0;
 		int tid = spasm_get_thread_num();
 
 		#pragma omp for schedule(dynamic, verbose_step)
@@ -199,7 +202,8 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 		/* per-thread scratch space */
 		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
 		int *xj = spasm_malloc(3 * m * sizeof(*xj));
-		spasm_vector_zero(xj, 3 * m);
+		for (int j = 0; j < 3 * m; j++)
+			xj[j] = 0;
 		int tid = spasm_get_thread_num();
 
 		#pragma omp for schedule(dynamic, verbose_step)
@@ -267,8 +271,8 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 		/* per-thread scratch space */
 		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
 		int *xj = spasm_malloc(3 * m * sizeof(*xj));
-		spasm_vector_zero(xj, 3 * m);
-		// int tid = spasm_get_thread_num();
+		for (int j = 0; j < 3 * m; j++)
+			xj[j] = 0;
 
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (i64 k = 0; k < N; k++) {

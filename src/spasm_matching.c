@@ -112,13 +112,13 @@ int spasm_maximum_matching(const spasm *A, int *p, int *qinv)
 	int *pstack = spasm_malloc(n * sizeof(int));
 	int *marks  = spasm_malloc(n * sizeof(int));
 	int *plookahead = spasm_malloc(n * sizeof(int));
-
-	spasm_vector_set(qinv, 0, m, -1);
-	spasm_vector_set(p, 0, n, -1);
-	spasm_vector_set(marks, 0, n, -1);
-	for (int i = 0; i < n; i++)
+	for (int j = 0; j < m; j++)
+		qinv[j] = -1;
+	for (int i = 0; i < n; i++) {
+		p[i] = -1;
+		marks[i] = -1;
 		plookahead[i] = 0;
-
+	}
 	int k = 0;
 	double start = spasm_wtime();
 	for (int i = 0; (i < n) && (k < r); i++) {
