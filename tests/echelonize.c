@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 	assert(U->n <= U->m);
 
 	echelon_form_check(U, Uqinv);
-	spasm_save_csr(stdout, U);
+	// spasm_save_csr(stdout, U);
 	deterministic_inclusion_test(A, U, Uqinv);
 
 	spasm *R = spasm_rref(U, Uqinv, Rqinv);

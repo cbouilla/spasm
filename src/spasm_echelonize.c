@@ -172,6 +172,7 @@ static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size
 	i64 *Up = U->p;
 	int *Uj = U->j;
 	spasm_GFp *Ux = U->x;
+        int prime = U->prime;
         for (i64 i = 0; i < rr; i++) {
                 int j = Sqinv[i];   /* column (of S) with the pivot on row i of S; the pivot is implicitly 1 */
         	Uj[unz] = q[j];  /* column of A with the pivot */
@@ -183,7 +184,7 @@ static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size
         		if (S[i * Sm + k] == 0)
         			continue;   /* don't store zero */
         		Uj[unz] = q[j];
-        		Ux[unz] = S[i * Sm + k];
+        		Ux[unz] = (prime + (i64) S[i * Sm + k]) % prime;
         		unz += 1;
         	}
         	U->n += 1;

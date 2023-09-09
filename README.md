@@ -81,9 +81,9 @@ curl https://hpac.imag.fr/Matrices/GL7d/GL7d22.sms.gz | gunzip - | ./vertical_sw
 Dealing with large matrices
 ---------------------------
 
-Sparse Gaussian elimination is more an art than a science.  In some cases, it will inevitably fail (the matrix will fill during the process). 
+Sparse Gaussian elimination is more an art than a science.  In some cases, it will inevitably fail (the matrix will fill and the process will grind to a halt). 
 
-However, with some expertise, it may be possible to deal with potentially larger problems than what the auto-pilot is capable. Don't hesitate to get in touch.
+However, with some expertise, it may be possible to deal with potentially larger problems than what the auto-pilot is capable of. Don't hesitate to get in touch.
 
 Citing SpaSM
 ------------
