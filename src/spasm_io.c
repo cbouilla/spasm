@@ -173,7 +173,8 @@ void spasm_save_pnm(const spasm *A, FILE *f, int x, int y, int mode, spasm_dm *D
 	assert(f != NULL);
 	assert((mode-1)*(mode-2)*(mode-3) == 0);
 	assert((mode != 3) || (DM != NULL));
-	spasm_vector_zero(w, x * y);
+	for (int i = 0; i < x*y; i++)
+		w[i] = 0;
 
 	fprintf(f, "P%d\n", mode);
 	fprintf(f, "%d %d\n", x, y);

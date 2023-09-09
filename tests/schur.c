@@ -17,7 +17,9 @@ int main(int argc, char **argv)
   
 	int *p = spasm_malloc(n * sizeof(int));
 	int *qinv = spasm_malloc(m * sizeof(int));
-	int npiv = spasm_find_pivots(A, p, qinv, NULL);
+	struct echelonize_opts opts;
+	spasm_echelonize_init_opts(&opts);
+	int npiv = spasm_find_pivots(A, p, qinv, &opts);
 	spasm_make_pivots_unitary(A, p, npiv);
 
 	spasm *S = spasm_schur(A, p, npiv, A, qinv, -1, SPASM_DISCARD_L, NULL);
