@@ -41,7 +41,7 @@ void spasm_echelonize_init_opts(struct echelonize_opts *opts)
 	opts->low_rank_start_weight = -1;
 }
 
-bool spasm_echelonize_test_completion(spasm *A, const int *p, int n, spasm *U, int *Uqinv)
+bool spasm_echelonize_test_completion(const spasm *A, const int *p, int n, spasm *U, int *Uqinv)
 {
 	int m = A->m;
 	int Sm = m - U->n;
@@ -61,7 +61,7 @@ bool spasm_echelonize_test_completion(spasm *A, const int *p, int n, spasm *U, i
 
 
 /* not dry w.r.t. spasm_LU() */
-void spasm_echelonize_GPLU(spasm *A, const int *p, int n, spasm *U, int *qinv, struct echelonize_opts *opts)
+void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm *U, int *qinv, struct echelonize_opts *opts)
 {
 	(void) opts;
 	int m = A->m;
@@ -195,7 +195,7 @@ static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size
         assert(unz == spasm_nnz(U));
 }
 
-void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts)
+static void spasm_echelonize_dense_lowrank(const spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts)
 {
 	assert(opts->dense_block_size > 0);
 	int m = A->m;
@@ -261,7 +261,7 @@ void spasm_echelonize_dense_lowrank(spasm *A, const int *p, int n, spasm *U, int
  * the schur complement (on non-pivotal rows of A) w.r.t. U is dense.
  * process (P*A)[0:n]
  */
-void spasm_echelonize_dense(spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts)
+static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts)
 {
 	assert(opts->dense_block_size > 0);
 	int m = A->m;
@@ -277,11 +277,11 @@ void spasm_echelonize_dense(spasm *A, const int *p, int n, spasm *U, int *Uqinv,
 	fprintf(stderr, "[echelonize/dense] processing dense schur complement of dimension %d x %d; block size=%d\n", 
 		n, Sm, opts->dense_block_size);
 	bool lowrank_mode = 0;
+	int rank_ub = spasm_min(A->n - U->n, A->m - U->n);
 
 	for (;;) {
 		/* compute a chunk of the schur complement, then echelonize with FFPACK */
-		int rank_ub = spasm_min(A->n - U->n, A->m - U->n);
-		int Sn = spasm_min(n - processed, spasm_min(rank_ub, opts->dense_block_size));
+		int Sn = spasm_min(opts->dense_block_size, n - processed);   // also potentially spasm_min with rank_ub
 		if (Sn <= 0)
 			break;
 		
@@ -296,13 +296,12 @@ void spasm_echelonize_dense(spasm *A, const int *p, int n, spasm *U, int *Uqinv,
         	round += 1;
         	processed += Sn;
         	p += Sn;
-        	n -= Sn;
         	Sm = m - U->n;
+        	rank_ub = spasm_min(A->n - U->n, A->m - U->n);
         	fprintf(stderr, "[echelonize/dense] found %d new pivots\n", rr);
 
 		/* switch to low-rank mode ? */
 		if (opts->enable_tall_and_skinny && (rr < opts->low_rank_ratio * Sn)) {
-			fprintf(stderr, "[echelonize/dense] Too few pivots; switching to low-rank mode\n");
 			lowrank_mode = 1;
 			break;
 		}
@@ -310,8 +309,9 @@ void spasm_echelonize_dense(spasm *A, const int *p, int n, spasm *U, int *Uqinv,
         free(S);
         free(q);
         free(Sp);
-        if (lowrank_mode) {
-		spasm_echelonize_dense_lowrank(A, p, n, U, Uqinv, opts);
+        if (rank_ub > 0 && A->n - processed > 0 && lowrank_mode) {
+        	fprintf(stderr, "[echelonize/dense] Too few pivots; switching to low-rank mode\n");
+		spasm_echelonize_dense_lowrank(A, p, n - processed, U, Uqinv, opts);
         } else {
         	fprintf(stderr, "[echelonize/dense] completed in %.1fs. %d new pivots found\n", spasm_wtime() - start, U->n - old_un);
         }
