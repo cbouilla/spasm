@@ -305,7 +305,7 @@ static int spasm_pivots_find(const spasm *A, int *pinv, int *qinv, struct echelo
 	int npiv = spasm_find_FL_pivots(A, pinv, qinv);
 	npiv += spasm_find_FL_column_pivots(A, pinv, qinv);
 	if (opts->enable_greedy_pivot_search)
-		npiv = spasm_find_cycle_free_pivots(A, pinv, qinv);
+		npiv += spasm_find_cycle_free_pivots(A, pinv, qinv);
 	fprintf(stderr, "\r[pivots] %d pivots found\n", npiv);
 	return npiv;
 }

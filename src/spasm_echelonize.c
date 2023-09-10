@@ -31,7 +31,7 @@ void spasm_echelonize_init_opts(struct echelonize_opts *opts)
 	opts->enable_GPLU = 1;
 
 	// options of the main procedure
-	opts->min_pivot_proportion = 0.05;
+	opts->min_pivot_proportion = 0.1;
 	opts->max_round = 3;
 	opts->sparsity_threshold = 0.05;
 	opts->tall_and_skinny_ratio = 5;

@@ -4,35 +4,14 @@
 
 #include "spasm.h"
 
-#if 0
-/* make pivotal rows of A unitary. FIXME: why is this not static? */
-void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv)
-{
-	int prime = A->prime;
-	const i64 *Ap = A->p;
-	spasm_GFp *Ax = A->x;
-
-	#pragma omp parallel for
-	for (int i = 0; i < npiv; i++) {
-		int inew = p ? p[i] : i;
-		i64 p = Ap[inew];
-		spasm_GFp diag = Ax[p];
-		if (diag == 1)
-			continue;
-		spasm_GFp alpha = spasm_GFp_inverse(diag, prime);
-		for (i64 px = Ap[inew]; px < Ap[inew + 1]; px++)
-			Ax[px] = (alpha * Ax[px]) % prime;
-	}
-}
-#endif
-
 /*
  * Samples R rows at random in the schur complement of (P*A)[0:n] w.r.t. U, and return the average density.
  * qinv locates the pivots in U.
  */
 double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, int R)
 {
-	assert(p != NULL);
+	if (n == 0)
+		return 0;
 	int m = A->m;
 	i64 nnz = 0;
 	if (n == 0)
@@ -57,6 +36,7 @@ double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const s
 					nnz += 1;
 			}
 		}
+
 		free(x);
 		free(xj);
 	}
