@@ -15,25 +15,32 @@ int main(int argc, char **argv)
 	int n = A->n;
 	int m = A->m;
   
-	int *p = spasm_malloc(n * sizeof(int));
-	int *qinv = spasm_malloc(m * sizeof(int));
+	int *p = spasm_malloc(n * sizeof(*p));
+	int *qinv = spasm_malloc(m * sizeof(*qinv));
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
-	int npiv = spasm_find_pivots(A, p, qinv, &opts);
-	spasm_make_pivots_unitary(A, p, npiv);
+	
+	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), A->prime, SPASM_WITH_NUMERICAL_VALUES);
+	U->n = 0;
+	for (int j = 0; j < m; j++)
+		qinv[j] = -1;
 
-	spasm *S = spasm_schur(A, p, npiv, A, qinv, -1, SPASM_DISCARD_L, NULL);
+	int npiv = spasm_pivots_extract_structural(A, U, qinv, p, &opts);
+	
+	spasm *S = spasm_schur(A, p + npiv, n - npiv, U, qinv, -1, SPASM_DISCARD_L, NULL);
 	int Sn = S->n;
 	i64 *Sp = S->p;
 	int *Sj = S->j;
 
 	/* checking that nothing remains under the pivots when we don't want it */
 	for (int i = 0; i < Sn; i++) {
-		for (i64 px = Sp[i]; px < Sp[i + 1]; px++)
-			if (qinv[Sj[px]] >= 0) {
+		for (i64 px = Sp[i]; px < Sp[i + 1]; px++) {
+			int j = Sj[px];
+			if (qinv[j] >= 0) {
 				printf("not ok - coeff (%d, %d) is below a pivot\n", i, Sj[px]);
 				exit(1);
 			} 
+		}
 	}
 	printf("ok - elimination coeffs are really absent\n");
 	spasm_csr_free(S);

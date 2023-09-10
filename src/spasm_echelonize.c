@@ -43,6 +43,9 @@ void spasm_echelonize_init_opts(struct echelonize_opts *opts)
 
 bool spasm_echelonize_test_completion(const spasm *A, const int *p, int n, spasm *U, int *Uqinv)
 {
+	/* deal with the easy cases first */
+	if (n == 0 || spasm_nnz(A) == 0)
+		return 1;
 	int m = A->m;
 	int Sm = m - U->n;
 	int Sn = ceil(128 / log2(A->prime));
@@ -309,7 +312,7 @@ static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U
         free(S);
         free(q);
         free(Sp);
-        if (rank_ub > 0 && A->n - processed > 0 && lowrank_mode) {
+        if (rank_ub > 0 && n - processed > 0 && lowrank_mode) {
         	fprintf(stderr, "[echelonize/dense] Too few pivots; switching to low-rank mode\n");
 		spasm_echelonize_dense_lowrank(A, p, n - processed, U, Uqinv, opts);
         } else {
@@ -324,7 +327,7 @@ static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U
  * Initializes Uqinv (must be preallocated of size m [==#columns of A]).
  * Modifies A (permutes entries in rows)
  */
-spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
+spasm* spasm_echelonize(const spasm *A, int *Uqinv, struct echelonize_opts *opts)
 {
 	struct echelonize_opts default_opts;
 	if (opts == NULL) {
@@ -334,72 +337,33 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 	}
 	int n = A->n;
 	int m = A->m;
-	int prime = A->prime;
 	
-	int *qinv = spasm_malloc(m * sizeof(*qinv));  /* for pivot search */
-	int *p = spasm_malloc(n * sizeof(*p));
-	for (int j = 0; j < m; j++)
-		qinv[j] = -1;
-	for (int i = 0; i < n; i++)
+	int *p = spasm_malloc(n * sizeof(*p)); /* pivotal rows come first in P*A */
+	for (int i = 0; i < n; i++)  /* initialize p in case opt->max_rounds == 0 */
 		p[i] = i;
-	int npiv = 0;
 
-	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), A->prime, SPASM_WITH_NUMERICAL_VALUES);
 	U->n = 0;
-	i64 Unz = 0;      /* #entries in U */
 	for (int j = 0; j < m; j++)
 		Uqinv[j] = -1;
 
 	fprintf(stderr, "[echelonize] Start on %d x %d matrix with %" PRId64 " nnz\n", n, m, spasm_nnz(A));
 	double start = spasm_wtime();
 	double density = -1;
-
+	int npiv = 0;
 	for (int round = 0; round < opts->max_round; round++) {
+		assert(n == A->n);
+
 		fprintf(stderr, "[echelonize] round %d\n", round);
-	 	i64 *Ap = A->p;
-		int *Aj = A->j;
-		spasm_GFp *Ax = A->x;
-
-		/* find structural pivots in A */
-		npiv = spasm_find_pivots(A, p, qinv, opts);
-
-		/* compute total pivot nnz and reallocate U if necessary */
-		int pivot_nnz = 0;
-		for (int k = 0; k < npiv; k++) {
-			int i = p[k];
-			pivot_nnz += spasm_row_weight(A, i);
-		}
-		if (spasm_nnz(U) + pivot_nnz > U->nzmax)
-			spasm_csr_realloc(U, spasm_nnz(U) + pivot_nnz);
-
-		/* copy pivotal rows to U and make them unitary; update Uqinv */
-		i64 *Up = U->p;
-		int *Uj = U->j;
-		spasm_GFp *Ux = U->x;
-		for (int k = 0; k < npiv; k++) {
-			int i = p[k];
-			int j = Aj[Ap[i]];
-			assert(Uqinv[j] < 0);
-			assert(qinv[j] == i);
-			Uqinv[j] = U->n;
-			for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
-				Uj[Unz] = Aj[px];
-				Ux[Unz] = Ax[px];
-				Unz += 1;
-			}
-			U->n += 1;
-			Up[U->n] = Unz;
-		}
-		assert(Unz <= U->nzmax);
-		spasm_make_pivots_unitary(U, SPASM_IDENTITY_PERMUTATION, U->n); /* reprocess previous pivots; shame */
+		npiv = spasm_pivots_extract_structural(A, U, Uqinv, p, opts);
 
 		/* decide whether to move on to the next iteration */
-		if (npiv == spasm_min(n, m)) {
-			fprintf(stderr, "[echelonize] full rank reached\n");			
+		if (npiv == spasm_min(n, m - U->n)) {
+			fprintf(stderr, "[echelonize] full rank reached\n");	
 			break;
 		}
 
-		if (npiv < opts->min_pivot_proportion * spasm_min(n, m)) {
+		if (npiv < opts->min_pivot_proportion * spasm_min(n, m - U->n)) {
 			fprintf(stderr, "[echelonize] not enough pivots found; stopping\n");
 			break;     /* not enough pivots found */
 		}		
@@ -414,18 +378,17 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 		}
 
 		/* compute the next schur complement */
-		i64 nnz = (density * (n - npiv)) * (m - npiv);
+		i64 nnz = (density * (n - npiv)) * (m - U->n);
 		char tmp[8];
 		spasm_human_format(sizeof(int) * (n - npiv + nnz) + sizeof(spasm_GFp) * nnz, tmp);
-		fprintf(stderr, "Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", n - npiv, m - npiv, density, tmp);
+		fprintf(stderr, "Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", n - npiv, m - U->n, density, tmp);
 		spasm *S = spasm_schur(A, p + npiv, n - npiv, U, Uqinv, density, SPASM_DISCARD_L, NULL);
 		if (round > 0)
-			spasm_csr_free(A);       /* only if it is not the input argument */
+			spasm_csr_free((spasm *) A);       /* discard const, only if it is not the input argument */
 		A = S;
-		n = A->n;
+		n = n - npiv;
 		round += 1;
 	}
-	free(qinv);
 
 	/* finish */
 	if (!opts->enable_tall_and_skinny)
@@ -435,7 +398,7 @@ spasm* spasm_echelonize(spasm *A, int *Uqinv, struct echelonize_opts *opts)
 	if (!opts->enable_GPLU)
 		fprintf(stderr, "[echelonize] GPLU mode disabled\n");
 	
-	double aspect_ratio = (double) (n - npiv) / (m - npiv);
+	double aspect_ratio = (double) (n - npiv) / (m - U->n);
 	fprintf(stderr, "[echelonize] finishing; density = %.3f; aspect ratio = %.1f\n", density, aspect_ratio);
 	if (opts->enable_tall_and_skinny && aspect_ratio > opts->tall_and_skinny_ratio)
 		spasm_echelonize_dense_lowrank(A, p + npiv, n - npiv, U, Uqinv, opts);

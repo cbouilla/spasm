@@ -4,6 +4,7 @@
 
 #include "spasm.h"
 
+#if 0
 /* make pivotal rows of A unitary. FIXME: why is this not static? */
 void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv)
 {
@@ -23,6 +24,7 @@ void spasm_make_pivots_unitary(spasm *A, const int *p, const int npiv)
 			Ax[px] = (alpha * Ax[px]) % prime;
 	}
 }
+#endif
 
 /*
  * Samples R rows at random in the schur complement of (P*A)[0:n] w.r.t. U, and return the average density.
@@ -254,14 +256,11 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q, int N, int w)
 {
 	assert(p != NULL);
+	assert(n > 0);
 	int m = A->m;
 	int Sm = m - U->n;
-	// const i64 *Ap = A->p;
-	// const int *Aj = A->j;
-	// const spasm_GFp *Ax = A->x;
 	const i64 *Up = U->p;
 	const int *Uj = U->j;
-	// const spasm_GFp *Ux = U->x;
 	prepare_q(m, qinv, q);
 	fprintf(stderr, "[schur/dense/random] dimension %d x %d, weight %d...\n", N, Sm, w);
 	double start = spasm_wtime();
@@ -272,9 +271,6 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 	{
 		/* per-thread scratch space */
 		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
-		int *xj = spasm_malloc(3 * m * sizeof(*xj));
-		for (int j = 0; j < 3 * m; j++)
-			xj[j] = 0;
 
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (i64 k = 0; k < N; k++) {
@@ -314,7 +310,6 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 			}
 		}
 		free(x);
-		free(xj);
 	}
 	fprintf(stderr, "\n[schur/dense/random] finished in %.1fs\n", spasm_wtime() - start);
 }
