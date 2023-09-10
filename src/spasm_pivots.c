@@ -4,41 +4,8 @@
 #include "spasm.h"
 
 /*
- * General convention: if a row is pivotal, then the pivot is the first entry of the row.
- * If some pivots have been found, then they are passed from one routine to the other through
- * three variables:
- *   - npiv (int)             : the number of pivots found)
- *   - p (array of size n)    : rows p[0], ..., p[npiv - 1] are pivotal
- *   - qinv (array of size m) : if qinv[j] == -1, then column j is not pivotal;
- *                                 otherwise, the pivot is on row qinv[j].
+ * General convention: in U, the pivot is the first entry of the row.
  */
-
-
-/* test if a pivot has already been found on row i (if so, it's the first entry of the row ) */
-static bool spasm_is_row_pivotal(const spasm *A, const int *qinv, const int i)
-{
-	const i64 *Ap = A->p;
-	const int *Aj = A->j;
-	if (Ap[i + 1] == Ap[i])   /* test for empty row before reading Aj[px] */
-		return 0;
-	int j = Aj[Ap[i]];        /* first row entry, supposed to be the pivot */ 
-	return (qinv[j] == i);
-}
-
-/* make pivot the first entry of the row */
-static void spasm_prepare_pivot(spasm *A, const int i, const i64 px)
-{
-	i64 *Ap = A->p;
-	int *Aj = A->j;
-	spasm_GFp *Ax = A->x;
-	// spasm_swap(Aj, Ap[i], px);
-	int foo = Aj[Ap[i]];
-	spasm_GFp bar = Ax[Ap[i]];
-	Aj[Ap[i]] = Aj[px];
-	Ax[Ap[i]] = Ax[px];
-	Aj[px] = foo;
-	Ax[px] = bar;
-}
 
 /* register a pivot in (i, j) ; return 1 iff it is new in both row i or col j */
 static int register_pivot(int i, int j, int *p, int *qinv)
@@ -146,23 +113,10 @@ static int spasm_find_FL_column_pivots(const spasm *A, int *pinv, int *qinv)
 	return npiv;
 }
 
-static inline int find_survivor(spasm *A, int i, char *w) 
-{
-	i64 *Ap = A->p;
-	int *Aj = A->j;
-	for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
-		int j = Aj[px];
-		if (w[j] == 1) { /* potential pivot found */
-			spasm_prepare_pivot(A, i, px);
-			return j;
-		}
-	}
-	return -1;
-}
 
 /*
- * provide already know pivots, and this looks for more. Updates qinv, but
- * DFS must be performed afterwards
+ * This implements the greedy parallel algorithm described in
+ * https://doi.org/10.1145/3115936.3115944
  */
 static inline void BFS_enqueue(char *w, int *queue, int *surviving, int *tail, int j)
 {
@@ -181,73 +135,72 @@ static inline void BFS_enqueue_row(char *w, int *queue, int *surviving, int *tai
 	}
 }
 
-/*
- * This implements the greedy parallel algorithm described in
- * https://doi.org/10.1145/3115936.3115944
- */
-int spasm_find_cycle_free_pivots(spasm *A, int *p, int *qinv, int npiv_start)
+static int spasm_find_cycle_free_pivots(const spasm *A, int *pinv, int *qinv)
 {
 	int n = A->n;
 	int m = A->m;
-	i64 *Ap = A->p;
-	int *Aj = A->j;
+	const i64 *Ap = A->p;
+	const int *Aj = A->j;
 	int v = spasm_max(1, spasm_min(1000, n / 100));
 	int processed = 0;
-	int retries = 0;
-	int npiv = npiv_start;
+	int npiv = 0;
 	double start = spasm_wtime();
+	int *journal = spasm_malloc(n * sizeof(*journal));
 
+	/*
+	 * This uses "transactions". Rows with new pivots are appended to the journal.
+	 * npiv is the number of such rows. If npiv has not changed since the beginning of
+	 * a transaction, then it can be commited right away.
+	 */
 	#pragma omp parallel
 	{
-		char *w = spasm_malloc(m * sizeof(char));
-		int *queue = spasm_malloc(m * sizeof(int));
-		int head, tail, npiv_local, surviving, tid;
+		char *w = spasm_malloc(m * sizeof(*w));
+		int *queue = spasm_malloc(m * sizeof(*queue));
 
 		/* workspace initialization */
-		tid = spasm_get_thread_num();
+		int tid = spasm_get_thread_num();
 		for(int j = 0; j < m; j++)
 			w[j] = 0;
 
 		#pragma omp for schedule(dynamic, 1000)
 		for (int i = 0; i < n; i++) {
 			/*
-			 * for each non-pivotal row, computes the columns
-			 * reachable from its entries by alternating paths.
-			 * Unreachable entries on the row can be chosen as
-			 * pivots. The w[] array is used for marking during
-			 * the graph traversal. 
+			 * for each non-pivotal row, computes the columns reachable from its entries by alternating paths.
+			 * Unreachable entries on the row can be chosen as pivots. 
+			 * The w[] array is used for marking during the graph traversal. 
 			 * Before the search: 
 			 *   w[j] == 1 for each non-pivotal entry j on the row 
 			 *   w[j] == 0 otherwise 
 			 * After the search: 
-			 *   w[j] ==  1  for each unreachable non-pivotal entry j on the row
-			 *                 (candidate pivot) 
+			 *   w[j] ==  1  for each unreachable non-pivotal entry j on the row (candidate pivot) 
 			 *   w[j] == -1  column j is reachable by an alternating path,
 			 *                 or is pivotal (has entered the queue at some point) 
 			 *   w[j] ==  0  column j was absent and is unreachable
 			 */
 			if ((tid == 0) && (i % v) == 0) {
-				fprintf(stderr, "\r[pivots] %d / %d --- found %d new", processed, n - npiv_start, npiv - npiv_start);
+				fprintf(stderr, "\r[pivots] %d / %d --- found %d new", processed, n, npiv);
 				fflush(stderr);
 			}
-			if (spasm_is_row_pivotal(A, qinv, i))
-				continue;
+			if (pinv[i] >= 0)
+				continue;   /* row is already pivotal */
 
 			#pragma omp atomic update
 			processed++;
 
-			/* we start reading qinv: begining of transaction */
+			/* we will start reading qinv: begin the transaction by reading npiv */
+			int npiv_local;
 			#pragma omp atomic read
 			npiv_local = npiv;
+
 			/* scatters columns of A[i] into w, enqueue pivotal entries */
-			head = 0;
-			tail = 0;
-			surviving = 0;
+			int head = 0;
+			int tail = 0;
+			int surviving = 0;
 			for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
 				int j = Aj[px];
 				if (qinv[j] < 0) {
 					w[j] = 1;
-					surviving++;
+					surviving += 1;
 				} else {
 					BFS_enqueue(w, queue, &surviving, &tail, j);
 				}
@@ -264,55 +217,71 @@ int spasm_find_cycle_free_pivots(spasm *A, int *p, int *qinv, int npiv_start)
 			}
 
 			/* scan w for surviving entries */
-			if (surviving > 0) {
-				int j = find_survivor(A, i, w);
-				int npiv_target = -1;
-
-				/* si aucun nouveau pivot n'est arrivé, ajouter ... */
-				#pragma omp critical
-				{
-					if (npiv == npiv_local) {
-						qinv[j] = i;
-						p[npiv] = i;
-						#pragma omp atomic update
-						npiv++;
-					} else {
-						#pragma omp atomic read
-						npiv_target = npiv;
-						retries++;
-					}
-				}
-
-				if (npiv_target < 0)
-					goto cleanup;
-
-				/* si on a découvert de nouveaux pivots alors... les traiter ! */
-				for (; npiv_local < npiv_target; npiv_local++) {
-					int I = p[npiv_local];
-					int j = Aj[Ap[I]];
-					if (w[j] == 0)	/* the new pivot plays no role here */
-						continue;
-					if (w[j] == 1) {
-						/* a survivors becomes pivotal with this pivot */
-						BFS_enqueue(w, queue, &surviving, &tail, j);
-					} else {
-						/* the new pivot has been hit */
-						BFS_enqueue_row(w, queue, &surviving, &tail, Ap, Aj, I);
-					}
-				}
-				goto BFS;
+			if (surviving == 0)
+				goto cleanup;   /* no possible pivot */
+			
+			/* locate survivor in the row */
+			int j = -1;
+			for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
+				j = Aj[px];
+				if (w[j] == 1)  /* potential pivot */
+					break;
 			}
-			/* reset w back to zero */
+			assert(j != -1);
+
+			/* try to commit the transaction */
+			int npiv_target = -1;
+			#pragma omp critical
+			{
+				if (npiv == npiv_local) {
+					/* success */
+					register_pivot(i, j, pinv, qinv);
+					journal[npiv] = j;
+					#pragma omp atomic update
+					npiv += 1;
+				} else {
+					/* failure */
+					#pragma omp atomic read
+					npiv_target = npiv;
+				}
+			}
+
+			if (npiv_target < 0)
+				goto cleanup;  /* commit success */
+
+			/* commit failure: new pivots have been found behind our back. Examine them */
+			for (; npiv_local < npiv_target; npiv_local++) {
+				int j = journal[npiv_local];
+				if (w[j] == 0)	/* the new pivot plays no role here */
+					continue;
+				if (w[j] == 1) {
+					/* a survivors becomes pivotal with this pivot */
+					BFS_enqueue(w, queue, &surviving, &tail, j);
+				} else {
+					/* the new pivot has been hit */
+					int i = qinv[j];
+					BFS_enqueue_row(w, queue, &surviving, &tail, Ap, Aj, i);
+				}
+			}
+			goto BFS;
+
 	cleanup:
-			for (i64 px = Ap[i]; px < Ap[i + 1]; px++)
-				w[Aj[px]] = 0;
-			for (int px = 0; px < tail; px++)
-				w[queue[px]] = 0;
+			/* reset w back to zero */
+			for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
+				int j = Aj[px];
+				w[j] = 0;
+			}
+			for (int px = 0; px < tail; px++) {
+				int j = queue[px];
+				w[j] = 0;
+			}
 		}
 		free(w);
 		free(queue);
 	}
-	fprintf(stderr, "\r[pivots] greedy alternating cycle-free search: %d pivots found [%.1fs]\n", npiv - npiv_start, spasm_wtime() - start);
+	free(journal);
+	fprintf(stderr, "\r[pivots] greedy alternating cycle-free search: %d pivots found [%.1fs]\n", 
+		npiv, spasm_wtime() - start);
 	return npiv;
 }
 
@@ -335,8 +304,8 @@ static int spasm_pivots_find(const spasm *A, int *pinv, int *qinv, struct echelo
 		pinv[i] = -1;
 	int npiv = spasm_find_FL_pivots(A, pinv, qinv);
 	npiv += spasm_find_FL_column_pivots(A, pinv, qinv);
-	// if (opts->enable_greedy_pivot_search)
-	// 	npiv = spasm_find_cycle_free_pivots(A, p, qinv, npiv);
+	if (opts->enable_greedy_pivot_search)
+		npiv = spasm_find_cycle_free_pivots(A, pinv, qinv);
 	fprintf(stderr, "\r[pivots] %d pivots found\n", npiv);
 	return npiv;
 }

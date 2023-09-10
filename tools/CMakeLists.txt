@@ -23,9 +23,6 @@ target_link_libraries(mtx_reader PUBLIC spasm)
 add_executable(dm dm.c)
 target_link_libraries(dm PUBLIC spasm)
 
-add_executable(find_pivots find_pivots.c)
-target_link_libraries(find_pivots PUBLIC spasm)
-
 add_executable(rank rank.c)
 target_link_libraries(rank PUBLIC spasm)
 
