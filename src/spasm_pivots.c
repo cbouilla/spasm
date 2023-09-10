@@ -98,22 +98,23 @@ static int spasm_find_FL_pivots(const spasm *A, int *p, int *qinv)
  * w[j] = 1 <===> column j does not appear in a pivotal row
  * 
  */
-int spasm_find_FL_column_pivots(spasm *A, int *p, int *qinv, int npiv_fl)
+static int spasm_find_FL_column_pivots(const spasm *A, int *pinv, int *qinv)
 {
 	int n = A->n;
 	int m = A->m;
 	i64 *Ap = A->p;
 	int *Aj = A->j;
-	int npiv = npiv_fl;
+	int npiv = 0;
 	int *w = spasm_malloc(m * sizeof(int));
 	for (int j = 0; j < m; j++)
 		w[j] = 1;
 	double start = spasm_wtime();
 
-	/* mark columns on previous pivot rows as obstructed */
-	for (int i = 0; i < npiv; i++) {
-		int inew = p[i];
-		for (i64 px = Ap[inew]; px < Ap[inew + 1]; px++) {
+	/* mark columns on pivotal rows as obstructed */
+	for (int i = 0; i < n; i++) {
+		if (pinv[i] < 0)
+			continue;
+		for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
 			int j = Aj[px];
 			w[j] = 0;
 		}
@@ -121,7 +122,7 @@ int spasm_find_FL_column_pivots(spasm *A, int *p, int *qinv, int npiv_fl)
 
 	/* find new pivots */
 	for (int i = 0; i < n; i++) {
-		if (spasm_is_row_pivotal(A, qinv, i))
+		if (pinv[i] >= 0)
 			continue;
 
 		/* does A[i,:] have an entry on an unobstructed column? */
@@ -129,21 +130,19 @@ int spasm_find_FL_column_pivots(spasm *A, int *p, int *qinv, int npiv_fl)
 			int j = Aj[px];
 			if (w[j] == 0)
 				continue;	/* this column is closed, skip this entry */
-			/* new pivot found! */
-			if (qinv[j] == -1) {
-				p[npiv++] = i;
-				qinv[j] = i;
-				spasm_prepare_pivot(A, i, px);
-				/* mark the columns occuring on this row as unavailable */
-				for (i64 px = Ap[i]; px < Ap[i + 1]; px++)
-					w[Aj[px]] = 0;
-				break;
-			}
+			if (qinv[j] >= 0)
+				continue;       /* column j already pivotal */
+			/* TODO: displace previous pivot on column j if this one is better */
+			npiv += register_pivot(i, j, pinv, qinv);
+			/* mark the columns occuring on this row as unavailable */
+			for (i64 px = Ap[i]; px < Ap[i + 1]; px++) 
+				w[Aj[px]] = 0;
+			break; /* move on to the next row */
 		}
 	}
 	free(w);
 	fprintf(stderr, "[pivots] ``Faugère-Lachartre on columns'': %d pivots found [%.1fs]\n", 
-		npiv - npiv_fl, spasm_wtime() - start);
+		npiv, spasm_wtime() - start);
 	return npiv;
 }
 
@@ -335,7 +334,7 @@ static int spasm_pivots_find(const spasm *A, int *pinv, int *qinv, struct echelo
 	for (int i = 0; i < n; i++)
 		pinv[i] = -1;
 	int npiv = spasm_find_FL_pivots(A, pinv, qinv);
-	// npiv = spasm_find_FL_column_pivots(A, p, qinv, npiv);
+	npiv += spasm_find_FL_column_pivots(A, pinv, qinv);
 	// if (opts->enable_greedy_pivot_search)
 	// 	npiv = spasm_find_cycle_free_pivots(A, p, qinv, npiv);
 	fprintf(stderr, "\r[pivots] %d pivots found\n", npiv);
