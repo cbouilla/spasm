@@ -126,6 +126,7 @@ int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj
 {
 	int m = U->m;
 	int prime = U->prime;
+	assert(qinv != NULL);
 	// const i64 *Bp = B->p;
 	// const int *Bj = B->j;
 	// const spasm_GFp *Bx = B->x;
@@ -149,7 +150,7 @@ int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj
 		int j = xj[px];          /* x[j] is generically nonzero, (i.e., barring numerical cancelation) */
 
 		/* locate corresponding pivot if there is any */
-		int i = (qinv != NULL) ? (qinv[j]) : j;
+		int i = qinv[j];
 		if (i < 0)
 			continue;
 

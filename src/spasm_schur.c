@@ -63,7 +63,7 @@ double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const s
 
 /*
  * Computes the Schur complement of (P*A)[0:n] w.r.t. U
- * The pivots must be the first entries on the rows.
+ * The pivots need not be the first entries on the rows.
  * The pivots must be unitary.	
  * This returns a sparse representation of S. 
  *
@@ -74,6 +74,7 @@ double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const s
  */
 spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double est_density, int keep_L, int *p_out)
 {
+	assert(p != NULL);
 	assert(!keep_L); /* option presently unsupported */
 	(void) p_out;
 	
@@ -103,7 +104,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm *U, const in
 
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (int i = 0; i < n; i++) {
-			int inew = (p != NULL) ? p[i] : i;
+			int inew = p[i];
 			int top = spasm_sparse_triangular_solve(U, A, inew, xj, x, qinv);
 
 			int row_nnz = 0;             /* #nz coefficients in the row */

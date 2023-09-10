@@ -50,7 +50,9 @@ int spasm_dfs(int jstart, const spasm *A, int top, int *xj, int *pstack, int *ma
 
 		if (i < 0) {
 			/* push initial column in the output stack and pop it from the recursion stack*/
-			xj[--top] = xj[head--];
+			top -= 1;
+			xj[top] = xj[head];
+			head -= 1;
 			continue;
 		}
 
@@ -69,9 +71,12 @@ int spasm_dfs(int jstart, const spasm *A, int top, int *xj, int *pstack, int *ma
 			xj[++head] = j;         /* push column j onto the recursion stack */
 			break;
 		}
-		if (k == p2)
+		if (k == p2) {
 			/* row i fully examined; push initial column in the output stack and pop it from the recursion stack */
-			xj[--top] = xj[head--];
+			top -= 1;
+			xj[top] = xj[head];
+			head -= 1;
+		}
 	}
 	return top;
 }

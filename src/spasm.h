@@ -175,7 +175,7 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 // int spasm_LU_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x);
 
 /* spasm_pivots.c */
-int spasm_find_pivots(spasm * A, int *p, int *qinv, struct echelonize_opts *opts);
+int spasm_find_pivots(spasm *A, int *p, int *qinv, struct echelonize_opts *opts);
 spasm * spasm_permute_pivots(const spasm *A, const int *p, int *qinv, int npiv);
 
 /* spasm_matching.c */
