@@ -339,9 +339,6 @@ spasm* spasm_echelonize(const spasm *A, int *Uqinv, struct echelonize_opts *opts
 	int m = A->m;
 	
 	int *p = spasm_malloc(n * sizeof(*p)); /* pivotal rows come first in P*A */
-	for (int i = 0; i < n; i++)  /* initialize p in case opt->max_rounds == 0 */
-		p[i] = i;
-
 	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), A->prime, SPASM_WITH_NUMERICAL_VALUES);
 	U->n = 0;
 	for (int j = 0; j < m; j++)
@@ -351,29 +348,30 @@ spasm* spasm_echelonize(const spasm *A, int *Uqinv, struct echelonize_opts *opts
 	double start = spasm_wtime();
 	double density = -1;
 	int npiv = 0;
+	int status = 0;  /* 0 == max_round reached; 1 == full rank reached; 2 == early abort */
 	for (int round = 0; round < opts->max_round; round++) {
-		assert(n == A->n);
-
 		fprintf(stderr, "[echelonize] round %d\n", round);
 		npiv = spasm_pivots_extract_structural(A, U, Uqinv, p, opts);
 
 		/* decide whether to move on to the next iteration */
 		if (npiv == spasm_min(n, m - U->n)) {
-			fprintf(stderr, "[echelonize] full rank reached\n");	
+			fprintf(stderr, "[echelonize] full rank reached\n");
+			status = 1;
 			break;
 		}
-
 		if (npiv < opts->min_pivot_proportion * spasm_min(n, m - U->n)) {
 			fprintf(stderr, "[echelonize] not enough pivots found; stopping\n");
+			status = 2;
 			break;     /* not enough pivots found */
 		}		
 		// if (density > opts->sparsity_threshold && aspect_ratio > opts->tall_and_skinny_ratio) {
-		// 	fprintf(stderr, "Schur complement is dense,tall and skinny (#rows / #cols = %.1f)\n", aspect_ratio);
+		// 	fprintf(stderr, "Schur complement is dense, tall and skinny (#rows / #cols = %.1f)\n", aspect_ratio);
 		// 	break;
 		// }
 		density = spasm_schur_estimate_density(A, p + npiv, n - npiv, U, Uqinv, 100);
 		if (density > opts->sparsity_threshold) {
 			fprintf(stderr, "[echelonize] Schur complement is dense (estimated %.2f%%)\n", 100 * density);
+			status = 2;
 			break;
 		}
 
@@ -386,9 +384,17 @@ spasm* spasm_echelonize(const spasm *A, int *Uqinv, struct echelonize_opts *opts
 		if (round > 0)
 			spasm_csr_free((spasm *) A);       /* discard const, only if it is not the input argument */
 		A = S;
-		n = n - npiv;
+		n = n - npiv;  // problem if we exit the loop normally
 		round += 1;
 	}
+	
+	if (status == 0) {
+		npiv = 0;
+		for (int i = 0; i < n; i++)
+			p[i] = i;
+	}
+	if (status == 1)
+		goto cleanup;  /* nothing else to do */
 
 	/* finish */
 	if (!opts->enable_tall_and_skinny)
@@ -409,6 +415,7 @@ spasm* spasm_echelonize(const spasm *A, int *Uqinv, struct echelonize_opts *opts
 	else
 		fprintf(stderr, "[echelonize] Cannot finish (no valid method enabled). Incomplete echelonization returned\n");
 
+cleanup:
 	free(p);
 	fprintf(stderr, "[echelonize] Done in %.1fs. Rank %d, %" PRId64 " nz in basis\n", spasm_wtime() - start, U->n, spasm_nnz(U));
 	spasm_csr_resize(U, U->n, m);
