@@ -3,7 +3,7 @@ image: gcc
 
 before_script:
   - apt update
-  - apt -y install make cmake
+  - apt -y install make cmake fflas-ffpack
 
 stages:
   - build
