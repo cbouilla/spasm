@@ -3,7 +3,7 @@ image: gcc
 
 before_script:
   - apt update
-  - apt -y install make cmake fflas-ffpack
+  - apt -y install make cmake libopenblas-dev fflas-ffpack
 
 stages:
   - build
