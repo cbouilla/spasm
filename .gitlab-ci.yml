@@ -14,7 +14,14 @@ compile:
   script:
     - make
 
-run_test:
+unit_tests:
     stage: test
+    dependencies: compile
+    script:
+      - make check
+
+long_tests:
+    stage: test
+    dependencies: compile
     script:
       - make check
