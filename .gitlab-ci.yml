@@ -1,5 +1,5 @@
 #image: debian
-image: gcc
+image: build
 
 before_script:
   - apt update
@@ -9,19 +9,22 @@ stages:
   - build
   - test
 
-compile:
+compile_gcc:
   stage: build
   script:
     - make
 
+compile_clang:
+  stage: build
+  script:
+    - CC=clang make
+
 unit_tests:
     stage: test
-    dependencies: compile
     script:
       - make check
 
 long_tests:
     stage: test
-    dependencies: compile
     script:
       - make check
