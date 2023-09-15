@@ -12,21 +12,16 @@ extern "C" {
 #include "spasm.h"
 }
 
-void spasm_ffpack_setzero(int prime, int n, int m, double *A, int ldA)
-{
-	Givaro::ModularBalanced<double> GFp(prime);
-	FFLAS::fzero(GFp, n, m, A, ldA);
-}
 
 /*
  * Q of size m (#cols). On output, Q[0:rank] is singificant.
  * It is implicit that U[i, 0:Q[i]] == 0 and U[i, 0:Q[i]] == 1.
  * M[i, Q[i]:m] contain the actual data.
  */ 
-int spasm_ffpack_echelonize(int prime, int n, int m, double *A, int ldA, size_t *qinv)
+int spasm_ffpack_echelonize(i64 prime, int n, int m, double *A, int ldA, size_t *qinv)
 {
 	double start = spasm_wtime();
-	fprintf(stderr, "[ffpack/echelonize] Matrix of dimension %d x %d mod %d... ", n, m, prime);
+	fprintf(stderr, "[ffpack/echelonize] Matrix of dimension %d x %d mod %" PRId64"... ", n, m, prime);
 	fflush(stderr);
 	Givaro::ModularBalanced<double> GFp(prime);
 	size_t *Qt = FFLAS::fflas_new<size_t>(m);

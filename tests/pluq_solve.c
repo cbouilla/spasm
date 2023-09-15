@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A;
-  spasm_GFp *x, *y, *b;
+  spasm_ZZp *x, *y, *b;
   int n, m, i, prime, result;
 
   T = spasm_load_sms(stdin, 42013);
@@ -16,11 +16,11 @@ int main(int argc, char **argv) {
 
   n = A->n;
   m = A->m;
-  prime = A->prime;
+  prime = A->field.p;
 
-  x = malloc(n * sizeof(spasm_GFp));
-  y = malloc(m * sizeof(spasm_GFp));
-  b = malloc(m * sizeof(spasm_GFp));
+  x = malloc(n * sizeof(spasm_ZZp));
+  y = malloc(m * sizeof(spasm_ZZp));
+  b = malloc(m * sizeof(spasm_ZZp));
 
   /* test A ------------------------- with a sensible RHS ----------- */
   printf("# testing correct solution\n");

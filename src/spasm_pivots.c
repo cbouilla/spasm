@@ -377,11 +377,11 @@ int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p
 	/* copy pivotal rows to U and make them unitary; update Uqinv */
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;
-	const spasm_GFp *Ax = A->x;
+	const spasm_ZZp *Ax = A->x;
 	i64 *Up = U->p;
 	int *Uj = U->j;
-	spasm_GFp *Ux = U->x;
-	spasm_GFp prime = A->prime;
+	spasm_ZZp *Ux = U->x;
+	spasm_ZZp prime = A->field.p;
 	i64 unz = spasm_nnz(U);      /* #entries in U */
 	for (int k = 0; k < npiv; k++) {
 		int i = p[k];
@@ -390,7 +390,7 @@ int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p
 		assert(qinv[j] == i);
 		Uqinv[j] = U->n;          /* register pivot in U */
 		/* locate pivot in row */ 
-		spasm_GFp pivot = 0;
+		spasm_ZZp pivot = 0;
 		for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
 			if (Aj[px] == j) {
 				pivot = Ax[px];
@@ -398,7 +398,7 @@ int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p
 			}
 		}
 		/* make pivot unitary and add it first */
-		spasm_GFp alpha = spasm_GFp_inverse(pivot, prime);
+		spasm_ZZp alpha = spasm_ZZp_inverse(&A->field, pivot);
 		Uj[unz] = j;
 		Ux[unz] = 1;
 		unz += 1;
@@ -407,7 +407,7 @@ int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p
 			if (j == Aj[px])
 				continue;    /* skip pivot, already there */
 			Uj[unz] = Aj[px];
-			Ux[unz] = (alpha * Ax[px]) % prime;
+			Ux[unz] = spasm_ZZp_mul(&A->field, alpha, Ax[px]);
 			unz += 1;
 		}
 		U->n += 1;

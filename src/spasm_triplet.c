@@ -4,21 +4,18 @@
 #include "spasm.h"
 
 /* add an entry to a triplet matrix; enlarge it if necessary */
-void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_GFp x)
+void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_ZZp x)
 {
 	assert((i >= 0) && (j >= 0));
-	int prime = T->prime;
-
 	i64 px = T->nz;
 	if (px == T->nzmax)
 		spasm_triplet_realloc(T, 1 + 2 * T->nzmax);
 	if (T->x != NULL) {
-		spasm_GFp x_p = ((x % prime) + prime) % prime;
-		if (x_p == 0)
+		spasm_ZZp xp = spasm_ZZp_init(&T->field, x);
+		if (xp == 0)
 			return;
-		T->x[px] = x_p;
+		T->x[px] = xp;
 	}
-
 	T->i[px] = i;
 	T->j[px] = j;
 	T->nz += 1;
@@ -43,9 +40,7 @@ void spasm_deduplicate(spasm *A)
 	int n = A->n;
 	i64 *Ap = A->p;
 	int *Aj = A->j;
-	spasm_GFp *Ax = A->x;
-	int prime = A->prime;
-
+	spasm_ZZp *Ax = A->x;
 	i64 *v = spasm_malloc(m * sizeof(*v));
 	for (int j = 0; j < m; j++)
 		v[j] = -1;
@@ -62,8 +57,10 @@ void spasm_deduplicate(spasm *A)
 					Ax[nz] = Ax[it];
 				nz += 1;
 			} else {
-				if (Ax)
-					Ax[v[j]] = (Ax[v[j]] + Ax[it]) % prime;
+				if (Ax) {
+					i64 px = v[j];
+					Ax[px] = spasm_ZZp_add(&A->field, Ax[px], Ax[it]);
+				}
 			}
 		}
 		Ap[i] = p;
@@ -81,20 +78,20 @@ spasm *spasm_compress(const spasm_triplet * T)
 	i64 nz = T->nz;
 	int *Ti = T->i;
 	int *Tj = T->j;
-	spasm_GFp *Tx = T->x;
+	spasm_ZZp *Tx = T->x;
 	
 	double start = spasm_wtime();
 	fprintf(stderr, "[CSR] Compressing... ");
 	fflush(stderr);
 
 	/* allocate result */
-	spasm *C = spasm_csr_alloc(n, m, nz, T->prime, Tx != NULL);
+	spasm *C = spasm_csr_alloc(n, m, nz, T->field.p, Tx != NULL);
 
 	/* get workspace */
 	i64 *w = spasm_calloc(n, sizeof(*w));
 	i64 *Cp = C->p;
 	int *Cj = C->j;
-	spasm_GFp *Cx = C->x;
+	spasm_ZZp *Cx = C->x;
 
 	/* compute row counts */
 	for (int it = 0; it < nz; it++) {
@@ -125,7 +122,7 @@ spasm *spasm_compress(const spasm_triplet * T)
 
 	/* success; free w and return C */
 	char mem[16];
-	int size = sizeof(int) * (n + nz) + sizeof(spasm_GFp) * ((Cx != NULL) ? nz : 0);
+	int size = sizeof(int) * (n + nz) + sizeof(spasm_ZZp) * ((Cx != NULL) ? nz : 0);
 	spasm_human_format(size, mem);
 	fprintf(stderr, "%" PRId64 " actual NZ, Mem usage = %sbyte [%.2fs]\n", spasm_nnz(C), mem, spasm_wtime() - start);
 	return C;

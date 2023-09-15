@@ -8,13 +8,13 @@ spasm *spasm_transpose(const spasm *C, int keep_values)
 	int n = C->n;
 	const i64 *Cp = C->p;
 	const int *Cj = C->j;
-	const spasm_GFp *Cx = C->x;
+	const spasm_ZZp *Cx = C->x;
 
 	/* allocate result */
-	spasm *T = spasm_csr_alloc(m, n, spasm_nnz(C), C->prime, keep_values && (Cx != NULL));
+	spasm *T = spasm_csr_alloc(m, n, spasm_nnz(C), C->field.p, keep_values && (Cx != NULL));
 	i64 *Tp = T->p;
 	int *Tj = T->j;
-	spasm_GFp *Tx = T->x;
+	spasm_ZZp *Tx = T->x;
 
 	/* get workspace */
 	i64 *w = spasm_calloc(m, sizeof(*w));

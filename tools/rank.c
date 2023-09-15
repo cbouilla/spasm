@@ -9,7 +9,7 @@
 int main(int argc, char **argv)
 {
 	int allow_transpose = 1;	/* transpose ON by default */
-	int prime = 42013;
+	i64 prime = 42013;
 
 	/* parse command-line options */
 	struct option longopts[7] = {

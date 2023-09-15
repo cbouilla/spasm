@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *B;
   int *p, *q;
-  spasm_GFp *x, *y, *u, *v, *w;
+  spasm_ZZp *x, *y, *u, *v, *w;
 
   T = spasm_load_sms(stdin, 42013);
   A = spasm_compress(T);
@@ -25,11 +25,11 @@ int main(int argc, char **argv) {
 
   B = spasm_permute(A, p, q, true);
 
-  x = spasm_malloc(n * sizeof(spasm_GFp));
-  y = spasm_malloc(m * sizeof(spasm_GFp));
-  u = spasm_malloc(n * sizeof(spasm_GFp));
-  v = spasm_malloc(m * sizeof(spasm_GFp));
-  w = spasm_malloc(m * sizeof(spasm_GFp));
+  x = spasm_malloc(n * sizeof(spasm_ZZp));
+  y = spasm_malloc(m * sizeof(spasm_ZZp));
+  u = spasm_malloc(n * sizeof(spasm_ZZp));
+  v = spasm_malloc(m * sizeof(spasm_ZZp));
+  w = spasm_malloc(m * sizeof(spasm_ZZp));
 
   for(i = 0; i < n; i++) {
     for(j = 0; j < n; j++) {

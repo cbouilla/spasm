@@ -6,7 +6,7 @@
 
 #include "spasm.h"
 
-int prime = 42013;
+i64 prime = 42013;
 bool rref = 0;
 
 struct echelonize_opts opts;

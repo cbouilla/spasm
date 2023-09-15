@@ -22,7 +22,7 @@
  * p[j] == i indicates if the "diagonal" entry on column j is on row i
  * 
  */
-void spasm_dense_back_solve(const spasm *L, spasm_GFp *b, spasm_GFp *x, const int *p)
+void spasm_dense_back_solve(const spasm *L, spasm_ZZp *b, spasm_ZZp *x, const int *p)
 {
 	/* check inputs */
 	assert(b != NULL);
@@ -32,8 +32,7 @@ void spasm_dense_back_solve(const spasm *L, spasm_GFp *b, spasm_GFp *x, const in
 	int m = L->m;
 	const i64 *Lp = L->p;
 	// const int *Lj = L->j;
-	const spasm_GFp *Lx = L->x;
-	int prime = L->prime;
+	const spasm_ZZp *Lx = L->x;
 
 	for (int i = 0; i < n; i++)
 		x[i] = 0;
@@ -42,12 +41,13 @@ void spasm_dense_back_solve(const spasm *L, spasm_GFp *b, spasm_GFp *x, const in
 		int i = (p != SPASM_IDENTITY_PERMUTATION) ? p[j] : j;
 
 		/* pivot on the j-th column is on the i-th row */
-		const spasm_GFp diagonal_entry = Lx[Lp[i + 1] - 1];
+		const spasm_ZZp diagonal_entry = Lx[Lp[i + 1] - 1];
 
 		/* axpy - inplace */
-		x[i] = (b[j] * spasm_GFp_inverse(diagonal_entry, prime)) % prime;
-		spasm_GFp backup = x[i];
-		spasm_scatter(L, i, prime - x[i], b);
+		spasm_ZZp alpha = spasm_ZZp_inverse(&L->field, diagonal_entry);
+		x[i] = spasm_ZZp_mul(&L->field, alpha, b[j]);
+		spasm_ZZp backup = x[i];
+		spasm_scatter(L, i, -x[i], b);
 		x[i] = backup;
 	}
 }
@@ -70,7 +70,7 @@ void spasm_dense_back_solve(const spasm *L, spasm_GFp *b, spasm_GFp *x, const in
  * 
  * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
  */
-int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp *x, const int *q)
+int spasm_dense_forward_solve(const spasm * U, spasm_ZZp *b, spasm_ZZp *x, const int *q)
 {
 	/* check inputs */
 	assert(b != NULL);
@@ -79,7 +79,7 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp *x, const
 	int n = U->n;
 	int m = U->m;
 	assert(n <= m);
-	int prime = U->prime;
+	i64 prime = U->field.p;
 	for (int i = 0; i < n; i++)
 		x[i] = 0;
 
@@ -87,13 +87,13 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp *x, const
 		int j = (q != SPASM_IDENTITY_PERMUTATION) ? q[i] : i;
 		if (b[j] != 0) {
 			/* check diagonal entry */
-			// const spasm_GFp diagonal_entry = Ux[Up[i]];
+			// const spasm_ZZp diagonal_entry = Ux[Up[i]];
 			// assert(diagonal_entry == 1);
 
 			/* axpy - inplace */
 			x[i] = b[j];
-			spasm_GFp backup = x[i];
-			spasm_scatter(U, i, prime - x[i], b);
+			spasm_ZZp backup = x[i];
+			spasm_scatter(U, i, -x[i], b);
 			x[i] = backup;
 			b[j] = 0;
 		}
@@ -122,14 +122,14 @@ int spasm_dense_forward_solve(const spasm * U, spasm_GFp *b, spasm_GFp *x, const
  * This does not require the pivots to be the first entry of the row.
  * This requires that the pivots in U are all equal to 1. 
  */
-int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_GFp * x, const int *qinv)
+int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_ZZp * x, const int *qinv)
 {
 	int m = U->m;
-	int prime = U->prime;
+	i64 prime = U->field.p;
 	assert(qinv != NULL);
 	// const i64 *Bp = B->p;
 	// const int *Bj = B->j;
-	// const spasm_GFp *Bx = B->x;
+	// const spasm_ZZp *Bx = B->x;
 
 	/* compute non-zero pattern of x --- xj[top:m] = Reach(U, B[k]) */
 	int top = spasm_reach(U, B, k, m, xj, qinv);
@@ -155,102 +155,10 @@ int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj
 			continue;
 
 		/* the pivot entry on row i is 1, so we just have to multiply by -x[j] */
-		spasm_GFp backup = x[j];
-		spasm_scatter(U, i, prime - x[j], x);
+		spasm_ZZp backup = x[j];
+		spasm_scatter(U, i, -x[j], x);
 		assert(x[j] == 0);
 		x[j] = backup;
 	}
 	return top;
-}
-
-/*
- * Solves X * U == B
- * Serious similarity with spasm_schur, spasm_rref, spasm_kernel, ...
- */
-spasm *spasm_trsm(const spasm *U, const int *qinv, const spasm *B)
-{
-	assert(U->m == B->m);
-	int m = B->m;
-	int n = B->n;
-	spasm *X = spasm_csr_alloc(n, m, spasm_nnz(B), B->prime, SPASM_WITH_NUMERICAL_VALUES);
-	i64 *Xp = X->p;
-	int *Xj = X->j;
-	spasm_GFp *Xx = X->x;
-	i64 nnz = 0;      /* nnz in X at the moment */
-	int Xn = 0;       /* #rows in X at the moment */
-	int writing = 0;
-	double start = spasm_wtime();
-
-	#pragma omp parallel
-	{
-		spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
-		int *xj = spasm_malloc(3 * m * sizeof(int));
-		for (int j = 0; j < 3*m; j++)
-			xj[j] = 0;
-		int tid = spasm_get_thread_num();
-
-		#pragma omp for schedule(guided)
-		for (int i = 0; i < n; i++) {
-			int top = spasm_sparse_triangular_solve(U, B, i, xj, x, qinv);
-
-			int row_nnz = 0;             /* #nz coefficients in the row */
-			for (int px = top; px < m; px++) {
-				int j = xj[px];
-				if (x[j] == 0)
-					continue;
-				assert(qinv[j] >= 0);   /* otherwise, solution does not exist */
-				row_nnz += 1;
-			}
-
-			int local_i;
-			i64 local_nnz;
-			#pragma omp critical(schur_complement)
-			{
-				/* enough room in X? */
-				if (nnz + row_nnz > X->nzmax) {
-					/* wait until other threads stop writing into it */
-					#pragma omp flush(writing)
-					while (writing > 0) {
-						#pragma omp flush(writing)
-					}
-					spasm_csr_realloc(X, 2 * X->nzmax + m);
-					Xj = X->j;
-					Xx = X->x;
-				}
-				/* save row Xn */
-				local_i = Xn;
-				Xn += 1;
-				local_nnz = nnz;
-				nnz += row_nnz;
-				#pragma omp atomic update
-				writing += 1;    /* register as a writing thread */
-			}
-			
-			/* write the new row in X */
-			for (int px = top; px < m; px++) {
-				int j = xj[px];
-				if (x[j] == 0)
-					continue;
-				Xj[local_nnz] = qinv[j];
-				Xx[local_nnz] = x[j];
-				local_nnz += 1;
-			}
-			Xp[local_i + 1] = local_nnz;
-
-			#pragma omp atomic update
-			writing -= 1;        /* unregister as a writing thread */
-
-			if (tid == 0) {
-				fprintf(stderr, "\r[trsm] %d/%d [%" PRId64 " nz]", Xn, n, nnz);
-				fflush(stderr);
-			}
-		}
-		free(x);
-		free(xj);
-	}
-	/* finalize X */
-	spasm_csr_realloc(X, -1);
-	double density = 1.0 * nnz / (1.0 * m * n);
-	fprintf(stderr, "\r[trsm] %d * %d [%" PRId64 " nz / density= %.3f], %.1fs\n", n, m, nnz, density, spasm_wtime() - start);
-	return X;
 }

@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv) 
 {
-	int prime = 42013;
+	i64 prime = 42013;
 
 	spasm_triplet *T = spasm_load_sms(stdin, prime);
 	spasm *A = spasm_compress(T);
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	
-	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), A->prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), A->field.p, SPASM_WITH_NUMERICAL_VALUES);
 	U->n = 0;
 	for (int j = 0; j < m; j++)
 		qinv[j] = -1;
@@ -51,9 +51,9 @@ int main(int argc, char **argv)
 	S = spasm_schur(A, p, npiv, -1, 1, p_out);
 	Sp = S->p;
 	Sj = S->j;
-	spasm_GFp *Sx = S->x;
-	spasm_GFp *x = spasm_malloc(n * sizeof(*x));
-	spasm_GFp *y = spasm_malloc(m * sizeof(*y));
+	spasm_ZZp *Sx = S->x;
+	spasm_ZZp *x = spasm_malloc(n * sizeof(*x));
+	spasm_ZZp *y = spasm_malloc(m * sizeof(*y));
 
 	abort = 0;
 	for (int k = 0; k < Sn; k++) {

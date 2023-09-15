@@ -16,10 +16,10 @@ spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv)
 	spasm_human_format(spasm_nnz(U), hnnz);
 	fprintf(stderr, "[rref] start. U is %d x %d (%s nnz)\n", n, m, hnnz);
 	double start_time = spasm_wtime();
-	spasm *R = spasm_csr_alloc(n, m, spasm_nnz(U), U->prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *R = spasm_csr_alloc(n, m, spasm_nnz(U), U->field.p, SPASM_WITH_NUMERICAL_VALUES);
 	i64 *Rp = R->p;
 	int *Rj = R->j;
-	int *Rx = R->x;
+	spasm_ZZp *Rx = R->x;
 	int Rn = 0;         /* #rows in R */
 	i64 nnz = 0;        /* entries in R */
 	int writing = 0;
@@ -28,7 +28,7 @@ spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv)
 
 	#pragma omp parallel
 	{
-		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+		spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
 		int *xj = spasm_malloc(3 * m * sizeof(int));
 		for (int j = 0; j < 3 * m; j++)
 			xj[j] = 0;

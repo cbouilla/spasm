@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -86,36 +87,32 @@ void *spasm_realloc(void *ptr, i64 size)
 }
 
 /* allocate a sparse matrix (compressed-row form) */
-spasm *spasm_csr_alloc(int n, int m, i64 nzmax, int prime, int with_values)
+spasm *spasm_csr_alloc(int n, int m, i64 nzmax, i64 prime, bool with_values)
 {
-	if (prime > 46337) {
-		prime = 46337;
-		fprintf(stderr, "WARNING: modulus has been set to 46337.\n");
-	}
 	spasm *A = spasm_malloc(sizeof(spasm));
+	spasm_field_init(prime, &A->field);
 	A->m = m;
 	A->n = n;
 	A->nzmax = nzmax;
-	A->prime = prime;
 	A->p = spasm_malloc((n + 1) * sizeof(i64));
 	A->j = spasm_malloc(nzmax * sizeof(int));
-	A->x = with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL;
+	A->x = with_values ? spasm_malloc(nzmax * sizeof(spasm_ZZp)) : NULL;
 	A->p[0] = 0;
 	return A;
 }
 
 /* allocate a sparse matrix (triplet form) */
-spasm_triplet *spasm_triplet_alloc(int n, int m, i64 nzmax, int prime, int with_values)
+spasm_triplet *spasm_triplet_alloc(int n, int m, i64 nzmax, i64 prime, bool with_values)
 {
 	spasm_triplet *A = spasm_malloc(sizeof(spasm_triplet));
 	A->m = m;
 	A->n = n;
 	A->nzmax = nzmax;
-	A->prime = prime;
+	spasm_field_init(prime, &A->field);
 	A->nz = 0;
 	A->i = spasm_malloc(nzmax * sizeof(int));
 	A->j = spasm_malloc(nzmax * sizeof(int));
-	A->x = with_values ? spasm_malloc(nzmax * sizeof(spasm_GFp)) : NULL;
+	A->x = with_values ? spasm_malloc(nzmax * sizeof(spasm_ZZp)) : NULL;
 	return A;
 }
 
@@ -131,7 +128,7 @@ void spasm_csr_realloc(spasm *A, i64 nzmax)
 	// 	errx(1, "spasm_csr_realloc with too small nzmax (contains %" PRId64 " nz, asking nzmax=%" PRId64 ")", spasm_nnz(A), nzmax);
 	A->j = spasm_realloc(A->j, nzmax * sizeof(int));
 	if (A->x != NULL)
-		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
+		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_ZZp));
 	A->nzmax = nzmax;
 }
 
@@ -146,7 +143,7 @@ void spasm_triplet_realloc(spasm_triplet * A, i64 nzmax)
 	A->i = spasm_realloc(A->i, nzmax * sizeof(int));
 	A->j = spasm_realloc(A->j, nzmax * sizeof(int));
 	if (A->x != NULL)
-		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_GFp));
+		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_ZZp));
 	A->nzmax = nzmax;
 }
 

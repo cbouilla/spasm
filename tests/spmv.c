@@ -7,7 +7,7 @@
 int main() {
   spasm_triplet *T;
   spasm *C;
-  spasm_GFp *x, *y;
+  spasm_ZZp *x, *y;
   int i, n;
 
   T = spasm_load_sms(stdin, 257);
@@ -15,9 +15,9 @@ int main() {
   spasm_triplet_free(T);
 
   n = C->n;
-  assert(n < C->prime);
-  x = malloc(n * sizeof(spasm_GFp));
-  y = malloc(n * sizeof(spasm_GFp));
+  assert(n < C->field.p);
+  x = malloc(n * sizeof(spasm_ZZp));
+  y = malloc(n * sizeof(spasm_ZZp));
   for(i = 0; i < n; i++) {
     x[i] = i + 1;
     y[i] = 0;

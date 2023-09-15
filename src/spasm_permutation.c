@@ -16,7 +16,7 @@
  * 
  * This means that x[k] <--- b[ p[k] ]
  */
-void spasm_pvec(const int *p, const spasm_GFp *b, spasm_GFp *x, int n)
+void spasm_pvec(const int *p, const spasm_ZZp *b, spasm_ZZp *x, int n)
 {
 	assert(x != NULL);
 	assert(b != NULL);
@@ -34,7 +34,7 @@ void spasm_pvec(const int *p, const spasm_GFp *b, spasm_GFp *x, int n)
  * 
  * The function is given p, not p^{-1}.
  */
-void spasm_ipvec(const int *p, const spasm_GFp * b, spasm_GFp * x, int n)
+void spasm_ipvec(const int *p, const spasm_ZZp * b, spasm_ZZp * x, int n)
 {
 	assert(x != NULL);
 	assert(b != NULL);
@@ -73,13 +73,13 @@ spasm *spasm_permute(const spasm *A, const int *p, const int *qinv, int values)
 	int m = A->m;
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;
-	const spasm_GFp *Ax = A->x;
+	const spasm_ZZp *Ax = A->x;
 
 	/* alloc result */
-	spasm *C = spasm_csr_alloc(n, m, A->nzmax, A->prime, values && (Ax != NULL));
+	spasm *C = spasm_csr_alloc(n, m, A->nzmax, A->field.p, values && (Ax != NULL));
 	i64 *Cp = C->p;
 	int *Cj = C->j;
-	spasm_GFp *Cx = C->x;
+	spasm_ZZp *Cx = C->x;
 	i64 nnz = 0;
 
 	for (int i = 0; i < n; i++) {

@@ -25,11 +25,11 @@ int main(int argc, char **argv)
         /* rows of K form a basis of the right-kernel of At, hence the left kernel of A */
         
         /* test that they are really kernel vectors */
-        spasm_GFp *x = spasm_malloc(n * sizeof(*x));
-        spasm_GFp *y = spasm_malloc(m * sizeof(*y));
+        spasm_ZZp *x = spasm_malloc(n * sizeof(*x));
+        spasm_ZZp *y = spasm_malloc(m * sizeof(*y));
         const i64 *Kp = K->p;
         const int *Kj = K->j;
-        const spasm_GFp *Kx = K->x;
+        const spasm_ZZp *Kx = K->x;
         for (int i = 0; i < K->n; i++) {
                 printf("# testing vector %d\n", i);
 

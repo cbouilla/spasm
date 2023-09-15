@@ -9,15 +9,15 @@ spasm *spasm_submatrix(const spasm * A, int r_0, int r_1, int c_0, int c_1, int 
 	assert(A != NULL);
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;
-	const spasm_GFp *Ax = A->x;
+	const spasm_ZZp *Ax = A->x;
 
 	int Bn = spasm_max(0, r_1 - r_0);
 	int Bm = spasm_max(0, c_1 - c_0);
 	i64 Bnz = spasm_max(0, Ap[r_1] - Ap[r_0]);
-	spasm *B = spasm_csr_alloc(Bn, Bm, Bnz, A->prime, (A->x != NULL) && with_values);
+	spasm *B = spasm_csr_alloc(Bn, Bm, Bnz, A->field.p, (A->x != NULL) && with_values);
 	i64 *Bp = B->p;
 	int *Bj = B->j;
-	spasm_GFp *Bx = B->x;
+	spasm_ZZp *Bx = B->x;
 
 	i64 k = 0;
 	for (int i = r_0; i < r_1; i++) {

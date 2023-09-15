@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *G;
   int i, n, m, prime;
-  spasm_GFp *x, *b, *y;
+  spasm_ZZp *x, *b, *y;
   int test = 0;
   
   T = spasm_load_sms(stdin, 32003);
@@ -18,16 +18,16 @@ int main(int argc, char **argv) {
 
   n = G->n;
   m = G->m;
-  prime = G->prime;
+  prime = G->field.p;
   assert(n >= m);
   assert(spasm_is_lower_triangular(G));
 
-  x = malloc(n * sizeof(spasm_GFp));
-  b = malloc(m * sizeof(spasm_GFp));
-  y = malloc(m * sizeof(spasm_GFp));
+  x = malloc(n * sizeof(spasm_ZZp));
+  b = malloc(m * sizeof(spasm_ZZp));
+  y = malloc(m * sizeof(spasm_ZZp));
 
   for(i = 0; i < m; i++) {
-    b[i] = rand() % prime;
+    b[i] = spasm_ZZp_init(&G->field, rand());
     y[i] = b[i];
   }
 

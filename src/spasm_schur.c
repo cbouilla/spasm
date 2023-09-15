@@ -20,7 +20,7 @@ double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const s
 	#pragma omp parallel
 	{
 		/* per-thread scratch space */
-		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+		spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
 		int *xj = spasm_malloc(3 * m * sizeof(*xj));
 		for (int j = 0; j < 3 * m; j++)
 			xj[j] = 0;
@@ -67,10 +67,10 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm *U, const in
 	long long size = (est_density * n) * m;
 	if (size > 2147483648)
 		errx(1, "Matrix too large (more than 2^31 entries)");
-	spasm *S = spasm_csr_alloc(n, m, size, A->prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *S = spasm_csr_alloc(n, m, size, A->field.p, SPASM_WITH_NUMERICAL_VALUES);
 	i64 *Sp = S->p;
 	int *Sj = S->j;
-	spasm_GFp *Sx = S->x;
+	spasm_ZZp *Sx = S->x;
 	i64 nnz = 0;      /* nnz in S at the moment */
 	int Sn = 0;       /* #rows in S at the moment */
 	int writing = 0;
@@ -78,7 +78,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm *U, const in
 
 	#pragma omp parallel
 	{
-		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+		spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
 		int *xj = spasm_malloc(3 * m * sizeof(*xj));
 		for (int j = 0; j < 3 * m; j++)
 			xj[j] = 0;
@@ -183,7 +183,7 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 	#pragma omp parallel
 	{
 		/* per-thread scratch space */
-		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+		spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
 		int *xj = spasm_malloc(3 * m * sizeof(*xj));
 		for (int j = 0; j < 3 * m; j++)
 			xj[j] = 0;
@@ -245,12 +245,12 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 	fprintf(stderr, "[schur/dense/random] dimension %d x %d, weight %d...\n", N, Sm, w);
 	double start = spasm_wtime();
 	int verbose_step = spasm_max(1, N / 1000);
-	int prime = A->prime;
+	i64 prime = A->field.p;
 
 	#pragma omp parallel
 	{
 		/* per-thread scratch space */
-		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+		spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
 
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (i64 k = 0; k < N; k++) {

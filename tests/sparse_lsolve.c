@@ -8,7 +8,7 @@
 
 int main(int argc, char **argv)
 {
-        int prime = 32003;
+        i64 prime = 32003;
         // load lower-triangular matrix matrix
         spasm_triplet *T = spasm_load_sms(stdin, prime);
         spasm *L = spasm_compress(T);
@@ -31,8 +31,8 @@ int main(int argc, char **argv)
         for (int j = 0; j < 3 * m; j++)
                 xi[j] = 0;
 
-        spasm_GFp *x = malloc(n * sizeof(*x));
-        spasm_GFp *y = malloc(m * sizeof(*y));
+        spasm_ZZp *x = malloc(n * sizeof(*x));
+        spasm_ZZp *y = malloc(m * sizeof(*y));
         for (int j = 0; j < n; j++)
                 x[j] = 0;
         for (int j = 0; j < m; j++)

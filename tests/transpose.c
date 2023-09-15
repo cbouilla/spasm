@@ -47,9 +47,9 @@ int main(int argc, char **argv)
         }
 
         printf("# check that A.T.T == A\n");
-        spasm_GFp *x = spasm_malloc(n * sizeof(*x));
-        spasm_GFp *y = spasm_malloc(m * sizeof(*y));
-        spasm_GFp *z = spasm_malloc(m * sizeof(*z));
+        spasm_ZZp *x = spasm_malloc(n * sizeof(*x));
+        spasm_ZZp *y = spasm_malloc(m * sizeof(*y));
+        spasm_ZZp *z = spasm_malloc(m * sizeof(*z));
 
         for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++)

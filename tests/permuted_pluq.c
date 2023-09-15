@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A, *U, *L;
   spasm_lu *PLUQ;
-  spasm_GFp *x, *y, *u, *v, *w, *z;
+  spasm_ZZp *x, *y, *u, *v, *w, *z;
   int n, m, r;
   int *p, *qinv;
 
@@ -29,12 +29,12 @@ int main(int argc, char **argv) {
   L = PLUQ->L;
   r = U->n;
 
-  x = malloc(n * sizeof(spasm_GFp));
-  y = malloc(m * sizeof(spasm_GFp));
-  u = malloc(n * sizeof(spasm_GFp));
-  v = malloc(r * sizeof(spasm_GFp));
-  w = malloc(m * sizeof(spasm_GFp));
-  z = malloc(m * sizeof(spasm_GFp));
+  x = malloc(n * sizeof(spasm_ZZp));
+  y = malloc(m * sizeof(spasm_ZZp));
+  u = malloc(n * sizeof(spasm_ZZp));
+  v = malloc(r * sizeof(spasm_ZZp));
+  w = malloc(m * sizeof(spasm_ZZp));
+  z = malloc(m * sizeof(spasm_ZZp));
 
   if (spasm_is_upper_triangular(U)) {
     printf("# PLUQ = P'A ---> U is upper\n");

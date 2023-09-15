@@ -8,7 +8,7 @@
 int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *C;
-  spasm_GFp *x, *y, *z;
+  spasm_ZZp *x, *y, *z;
   int i, n, m, xnz, *xi, *yi;
 
   T = spasm_load_sms(stdin, 277);
@@ -20,9 +20,9 @@ int main(int argc, char **argv) {
   xnz = 3;
  
   xi = malloc(xnz * sizeof(int));
-  x = malloc(n * sizeof(spasm_GFp));
-  y = malloc(m * sizeof (spasm_GFp));
-  z = malloc(m * sizeof(spasm_GFp));
+  x = malloc(n * sizeof(spasm_ZZp));
+  y = malloc(m * sizeof (spasm_ZZp));
+  z = malloc(m * sizeof(spasm_ZZp));
   yi = malloc(m * sizeof(int));
 
   for(i = 0; i < m; i++) {

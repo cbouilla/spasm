@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
   spasm *A;
   int i, j, n, m;
   int test;
-  spasm_GFp *x, *y, *z;
+  spasm_ZZp *x, *y, *z;
 
   assert(argc > 1);
   test = atoi(argv[1]);
@@ -38,10 +38,10 @@ int main(int argc, char **argv) {
   
   super_spasm **column_slices = super_spasm_column_slices(A, Q, first_col, n_blocks, 1);
 
-  assert(n < A->prime);
-  x = malloc(n * sizeof(spasm_GFp));
-  y = malloc(m * sizeof(spasm_GFp));
-  z = malloc(m * sizeof(spasm_GFp));
+  assert(n < A->field.p);
+  x = malloc(n * sizeof(spasm_ZZp));
+  y = malloc(m * sizeof(spasm_ZZp));
+  z = malloc(m * sizeof(spasm_ZZp));
   for(i = 0; i < n; i++) {
     x[i] = i + 1;
   }

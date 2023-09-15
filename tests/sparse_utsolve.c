@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv)
 {
- 	int prime = 32003;
+ 	i64 prime = 32003;
  	// load matrix
  	spasm_triplet *T = spasm_load_sms(stdin, prime);
  	spasm *A = spasm_compress(T);
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 	int *xi = malloc(3*r * sizeof(*xi));
 	for (int j = 0; j < 3*r; j++)
 		xi[j] = 0;
-	spasm_GFp *x = malloc(m * sizeof(*x));
+	spasm_ZZp *x = malloc(m * sizeof(*x));
 	int top = spasm_sparse_triangular_solve(Ut, B, 0, xi, x, pinv);
 
 	for (int px = top; px < r; px++)
@@ -69,8 +69,8 @@ int main(int argc, char **argv)
 		printf("# xx[%d] = %d\n", i, x[i]);
 
 	// check
-	spasm_GFp *xx = malloc(m * sizeof(spasm_GFp));
-	spasm_GFp *yy = malloc(r * sizeof(spasm_GFp));
+	spasm_ZZp *xx = malloc(m * sizeof(spasm_ZZp));
+	spasm_ZZp *yy = malloc(r * sizeof(spasm_ZZp));
 	for (int j = 0; j < m; j++)
 		xx[j] = 0;
 	for (int j = 0; j < r; j++)

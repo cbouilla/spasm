@@ -29,8 +29,8 @@ int main(int argc, char **argv)
         int *xi = spasm_malloc(3*m * sizeof(*xi));
         for (int j = 0; j < 3*m; j++)
                 xi[j] = 0;
-        spasm_GFp *x = malloc(m * sizeof(*x));
-        spasm_GFp *y = malloc(m * sizeof(*y));
+        spasm_ZZp *x = malloc(m * sizeof(*x));
+        spasm_ZZp *y = malloc(m * sizeof(*y));
         for (int j = 0; j < m; j++) {
                 x[j] = 0;
                 y[j] = 0;
@@ -45,9 +45,9 @@ int main(int argc, char **argv)
         /* check solution */
         spasm_xApy(x, U, y);
         for (int j = n; j < m; j++)
-                y[j] = (y[j] + x[j]) % B->prime;
+                y[j] = (y[j] + x[j]) % B->field.p;
 
-        spasm_scatter(B, 0, B->prime - 1, y);
+        spasm_scatter(B, 0, B->field.p - 1, y);
 
         for (int i = 0; i < m; i++)
                 if (y[i] != 0) {

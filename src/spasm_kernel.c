@@ -11,7 +11,7 @@ spasm * spasm_kernel(const spasm *U, const int *qinv)
 	int m = U->m;
 	int n = U->n;
 	assert(n <= m);
-	int prime = U->prime;
+	i64 prime = U->field.p;
 	char hnnz[8];
 	spasm_human_format(spasm_nnz(U), hnnz);
 	fprintf(stderr, "[kernel] start. U is %d x %d (%s nnz). Transposing U\n", n, m, hnnz);
@@ -22,7 +22,7 @@ spasm * spasm_kernel(const spasm *U, const int *qinv)
 	spasm *K = spasm_csr_alloc(m-n, m, spasm_nnz(U), prime, SPASM_WITH_NUMERICAL_VALUES);
 	i64 *Kp = K->p;
 	int *Kj = K->j;
-	spasm_GFp *Kx = K->x;
+	spasm_ZZp *Kx = K->x;
 	int Kn = 0;         /* #rows in R */
 	i64 nnz = 0;        /* entries in R */
 	int writing = 0;
@@ -39,7 +39,7 @@ spasm * spasm_kernel(const spasm *U, const int *qinv)
 	 */
 	#pragma omp parallel
 	{
-		spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+		spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
 		int *xj = spasm_malloc(3 * n * sizeof(int));
 		for (int j = 0; j < 3 * n; j++)
 			xj[j] = 0;
@@ -134,11 +134,11 @@ spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv)
 	int n = R->n;
 	int m = R->m;
 	assert(n <= m);
-	int prime = R->prime;
+	i64 prime = R->field.p;
 	spasm *Rt = spasm_transpose(R, SPASM_WITH_NUMERICAL_VALUES);
 	const i64 *Rtp = Rt->p;
 	const int *Rtj = Rt->j;
-	const spasm_GFp *Rtx = Rt->x;
+	const spasm_ZZp *Rtx = Rt->x;
 
 	int *p = spasm_malloc(n * sizeof(*p));    /* what row of Rt (column of R) contains the pivot on col i.*/
 	const i64 *Rp = R->p;
@@ -152,7 +152,7 @@ spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv)
 	K->n = 0;
 	i64 *Kp = K->p;
 	int *Kj = K->j;
-	spasm_GFp *Kx = K->x;
+	spasm_ZZp *Kx = K->x;
 	i64 nnz = 0;      /* #entries in K */
 	for (int j = 0; j < m; j++) {
 		if (qinv[j] >= 0)

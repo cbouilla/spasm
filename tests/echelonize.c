@@ -11,9 +11,9 @@
 void echelon_form_check(const spasm *U, int *qinv)
 {
 	int m = U->m;
-	i64 *Up = U->p;
-	int *Uj = U->j;
-	spasm_GFp *Ux = U->x;
+	const i64 *Up = U->p;
+	const int *Uj = U->j;
+	const spasm_ZZp *Ux = U->x;
 	
 	printf("# Checking that U is really in echelon form...\n");
 	for (int j = 0; j < m; j++)
@@ -33,9 +33,9 @@ void echelon_form_check(const spasm *U, int *qinv)
 
 void rref_check(const spasm *U, int *qinv)
 {
-	i64 *Up = U->p;
-	int *Uj = U->j;
-	spasm_GFp *Ux = U->x;
+	const i64 *Up = U->p;
+	const int *Uj = U->j;
+	const spasm_ZZp *Ux = U->x;
 	
 	printf("# Checking that R is really in RREF...\n");
 	for (int i = 0; i < U->n; i++) {
@@ -60,7 +60,7 @@ void deterministic_inclusion_test(const spasm *A, const spasm *U, const int *qin
 	{
 		int tid = spasm_get_thread_num();
 		int *xj = spasm_malloc(3*m * sizeof(int));
-	  	spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
+	  	spasm_ZZp *x = spasm_malloc(m * sizeof(spasm_ZZp));
 	  	for (int j = 0; j < 3*m; j++)
 	  		xj[j] = 0;
 	  
@@ -94,18 +94,18 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 {
 	fprintf(stderr, "---> Checking that rowspan(A) is included in rowspan(U) [probabilistic, %d iterations]...\n", n_iterations);
 	
-	int prime = A->prime;
+	i64 prime = A->field.p;
 	int n = A->n;
 	int m = A->m;
 	int r = U->n;
-	i64 *Up = U->p;
-	int *Uj = U->j;
+	const i64 *Up = U->p;
+	const int *Uj = U->j;
 
 	int done = 0;
 	#pragma omp parallel
 	{
 		int tid = spasm_get_thread_num();
-		spasm_GFp *x = spasm_malloc(m * sizeof(spasm_GFp));
+		spasm_ZZp *x = spasm_malloc(m * sizeof(spasm_ZZp));
 	
 		#pragma omp for schedule(dynamic, 1)
 		for (int k = 0; k < n_iterations; k++) {

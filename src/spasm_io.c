@@ -11,28 +11,26 @@
  * load a matrix in SMS format from f (an opened file). 
  * set prime == -1 to avoid loading values.
  */
-spasm_triplet *spasm_load_sms(FILE * f, int prime)
+spasm_triplet *spasm_load_sms(FILE * f, i64 prime)
 {
-	int i, j;
-	spasm_GFp x;
-	char type;
-	
 	assert(f != NULL);
-
 	double start = spasm_wtime();
+	int i, j;
+	char type;
 	if (fscanf(f, "%d %d %c\n", &i, &j, &type) != 3)
 		errx(1, "[spasm_load_sms] bad SMS file (header)\n");
 
 	if (prime != -1 && type != 'M')
 		errx(1, "[spasm_load_sms] only ``Modular'' type supported\n");
 
-	fprintf(stderr, "[IO] loading %d x %d SMS matrix modulo %d... ", i, j, prime);
+	fprintf(stderr, "[IO] loading %d x %d SMS matrix modulo %" PRId64 "... ", i, j, prime);
 	fflush(stderr);
 
 	/* allocate result */
 	spasm_triplet *T = spasm_triplet_alloc(i, j, 1, prime, prime != -1);
 
-	while (fscanf(f, "%d %d %d\n", &i, &j, &x) == 3) {
+	i64 x;
+	while (fscanf(f, "%d %d %" SCNd64 "\n", &i, &j, &x) == 3) {
 		if (i == 0 && j == 0 && x == 0)
 			break;
 		spasm_add_entry(T, i - 1, j - 1, x);
@@ -49,7 +47,7 @@ spasm_triplet *spasm_load_sms(FILE * f, int prime)
  * Heavily inspired by the example program:
  *     http://math.nist.gov/MatrixMarket/mmio/c/example_read.c
  */
-spasm_triplet *spasm_load_mm(FILE *f, int prime)
+spasm_triplet *spasm_load_mm(FILE *f, i64 prime)
 {
 	MM_typecode matcode;
 	int n, m, nnz;
@@ -67,7 +65,7 @@ spasm_triplet *spasm_load_mm(FILE *f, int prime)
 		errx(1, "Matrix market type [%s] not supported",  mm_typecode_to_str(matcode));
 	if (mm_read_mtx_crd_size(f, &n, &m, &nnz) != 0)
 		errx(1, "Cannot read matrix size");
-	fprintf(stderr, "[IO] loading %d x %d MTX [%s] modulo %d, %d nnz...", n, m, mm_typecode_to_str(matcode), prime, nnz);
+	fprintf(stderr, "[IO] loading %d x %d MTX [%s] modulo %" PRId64 ", %d nnz...", n, m, mm_typecode_to_str(matcode), prime, nnz);
 	fflush(stderr);
 	
 	if (mm_is_pattern(matcode))
@@ -76,25 +74,17 @@ spasm_triplet *spasm_load_mm(FILE *f, int prime)
 	spasm_triplet *T = spasm_triplet_alloc(n, m, nnz, prime, prime != -1);
 
 	for (int i = 0; i < nnz; i++) {
-		int u, v, w;
-		double x, y;
+		int u, v;
+		i64 w;
 
 		if (mm_is_pattern(matcode)) {
 			if (2 != fscanf(f, "%d %d\n", &u, &v))
 				errx(1, "parse error entry %d\n", i);
 			spasm_add_entry(T, u - 1, v - 1, 1);
 		} else if (mm_is_integer(matcode)) {
-			if (3 != fscanf(f, "%d %d %d\n", &u, &v, &w))
+			if (3 != fscanf(f, "%d %d %" SCNd64 "\n", &u, &v, &w))
 				errx(1, "parse error entry %d\n", i);
 			spasm_add_entry(T, u - 1, v - 1, w);
-		} else if (mm_is_real(matcode)) {
-			if (3 != fscanf(f, "%d %d %lg\n", &u, &v, &x))
-				errx(1, "parse error entry %d\n", i);
-			spasm_add_entry(T, u - 1, v - 1, (int) (100000 * x));
-		} else if (mm_is_complex(matcode)) {
-			if (4 != fscanf(f, "%d %d %lg %lg\n", &u, &v, &y, &x))
-				errx(1, "parse error entry %d\n", i);
-			spasm_add_entry(T, u - 1, v - 1, (int) (1000 * (y + 100 * x)));
 		} else {
 			errx(1, "Don't know how to read matrix");
 		}
@@ -125,17 +115,15 @@ void spasm_save_csr(FILE *f, const spasm *A)
 	assert(f != NULL);
 	const int *Aj = A->j;
 	const i64 *Ap = A->p;
-	const spasm_GFp *Ax = A->x;
+	const spasm_ZZp *Ax = A->x;
 	int n = A->n;
 	int m = A->m;
-	int prime = A->prime;
 
 	fprintf(f, "%d %d M\n", n, m);
 	for (int i = 0; i < n; i++)
 		for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
-			spasm_GFp x = (Ax != NULL) ? Ax[px] : 1;
-			x = (x > prime / 2) ? x - prime : x;
-			fprintf(f, "%d %d %d\n", i + 1, Aj[px] + 1, x);
+			i64 x = (Ax != NULL) ? Ax[px] : 1;
+			fprintf(f, "%d %d %" PRId64 "\n", i + 1, Aj[px] + 1, x);
 		}
 	fprintf(f, "0 0 0\n");
 }
@@ -148,7 +136,7 @@ void spasm_save_triplet(FILE *f, const spasm_triplet *A)
 	assert(f != NULL);
 	const int *Ai = A->i;
 	const int *Aj = A->j;
-	const spasm_GFp *Ax = A->x;
+	const spasm_ZZp *Ax = A->x;
 	i64 nz = A->nz;
 	fprintf(f, "%d %d M\n", A->n, A->m);
 	for (i64 px = 0; px < nz; px++)

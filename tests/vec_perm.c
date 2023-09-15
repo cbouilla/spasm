@@ -11,8 +11,8 @@ int main() {
 
   int *p = malloc(n * sizeof(int));
   int *pinv;
-  spasm_GFp *x = malloc(n * sizeof(spasm_GFp));
-  spasm_GFp *y = malloc(n * sizeof(spasm_GFp));
+  spasm_ZZp *x = malloc(n * sizeof(spasm_ZZp));
+  spasm_ZZp *y = malloc(n * sizeof(spasm_ZZp));
 
   for(i = 0; i < n; i++) {
     x[i] = i*i + 3*i - 7;

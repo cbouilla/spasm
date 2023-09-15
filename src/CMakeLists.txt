@@ -1,6 +1,6 @@
 add_library(spasm SHARED
 	# common stuff, IO, utilities
-	spasm_util.c mmio.c spasm_io.c spasm_triplet.c spasm_GFp.c spasm_scatter.c
+	spasm_util.c mmio.c spasm_io.c spasm_triplet.c spasm_ZZp.c spasm_scatter.c
 	spasm_spmv.c spasm_transpose.c spasm_permutation.c
 
 	# core algo: triangular solver

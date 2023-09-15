@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv)
 {
-        int prime = 42013;
+        i64 prime = 42013;
         spasm_triplet *T = spasm_load_sms(stdin, prime);
         spasm *A = spasm_compress(T);
         spasm_triplet_free(T);
@@ -15,10 +15,11 @@ int main(int argc, char **argv)
         int m = A->m;
         i64 *Ap = A->p;
         int *Aj = A->j;
-        spasm_GFp *Ax = A->x;
+        spasm_ZZp *Ax = A->x;
 
         double *M = spasm_malloc(m * n * sizeof(*M));
-        spasm_ffpack_setzero(prime, n, m, M, m);
+        for (int i = 0; i < n * m; i++)
+                M[i] = 0;
         for (int i = 0; i < n*m; i++)
                 assert(M[i] == 0);
 
@@ -55,7 +56,7 @@ int main(int argc, char **argv)
                 printf("# Qt[%d] = %zd\n", j, qinv[j]);
 
         /* check that all rows of the input matrix belong to the row-space of U */  
-        spasm_GFp *x = spasm_malloc(m * sizeof(*x));
+        spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
         for (int i = 0; i < n; i++) {
                 // scatter A[i] into x
                 for (int j = 0; j < m; j++)

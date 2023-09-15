@@ -8,7 +8,7 @@ int spasm_is_upper_triangular(const spasm *A)
           return 0;
         const i64 *Ap = A->p;
         const int *Aj = A->j;
-        const spasm_GFp*Ax = A->x;
+        const spasm_ZZp*Ax = A->x;
         for (int i = 0; i < n; i++) {
                 if (Ap[i] == Ap[i + 1])
                         return 0;
@@ -34,7 +34,7 @@ int spasm_is_lower_triangular(const spasm *A)
                 return 0;
         const i64 *Ap = A->p;
         const int *Aj = A->j;
-        const spasm_GFp *Ax = A->x;
+        const spasm_ZZp *Ax = A->x;
         for (int i = 0; i < m; i++) {
                 if (Ap[i] == Ap[i + 1])
                         return 0;

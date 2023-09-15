@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
   spasm_triplet *T;
   spasm *A;
   spasm_lu *LU;
-  spasm_GFp *x, *y, *u, *v;
+  spasm_ZZp *x, *y, *u, *v;
   int n, m, i, j;
 
   T = spasm_load_sms(stdin, 42013);
@@ -18,10 +18,10 @@ int main(int argc, char **argv) {
   n = A->n;
   m = A->m;
 
-  x = malloc(n * sizeof(spasm_GFp));
-  y = malloc(m * sizeof(spasm_GFp));
-  u = malloc(n * sizeof(spasm_GFp));
-  v = malloc(m * sizeof(spasm_GFp));
+  x = malloc(n * sizeof(spasm_ZZp));
+  y = malloc(m * sizeof(spasm_ZZp));
+  u = malloc(n * sizeof(spasm_ZZp));
+  v = malloc(m * sizeof(spasm_ZZp));
 
   LU = spasm_LU(A, SPASM_IDENTITY_PERMUTATION, SPASM_KEEP_L);
 

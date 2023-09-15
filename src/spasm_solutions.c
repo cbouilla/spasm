@@ -12,8 +12,8 @@
  * 
  * Uses a PLUQ factorization
  */
-int spasm_PLUQ_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x) {
-	spasm_GFp *u, *v, *w, *s;
+int spasm_PLUQ_solve(spasm * A, const spasm_ZZp * b, spasm_ZZp * x) {
+	spasm_ZZp *u, *v, *w, *s;
 	spasm_lu *PLUQ;
 	spasm *L, *U;
 	int n, m, r, ok;
@@ -35,10 +35,10 @@ int spasm_PLUQ_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x) {
 	r = U->n;
 
 	/* get workspace */
-	u = spasm_malloc(m * sizeof(spasm_GFp));
-	v = spasm_malloc(r * sizeof(spasm_GFp));
-	w = spasm_malloc(n * sizeof(spasm_GFp));
-	s = spasm_malloc(n * sizeof(spasm_GFp));
+	u = spasm_malloc(m * sizeof(spasm_ZZp));
+	v = spasm_malloc(r * sizeof(spasm_ZZp));
+	w = spasm_malloc(n * sizeof(spasm_ZZp));
+	s = spasm_malloc(n * sizeof(spasm_ZZp));
 
 	/* u*Q = b */
 	spasm_ipvec(PLUQ->qinv, b, u, m);
@@ -71,8 +71,8 @@ int spasm_PLUQ_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x) {
  * 
  * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
  */
-int spasm_LU_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x) {
-	spasm_GFp *y, *z, *w;
+int spasm_LU_solve(spasm * A, const spasm_ZZp * b, spasm_ZZp * x) {
+	spasm_ZZp *y, *z, *w;
 	spasm_lu *LU;
 	spasm *L, *U;
 	int n, m, r, i, ok;
@@ -94,9 +94,9 @@ int spasm_LU_solve(spasm * A, const spasm_GFp * b, spasm_GFp * x) {
 	r = U->n;
 
 	/* get workspace */
-	y = spasm_malloc(m * sizeof(spasm_GFp));
-	z = spasm_malloc(r * sizeof(spasm_GFp));
-	w = spasm_malloc(n * sizeof(spasm_GFp));
+	y = spasm_malloc(m * sizeof(spasm_ZZp));
+	z = spasm_malloc(r * sizeof(spasm_ZZp));
+	w = spasm_malloc(n * sizeof(spasm_ZZp));
 	q = spasm_malloc(m * sizeof(int));
 
 	for (i = 0; i < m; i++) {
