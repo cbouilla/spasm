@@ -71,7 +71,7 @@ int main(int argc, char **argv)
                         x[j] = 0;
                         for (int l = rank; l < m; l++) {
                                 int j = qinv[l];
-                                x[j] = (int) (x[j] - alpha * M[k * m + l]) % prime;
+                                x[j] = spasm_ZZp_axpy(A->field, -alpha, M[k * m + l], x[j]);
                         }
                 }
                 printf("# row %2d --> (", i);

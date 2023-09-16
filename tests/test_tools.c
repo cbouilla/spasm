@@ -1,4 +1,5 @@
 #include "spasm.h"
+#include "test_tools.h"
 
 int spasm_is_upper_triangular(const spasm *A)
 {
@@ -50,3 +51,4 @@ int spasm_is_lower_triangular(const spasm *A)
         }
         return 1;
 }
+

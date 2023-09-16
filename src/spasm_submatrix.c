@@ -10,11 +10,12 @@ spasm *spasm_submatrix(const spasm * A, int r_0, int r_1, int c_0, int c_1, int 
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;
 	const spasm_ZZp *Ax = A->x;
+	i64 prime = spasm_get_prime(A);
 
 	int Bn = spasm_max(0, r_1 - r_0);
 	int Bm = spasm_max(0, c_1 - c_0);
 	i64 Bnz = spasm_max(0, Ap[r_1] - Ap[r_0]);
-	spasm *B = spasm_csr_alloc(Bn, Bm, Bnz, A->field.p, (A->x != NULL) && with_values);
+	spasm *B = spasm_csr_alloc(Bn, Bm, Bnz, prime, (A->x != NULL) && with_values);
 	i64 *Bp = B->p;
 	int *Bj = B->j;
 	spasm_ZZp *Bx = B->x;

@@ -45,9 +45,9 @@ int main(int argc, char **argv)
         /* check solution */
         spasm_xApy(x, U, y);
         for (int j = n; j < m; j++)
-                y[j] = (y[j] + x[j]) % B->field.p;
+                y[j] = spasm_ZZp_add(B->field, y[j], x[j]);
 
-        spasm_scatter(B, 0, B->field.p - 1, y);
+        spasm_scatter(B, 0, -1, y);
 
         for (int i = 0; i < m; i++)
                 if (y[i] != 0) {

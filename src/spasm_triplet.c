@@ -11,7 +11,7 @@ void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_ZZp x)
 	if (px == T->nzmax)
 		spasm_triplet_realloc(T, 1 + 2 * T->nzmax);
 	if (T->x != NULL) {
-		spasm_ZZp xp = spasm_ZZp_init(&T->field, x);
+		spasm_ZZp xp = spasm_ZZp_init(T->field, x);
 		if (xp == 0)
 			return;
 		T->x[px] = xp;
@@ -59,7 +59,7 @@ void spasm_deduplicate(spasm *A)
 			} else {
 				if (Ax) {
 					i64 px = v[j];
-					Ax[px] = spasm_ZZp_add(&A->field, Ax[px], Ax[it]);
+					Ax[px] = spasm_ZZp_add(A->field, Ax[px], Ax[it]);
 				}
 			}
 		}
@@ -85,7 +85,7 @@ spasm *spasm_compress(const spasm_triplet * T)
 	fflush(stderr);
 
 	/* allocate result */
-	spasm *C = spasm_csr_alloc(n, m, nz, T->field.p, Tx != NULL);
+	spasm *C = spasm_csr_alloc(n, m, nz, T->field->p, Tx != NULL);
 
 	/* get workspace */
 	i64 *w = spasm_calloc(n, sizeof(*w));

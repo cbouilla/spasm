@@ -24,16 +24,11 @@
  */
 void spasm_dense_back_solve(const spasm *L, spasm_ZZp *b, spasm_ZZp *x, const int *p)
 {
-	/* check inputs */
-	assert(b != NULL);
-	assert(x != NULL);
-	assert(L != NULL);
 	int n = L->n;
 	int m = L->m;
 	const i64 *Lp = L->p;
-	// const int *Lj = L->j;
 	const spasm_ZZp *Lx = L->x;
-
+	
 	for (int i = 0; i < n; i++)
 		x[i] = 0;
 
@@ -44,8 +39,8 @@ void spasm_dense_back_solve(const spasm *L, spasm_ZZp *b, spasm_ZZp *x, const in
 		const spasm_ZZp diagonal_entry = Lx[Lp[i + 1] - 1];
 
 		/* axpy - inplace */
-		spasm_ZZp alpha = spasm_ZZp_inverse(&L->field, diagonal_entry);
-		x[i] = spasm_ZZp_mul(&L->field, alpha, b[j]);
+		spasm_ZZp alpha = spasm_ZZp_inverse(L->field, diagonal_entry);
+		x[i] = spasm_ZZp_mul(L->field, alpha, b[j]);
 		spasm_ZZp backup = x[i];
 		spasm_scatter(L, i, -x[i], b);
 		x[i] = backup;
@@ -72,14 +67,10 @@ void spasm_dense_back_solve(const spasm *L, spasm_ZZp *b, spasm_ZZp *x, const in
  */
 int spasm_dense_forward_solve(const spasm * U, spasm_ZZp *b, spasm_ZZp *x, const int *q)
 {
-	/* check inputs */
-	assert(b != NULL);
-	assert(x != NULL);
-	assert(U != NULL);
 	int n = U->n;
 	int m = U->m;
 	assert(n <= m);
-	i64 prime = U->field.p;
+
 	for (int i = 0; i < n; i++)
 		x[i] = 0;
 
@@ -125,7 +116,6 @@ int spasm_dense_forward_solve(const spasm * U, spasm_ZZp *b, spasm_ZZp *x, const
 int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_ZZp * x, const int *qinv)
 {
 	int m = U->m;
-	i64 prime = U->field.p;
 	assert(qinv != NULL);
 	// const i64 *Bp = B->p;
 	// const int *Bj = B->j;

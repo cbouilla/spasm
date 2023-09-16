@@ -94,7 +94,7 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 {
 	fprintf(stderr, "---> Checking that rowspan(A) is included in rowspan(U) [probabilistic, %d iterations]...\n", n_iterations);
 	
-	i64 prime = A->field.p;
+	i64 prime = spasm_get_prime(A);
 	int n = A->n;
 	int m = A->m;
 	int r = U->n;
@@ -113,7 +113,7 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 			for (int j = 0; j < m; j++)
 				x[j] = 0;
 			for (int i = 0; i < n; i++)
-				spasm_scatter(A, i, rand() % prime, x);
+				spasm_scatter(A, i, spasm_ZZp_init(A->field, rand()), x);
 			/* eliminate everything in x */
 			for (int i = 0; i < r; i++) {
 				int j = Uj[Up[i]];

@@ -90,7 +90,7 @@ void *spasm_realloc(void *ptr, i64 size)
 spasm *spasm_csr_alloc(int n, int m, i64 nzmax, i64 prime, bool with_values)
 {
 	spasm *A = spasm_malloc(sizeof(spasm));
-	spasm_field_init(prime, &A->field);
+	spasm_field_init(prime, A->field);
 	A->m = m;
 	A->n = n;
 	A->nzmax = nzmax;
@@ -108,7 +108,7 @@ spasm_triplet *spasm_triplet_alloc(int n, int m, i64 nzmax, i64 prime, bool with
 	A->m = m;
 	A->n = n;
 	A->nzmax = nzmax;
-	spasm_field_init(prime, &A->field);
+	spasm_field_init(prime, A->field);
 	A->nz = 0;
 	A->i = spasm_malloc(nzmax * sizeof(int));
 	A->j = spasm_malloc(nzmax * sizeof(int));

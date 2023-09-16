@@ -14,13 +14,13 @@ int main(int argc, char **argv)
 
 	int n = A->n;
 	int m = A->m;
-  
+ 
 	int *p = spasm_malloc(n * sizeof(*p));
 	int *qinv = spasm_malloc(m * sizeof(*qinv));
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	
-	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), A->field.p, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
 	U->n = 0;
 	for (int j = 0; j < m; j++)
 		qinv[j] = -1;

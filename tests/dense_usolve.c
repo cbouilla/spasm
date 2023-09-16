@@ -4,62 +4,55 @@
 
 #include "spasm.h"
 
-int main(int argc, char **argv) {
-  spasm_triplet *T;
-  spasm *G;
-  int i, j, n, m, prime, result;
-  spasm_ZZp *x, *b, *y;
-
-  T = spasm_load_sms(stdin, 32003);
-  G = spasm_compress(T);
+int main(int argc, char **argv)
+{
+  spasm_triplet *T = spasm_load_sms(stdin, 32003);
+  spasm *G = spasm_compress(T);
   spasm_triplet_free(T);
 
-  n = G->n;
-  m = G->m;
-  prime = G->field.p;
+  int n = G->n;
+  int m = G->m;
   assert(n <= m);
 
-  x = malloc(n * sizeof(spasm_ZZp));
-  b = malloc(m * sizeof(spasm_ZZp));
-  y = malloc(m * sizeof(spasm_ZZp));
+  spasm_ZZp *x = malloc(n * sizeof(spasm_ZZp));
+  spasm_ZZp *b = malloc(m * sizeof(spasm_ZZp));
+  spasm_ZZp *y = malloc(m * sizeof(spasm_ZZp));
 
   /* test A ------------------------- with a sensible RHS ----------- */
   printf("# testing correct solution\n");
 
-  for(i = 0; i < n; i++) {
-    x[i] = rand() % prime;
-  }
-  for(j = 0; j < m; j++) {
+  for (int i = 0; i < n; i++)
+    x[i] = spasm_ZZp_init(G->field, rand());
+  
+  for (int j = 0; j < m; j++)
     b[j] = 0;
-  }
+  
   spasm_xApy(x, G, b);
-  for(j = 0; j < m; j++) {
+  for (int j = 0; j < m; j++)
     y[j] = b[j];
-  }
 
-  result = spasm_dense_forward_solve(G, y, x, SPASM_IDENTITY_PERMUTATION);
+  int result = spasm_dense_forward_solve(G, y, x, SPASM_IDENTITY_PERMUTATION);
   if (result != SPASM_SUCCESS) {
     printf("not ok - dense forward-substitution triangular solver [solution not found]\n");
     exit(1);
   }
 
-  for(j = 0; j < m; j++) {
+  for (int j = 0; j < m; j++)
     y[j] = 0;
-  }
+ 
   spasm_xApy(x, G, y);
-  for(i = 0; i < m; i++) {
+  for (int i = 0; i < m; i++)
     if (y[i] != b[i]) {
       printf("not ok - dense forward-substitution triangular solver [incorrect solution found]\n");
       exit(1);
     }
-  }
+  
 
   /* test B ------------------------- with a bogus RHS ----------- */
   if (n < m) {
     printf("# testing bogus solution\n");
-    for(j = 0; j < m; j++) {
-      b[j] = rand() % prime;
-    }
+    for (int j = 0; j < m; j++)
+      b[j] = spasm_ZZp_init(G->field, rand());
 
     result = spasm_dense_forward_solve(G, b, x, SPASM_IDENTITY_PERMUTATION);
     if (result == SPASM_SUCCESS) {

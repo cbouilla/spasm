@@ -10,8 +10,8 @@ spasm * spasm_kernel(const spasm *U, const int *qinv)
 {
 	int m = U->m;
 	int n = U->n;
+	i64 prime = spasm_get_prime(U);
 	assert(n <= m);
-	i64 prime = U->field.p;
 	char hnnz[8];
 	spasm_human_format(spasm_nnz(U), hnnz);
 	fprintf(stderr, "[kernel] start. U is %d x %d (%s nnz). Transposing U\n", n, m, hnnz);
@@ -134,7 +134,7 @@ spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv)
 	int n = R->n;
 	int m = R->m;
 	assert(n <= m);
-	i64 prime = R->field.p;
+	i64 prime = spasm_get_prime(R);
 	spasm *Rt = spasm_transpose(R, SPASM_WITH_NUMERICAL_VALUES);
 	const i64 *Rtp = Rt->p;
 	const int *Rtj = Rt->j;

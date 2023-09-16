@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 typedef int64_t i64;
+typedef uint64_t u64;
 typedef uint32_t u32;
 typedef int32_t i32;
 
@@ -21,13 +22,14 @@ typedef int32_t i32;
 
 typedef i32 spasm_ZZp;
 
-typedef struct {
+struct spasm_field_struct {
 	i64 p;
     i64 halfp;
     i64 mhalfp;
     double dinvp;
-} spasm_field;
+};
 
+typedef struct spasm_field_struct spasm_field[1];
 // truc de la mort avec tableau de taille 1
 
 typedef struct {                /* matrix in compressed-sparse row format */
@@ -108,13 +110,13 @@ struct echelonize_opts {
 
 
 /* spasm_ZZp.c */
-void spasm_field_init(i64 p, spasm_field *field);
-spasm_ZZp spasm_ZZp_init(const spasm_field* field, i64 x);
-spasm_ZZp spasm_ZZp_add(const spasm_field* field, spasm_ZZp a, spasm_ZZp b);
-spasm_ZZp spasm_ZZp_sub(const spasm_field* field, spasm_ZZp a, spasm_ZZp b);
-spasm_ZZp spasm_ZZp_mul(const spasm_field* field, spasm_ZZp a, spasm_ZZp b);
-spasm_ZZp spasm_ZZp_inverse(const spasm_field* field, spasm_ZZp a);
-spasm_ZZp spasm_ZZp_axpy(const spasm_field* field, spasm_ZZp a, spasm_ZZp x, spasm_ZZp y);
+void spasm_field_init(i64 p, spasm_field F);
+spasm_ZZp spasm_ZZp_init(const spasm_field F, i64 x);
+spasm_ZZp spasm_ZZp_add(const spasm_field F, spasm_ZZp a, spasm_ZZp b);
+spasm_ZZp spasm_ZZp_sub(const spasm_field F, spasm_ZZp a, spasm_ZZp b);
+spasm_ZZp spasm_ZZp_mul(const spasm_field F, spasm_ZZp a, spasm_ZZp b);
+spasm_ZZp spasm_ZZp_inverse(const spasm_field F, spasm_ZZp a);
+spasm_ZZp spasm_ZZp_axpy(const spasm_field F, spasm_ZZp a, spasm_ZZp x, spasm_ZZp y);
 
 
 /* spasm_util.c */
@@ -136,6 +138,7 @@ void spasm_dm_free(spasm_dm * P);
 void spasm_human_format(int64_t n, char *target);
 int spasm_get_num_threads();
 int spasm_get_thread_num();
+static inline i64 spasm_get_prime(const spasm *A) { return A->field->p; }
 
 /* spasm_triplet.c */
 void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_ZZp x);

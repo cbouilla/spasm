@@ -9,9 +9,8 @@ void spasm_scatter(const spasm *A, int i, spasm_ZZp beta, spasm_ZZp * x)
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;
 	const spasm_ZZp *Ax = A->x;
-	const i64 prime = A->field.p;
 	for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
 		int j = Aj[px];
-		x[j] = spasm_ZZp_axpy(&A->field, beta, Ax[px], x[j]);
+		x[j] = spasm_ZZp_axpy(A->field, beta, Ax[px], x[j]);
 	}
 }

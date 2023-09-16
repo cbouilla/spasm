@@ -48,14 +48,15 @@ bool spasm_echelonize_test_completion(const spasm *A, const int *p, int n, spasm
 		return 1;
 	int m = A->m;
 	int Sm = m - U->n;
-	int Sn = ceil(128 / log2(A->field.p));
+	i64 prime = spasm_get_prime(A);
+	int Sn = ceil(128 / log2(prime));
 	double *S = spasm_malloc(Sn * Sm * sizeof(*S));
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
 	fprintf(stderr, "[echelonize/completion] Testing completion with %d random linear combinations (rank %d)\n", Sn, U->n);
 	fflush(stderr);
 	spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, q, Sn, 0);
-	int rr = spasm_ffpack_echelonize(A->field.p, Sn, Sm, S, Sm, Sp);
+	int rr = spasm_ffpack_echelonize(prime, Sn, Sm, S, Sm, Sp);
 	free(S);
 	free(Sp);
 	free(q);
@@ -68,7 +69,6 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm *U, int *q
 {
 	(void) opts;
 	int m = A->m;
-	i64 prime = A->field.p;
 	int verbose_step = spasm_max(1, n / 1000);
 
 	fprintf(stderr, "[echelonize/GPLU] processing matrix of dimension %d x %d\n", n, m);
@@ -138,12 +138,12 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm *U, int *q
 		Uj[unz] = jpiv;
 		Ux[unz] = 1;
 		unz += 1;
-		spasm_ZZp beta = spasm_ZZp_inverse(&A->field, x[jpiv]);
+		spasm_ZZp beta = spasm_ZZp_inverse(A->field, x[jpiv]);
 		for (int px = top; px < m; px++) {
 			int j = xj[px];
 			if (qinv[j] < 0) {
 				Uj[unz] = j;
-				Ux[unz] = spasm_ZZp_mul(&A->field, beta, x[j]);
+				Ux[unz] = spasm_ZZp_mul(A->field, beta, x[j]);
 				unz += 1;
 			}
 		}
@@ -177,7 +177,6 @@ static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size
 	i64 *Up = U->p;
 	int *Uj = U->j;
 	spasm_ZZp *Ux = U->x;
-        i64 prime = U->field.p;
         for (i64 i = 0; i < rr; i++) {
                 int j = Sqinv[i];   /* column (of S) with the pivot on row i of S; the pivot is implicitly 1 */
         	Uj[unz] = q[j];  /* column of A with the pivot */
@@ -189,7 +188,7 @@ static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size
         		if (S[i * Sm + k] == 0)
         			continue;   /* don't store zero */
         		Uj[unz] = q[j];
-        		Ux[unz] = (prime + (i64) S[i * Sm + k]) % prime;
+        		Ux[unz] = S[i * Sm + k];  // reduce?
         		unz += 1;
         	}
         	U->n += 1;
@@ -203,6 +202,7 @@ static void spasm_echelonize_dense_lowrank(const spasm *A, const int *p, int n, 
 	assert(opts->dense_block_size > 0);
 	int m = A->m;
 	int Sm = m - U->n;
+	i64 prime = spasm_get_prime(A);
 
 	i64 size_S = (i64) opts->dense_block_size * (i64) Sm * sizeof(double);
 	double *S = spasm_malloc(size_S);
@@ -235,7 +235,7 @@ static void spasm_echelonize_dense_lowrank(const spasm *A, const int *p, int n, 
 		fprintf(stderr, "[echelonize/dense/low-rank] Round %d. Weight %d. Processing chunk (%d x %d), |U| = %"PRId64"\n", 
 			round, w, Sn, Sm, spasm_nnz(U));
 		spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, q, Sn, w);
-		int rr = spasm_ffpack_echelonize(A->field.p, Sn, Sm, S, Sm, Sp);
+		int rr = spasm_ffpack_echelonize(prime, Sn, Sm, S, Sm, Sp);
 
 		if (rr == 0) {
 			if (spasm_echelonize_test_completion(A, p, n, U, Uqinv))
@@ -269,6 +269,7 @@ static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U
 	assert(opts->dense_block_size > 0);
 	int m = A->m;
 	int Sm = m - U->n;
+	i64 prime = spasm_get_prime(A);
 
 	double *S = spasm_malloc(opts->dense_block_size * Sm * sizeof(*S));
 	int *q = spasm_malloc(Sm * sizeof(*q));
@@ -290,7 +291,7 @@ static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U
 		
 		fprintf(stderr, "[echelonize/dense] Round %d. processing S[%d:%d] (%d x %d)\n", round, processed, processed + Sn, Sn, Sm);	
 		int r = spasm_schur_dense(A, p, Sn, U, Uqinv, S, q);
-		int rr = spasm_ffpack_echelonize(A->field.p, r, Sm, S, Sm, Sp);
+		int rr = spasm_ffpack_echelonize(prime, r, Sm, S, Sm, Sp);
 		
 		/* update U */
 		dense_update_U(U, rr, Sm, S, Sp, q, Uqinv);
@@ -337,9 +338,10 @@ spasm* spasm_echelonize(const spasm *A, int *Uqinv, struct echelonize_opts *opts
 	}
 	int n = A->n;
 	int m = A->m;
+	i64 prime = spasm_get_prime(A);
 	
 	int *p = spasm_malloc(n * sizeof(*p)); /* pivotal rows come first in P*A */
-	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), A->field.p, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
 	U->n = 0;
 	for (int j = 0; j < m; j++)
 		Uqinv[j] = -1;

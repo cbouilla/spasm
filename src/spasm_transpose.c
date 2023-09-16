@@ -9,9 +9,10 @@ spasm *spasm_transpose(const spasm *C, int keep_values)
 	const i64 *Cp = C->p;
 	const int *Cj = C->j;
 	const spasm_ZZp *Cx = C->x;
+	i64 prime = spasm_get_prime(C);
 
 	/* allocate result */
-	spasm *T = spasm_csr_alloc(m, n, spasm_nnz(C), C->field.p, keep_values && (Cx != NULL));
+	spasm *T = spasm_csr_alloc(m, n, spasm_nnz(C), prime, keep_values && (Cx != NULL));
 	i64 *Tp = T->p;
 	int *Tj = T->j;
 	spasm_ZZp *Tx = T->x;

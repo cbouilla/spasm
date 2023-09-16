@@ -4,31 +4,26 @@
 
 #include "spasm.h"
 
-int main() {
-  spasm_triplet *T;
-  spasm *C;
-  spasm_ZZp *x, *y;
-  int i, n;
+int main()
+{
+	spasm_triplet *T = spasm_load_sms(stdin, 257);
+	spasm *C = spasm_compress(T);
+	spasm_triplet_free(T);
 
-  T = spasm_load_sms(stdin, 257);
-  C = spasm_compress(T);
-  spasm_triplet_free(T);
-
-  n = C->n;
-  assert(n < C->field.p);
-  x = malloc(n * sizeof(spasm_ZZp));
-  y = malloc(n * sizeof(spasm_ZZp));
-  for(i = 0; i < n; i++) {
-    x[i] = i + 1;
-    y[i] = 0;
-  }
-  spasm_xApy(x, C, y);
-  for(i = 0; i < n; i++) {
-    printf("%d\n", y[i]);
-  }
-
-  spasm_csr_free(C);
-  free(x);
-  free(y);
-  return 0;
+	int n = C->n;
+	assert(n < spasm_get_prime(C));
+	spasm_ZZp *x = malloc(n * sizeof(*x));
+	spasm_ZZp *y = malloc(n * sizeof(*y));
+	for (int i = 0; i < n; i++) {
+		x[i] = spasm_ZZp_init(C->field, i + 1);
+		y[i] = 0;
+	}
+	spasm_xApy(x, C, y);
+	for (int i = 0; i < n; i++)
+		printf("%d\n", y[i]);
+	
+	spasm_csr_free(C);
+	free(x);
+	free(y);
+	return 0;
 }

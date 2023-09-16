@@ -12,11 +12,12 @@ spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv)
 {
 	int n = U->n;
 	int m = U->m;
+	i64 prime = spasm_get_prime(U);
 	char hnnz[8];
 	spasm_human_format(spasm_nnz(U), hnnz);
 	fprintf(stderr, "[rref] start. U is %d x %d (%s nnz)\n", n, m, hnnz);
 	double start_time = spasm_wtime();
-	spasm *R = spasm_csr_alloc(n, m, spasm_nnz(U), U->field.p, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *R = spasm_csr_alloc(n, m, spasm_nnz(U), prime, SPASM_WITH_NUMERICAL_VALUES);
 	i64 *Rp = R->p;
 	int *Rj = R->j;
 	spasm_ZZp *Rx = R->x;

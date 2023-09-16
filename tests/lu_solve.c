@@ -24,40 +24,38 @@ int main(int argc, char **argv) {
 
   /* test A ------------------------- with a sensible RHS ----------- */
   printf("# testing correct solution\n");
-  for(i = 0; i < n; i++) {
-    x[i] = rand() % prime;
-  }
-  for(i = 0; i < m; i++) {
+  for (int i = 0; i < n; i++)
+    x[i] = spasm_ZZp_init(A->field, rand());
+  
+  for (int i = 0; i < m; i++)
     b[i] = 0;
-  }
   spasm_gaxpy(A, x, b);
 
-  for(i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++)
     x[i] = 0;
-  }
+
   result = spasm_LU_solve(A, b, x);
   if (result != SPASM_SUCCESS) {
     printf("not ok - LU solver [solution not found]\n");
     exit(1);
   }
 
-  for(i = 0; i < m; i++) {
+  for (int i = 0; i < m; i++)
     y[i] = 0;
-  }
+  
   spasm_gaxpy(A, x, y);
-  for(i = 0; i < m; i++) {
+  for (int i = 0; i < m; i++)
     if (y[i] != b[i]) {
       printf("not ok - LU solver [incorrect solution found]\n");
       exit(1);
     }
-  }
 
   /* test B ------------------------- with a bogus RHS ----------- */
   if (n < m) {
     printf("# testing bogus solution\n");
-    for(i = 0; i < m; i++) {
-      b[i] = rand() % prime;
-    }
+    for(i = 0; i < m; i++)
+      b[i] = spasm_ZZp_init(A->field, rand());
+  
 
     result = spasm_LU_solve(A, b, x);
     if (result == SPASM_SUCCESS) {

@@ -67,7 +67,8 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm *U, const in
 	long long size = (est_density * n) * m;
 	if (size > 2147483648)
 		errx(1, "Matrix too large (more than 2^31 entries)");
-	spasm *S = spasm_csr_alloc(n, m, size, A->field.p, SPASM_WITH_NUMERICAL_VALUES);
+	i64 prime = spasm_get_prime(A);
+	spasm *S = spasm_csr_alloc(n, m, size, prime, SPASM_WITH_NUMERICAL_VALUES);
 	i64 *Sp = S->p;
 	int *Sj = S->j;
 	spasm_ZZp *Sx = S->x;
@@ -245,7 +246,7 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 	fprintf(stderr, "[schur/dense/random] dimension %d x %d, weight %d...\n", N, Sm, w);
 	double start = spasm_wtime();
 	int verbose_step = spasm_max(1, N / 1000);
-	i64 prime = A->field.p;
+	i64 prime = spasm_get_prime(A);
 
 	#pragma omp parallel
 	{
@@ -260,13 +261,13 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 				/* x <--- random linear combinations of all rows */
 				for (int i = 0; i < n; i++) {
 					int inew = p[i];
-					int coeff = rand() % prime;
+					int coeff = spasm_ZZp_init(A->field, rand());
 					spasm_scatter(A, inew, coeff, x);
 				}
 			} else {
 				for (int i = 0; i < w; i++) {
 					int inew = p[rand() % n];
-					int coeff = (i == 0) ? 1 : rand() % prime;
+					int coeff = (i == 0) ? 1 : spasm_ZZp_init(A->field, rand());
 					spasm_scatter(A, inew, coeff, x);
 				}
 			}

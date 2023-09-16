@@ -74,9 +74,10 @@ spasm *spasm_permute(const spasm *A, const int *p, const int *qinv, int values)
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;
 	const spasm_ZZp *Ax = A->x;
+	i64 prime = spasm_get_prime(A);
 
 	/* alloc result */
-	spasm *C = spasm_csr_alloc(n, m, A->nzmax, A->field.p, values && (Ax != NULL));
+	spasm *C = spasm_csr_alloc(n, m, A->nzmax, prime, values && (Ax != NULL));
 	i64 *Cp = C->p;
 	int *Cj = C->j;
 	spasm_ZZp *Cx = C->x;

@@ -5,7 +5,7 @@ add_compile_options(-Wno-unused-parameter)
 
 ############# custom functions to declare and run tests easily ################
 
-add_library(spasmtest test_tools.c)
+add_library(spasmtest test_tools.c trivium64.c)
 
 function(spasm_declare_test name)
     add_executable(test_${name} EXCLUDE_FROM_ALL ${name}.c)
