@@ -180,7 +180,8 @@ bool spasm_dense_forward_solve(const spasm * U, spasm_ZZp * b, spasm_ZZp * x, co
 int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_ZZp * x, const int *qinv);
 
 /* spasm_schur.c */
-spasm *spasm_schur(const spasm * A, const int *p, int npiv, const spasm *U, const int *qinv, double est_density, int keep_L, int *p_out);
+spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact, 
+                   double est_density, spasm_triplet *L, const int *p_in, int *p_out);
 double spasm_schur_estimate_density(const spasm * A, const int *p, int n, const spasm *U, const int *qinv, int R);
 int spasm_schur_dense(const spasm *A, const int *p, int k, const spasm *U, const int *qinv, double *S, int *q);
 void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q, int N, int w);

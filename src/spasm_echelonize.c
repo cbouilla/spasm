@@ -443,7 +443,7 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 		char tmp[8];
 		spasm_human_format(sizeof(int) * (n - npiv + nnz) + sizeof(spasm_ZZp) * nnz, tmp);
 		fprintf(stderr, "Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", n - npiv, m - U->n, density, tmp);
-		spasm *S = spasm_schur(A, p + npiv, n - npiv, U, Uqinv, density, false, NULL);
+		spasm *S = spasm_schur(A, p + npiv, n - npiv, fact, density, NULL, NULL, NULL);
 		if (round > 0)
 			spasm_csr_free((spasm *) A);       /* discard const, only if it is not the input argument */
 		A = S;
