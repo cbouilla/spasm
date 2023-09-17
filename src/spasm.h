@@ -105,11 +105,6 @@ struct echelonize_opts {
 #define SPASM_IGNORE NULL
 #define SPASM_IGNORE_VALUES 0
 #define SPASM_WITH_NUMERICAL_VALUES 1
-#define SPASM_KEEP_L 1
-#define SPASM_DISCARD_L 0
-#define SPASM_SUCCESS 0
-#define SPASM_NO_SOLUTION 1
-
 
 /* spasm_ZZp.c */
 void spasm_field_init(i64 p, spasm_field F);
@@ -181,7 +176,7 @@ void spasm_Axpy(const spasm *A, const spasm_ZZp *x, spasm_ZZp *y);
 
 /* spasm_triangular.c */
 void spasm_dense_back_solve(const spasm *L, spasm_ZZp *b, spasm_ZZp *x, const int *p);
-int spasm_dense_forward_solve(const spasm * U, spasm_ZZp * b, spasm_ZZp * x, const int *q);
+bool spasm_dense_forward_solve(const spasm * U, spasm_ZZp * b, spasm_ZZp * x, const int *q);
 int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_ZZp * x, const int *qinv);
 
 /* spasm_schur.c */
@@ -189,11 +184,6 @@ spasm *spasm_schur(const spasm * A, const int *p, int npiv, const spasm *U, cons
 double spasm_schur_estimate_density(const spasm * A, const int *p, int n, const spasm *U, const int *qinv, int R);
 int spasm_schur_dense(const spasm *A, const int *p, int k, const spasm *U, const int *qinv, double *S, int *q);
 void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q, int N, int w);
-
-/* spasm_solutions.c */
-// currently outdated
-// int spasm_PLUQ_solve(spasm * A, const spasm_ZZp * b, spasm_ZZp * x);
-// int spasm_LU_solve(spasm * A, const spasm_ZZp * b, spasm_ZZp * x);
 
 /* spasm_pivots.c */
 int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p, struct echelonize_opts *opts);
@@ -224,6 +214,9 @@ spasm * spasm_rref(const spasm_lu *fact, int *Rqinv);
 /* spasm_kernel.c */
 spasm * spasm_kernel(const spasm_lu *fact);
 spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv);
+
+/* spasm_solve.c */
+bool spasm_solve(const spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x);
 
 /* utilities */
 static inline int spasm_max(int a, int b)

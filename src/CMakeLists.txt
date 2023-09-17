@@ -1,20 +1,22 @@
 add_library(spasm SHARED
 	# common stuff, IO, utilities
-	spasm_util.c mmio.c spasm_io.c spasm_triplet.c spasm_ZZp.c spasm_scatter.c
-	spasm_spmv.c spasm_transpose.c spasm_permutation.c
+	spasm_ZZp.c spasm_util.c spasm_triplet.c 
+	mmio.c spasm_io.c
+	spasm_scatter.c spasm_spmv.c 
+	spasm_transpose.c spasm_permutation.c
 
-	# core algo: triangular solver
+	# triangular solver
 	spasm_reach.c spasm_triangular.c 
 	
-	# core algo: echelonization
+	# echelonization
 	spasm_pivots.c spasm_schur.c spasm_ffpack.cpp 
-	spasm_echelonize.c spasm_rref.c spasm_kernel.c
-	
-	# core algo: dulmage-mendelson
-	spasm_submatrix.c spasm_matching.c spasm_dm.c spasm_scc.c 
+	spasm_echelonize.c 
 
-	# needs work
-	# spasm_solutions.c
+	# main functionnalities
+	spasm_solve.c spasm_kernel.c spasm_rref.c
+	
+	# dulmage-mendelson
+	spasm_submatrix.c spasm_matching.c spasm_dm.c spasm_scc.c 
 )
 
 target_link_libraries(spasm PUBLIC OpenMP::OpenMP_C)

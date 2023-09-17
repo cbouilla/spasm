@@ -31,8 +31,8 @@ int main(int argc, char **argv)
   for (int j = 0; j < m; j++)
     y[j] = b[j];
 
-  int result = spasm_dense_forward_solve(G, y, x, SPASM_IDENTITY_PERMUTATION);
-  if (result != SPASM_SUCCESS) {
+  bool result = spasm_dense_forward_solve(G, y, x, SPASM_IDENTITY_PERMUTATION);
+  if (!result) {
     printf("not ok - dense forward-substitution triangular solver [solution not found]\n");
     exit(1);
   }
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
       b[j] = spasm_ZZp_init(G->field, rand());
 
     result = spasm_dense_forward_solve(G, b, x, SPASM_IDENTITY_PERMUTATION);
-    if (result == SPASM_SUCCESS) {
+    if (result) {
       printf("not ok - dense forward-substitution triangular solver [bogus solution found]\n");
       exit(1);
     }

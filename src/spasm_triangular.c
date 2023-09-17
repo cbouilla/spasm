@@ -9,15 +9,11 @@
 
 
 /*
- * dense backwards substitution solver. Solve x . L = b where x and b are
- * dense.
+ * Solve x.L = b with dense b and x.
+ * x must have size n (#rows of L) and b must have size m (#cols of L)
+ * b is destroyed
  * 
- * b is undefined on output
- * 
- * L is assumed to be lower-triangular, with non-zero diagonal.
- * 
- * The diagonal entry is the **last** of each row. More precisely, L[j,j] is Lx[
- * Lp[j+1] - 1 ]
+ * L is assumed to be (permuted) lower-triangular, with non-zero diagonal.
  * 
  * p[j] == i indicates if the "diagonal" entry on column j is on row i
  * 
@@ -25,18 +21,27 @@
 void spasm_dense_back_solve(const spasm *L, spasm_ZZp *b, spasm_ZZp *x, const int *p)
 {
 	int n = L->n;
-	int m = L->m;
+	int r = L->m;
 	const i64 *Lp = L->p;
+	const int *Lj = L->j;
 	const spasm_ZZp *Lx = L->x;
 	
 	for (int i = 0; i < n; i++)
 		x[i] = 0;
 
-	for (int j = m - 1; j >= 0; j--) {
-		int i = (p != SPASM_IDENTITY_PERMUTATION) ? p[j] : j;
+	for (int j = r - 1; j >= 0; j--) {
+		int i = (p != NULL) ? p[j] : j;
+		assert(0 <= i);
+		assert(i < n);
 
-		/* pivot on the j-th column is on the i-th row */
-		const spasm_ZZp diagonal_entry = Lx[Lp[i + 1] - 1];
+		/* scan L[i] to locate the "diagonal" entry on column j */
+		spasm_ZZp diagonal_entry = 0;
+		for (i64 px = Lp[i]; px < Lp[i + 1]; px++)
+			if (Lj[px] == j) {
+				diagonal_entry = Lx[px];
+				break; 
+			}
+		assert(diagonal_entry != 0);
 
 		/* axpy - inplace */
 		spasm_ZZp alpha = spasm_ZZp_inverse(L->field, diagonal_entry);
@@ -48,24 +53,16 @@ void spasm_dense_back_solve(const spasm *L, spasm_ZZp *b, spasm_ZZp *x, const in
 }
 
 /*
- * dense forwards substitution solver. Solve x . U = b where x and b are
- * dense.
+ * Solve x.U = b with dense x, b.
  * 
- * b is undefined on output
+ * b is destroyed on output
  * 
- * U is upper-triangular
- * 
- * Assumption : the diagonal entry is always present, is always != 0.
- * 
- * The diagonal entry is the first one of each row. More precisely, U[i,i] is
- * Ux[ Up[i] ]
- * 
- * if q != SPASM_IDENTITY_PERMUTATION, then q[i] indicates the column on which
- * the i-th row pivot is.
- * 
- * returns SPASM_SUCCESS or SPASM_NO_SOLUTION
+ * U is (petmuted) upper-triangular with unit diagonal.
+ * q[i] == j    means that the pivot on row i is on column j (this is the inverse of the usual qinv). 
+ *
+ * returns True if a solution was found;
  */
-int spasm_dense_forward_solve(const spasm * U, spasm_ZZp *b, spasm_ZZp *x, const int *q)
+bool spasm_dense_forward_solve(const spasm *U, spasm_ZZp *b, spasm_ZZp *x, const int *q)
 {
 	int n = U->n;
 	int m = U->m;
@@ -75,24 +72,20 @@ int spasm_dense_forward_solve(const spasm * U, spasm_ZZp *b, spasm_ZZp *x, const
 		x[i] = 0;
 
 	for (int i = 0; i < n; i++) {
-		int j = (q != SPASM_IDENTITY_PERMUTATION) ? q[i] : i;
-		if (b[j] != 0) {
-			/* check diagonal entry */
-			// const spasm_ZZp diagonal_entry = Ux[Up[i]];
-			// assert(diagonal_entry == 1);
+		int j = (q != NULL) ? q[i] : i;
+		
+		if (b[j] == 0)
+			continue;
 
-			/* axpy - inplace */
-			x[i] = b[j];
-			spasm_ZZp backup = x[i];
-			spasm_scatter(U, i, -x[i], b);
-			x[i] = backup;
-			b[j] = 0;
-		}
+		/* eliminate b[j] */
+		x[i] = b[j];
+		spasm_scatter(U, i, -b[j], b);
+		assert(b[j] == 0);
 	}
-	for (int i = 0; i < m; i++) 
-		if (b[i] != 0)
-			return SPASM_NO_SOLUTION;
-	return SPASM_SUCCESS;
+	for (int j = 0; j < m; j++)   /* check that everything has been eliminated */
+		if (b[j] != 0)
+			return 0;
+	return 1;
 }
 
 /*

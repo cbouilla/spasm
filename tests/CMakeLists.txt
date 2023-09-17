@@ -94,26 +94,18 @@ spasm_declare_test(GFp)
 add_test(NAME GFp COMMAND test_GFp)
 
 
-########### lu / pluq / solve / with and without permutation
+########### lu / solve / dense LU
 spasm_declare_test(lu)
-# spasm_declare_test(pluq)
-# spasm_declare_test(permuted_lu)
-# spasm_declare_test(permuted_pluq)
-# spasm_declare_test(lu_solve)
-# spasm_declare_test(pluq_solve)
-# spasm_declare_test(dense_lu)
+spasm_declare_test(solve)
 spasm_declare_test(dense_lu_ffpack)
 
 spasm_run_tests_mod(lu                "${ALL_TEST_MATRICES}")
+spasm_run_tests(solve                 "${ALL_TEST_MATRICES}")
 spasm_run_tests_mod(dense_lu_ffpack   "${ALL_TEST_MATRICES}")
-
-# spasm_run_tests(lu_solve            "${ALL_TEST_MATRICES}")
 
 ############ transpose
 spasm_declare_test(transpose)
-
 spasm_run_tests(transpose "${ALL_TEST_MATRICES}")
-
 
 ########## triangular solvers
 set(LOWER_TEST_MATRICES
@@ -132,12 +124,12 @@ spasm_declare_test(sparse_usolve)
 spasm_declare_test(sparse_lu_usolve)
 spasm_declare_test(sparse_utsolve)
 
-spasm_run_tests(dense_lsolve "${LOWER_TEST_MATRICES}")
-spasm_run_tests(sparse_lsolve "${LOWER_TEST_MATRICES}")
-spasm_run_tests(dense_usolve "${UPPER_TEST_MATRICES}")
-spasm_run_tests(sparse_usolve "${UPPER_TEST_MATRICES}")
-spasm_run_tests(sparse_lu_usolve "${ALL_TEST_MATRICES}")
-spasm_run_tests(sparse_utsolve "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(dense_lsolve "${LOWER_TEST_MATRICES}")
+spasm_run_tests_mod(sparse_lsolve "${LOWER_TEST_MATRICES}")
+spasm_run_tests_mod(dense_usolve "${UPPER_TEST_MATRICES}")
+spasm_run_tests_mod(sparse_usolve "${UPPER_TEST_MATRICES}")
+spasm_run_tests_mod(sparse_lu_usolve "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(sparse_utsolve "${ALL_TEST_MATRICES}")
 
 ########## Dulmage-Mendelson / matching / SCC / etc.
 

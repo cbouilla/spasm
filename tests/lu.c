@@ -44,8 +44,11 @@ int main(int argc, char **argv)
 	opts.L = 1;
 	spasm_lu *fact = spasm_echelonize(A, &opts);
 	assert(fact->L != NULL);
-	assert(fact->Lqinv != NULL);
+	assert(fact->U->n == 0 || fact->Lqinv != NULL);
 	assert(fact->Ltmp == NULL);
+	assert(fact->U->n == fact->L->m);
+	assert(fact->U->m == m);
+	assert(fact->L->n == n);
 
 	/* check that A == L*U */
 	for (int i = 0; i < n; i++) {

@@ -50,6 +50,7 @@ void spasm_deduplicate(spasm *A)
 		i64 p = nz;
 		for (i64 it = Ap[i]; it < Ap[i + 1]; it++) {
 			int j = Aj[it];
+			assert(j < m);
 			if (v[j] < p) { /* occurs in previous row */
 				v[j] = nz;
 				Aj[nz] = j;
@@ -96,6 +97,7 @@ spasm *spasm_compress(const spasm_triplet * T)
 	/* compute row counts */
 	for (int it = 0; it < nz; it++) {
 		int i = Ti[it];
+		assert(i < n);
 		w[i] += 1;
 	}
 

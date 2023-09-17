@@ -150,7 +150,7 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 		/* add entry entry in L for the pivot */
 		if (L != NULL) {
 			assert(x[jpiv] != 0);
-			Lqinv[U->n] = L->n;
+			Lqinv[U->n] = inew;
 			Li[lnz] = inew;
 			Lj[lnz] = U->n;
 			Lx[lnz] = x[jpiv];
@@ -159,16 +159,21 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 
 		/* store new pivotal row into U */
 		Uqinv[jpiv] = U->n;
+		fprintf(stderr, "setting Uqinv[%d] <--- %d\n", jpiv, U->n);
+
 		i64 old_unz = unz;
 		Uj[unz] = jpiv;
 		Ux[unz] = 1;
 		unz += 1;
+		fprintf(stderr, "setting U[%d, %d] <--- 1\n", U->n, jpiv);
+		assert(x[jpiv] != 0);
 		spasm_ZZp beta = spasm_ZZp_inverse(A->field, x[jpiv]);
 		for (int px = top; px < m; px++) {
 			int j = xj[px];
 			if (x[j] != 0 && Uqinv[j] < 0) {
 				Uj[unz] = j;
 				Ux[unz] = spasm_ZZp_mul(A->field, beta, x[j]);
+				fprintf(stderr, "setting U[%d, %d] <--- %d\n", U->n, j, Ux[unz]);
 				unz += 1;
 			}
 		}
@@ -179,15 +184,17 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 		rows_since_last_pivot = 0;
 		early_abort_done = 0;
 
-		if ((i % verbose_step) == 0) {
+		if (0 && (i % verbose_step) == 0) {
 			fprintf(stderr, "\r[echelonize/GPLU] %d / %d [|U| = %" PRId64 " / |L| = %" PRId64"] -- current density= (%.3f vs %.3f) --- rank >= %d", 
 				i, n, unz, lnz, 1.0 * (m - top) / (m), 1.0 * (unz - old_unz) / m, U->n);
 			fflush(stderr);
 		}
 	}
 	/* cleanup */
-	if (L)
+	if (L) {
 		L->nz = lnz;
+		L->m = U->n;
+	}
 	fprintf(stderr, "\n");
 	free(x);
 	free(xj);
@@ -436,7 +443,7 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 		char tmp[8];
 		spasm_human_format(sizeof(int) * (n - npiv + nnz) + sizeof(spasm_ZZp) * nnz, tmp);
 		fprintf(stderr, "Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", n - npiv, m - U->n, density, tmp);
-		spasm *S = spasm_schur(A, p + npiv, n - npiv, U, Uqinv, density, SPASM_DISCARD_L, NULL);
+		spasm *S = spasm_schur(A, p + npiv, n - npiv, U, Uqinv, density, false, NULL);
 		if (round > 0)
 			spasm_csr_free((spasm *) A);       /* discard const, only if it is not the input argument */
 		A = S;
@@ -477,6 +484,7 @@ cleanup:
 	spasm_csr_resize(U, U->n, m);
 	spasm_csr_realloc(U, -1);
 	if (opts->L) {
+		fact->Lqinv = spasm_realloc(Lqinv, U->n * sizeof(*Lqinv));
 		fact->L = spasm_compress(L);
 		spasm_triplet_free(L);
 		fact->Ltmp = NULL;
