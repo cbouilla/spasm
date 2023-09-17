@@ -49,9 +49,9 @@ int main(int argc, char **argv)
 	printf("# testing correct solution\n");
 	
 	/* forge valid solution */
-	trivium64_setseed(prime, 0);
+	spasm_prng_seed(prime, 0);
 	for (int i = 0; i < n; i++)
-		x[i] = spasm_ZZp_init(A->field, trivium64_next());
+		x[i] = spasm_ZZp_init(A->field, spasm_prng_next());
 	for (int j = 0; j < m; j++)
 		b[j] = 0;
 	spasm_xApy(x, A, b);
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 	if (n < m) {
 		printf("# testing bogus solution\n");
 		for (int j = 0; j < m; j++)       /* create random vector */
-			b[j] = spasm_ZZp_init(A->field, trivium64_next());
+			b[j] = spasm_ZZp_init(A->field, spasm_prng_next());
 	
 		bool result = spasm_solve(fact, b, x);
 		if (result) {

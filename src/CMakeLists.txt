@@ -1,6 +1,6 @@
 add_library(spasm SHARED
 	# common stuff, IO, utilities
-	spasm_ZZp.c spasm_util.c spasm_triplet.c 
+	spasm_ZZp.c spasm_util.c spasm_triplet.c spasm_prng.c
 	mmio.c spasm_io.c
 	spasm_scatter.c spasm_spmv.c 
 	spasm_transpose.c spasm_permutation.c
@@ -13,7 +13,7 @@ add_library(spasm SHARED
 	spasm_echelonize.c 
 
 	# main functionnalities
-	spasm_solve.c spasm_kernel.c spasm_rref.c
+	spasm_solve.c spasm_kernel.c spasm_rref.c spasm_certificate.c
 	
 	# dulmage-mendelson
 	spasm_submatrix.c spasm_matching.c spasm_dm.c spasm_scc.c 

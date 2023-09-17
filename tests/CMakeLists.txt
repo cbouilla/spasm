@@ -5,7 +5,7 @@ add_compile_options(-Wno-unused-parameter)
 
 ############# custom functions to declare and run tests easily ################
 
-add_library(spasmtest test_tools.c trivium64.c)
+add_library(spasmtest test_tools.c)
 
 function(spasm_declare_test name)
     add_executable(test_${name} EXCLUDE_FROM_ALL ${name}.c)
@@ -184,3 +184,7 @@ spasm_test_expected_output(spmv m1.sms gaxpy.1)
 spasm_declare_test(submatrix)
 spasm_test_expected_output(submatrix singular.sms submatrix.1)
 
+######### certficates
+
+spasm_declare_test(rowspan_cert)
+spasm_run_tests_mod(rowspan_cert "${ALL_TEST_MATRICES}")

@@ -1,9 +1,24 @@
 #include "spasm.h"
-#include "test_tools.h"
+
+/* 
+ * PRNG-style implementation of trivium (64-bit version).
+ *
+ * This version operates on 64-bit words and returns 64 pseudo-random bits.
+ *
+ * Trivium is a stream cipher (cryptographic-strength RNG) selected by eSTREAM 
+ * (part of the the EU ECRYPT project) to be part of a portfolio of secure 
+ * algorithms (https://www.ecrypt.eu.org/stream/).
+ *
+ * Trivium has been designed by Christophe De Cannière and Bart Preneel.
+ * This code generates the same output as trivium's reference implementation.
+ *
+ * The generator takes a 64-bit seed and a 64-bit "sequence number" (this allows
+ * to generate independent sequences with the same seed).
+ */
 
 u64 s11, s12, s21, s22, s31, s32;  /* global internal state */
 
-u64 trivium64_next()
+u64 spasm_prng_next()
 {
         u64 s66 = (s12 << 62) ^ (s11 >> 2);
         u64 s93 = (s12 << 35) ^ (s11 >> 29);
@@ -36,7 +51,7 @@ u64 trivium64_next()
         return z;
 }
 
-void trivium64_setseed(u64 seed, u64 seq)
+void spasm_prng_seed(u64 seed, u64 seq)
 {
         s11 = seed;
         s12 = 0;
@@ -45,5 +60,5 @@ void trivium64_setseed(u64 seed, u64 seq)
         s31 = 0;
         s32 = 0x700000000000;
         for (int i = 0; i < 18; i++)    /* blank rounds */
-                trivium64_next();
+                spasm_prng_next();
 }

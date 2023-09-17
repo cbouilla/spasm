@@ -24,9 +24,9 @@ void check_some(i64 prime)
 {
 	spasm_field F;
 	spasm_field_init(prime, F);  
-	trivium64_setseed(0, prime);
+	spasm_prng_seed(0, prime);
 	for (i64 k = 1; k < 10000; k++) {
-		spasm_ZZp x = spasm_ZZp_init(F, trivium64_next());
+		spasm_ZZp x = spasm_ZZp_init(F, spasm_prng_next());
 		assert(x <= prime / 2);
 		assert(x >= -prime / 2);
 
@@ -43,9 +43,9 @@ void check_some(i64 prime)
 	}
 	printf("ok inversion mod %" PRId64"\n", prime);	
 	for (i64 k = 1; k < 10000; k++) {
-		spasm_ZZp x = spasm_ZZp_init(F, trivium64_next());
-		spasm_ZZp y = spasm_ZZp_init(F, trivium64_next());
-		spasm_ZZp z = spasm_ZZp_init(F, trivium64_next());
+		spasm_ZZp x = spasm_ZZp_init(F, spasm_prng_next());
+		spasm_ZZp y = spasm_ZZp_init(F, spasm_prng_next());
+		spasm_ZZp z = spasm_ZZp_init(F, spasm_prng_next());
 		spasm_ZZp zz = spasm_ZZp_axpy(F, x, y, z);          // zz == x*y + z
 		spasm_ZZp o = spasm_ZZp_axpy(F, -x, y, zz);          // o == zz - x*y == z
 		assert(o == z);

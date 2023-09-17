@@ -101,6 +101,13 @@ struct echelonize_opts {
 
 };
 
+typedef struct {
+	u64 seed;
+	spasm_ZZp *z;         /* proves rowspan(U) <= rowspan(A) */
+	spasm_ZZp *h;         /* proves rowspan(A) <= rowspan(U) */
+} spasm_rowspan_certificate;
+
+
 #define SPASM_IDENTITY_PERMUTATION NULL
 #define SPASM_IGNORE NULL
 #define SPASM_IGNORE_VALUES 0
@@ -115,6 +122,9 @@ spasm_ZZp spasm_ZZp_mul(const spasm_field F, spasm_ZZp a, spasm_ZZp b);
 spasm_ZZp spasm_ZZp_inverse(const spasm_field F, spasm_ZZp a);
 spasm_ZZp spasm_ZZp_axpy(const spasm_field F, spasm_ZZp a, spasm_ZZp x, spasm_ZZp y);
 
+/* spasm_prng.c */
+u64 spasm_prng_next();
+void spasm_prng_seed(u64 seed, u64 seq);
 
 /* spasm_util.c */
 double spasm_wtime();
@@ -218,6 +228,11 @@ spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv);
 
 /* spasm_solve.c */
 bool spasm_solve(const spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x);
+
+/* spasm_certificate.c */
+spasm_rowspan_certificate * spasm_certificate_rowspan_create(const spasm *A, const spasm_lu *fact, u64 seed);
+bool spasm_certificate_rowspan_verify(const spasm *A, const spasm *U, const spasm_rowspan_certificate *proof);
+
 
 /* utilities */
 static inline int spasm_max(int a, int b)

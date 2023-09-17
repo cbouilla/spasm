@@ -165,7 +165,7 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 		Uj[unz] = jpiv;
 		Ux[unz] = 1;
 		unz += 1;
-		fprintf(stderr, "setting U[%d, %d] <--- 1\n", U->n, jpiv);
+		// fprintf(stderr, "setting U[%d, %d] <--- 1\n", U->n, jpiv);
 		assert(x[jpiv] != 0);
 		spasm_ZZp beta = spasm_ZZp_inverse(A->field, x[jpiv]);
 		for (int px = top; px < m; px++) {
@@ -173,7 +173,7 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 			if (x[j] != 0 && Uqinv[j] < 0) {
 				Uj[unz] = j;
 				Ux[unz] = spasm_ZZp_mul(A->field, beta, x[j]);
-				fprintf(stderr, "setting U[%d, %d] <--- %d\n", U->n, j, Ux[unz]);
+				// fprintf(stderr, "setting U[%d, %d] <--- %d\n", U->n, j, Ux[unz]);
 				unz += 1;
 			}
 		}
@@ -377,7 +377,6 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 	
 	/* options sanity check */
 	if (opts->L) {
-		opts->max_round = 1;
 		opts->enable_tall_and_skinny = 0;
 		opts->enable_dense = 0;
 		opts->enable_GPLU = 1;
