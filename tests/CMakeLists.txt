@@ -14,11 +14,11 @@ function(spasm_declare_test name)
     add_dependencies(check test_${name})
 endfunction()
 
-function(spasm_run_test name test_matrix)
-    add_test(NAME ${name}-${test_matrix} 
-             COMMAND sh -c "./test_${name} < ${CMAKE_CURRENT_SOURCE_DIR}/Matrix/${test_matrix}")
-    set_tests_properties(${name}-${test_matrix} PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP")
-    set_tests_properties(${name}-${test_matrix} PROPERTIES FAIL_REGULAR_EXPRESSION "not ok")
+function(spasm_run_test name modulus test_matrix)
+    add_test(NAME ${name}-${modulus}-${test_matrix} 
+             COMMAND sh -c "./test_${name} --modulus ${modulus} < ${CMAKE_CURRENT_SOURCE_DIR}/Matrix/${test_matrix}")
+    set_tests_properties(${name}-${modulus}-${test_matrix} PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP")
+    set_tests_properties(${name}-${modulus}-${test_matrix} PROPERTIES FAIL_REGULAR_EXPRESSION "not ok")
 endfunction()
 
 function(spasm_test_expected_output name test_matrix expected_output)
@@ -26,12 +26,28 @@ function(spasm_test_expected_output name test_matrix expected_output)
              COMMAND sh -c "./test_${name} < ${CMAKE_CURRENT_SOURCE_DIR}/Matrix/${test_matrix} | diff - ${CMAKE_CURRENT_SOURCE_DIR}/Expected/${expected_output}")
 endfunction()
 
-function(spasm_run_tests name test_matrices)
+
+set(ALL_MODULI
+    3
+    257
+    65537
+    67108859
+    189812507
+)
+
+function(spasm_run_tests_mod name test_matrices)
     foreach (test_matrix ${test_matrices})
-        spasm_run_test(${name} ${test_matrix})
+        foreach (modulus ${ALL_MODULI})
+            spasm_run_test(${name} ${modulus} ${test_matrix})
+        endforeach (modulus)
     endforeach (test_matrix)
 endfunction()
 
+function(spasm_run_tests name test_matrices)
+    foreach (test_matrix ${test_matrices})
+            spasm_run_test(${name} 257 ${test_matrix})
+    endforeach (test_matrix)
+endfunction()
 
 ########################## now the actual tests ###############################
 
@@ -73,6 +89,7 @@ set(ALL_TEST_MATRICES
 )
 
 ######### GFp arith
+
 spasm_declare_test(GFp)
 add_test(NAME GFp COMMAND test_GFp)
 
@@ -94,7 +111,7 @@ spasm_declare_test(dense_lu_ffpack)
 # spasm_run_tests(lu_solve        "${LU_TEST_MATRICES}")
 # spasm_run_tests(pluq_solve      "${LU_TEST_MATRICES}")
 # spasm_run_tests(dense_lu        "${LU_TEST_MATRICES}")
-spasm_run_tests(dense_lu_ffpack   "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(dense_lu_ffpack   "${ALL_TEST_MATRICES}")
 
 
 ############ transpose
@@ -151,17 +168,17 @@ spasm_run_tests(dm       "${DM_TEST_MATRICES}")
 ########## schur complement
 
 spasm_declare_test(schur)
-spasm_run_tests(schur       "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(schur       "${ALL_TEST_MATRICES}")
 
 ######### echelonization
 
 spasm_declare_test(echelonize)
-spasm_run_tests(echelonize       "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(echelonize       "${ALL_TEST_MATRICES}")
 
 ######### kernel
 
 spasm_declare_test(kernel)
-spasm_run_tests(kernel "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(kernel "${ALL_TEST_MATRICES}")
 
 ##### permutations
 
@@ -169,20 +186,8 @@ spasm_declare_test(vec_perm)
 spasm_declare_test(mat_perm)
 
 add_test(NAME vec_perm COMMAND test_vec_perm)
-spasm_run_test(mat_perm small.sms)
-spasm_run_test(mat_perm upper_trapeze.sms)
-
-
-######### GEMV
-
-# spasm_declare_test(sparse_vect_matrix_prod)
-
-set(SPMV_TEST_MATRICES
-    m1.sms
-    medium.sms
-    rectangular_l.sms
-)
-# spasm_run_tests(sparse_vect_matrix_prod       "${SPMV_TEST_MATRICES}")
+spasm_run_test(mat_perm 65537 small.sms)
+spasm_run_test(mat_perm 65537 upper_trapeze.sms)
 
 ######### misc
 

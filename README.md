@@ -16,6 +16,8 @@ This enables several of useful computations on sparse matrices modulo _p_:
   * Reduced Row Echelon form
   * Rank
 
+SpaSM works with all prime moduli in the range [3; 189,812,507].  While it would be possible to work with _p = 2_ or with any 32-bit prime _p_, this would require tweaks to the code (and is not tested). 
+
 In addition, SpaSM contains code to compute the Dulmage-Mendelson decomposition (permutation of a matrice to block triangular form) and several other useful functions.
 
 The following algorithms algorithms are used in SpaSM:

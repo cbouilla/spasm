@@ -2,13 +2,36 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <getopt.h>
+#include <err.h>
 
 #include "spasm.h"
 #include "test_tools.h"
+#include "spasm.h"
+
+i64 prime = 42013;
+
+void parse_command_line_options(int argc, char **argv)
+{
+        struct option longopts[] = {
+                {"modulus", required_argument, NULL, 'p'},
+                {NULL, 0, NULL, 0}
+        };
+        char ch;
+        while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
+                switch (ch) {
+                case 'p':
+                        prime = atoll(optarg);
+                        break;
+                default:
+                        errx(1, "Unknown option\n");
+                }
+        }
+}
 
 int main(int argc, char **argv)
 {
-        i64 prime = 32003;
+        parse_command_line_options(argc, argv);
         // load lower-triangular matrix matrix
         spasm_triplet *T = spasm_load_sms(stdin, prime);
         spasm *L = spasm_compress(T);
@@ -20,7 +43,7 @@ int main(int argc, char **argv)
         assert(spasm_is_lower_triangular(L));
 
         // load RHS
-        T = spasm_triplet_alloc(1, m, 10, 32003, prime);
+        T = spasm_triplet_alloc(1, m, 10, prime, SPASM_WITH_NUMERICAL_VALUES);
         spasm_add_entry(T, 0, 0, 1);
         spasm_add_entry(T, 0, m / 2, 2);
         spasm_add_entry(T, 0, m - 1, 3);

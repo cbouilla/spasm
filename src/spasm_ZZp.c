@@ -5,7 +5,7 @@
 void spasm_field_init(i64 p, spasm_field F)
 {
 	assert(2 <= p);
-	// assert(p <= 0xfffffffbLL);
+	assert(p <= 0xfffffffbLL);
 	F->p = p;
 	F->halfp = p / 2;
 	F->mhalfp = p / 2 - p + 1;

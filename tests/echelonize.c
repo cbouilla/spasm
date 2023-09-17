@@ -1,13 +1,32 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <getopt.h>
 #include <err.h>
-#include <stdlib.h>
 
 #include "spasm.h"
 
-/* so far, this program checks that the U matrix is in REF, and that rowspan(A) is included in rowspan(U) */
+i64 prime = 42013;
 
+void parse_command_line_options(int argc, char **argv)
+{
+        struct option longopts[] = {
+                {"modulus", required_argument, NULL, 'p'},
+                {NULL, 0, NULL, 0}
+        };
+        char ch;
+        while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
+                switch (ch) {
+                case 'p':
+                        prime = atoll(optarg);
+                        break;
+                default:
+                        errx(1, "Unknown option\n");
+                }
+        }
+}
+
+/* so far, this program checks that the U matrix is in REF, and that rowspan(A) is included in rowspan(U) */
 void echelon_form_check(const spasm *U, int *qinv)
 {
 	int m = U->m;
@@ -139,7 +158,8 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 /** given an arbitrary matrix A and an echelonized matrix U, check that rowspan(A) == rowspan(U). */
 int main(int argc, char **argv)
 {
-	spasm_triplet *T = spasm_load_sms(stdin, 42013);
+	parse_command_line_options(argc, argv);
+	spasm_triplet *T = spasm_load_sms(stdin, prime);
 	spasm *A = spasm_compress(T);
 	spasm_triplet_free(T);
 
