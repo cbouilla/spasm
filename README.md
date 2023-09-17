@@ -15,6 +15,7 @@ This enables several of useful computations on sparse matrices modulo _p_:
   * Basis of the kernel
   * Reduced Row Echelon form
   * Rank
+  * Solution of linear systems (WIP --- performance not as good as the rest)
 
 SpaSM works with all prime moduli in the range [3; 189,812,507].  While it would be possible to work with _p = 2_ or with any 32-bit prime _p_, this would require tweaks to the code (and is not tested). 
 
