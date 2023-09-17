@@ -60,17 +60,17 @@ int main(int argc, char **argv)
 			y[j] = 0;
 			v[j] = 0;
 		}
+		printf("###################### i=%d\n", i);
 		x[i] = 1;
 
 		spasm_xApy(x, A, y);     // y <- x*A
 		spasm_xApy(x, fact->L, u); // u <- x*L
 		spasm_xApy(u, fact->U, v); // v <- (x*L)*U
 
-		for (int j = 0; j < m; j++)
-			if (y[j] != v[j]) {
-				printf("not ok - L*U == A (col %d)\n", j);
-				exit(1);
-			}
+		for (int j = 0; j < m; j++) {
+			printf("# x*A[%4d] = %8d VS x*L[%4d] = %8d VS x*LU[%4d] = %8d\n", j, y[j], j, u[j], j, v[j]);
+			assert(y[j] == v[j]);
+		}
 	}
 	printf("ok - L*U == A\n");
 	spasm_csr_free(A);

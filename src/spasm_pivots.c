@@ -348,15 +348,15 @@ static void spasm_pivots_reorder(const spasm *A, const int *pinv, const int *qin
 }
 
 /*
- * Identify stuctural pivots in A, and copy the relevant rows to U
- * Update Uqinv and p (pivotal rows of A first)
+ * Identify stuctural pivots in A, and copy the relevant rows to U / update L if present
+ * write p (pivotal rows of A first)
  * return the number of pivots found
  */
-int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p, struct echelonize_opts *opts)
+int spasm_pivots_extract_structural(const spasm *A, const int *p_in, spasm_lu *fact, int *p, struct echelonize_opts *opts)
 {
 	int n = A->n;
 	int m = A->m;
-	int *qinv = spasm_malloc(m * sizeof(*qinv));  /* for pivot search */
+	int *qinv = spasm_malloc(m * sizeof(*qinv));     /* for pivot search */
 	int *pinv = spasm_malloc(n * sizeof(*pinv));     /* for pivot search */
 
 	/* find structural pivots in A */
@@ -366,6 +366,10 @@ int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p
 	spasm_pivots_reorder(A, pinv, qinv, p);
 
 	/* compute total pivot nnz and reallocate U if necessary */
+	spasm *U = fact->U;
+	spasm_triplet *L = fact->Ltmp;
+	int *Uqinv = fact->Uqinv;
+	int *Lqinv = fact->Lqinv;
 	i64 pivot_nnz = 0;
 	for (int k = 0; k < npiv; k++) {
 		int i = p[k];
@@ -381,12 +385,14 @@ int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p
 	i64 *Up = U->p;
 	int *Uj = U->j;
 	spasm_ZZp *Ux = U->x;
-	i64 unz = spasm_nnz(U);      /* #entries in U */
+	i64 unz = spasm_nnz(U);
+
 	for (int k = 0; k < npiv; k++) {
 		int i = p[k];
 		int j = pinv[i];
 		assert(j >= 0);
 		assert(qinv[j] == i);
+		
 		Uqinv[j] = U->n;          /* register pivot in U */
 		/* locate pivot in row */ 
 		spasm_ZZp pivot = 0;
@@ -396,6 +402,13 @@ int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p
 				break;
 			}
 		}
+		if (L != NULL) {
+			int i_out = (p_in != NULL) ? p_in[i] : i;
+			spasm_add_entry(L, i_out, U->n, pivot);
+			// fprintf(stderr, "Adding L[%d, %d] = %d\n", i_out, U->n, pivot);
+			Lqinv[U->n] = i_out;
+		}
+
 		/* make pivot unitary and add it first */
 		spasm_ZZp alpha = spasm_ZZp_inverse(A->field, pivot);
 		Uj[unz] = j;

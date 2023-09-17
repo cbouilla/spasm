@@ -166,7 +166,8 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact,
 				} else if (L != NULL) {
 					Li[local_lnz] = i_out;
 					Lj[local_lnz] = qinv[j];
-					Lx[local_snz] = x[j];
+					Lx[local_lnz] = x[j];
+					// fprintf(stderr, "Adding L[%d, %d] = %d\n", i_out, qinv[j], x[j]);
 					local_lnz += 1;
 				}
 			}
@@ -184,7 +185,9 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact,
 		free(x);
 		free(xj);
 	}
-	/* finalize S */
+	/* finalize S and L */
+	if (L)
+		L->nz = lnz;
 	spasm_csr_realloc(S, -1);
 	double density = 1.0 * snz / (1.0 * m * n);
 	fprintf(stderr, "\rSchur complement: %d * %d [%" PRId64 " nz / density= %.3f], %.1fs\n", n, m, snz, density, spasm_wtime() - start);

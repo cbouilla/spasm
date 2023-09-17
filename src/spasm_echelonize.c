@@ -184,7 +184,7 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 		rows_since_last_pivot = 0;
 		early_abort_done = 0;
 
-		if (0 && (i % verbose_step) == 0) {
+		if ((i % verbose_step) == 0) {
 			fprintf(stderr, "\r[echelonize/GPLU] %d / %d [|U| = %" PRId64 " / |L| = %" PRId64"] -- current density= (%.3f vs %.3f) --- rank >= %d", 
 				i, n, unz, lnz, 1.0 * (m - top) / (m), 1.0 * (unz - old_unz) / m, U->n);
 			fflush(stderr);
@@ -360,6 +360,7 @@ static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U
  * Returns the row echelon form of A. 
  * Initializes Uqinv (must be preallocated of size m [==#columns of A]).
  * Modifies A (permutes entries in rows)
+ * FIXME potential memleak (>= 1 rounds then status == 1...)
  */
 spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 {
@@ -376,7 +377,7 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 	
 	/* options sanity check */
 	if (opts->L) {
-		opts->max_round = 0;
+		opts->max_round = 1;
 		opts->enable_tall_and_skinny = 0;
 		opts->enable_dense = 0;
 		opts->enable_GPLU = 1;
@@ -411,17 +412,19 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 	double density = -1;
 	int npiv = 0;
 	int status = 0;  /* 0 == max_round reached; 1 == full rank reached; 2 == early abort */
-	
-	for (int round = 0; round < opts->max_round; round++) {
-		fprintf(stderr, "[echelonize] round %d\n", round);
-		npiv = spasm_pivots_extract_structural(A, U, Uqinv, p, opts);
+	int *p_in = NULL;
 
+	for (int round = 0; round < opts->max_round; round++) {
 		/* decide whether to move on to the next iteration */
-		if (npiv == spasm_min(n, m - U->n)) {
-			fprintf(stderr, "[echelonize] full rank reached\n");
+		if (spasm_nnz(A) == 0) {
+			fprintf(stderr, "[echelonize] empty matrix\n");
 			status = 1;
 			break;
 		}
+		
+		fprintf(stderr, "[echelonize] round %d\n", round);
+		npiv = spasm_pivots_extract_structural(A, p_in, fact, p, opts);
+
 		if (npiv < opts->min_pivot_proportion * spasm_min(n, m - U->n)) {
 			fprintf(stderr, "[echelonize] not enough pivots found; stopping\n");
 			status = 2;
@@ -443,14 +446,16 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 		char tmp[8];
 		spasm_human_format(sizeof(int) * (n - npiv + nnz) + sizeof(spasm_ZZp) * nnz, tmp);
 		fprintf(stderr, "Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", n - npiv, m - U->n, density, tmp);
-		spasm *S = spasm_schur(A, p + npiv, n - npiv, fact, density, NULL, NULL, NULL);
+		int *p_out = spasm_malloc((n - npiv) * sizeof(*p_out));
+		spasm *S = spasm_schur(A, p + npiv, n - npiv, fact, density, L, p_in, p_out);
 		if (round > 0)
 			spasm_csr_free((spasm *) A);       /* discard const, only if it is not the input argument */
 		A = S;
 		n = n - npiv;  // problem if we exit the loop normally
+		free(p_in);
+		p_in = p_out;
 		round += 1;
 	}
-	
 	if (status == 0) {
 		npiv = 0;
 		for (int i = 0; i < n; i++)
@@ -484,6 +489,7 @@ cleanup:
 	spasm_csr_resize(U, U->n, m);
 	spasm_csr_realloc(U, -1);
 	if (opts->L) {
+		L->m = U->n; 
 		fact->Lqinv = spasm_realloc(Lqinv, U->n * sizeof(*Lqinv));
 		fact->L = spasm_compress(L);
 		spasm_triplet_free(L);

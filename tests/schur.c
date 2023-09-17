@@ -46,12 +46,12 @@ int main(int argc, char **argv)
 	for (int j = 0; j < m; j++)
 		qinv[j] = -1;
 
-	int npiv = spasm_pivots_extract_structural(A, U, qinv, p, &opts);
-	
 	spasm_lu fact;
 	fact.U = U;
 	fact.Uqinv = qinv;
+	fact.L = NULL;
 
+	int npiv = spasm_pivots_extract_structural(A, NULL, &fact, p, &opts);
 	spasm *S = spasm_schur(A, p + npiv, n - npiv, &fact, -1, NULL, NULL, NULL);
 	int Sn = S->n;
 	i64 *Sp = S->p;

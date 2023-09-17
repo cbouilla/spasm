@@ -187,7 +187,7 @@ int spasm_schur_dense(const spasm *A, const int *p, int k, const spasm *U, const
 void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q, int N, int w);
 
 /* spasm_pivots.c */
-int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p, struct echelonize_opts *opts);
+int spasm_pivots_extract_structural(const spasm *A, const int *p_in, spasm_lu *fact, int *p, struct echelonize_opts *opts);
 
 /* spasm_matching.c */
 int spasm_maximum_matching(const spasm *A, int *jmatch, int *imatch);
