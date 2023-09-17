@@ -95,7 +95,7 @@ add_test(NAME GFp COMMAND test_GFp)
 
 
 ########### lu / pluq / solve / with and without permutation
-# spasm_declare_test(lu)
+spasm_declare_test(lu)
 # spasm_declare_test(pluq)
 # spasm_declare_test(permuted_lu)
 # spasm_declare_test(permuted_pluq)
@@ -104,15 +104,10 @@ add_test(NAME GFp COMMAND test_GFp)
 # spasm_declare_test(dense_lu)
 spasm_declare_test(dense_lu_ffpack)
 
-# spasm_run_tests(lu              "${LU_TEST_MATRICES}")
-# spasm_run_tests(pluq            "${LU_TEST_MATRICES}")
-# spasm_run_tests(permuted_lu     "${LU_TEST_MATRICES}")
-# spasm_run_tests(permuted_pluq   "${LU_TEST_MATRICES}")
-# spasm_run_tests(lu_solve        "${LU_TEST_MATRICES}")
-# spasm_run_tests(pluq_solve      "${LU_TEST_MATRICES}")
-# spasm_run_tests(dense_lu        "${LU_TEST_MATRICES}")
+spasm_run_tests_mod(lu                "${ALL_TEST_MATRICES}")
 spasm_run_tests_mod(dense_lu_ffpack   "${ALL_TEST_MATRICES}")
 
+# spasm_run_tests(lu_solve            "${ALL_TEST_MATRICES}")
 
 ############ transpose
 spasm_declare_test(transpose)

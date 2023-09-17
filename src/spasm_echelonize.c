@@ -66,75 +66,99 @@ bool spasm_echelonize_test_completion(const spasm *A, const int *p, int n, spasm
 
 
 /* not dry w.r.t. spasm_LU() */
-void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm *U, int *qinv, struct echelonize_opts *opts)
+void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, struct echelonize_opts *opts)
 {
 	(void) opts;
+	assert(p != NULL);
 	int m = A->m;
+	int r = spasm_min(A->n, m);  /* upper-bound on rank */
 	int verbose_step = spasm_max(1, n / 1000);
-
 	fprintf(stderr, "[echelonize/GPLU] processing matrix of dimension %d x %d\n", n, m);
+	
+	spasm *U = fact->U;
+	spasm_triplet *L = fact->Ltmp;
+	int *Uqinv = fact->Uqinv;
+	i64 *Up = U->p;
+	i64 unz = spasm_nnz(U);
+	i64 lnz = (L != NULL) ? L->nz : 0;
+	int *Lqinv = fact->Lqinv;
+
+	/* initialize early abort */
+	int rows_since_last_pivot = 0;
+	bool early_abort_done = 0;
 
 	/* workspace for triangular solver */
 	spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
 	int *xj = spasm_malloc(3 * m * sizeof(*xj));
 	for (int j = 0; j < 3*m; j++)
 		xj[j] = 0;
-	
-	/* allocate result */
-	i64 *Up = U->p;
-	i64 unz = spasm_nnz(U);
-	int r = spasm_min(A->n, m);  /* upper-bound on rank */
-
-	/* initialize early abort */
-	int rows_since_last_pivot = 0;
-	bool early_abort_done = 0;
 
 	/* Main loop : compute L[i] and U[i] */
 	int i;
 	for (i = 0; i < n; i++) {
-		/* test for early abort */
-		if (U->n == r) {
+		/* test for early abort (if L not needed) */
+		if (L == NULL && U->n == r) {
 			fprintf(stderr, "\n[echelonize/GPLU] full rank reached\n");
 			break;
 		}
 		/* TODO: make these hard-coded values options */
-		if (!early_abort_done && rows_since_last_pivot > 10 && (rows_since_last_pivot > (n / 100))) {
+		if (L == NULL && !early_abort_done && rows_since_last_pivot > 10 && (rows_since_last_pivot > (n / 100))) {
 			fprintf(stderr, "\n[echelonize/GPLU] testing for early abort...");
-			if (spasm_echelonize_test_completion(A, p, n, U, qinv))
+			if (spasm_echelonize_test_completion(A, p, n, U, Uqinv))
 				break;
 			early_abort_done = 1;
 		}
+		rows_since_last_pivot += 1;
 
-		/* Triangular solve: x * U = A[i] */
-		int inew = (p != NULL) ? p[i] : i;
-		int top = spasm_sparse_triangular_solve(U, A, inew, xj, x, qinv);
-
-		/* Find pivot column; current poor strategy= choose leftmost */
-		int jpiv = -1;	          /* column index of best pivot so far. */
-		for (int px = top; px < m; px++) {
-			int j = xj[px];        /* x[j] is (generically) nonzero */
-			if (x[j] == 0)
-				continue;
-			if (qinv[j] < 0) {
-				/* have found the pivot on row i yet ? */
-				if (jpiv == -1 || j < jpiv)
-					jpiv = j;
-			}
-		}
-		if (jpiv < 0) {
-			/* no pivot found */
-			rows_since_last_pivot += 1;
-			continue;
-		}
-
-		/* ensure enough room in U for an extra row */
+		/* ensure enough room in L / U for an extra row */
 		if (unz + m > U->nzmax)
 			spasm_csr_realloc(U, 2 * U->nzmax + m);
 		int *Uj = U->j;
 		spasm_ZZp *Ux = U->x;
+		if (L && lnz + m > L->nzmax)
+			spasm_triplet_realloc(L, 2 * L->nzmax + m);
+		int *Li = (L != NULL) ? L->i : NULL;
+		int *Lj = (L != NULL) ? L->j : NULL;
+		spasm_ZZp *Lx = (L != NULL) ? L->x : NULL;
+
+		/* Triangular solve: x * U = A[i] */
+		int inew = p[i];
+		int top = spasm_sparse_triangular_solve(U, A, inew, xj, x, Uqinv);
+
+		/* Find pivot column; current poor strategy= choose leftmost */
+		int jpiv = m ;                 /* column index of best pivot so far. */
+		for (int px = top; px < m; px++) {
+			int j = xj[px];        /* x[j] is (generically) nonzero */
+			if (x[j] == 0)
+				continue;
+			if (Uqinv[j] < 0) {
+				/* non-zero coeff on non-pivotal column --> candidate */
+				if (j < jpiv)
+					jpiv = j;
+			} else if (L != NULL) {
+				/* everything under pivotal columns goes into L */
+				Li[lnz] = inew;
+				Lj[lnz] = Uqinv[j];
+				Lx[lnz] = x[j];
+				lnz += 1;
+			}	
+		}
+		
+		if (jpiv == m)
+			continue;        /* no pivot found */
+
+		/* add entry entry in L for the pivot */
+		if (L != NULL) {
+			assert(x[jpiv] != 0);
+			Lqinv[U->n] = L->n;
+			Li[lnz] = inew;
+			Lj[lnz] = U->n;
+			Lx[lnz] = x[jpiv];
+			lnz += 1;
+		}
 
 		/* store new pivotal row into U */
-		qinv[jpiv] = U->n;
+		Uqinv[jpiv] = U->n;
 		i64 old_unz = unz;
 		Uj[unz] = jpiv;
 		Ux[unz] = 1;
@@ -142,7 +166,7 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm *U, int *q
 		spasm_ZZp beta = spasm_ZZp_inverse(A->field, x[jpiv]);
 		for (int px = top; px < m; px++) {
 			int j = xj[px];
-			if (qinv[j] < 0) {
+			if (x[j] != 0 && Uqinv[j] < 0) {
 				Uj[unz] = j;
 				Ux[unz] = spasm_ZZp_mul(A->field, beta, x[j]);
 				unz += 1;
@@ -151,18 +175,19 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm *U, int *q
 		U->n += 1;
 		Up[U->n] = unz;
 
-		/* TODO: switch to dense */
-
 		/* reset early abort */
 		rows_since_last_pivot = 0;
 		early_abort_done = 0;
-		
+
 		if ((i % verbose_step) == 0) {
-			fprintf(stderr, "\r[echelonize/GPLU] %d / %d [|U| = %" PRId64 "] -- current density= (%.3f vs %.3f) --- rank >= %d", i, n, unz, 1.0 * (m - top) / (m), 1.0 * (unz - old_unz) / m, U->n);
+			fprintf(stderr, "\r[echelonize/GPLU] %d / %d [|U| = %" PRId64 " / |L| = %" PRId64"] -- current density= (%.3f vs %.3f) --- rank >= %d", 
+				i, n, unz, lnz, 1.0 * (m - top) / (m), 1.0 * (unz - old_unz) / m, U->n);
 			fflush(stderr);
 		}
 	}
 	/* cleanup */
+	if (L)
+		L->nz = lnz;
 	fprintf(stderr, "\n");
 	free(x);
 	free(xj);
@@ -340,31 +365,46 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 	int n = A->n;
 	int m = A->m;
 	i64 prime = spasm_get_prime(A);
+	fprintf(stderr, "[echelonize] Start on %d x %d matrix with %" PRId64 " nnz\n", n, m, spasm_nnz(A));
 	
-	/* allocate result */
-	spasm *L = NULL;
-	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
-	int *Lqinv = NULL;
-	int *Uqinv = spasm_malloc(m * sizeof(*Uqinv));
-	spasm_lu *R = spasm_malloc(sizeof(*R));
-	R->L = L;
-	R->Lqinv = Lqinv;
-	R->U = U;
-	R->Uqinv = Uqinv;
+	/* options sanity check */
+	if (opts->L) {
+		opts->max_round = 0;
+		opts->enable_tall_and_skinny = 0;
+		opts->enable_dense = 0;
+		opts->enable_GPLU = 1;
+	}
 
-	/* local stuff */
-	int *p = spasm_malloc(n * sizeof(*p)); /* pivotal rows come first in P*A */
-	
-	/* prepare U */
+	/* allocate result */
+	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
+	int *Uqinv = spasm_malloc(m * sizeof(*Uqinv));
 	U->n = 0;
 	for (int j = 0; j < m; j++)
 		Uqinv[j] = -1;
+	
+	spasm_triplet *L = NULL;
+	int *Lqinv = NULL;
+	if (opts->L) {
+		L = spasm_triplet_alloc(n, n, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
+		Lqinv = spasm_malloc(n * sizeof(*Lqinv));
+		for (int j = 0; j < n; j++)
+			Lqinv[j] = -1;
+	}
+	
+	spasm_lu *fact = spasm_malloc(sizeof(*fact));
+	fact->L = NULL;
+	fact->Lqinv = Lqinv;
+	fact->U = U;
+	fact->Uqinv = Uqinv;
+	fact->Ltmp = L;
 
-	fprintf(stderr, "[echelonize] Start on %d x %d matrix with %" PRId64 " nnz\n", n, m, spasm_nnz(A));
+	/* local stuff */
+	int *p = spasm_malloc(n * sizeof(*p)); /* pivotal rows come first in P*A */
 	double start = spasm_wtime();
 	double density = -1;
 	int npiv = 0;
 	int status = 0;  /* 0 == max_round reached; 1 == full rank reached; 2 == early abort */
+	
 	for (int round = 0; round < opts->max_round; round++) {
 		fprintf(stderr, "[echelonize] round %d\n", round);
 		npiv = spasm_pivots_extract_structural(A, U, Uqinv, p, opts);
@@ -427,7 +467,7 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 	else if (opts->enable_dense && density > opts->sparsity_threshold)
 		spasm_echelonize_dense(A, p + npiv, n - npiv, U, Uqinv, opts);
 	else if (opts->enable_GPLU)
-		spasm_echelonize_GPLU(A, p + npiv, n - npiv, U, Uqinv, opts);
+		spasm_echelonize_GPLU(A, p + npiv, n - npiv, fact, opts);
 	else
 		fprintf(stderr, "[echelonize] Cannot finish (no valid method enabled). Incomplete echelonization returned\n");
 
@@ -436,5 +476,10 @@ cleanup:
 	fprintf(stderr, "[echelonize] Done in %.1fs. Rank %d, %" PRId64 " nz in basis\n", spasm_wtime() - start, U->n, spasm_nnz(U));
 	spasm_csr_resize(U, U->n, m);
 	spasm_csr_realloc(U, -1);
-	return R;
+	if (opts->L) {
+		fact->L = spasm_compress(L);
+		spasm_triplet_free(L);
+		fact->Ltmp = NULL;
+	}
+	return fact;
 }

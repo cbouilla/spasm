@@ -47,22 +47,23 @@ typedef struct {                /* matrix in compressed-sparse row format */
 	 */
 } spasm;
 
-typedef struct {                /* matrix in triplet form */
-	i64 nzmax;                    /* maximum number of entries */
-	i64 nz;                       /* # entries */
-	int n;                        /* number of rows */
-	int m;                        /* number of columns */
-	int *i;                       /* row indices, size nzmax */
-	int *j;                       /* column indices (size nzmax) */
-	spasm_ZZp *x;                 /* numerical values, size nzmax (optional) */
+typedef struct {                   /* matrix in triplet form */
+	i64 nzmax;                     /* maximum number of entries */
+	i64 nz;                        /* # entries */
+	int n;                         /* number of rows */
+	int m;                         /* number of columns */
+	int *i;                        /* row indices, size nzmax */
+	int *j;                        /* column indices (size nzmax) */
+	spasm_ZZp *x;                  /* numerical values, size nzmax (optional) */
 	spasm_field field;
 } spasm_triplet;
 
-typedef struct {                  /* a PLUQ factorisation */
+typedef struct {                   /* a PLUQ factorisation */
 	spasm *L;
 	spasm *U;
 	int *Uqinv;                    /* locate pivots in U (on column j, row Uqinv[j]) */
 	int *Lqinv;                    /* locate pivots in L (on column j, row Lqinv[j]) */
+	spasm_triplet *Ltmp;           /* for internal use during the factorization */
 } spasm_lu;
 
 typedef struct {      /**** a Dulmage-Mendelson decomposition */
