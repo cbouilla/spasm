@@ -31,6 +31,7 @@ void spasm_echelonize_init_opts(struct echelonize_opts *opts)
 	opts->enable_GPLU = 1;
 
 	// options of the main procedure
+	opts->L = 0;
 	opts->min_pivot_proportion = 0.1;
 	opts->max_round = 3;
 	opts->sparsity_threshold = 0.05;
@@ -328,7 +329,7 @@ static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U
  * Initializes Uqinv (must be preallocated of size m [==#columns of A]).
  * Modifies A (permutes entries in rows)
  */
-spasm* spasm_echelonize(const spasm *A, int *Uqinv, struct echelonize_opts *opts)
+spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 {
 	struct echelonize_opts default_opts;
 	if (opts == NULL) {
@@ -340,8 +341,21 @@ spasm* spasm_echelonize(const spasm *A, int *Uqinv, struct echelonize_opts *opts
 	int m = A->m;
 	i64 prime = spasm_get_prime(A);
 	
-	int *p = spasm_malloc(n * sizeof(*p)); /* pivotal rows come first in P*A */
+	/* allocate result */
+	spasm *L = NULL;
 	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
+	int *Lqinv = NULL;
+	int *Uqinv = spasm_malloc(m * sizeof(*Uqinv));
+	spasm_lu *R = spasm_malloc(sizeof(*R));
+	R->L = L;
+	R->Lqinv = Lqinv;
+	R->U = U;
+	R->Uqinv = Uqinv;
+
+	/* local stuff */
+	int *p = spasm_malloc(n * sizeof(*p)); /* pivotal rows come first in P*A */
+	
+	/* prepare U */
 	U->n = 0;
 	for (int j = 0; j < m; j++)
 		Uqinv[j] = -1;
@@ -422,5 +436,5 @@ cleanup:
 	fprintf(stderr, "[echelonize] Done in %.1fs. Rank %d, %" PRId64 " nz in basis\n", spasm_wtime() - start, U->n, spasm_nnz(U));
 	spasm_csr_resize(U, U->n, m);
 	spasm_csr_realloc(U, -1);
-	return U;
+	return R;
 }

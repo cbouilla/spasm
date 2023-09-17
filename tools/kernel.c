@@ -61,18 +61,16 @@ int main(int argc, char **argv)
 	}
 	spasm *A = spasm_compress(T);
 	spasm_triplet_free(T);
-	int m = A->m;
 
 	/* echelonize A */
-	int *qinv = spasm_malloc(m * sizeof(*qinv));
-	spasm *U = spasm_echelonize(A, qinv, &opts);
+	spasm_lu *fact = spasm_echelonize(A, &opts);
 	spasm_csr_free(A);
 
-	spasm *K = spasm_kernel(U, qinv);
+	/* kernel basis */
+	spasm *K = spasm_kernel(fact);
 	spasm_save_csr(stdout, K);
 	fprintf(stderr, "Kernel basis matrix is %d x %d with %" PRId64 " nz\n", K->n, K->m, spasm_nnz(K));
-	free(qinv);
-	spasm_csr_free(U);
+	spasm_lu_free(fact);
 	spasm_csr_free(K);
 	exit(EXIT_SUCCESS);
 }

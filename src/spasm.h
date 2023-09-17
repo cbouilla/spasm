@@ -58,11 +58,11 @@ typedef struct {                /* matrix in triplet form */
 	spasm_field field;
 } spasm_triplet;
 
-typedef struct {                /* a PLUQ factorisation */
+typedef struct {                  /* a PLUQ factorisation */
 	spasm *L;
 	spasm *U;
-	int *qinv;                    /* the inverse Q is stored */
-	int *p;
+	int *Uqinv;                    /* locate pivots in U (on column j, row Uqinv[j]) */
+	int *Lqinv;                    /* locate pivots in L (on column j, row Lqinv[j]) */
 } spasm_lu;
 
 typedef struct {      /**** a Dulmage-Mendelson decomposition */
@@ -85,6 +85,7 @@ struct echelonize_opts {
 	bool enable_GPLU;
 
 	/* Parameters of the "root" echelonization procedure itself */
+	bool L;                         /* should we compute L / Lqinv in addition to U / Uqinv ? */
 	double min_pivot_proportion;    /* minimum number of pivots found to keep going; < 0 = keep going */
 	int max_round;                  /* maximum number of rounds; < 0 = keep going */
  
@@ -134,7 +135,7 @@ void spasm_triplet_realloc(spasm_triplet * A, i64 nzmax);
 void spasm_triplet_free(spasm_triplet * A);
 spasm_dm *spasm_dm_alloc(int n, int m);
 void spasm_dm_free(spasm_dm * P);
-// spasm *spasm_identity(int n, spasm_ZZp prime);
+void spasm_lu_free(spasm_lu *N);
 void spasm_human_format(int64_t n, char *target);
 int spasm_get_num_threads();
 int spasm_get_thread_num();
@@ -196,7 +197,6 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 /* spasm_pivots.c */
 int spasm_pivots_extract_structural(const spasm *A, spasm *U, int *Uqinv, int *p, struct echelonize_opts *opts);
 
-
 /* spasm_matching.c */
 int spasm_maximum_matching(const spasm *A, int *jmatch, int *imatch);
 int *spasm_permute_row_matching(int n, const int *jmatch, const int *p, const int *qinv);
@@ -215,13 +215,13 @@ int spasm_ffpack_echelonize(i64 prime, int n, int m, double *A, int ldA, size_t 
 
 /* spasm_echelonize */
 void spasm_echelonize_init_opts(struct echelonize_opts *opts);
-spasm* spasm_echelonize(const spasm *A, int *Uqinv, struct echelonize_opts *opts);
+spasm_lu* spasm_echelonize(const spasm *A, struct echelonize_opts *opts);
 
 /* spasm_rref.c */
-spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv);
+spasm * spasm_rref(const spasm_lu *fact, int *Rqinv);
 
 /* spasm_kernel.c */
-spasm * spasm_kernel(const spasm *U, const int *qinv);
+spasm * spasm_kernel(const spasm_lu *fact);
 spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv);
 
 /* utilities */

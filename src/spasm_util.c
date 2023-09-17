@@ -202,3 +202,12 @@ void spasm_dm_free(spasm_dm *P)
 	free(P->c);
 	free(P);
 }
+
+void spasm_lu_free(spasm_lu *N)
+{
+	free(N->Uqinv);
+	free(N->Lqinv);
+	spasm_csr_free(N->U);
+	spasm_csr_free(N->L);
+	free(N);
+}

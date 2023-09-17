@@ -62,11 +62,6 @@ static i64 gcdext(i64 a, i64 p)
 	return t;
 }
 
-static bool is_normalized(const spasm_field F, spasm_ZZp a)
-{
-	return (a >= F->mhalfp) && (a <= F->halfp); 
-}
-
 spasm_ZZp spasm_ZZp_inverse(const spasm_field F, spasm_ZZp a)
 {
 	i64 aa = a;

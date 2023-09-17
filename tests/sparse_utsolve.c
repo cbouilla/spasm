@@ -36,8 +36,9 @@ int main(int argc, char **argv)
  	spasm_triplet_free(T);
  	int m = A->m;
 
- 	int *qinv = spasm_malloc(m * sizeof(*qinv));
- 	spasm *U = spasm_echelonize(A, qinv, NULL);
+ 	spasm_lu *fact = spasm_echelonize(A, NULL);
+	spasm *U = fact->U;
+	int *qinv = fact->Uqinv;
 	int r = U->n;
 	if (r == 0) {
 		printf("rank zero # SKIP\n");

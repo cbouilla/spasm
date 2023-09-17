@@ -7,9 +7,14 @@
 /* 
  * build the RREF from an echelonized matrix. 
  * This code is similar to src/spasm_schur.c ---> in bad need of factorization
+ * On output, Rqinv locates the pivots in R (on column j, pivot is on row Rqinv[i] of R,
+ * or Rqinv[j] == -1 if there is no pivot on column j).
  */
-spasm * spasm_rref(const spasm *U, const int *Uqinv, int *Rqinv)
+spasm * spasm_rref(const spasm_lu *fact, int *Rqinv)
 {
+	const spasm *U = fact->U;
+	const int *Uqinv = fact->Uqinv;
+
 	int n = U->n;
 	int m = U->m;
 	i64 prime = spasm_get_prime(U);

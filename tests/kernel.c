@@ -39,12 +39,12 @@ int main(int argc, char **argv)
   
         /* build left kernel basis of A */
         spasm *At = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
-        int *qinv = spasm_malloc(n * sizeof(*qinv));
         struct echelonize_opts opts;
         spasm_echelonize_init_opts(&opts);
-        spasm *U = spasm_echelonize(At, qinv, &opts);
+        spasm_lu *fact = spasm_echelonize(At, &opts);
+        spasm *U = fact->U;
         spasm *Ut = spasm_transpose(U, SPASM_WITH_NUMERICAL_VALUES);
-        spasm *K = spasm_kernel(U, qinv);
+        spasm *K = spasm_kernel(fact);
 
         /* rows of K form a basis of the right-kernel of At, hence the left kernel of A */
         

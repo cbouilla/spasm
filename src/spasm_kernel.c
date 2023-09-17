@@ -4,10 +4,12 @@
 #include "spasm.h"
 
 /* 
- * return a basis of the right kernel of U.  U must be echelonized.
+ * return a basis of the right kernel of the matrix described by the LU factorization
  */
-spasm * spasm_kernel(const spasm *U, const int *qinv)
+spasm * spasm_kernel(const spasm_lu *fact)
 {
+	const spasm *U = fact->U;
+	const int *qinv = fact->Uqinv; 
 	int m = U->m;
 	int n = U->n;
 	i64 prime = spasm_get_prime(U);
