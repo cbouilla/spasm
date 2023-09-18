@@ -169,7 +169,7 @@ static void prepare_q(int m, const int *qinv, int *q)
  * q must be preallocated of size at least (m - U->n).
  * on output, q sends columns of S to non-pivotal columns of A
  */
-int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q)
+int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, FFPACK_carrier *S, int *q)
 {
 	assert(p != NULL);
 	int m = A->m;
@@ -233,7 +233,7 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
  * q must be preallocated of size at least (m - U->n).
  * on output, q sends columns of S to non-pivotal columns of A
  */
-void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q, int N, int w)
+void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, FFPACK_carrier *S, int *q, int N, int w)
 {
 	assert(p != NULL);
 	assert(n > 0);

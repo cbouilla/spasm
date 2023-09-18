@@ -49,7 +49,7 @@ bool spasm_echelonize_test_completion(const spasm *A, const int *p, int n, spasm
 	int m = A->m;
 	int Sm = m - U->n;
 	int Sn = ceil(128 / log2(A->prime));
-	double *S = spasm_malloc(Sn * Sm * sizeof(*S));
+	FFPACK_carrier *S = spasm_malloc(Sn * Sm * sizeof(*S));
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
 	fprintf(stderr, "[echelonize/completion] Testing completion with %d random linear combinations (rank %d)\n", Sn, U->n);
@@ -168,7 +168,7 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm *U, int *q
 }
 
 
-static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size_t *Sqinv, const int *q, int *Uqinv)
+static void dense_update_U(spasm *U, int rr, int Sm, const FFPACK_carrier *S, const size_t *Sqinv, const int *q, int *Uqinv)
 {
 	i64 extra_nnz = ((i64) (1 + Sm - rr)) * rr;     /* maximum size increase */
         i64 unz = spasm_nnz(U);
@@ -204,8 +204,8 @@ static void spasm_echelonize_dense_lowrank(const spasm *A, const int *p, int n, 
 	int m = A->m;
 	int Sm = m - U->n;
 
-	i64 size_S = (i64) opts->dense_block_size * (i64) Sm * sizeof(double);
-	double *S = spasm_malloc(size_S);
+	i64 size_S = (i64) opts->dense_block_size * (i64) Sm * sizeof(FFPACK_carrier);
+	FFPACK_carrier *S = spasm_malloc(size_S);
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
 	double start = spasm_wtime();
@@ -270,7 +270,7 @@ static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U
 	int m = A->m;
 	int Sm = m - U->n;
 
-	double *S = spasm_malloc(opts->dense_block_size * Sm * sizeof(*S));
+	FFPACK_carrier *S = spasm_malloc(opts->dense_block_size * Sm * sizeof(*S));
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
 	int processed = 0;

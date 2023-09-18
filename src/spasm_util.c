@@ -14,6 +14,12 @@ int spasm_get_num_threads() {
 #endif
 }
 
+void spasm_set_num_threads(int n) {
+#ifdef _OPENMP
+	omp_set_num_threads(n);
+#endif
+}
+
 int spasm_get_thread_num() {
 #ifdef _OPENMP
 	return omp_get_thread_num();
