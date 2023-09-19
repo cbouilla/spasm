@@ -37,9 +37,9 @@ bool spasm_solve(const spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x)
 		y[i] = b[i];
 	bool ok = spasm_dense_forward_solve(U, y, z, Uq);
 
-	if (ok)
-		/* y.LU = b */
-		spasm_dense_back_solve(L, z, x, fact->Lqinv);
+	/* y.LU = b */
+	spasm_dense_back_solve(L, z, x, fact->Lqinv);
+	
 	free(y);
 	free(z);
 	free(Uq);

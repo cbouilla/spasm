@@ -6,17 +6,16 @@
 
 #include "spasm.h"
 
-/*
- * Implements the ideads given in 
- * "Elimination-based certificates for triangular equivalence and rank profiles"
- * By Jean-Guillaume Dumas, Erich Kaltofen, David Lucas and Clément Pernet
- * J. Symb. Comp. --- https://doi.org/10.1016/j.jsc.2019.07.013
- */
-
 
 /*
  * Generates a proof that U is correct.
  * This requires a full LU factorization.
+ *
+ * Implements the ideads given in 
+ * "Elimination-based certificates for triangular equivalence and rank profiles"
+ * By Jean-Guillaume Dumas, Erich Kaltofen, David Lucas and Clément Pernet
+ * J. Symb. Comp. --- https://doi.org/10.1016/j.jsc.2019.07.013
+ *
  * To make a "real" certificate, seed should be obtained by hashing the input matrix
  */
 spasm_rowspan_certificate * spasm_certificate_rowspan_create(const spasm *A, const spasm_lu *fact, u64 seed)
@@ -139,13 +138,6 @@ static bool check_vector_equality(const spasm_ZZp *x, const spasm *A, const spas
 	return correct;
 }
 
-/*
- * Generates a proof that U is correct.
- * This requires a full LU factorization.
- *
- * The proof only requires U to be checked, and the seed.
- * To make a "real" certificate, seed should be obtained by hashing the input matrix
- */
 bool spasm_certificate_rowspan_verify(const spasm *A, const spasm *U, const spasm_rowspan_certificate *proof)
 {
 	if (!check_echelon_form(U))
@@ -166,5 +158,157 @@ bool spasm_certificate_rowspan_verify(const spasm *A, const spasm *U, const spas
 		x[i] = spasm_ZZp_init(A->field, spasm_prng_next());
 	correct = correct && check_vector_equality(x, U, proof->h, A);
 	free(x);
+	return correct;
+}
+
+
+
+/*
+ * Generates a proof that A has the given rank.
+ * This requires a full LU factorization.
+ *
+ * Implements the ideas given in
+ * "A New Interactive Certificate for Matrix Rank", by Wayne Eberly.
+ * Technical report, University of Calgary, 2015.
+ * http://prism.ucalgary.ca/bitstream/1880/50543/1/2015-1078-11.pdf. 
+ *
+ * To make a "real" certificate, seed should be obtained by hashing the input matrix
+ * and the "commitment" i / j.
+ */
+spasm_rank_certificate * spasm_certificate_rank_create(const spasm *A, const spasm_lu *fact, u64 seed)
+{
+	assert(fact->L != NULL);
+	const spasm *U = fact->U;
+	const spasm *L = fact->L;
+	int n = L->n;
+	int m = U->m;
+	int r = U->n;
+
+	spasm_rank_certificate *proof = spasm_malloc(sizeof(*proof));
+	proof->r = r;
+	proof->seed = seed;
+	spasm_ZZp *xx = spasm_malloc(r * sizeof(*xx));
+	spasm_ZZp *yy = spasm_malloc(r * sizeof(*yy));
+	int *ii = spasm_malloc(r * sizeof(*ii));
+	int *jj = spasm_malloc(r * sizeof(*jj));
+	proof->x = xx;
+	proof->y = yy;
+	proof->i = ii;
+	proof->j = jj;
+
+	/* write i / j indices (positions of pivots) */
+	for (int k = 0; k < r; k++)
+		ii[k] = fact->Lqinv[k];
+	int k = 0;
+	for (int j = 0; j < m; j++)
+		if (fact->Uqinv[j] >= 0) {
+			jj[k] = j;
+			k += 1;
+		}
+
+	/* Generate challenge */
+	spasm_prng_seed(seed, 0);
+	spasm_ZZp *ab = spasm_malloc(n * sizeof(*ab));
+	for (int i = 0; i < n; i++)
+		ab[i] = spasm_ZZp_init(A->field, spasm_prng_next());
+	
+	/* compute x */
+	spasm_ZZp *x = spasm_malloc(n * sizeof(*x));
+	spasm_ZZp *y = spasm_malloc(m * sizeof(*y));
+	for (int j = 0; j < m; j++)
+		y[j] = 0;
+	for (int k = 0; k < r; k++) {
+		int j = jj[k];
+		y[j] = ab[k];
+	}
+	spasm_solve(fact, y, x);
+	for (int k = 0; k < r; k++) {
+		int i = ii[k];
+		xx[k] = x[i];
+	}
+	
+	/* compute y */
+	spasm_ZZp BOT = 0x7fffffff;
+	for (int i = 0; i < n; i++)
+		x[i] = BOT;
+	for (int k = 0; k < r; k++) {
+		int i = ii[k];
+		x[i] = 0;
+	}
+	k = 0;
+	for (int i = 0; i < n; i++)
+		if (x[i] == BOT) {
+			x[i] = -ab[k];
+			k += 1;
+		}
+	for (int j = 0; j < m; j++)
+		y[j] = 0;
+	spasm_xApy(x, A, y);
+	spasm_solve(fact, y, x);
+	for (int k = 0; k < r; k++) {
+		int i = ii[k];
+		yy[k] = x[i];
+	}
+	free(x);
+	free(y);
+	free(ab);
+	return proof;
+}
+
+bool spasm_certificate_rank_verify(const spasm *A, const spasm_rank_certificate *proof)
+{
+	int n = A->n;
+	int m = A->m;
+	int r = proof->r;
+
+	spasm_prng_seed(proof->seed, 0);
+	spasm_ZZp *ab = spasm_malloc(n * sizeof(*ab));
+	for (int i = 0; i < n; i++)
+		ab[i] = spasm_ZZp_init(A->field, spasm_prng_next());
+
+	spasm_ZZp *x = spasm_malloc(n * sizeof(*x));
+	spasm_ZZp *y = spasm_malloc(m * sizeof(*y));
+	
+	/* check Ax --- must match alpha on the j coordinates */
+	for (int i = 0; i < n; i++)   /* compute x */
+		x[i] = 0;
+	for (int k = 0; k < r; k++) {
+		int i = proof->i[k];
+		x[i] = proof->x[k];
+	}
+	for (int j = 0; j < m; j++)
+		y[j] = 0;
+	spasm_xApy(x, A, y);
+	bool correct = 1;
+	for (int k = 0; k < r; k++) {
+		int j = proof->j[k];
+		if (y[j] != ab[k])
+			correct = 0;
+	}
+
+	/* check Ay */
+	spasm_ZZp BOT = 0x7fffffff;        /* compute y */
+	for (int i = 0; i < n; i++)
+		x[i] = BOT;
+	for (int k = 0; k < r; k++) {
+		int i = proof->i[k];
+		x[i] = proof->y[k];
+	}
+	int k = 0;
+	for (int i = 0; i < n; i++)
+		if (x[i] == BOT) {
+			x[i] = ab[k];
+			k += 1;
+		}
+	for (int j = 0; j < m; j++)
+		y[j] = 0;
+	spasm_xApy(x, A, y);
+	for (int j = 0; j < m; j++) {
+		if (y[j] != 0)
+			correct = 0;
+	}
+	free(ab);
+	free(x);
+	free(y);
 	return correct;
 }

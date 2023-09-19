@@ -107,6 +107,14 @@ typedef struct {
 	spasm_ZZp *h;         /* proves rowspan(A) <= rowspan(U) */
 } spasm_rowspan_certificate;
 
+typedef struct {
+	int r;
+	u64 seed;
+	int *i;           /* size r */
+	int *j;           /* size r */
+	spasm_ZZp *x;     /* size r */
+	spasm_ZZp *y;     /* size r */
+} spasm_rank_certificate;
 
 #define SPASM_IDENTITY_PERMUTATION NULL
 #define SPASM_IGNORE NULL
@@ -232,6 +240,8 @@ bool spasm_solve(const spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x);
 /* spasm_certificate.c */
 spasm_rowspan_certificate * spasm_certificate_rowspan_create(const spasm *A, const spasm_lu *fact, u64 seed);
 bool spasm_certificate_rowspan_verify(const spasm *A, const spasm *U, const spasm_rowspan_certificate *proof);
+spasm_rank_certificate * spasm_certificate_rank_create(const spasm *A, const spasm_lu *fact, u64 seed);
+bool spasm_certificate_rank_verify(const spasm *A, const spasm_rank_certificate *proof);
 
 
 /* utilities */
