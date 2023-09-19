@@ -208,9 +208,6 @@ spasm_rank_certificate * spasm_certificate_rank_create(const spasm *A, const spa
 
 	/* Generate challenge */
 	spasm_prng_seed(seed, 0);
-	spasm_ZZp *ab = spasm_malloc(n * sizeof(*ab));
-	for (int i = 0; i < n; i++)
-		ab[i] = spasm_ZZp_init(A->field, spasm_prng_next());
 	
 	/* compute x */
 	spasm_ZZp *x = spasm_malloc(n * sizeof(*x));
@@ -219,7 +216,7 @@ spasm_rank_certificate * spasm_certificate_rank_create(const spasm *A, const spa
 		y[j] = 0;
 	for (int k = 0; k < r; k++) {
 		int j = jj[k];
-		y[j] = ab[k];
+		y[j] = spasm_ZZp_init(A->field, spasm_prng_next());
 	}
 	spasm_solve(fact, y, x);
 	for (int k = 0; k < r; k++) {
@@ -235,12 +232,9 @@ spasm_rank_certificate * spasm_certificate_rank_create(const spasm *A, const spa
 		int i = ii[k];
 		x[i] = 0;
 	}
-	k = 0;
 	for (int i = 0; i < n; i++)
-		if (x[i] == BOT) {
-			x[i] = -ab[k];
-			k += 1;
-		}
+		if (x[i] == BOT)
+			x[i] = -spasm_ZZp_init(A->field, spasm_prng_next());
 	for (int j = 0; j < m; j++)
 		y[j] = 0;
 	spasm_xApy(x, A, y);
@@ -251,7 +245,6 @@ spasm_rank_certificate * spasm_certificate_rank_create(const spasm *A, const spa
 	}
 	free(x);
 	free(y);
-	free(ab);
 	return proof;
 }
 
@@ -262,10 +255,6 @@ bool spasm_certificate_rank_verify(const spasm *A, const spasm_rank_certificate 
 	int r = proof->r;
 
 	spasm_prng_seed(proof->seed, 0);
-	spasm_ZZp *ab = spasm_malloc(n * sizeof(*ab));
-	for (int i = 0; i < n; i++)
-		ab[i] = spasm_ZZp_init(A->field, spasm_prng_next());
-
 	spasm_ZZp *x = spasm_malloc(n * sizeof(*x));
 	spasm_ZZp *y = spasm_malloc(m * sizeof(*y));
 	
@@ -282,7 +271,7 @@ bool spasm_certificate_rank_verify(const spasm *A, const spasm_rank_certificate 
 	bool correct = 1;
 	for (int k = 0; k < r; k++) {
 		int j = proof->j[k];
-		if (y[j] != ab[k])
+		if (y[j] != spasm_ZZp_init(A->field, spasm_prng_next()))
 			correct = 0;
 	}
 
@@ -294,12 +283,10 @@ bool spasm_certificate_rank_verify(const spasm *A, const spasm_rank_certificate 
 		int i = proof->i[k];
 		x[i] = proof->y[k];
 	}
-	int k = 0;
+	//int k = 0;
 	for (int i = 0; i < n; i++)
-		if (x[i] == BOT) {
-			x[i] = ab[k];
-			k += 1;
-		}
+		if (x[i] == BOT)
+			x[i] = spasm_ZZp_init(A->field, spasm_prng_next()); 
 	for (int j = 0; j < m; j++)
 		y[j] = 0;
 	spasm_xApy(x, A, y);
@@ -307,7 +294,6 @@ bool spasm_certificate_rank_verify(const spasm *A, const spasm_rank_certificate 
 		if (y[j] != 0)
 			correct = 0;
 	}
-	free(ab);
 	free(x);
 	free(y);
 	return correct;
