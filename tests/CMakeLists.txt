@@ -1,7 +1,9 @@
 include_directories (../src)
 
-add_custom_target(check ${CMAKE_CTEST_COMMAND})            # create "make check"
+add_custom_target(check ${CMAKE_CTEST_COMMAND} -LE LongTest)                # create "make check"
 add_compile_options(-Wno-unused-parameter)
+
+add_custom_target(longtests ${CMAKE_CTEST_COMMAND} -L LongTest)            # create "make long-tests"
 
 ############# custom functions to declare and run tests easily ################
 
@@ -26,6 +28,17 @@ function(spasm_test_expected_output name test_matrix expected_output)
              COMMAND sh -c "./test_${name} < ${CMAKE_CURRENT_SOURCE_DIR}/Matrix/${test_matrix} | diff - ${CMAKE_CURRENT_SOURCE_DIR}/Expected/${expected_output}")
 endfunction()
 
+set(GITLAB_URL "https://gitlab.lip6.fr/almasty/spasm-test-matrices/-/raw/main")
+
+function(spasm_long_test name test_matrix opts)
+    add_test(NAME ${name}-${test_matrix}-${opts}
+             COMMAND sh -c "curl --silent ${GITLAB_URL}/${test_matrix} | zcat | ./test_${name} ${opts}")
+    set_tests_properties(${name}-${test_matrix}-${opts} PROPERTIES LABELS "LongTest")
+    set_tests_properties(${name}-${test_matrix}-${opts} PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP")
+    set_tests_properties(${name}-${test_matrix}-${opts} PROPERTIES FAIL_REGULAR_EXPRESSION "not ok")
+endfunction()
+
+spasm_long_test(lu kneser_10_4_1.sms.gz "")
 
 set(ALL_MODULI
     3

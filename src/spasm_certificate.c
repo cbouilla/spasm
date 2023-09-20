@@ -298,3 +298,39 @@ bool spasm_certificate_rank_verify(const spasm *A, const spasm_rank_certificate 
 	free(y);
 	return correct;
 }
+
+bool spasm_factorization_verify(const spasm *A, const spasm_lu *fact, u64 seed)
+{
+	assert(fact->L != NULL);
+	const spasm *U = fact->U;
+	const spasm *L = fact->L;
+	int n = A->n;
+	int m = A->m;
+	int r = U->n;
+	spasm_ZZp *x = malloc(n * sizeof(*x));
+	spasm_ZZp *y = malloc(r * sizeof(*y));
+	spasm_ZZp *z = malloc(n * sizeof(*z));
+	spasm_ZZp *t = malloc(m * sizeof(*t));
+
+	spasm_prng_seed(seed, 0);
+	for (int i = 0; i < n; i++)
+		x[i] = spasm_ZZp_init(A->field, spasm_prng_next());
+	for (int j = 0; j < m; j++) {
+		z[j] = 0;
+		t[j] = 0;
+	}
+	for (int k = 0; k < r; k++)
+		y[k] = 0;
+	spasm_xApy(x, A, t);
+	spasm_xApy(x, L, y);
+	spasm_xApy(y, U, z);
+	bool correct = 1;
+	for (int j = 0; j < m; j++)
+		if (z[j] != t[j])
+			correct = 0;
+	free(x);
+	free(y);
+	free(z);
+	free(t);
+	return correct;
+}

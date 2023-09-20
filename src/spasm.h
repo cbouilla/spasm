@@ -242,6 +242,7 @@ spasm_rowspan_certificate * spasm_certificate_rowspan_create(const spasm *A, con
 bool spasm_certificate_rowspan_verify(const spasm *A, const spasm *U, const spasm_rowspan_certificate *proof);
 spasm_rank_certificate * spasm_certificate_rank_create(const spasm *A, const spasm_lu *fact, u64 seed);
 bool spasm_certificate_rank_verify(const spasm *A, const spasm_rank_certificate *proof);
+bool spasm_factorization_verify(const spasm *A, const spasm_lu *fact, u64 seed);
 
 
 /* utilities */

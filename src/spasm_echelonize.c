@@ -159,7 +159,7 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 
 		/* store new pivotal row into U */
 		Uqinv[jpiv] = U->n;
-		fprintf(stderr, "setting Uqinv[%d] <--- %d\n", jpiv, U->n);
+		// fprintf(stderr, "setting Uqinv[%d] <--- %d\n", jpiv, U->n);
 
 		i64 old_unz = unz;
 		Uj[unz] = jpiv;
@@ -453,7 +453,6 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 		n = n - npiv;  // problem if we exit the loop normally
 		free(p_in);
 		p_in = p_out;
-		round += 1;
 	}
 	if (status == 0) {
 		npiv = 0;

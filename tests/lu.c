@@ -42,13 +42,32 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	opts.L = 1;
+	opts.enable_greedy_pivot_search = 0;
 	spasm_lu *fact = spasm_echelonize(A, &opts);
+	int r = fact->U->n;
 	assert(fact->L != NULL);
-	assert(fact->U->n == 0 || fact->Lqinv != NULL);
+	assert(r == 0 || fact->Lqinv != NULL);
 	assert(fact->Ltmp == NULL);
-	assert(fact->U->n == fact->L->m);
+	assert(r == fact->L->m);
 	assert(fact->U->m == m);
 	assert(fact->L->n == n);
+
+	bool *pivotal_row = spasm_malloc(n * sizeof(*pivotal_row));
+	bool *pivotal_col = spasm_malloc(m * sizeof(*pivotal_row));
+	for (int i = 0; i < n; i++)
+		pivotal_row[i] = 0;
+	for (int j = 0; j < m; j++)
+		pivotal_col[j] = 0;
+	for (int k = 0; k < r; k++) {
+		int i = fact->Lqinv[k];
+		pivotal_row[i] = 1;
+	}
+	for (int j = 0; j < m; j++) {
+		int i = fact->Uqinv[j];
+		if (i >= 0)
+			pivotal_col[j] = 1;
+	}
+
 
 	/* check that A == L*U */
 	for (int i = 0; i < n; i++) {
@@ -60,7 +79,7 @@ int main(int argc, char **argv)
 			y[j] = 0;
 			v[j] = 0;
 		}
-		printf("###################### i=%d\n", i);
+		// printf("###################### i=%d\n", i);
 		x[i] = 1;
 
 		spasm_xApy(x, A, y);     // y <- x*A
@@ -68,7 +87,10 @@ int main(int argc, char **argv)
 		spasm_xApy(u, fact->U, v); // v <- (x*L)*U
 
 		for (int j = 0; j < m; j++) {
-			printf("# x*A[%4d] = %8d VS x*L[%4d] = %8d VS x*LU[%4d] = %8d\n", j, y[j], j, u[j], j, v[j]);
+			// printf("# x*A[%4d] = %8d VS x*L[%4d] = %8d VS x*LU[%4d] = %8d\n", j, y[j], j, u[j], j, v[j]);
+			if (y[j] != v[j])
+				printf("mismatch on row %d (pivotal=%d), column %d (pivotal=%d)\n", 
+					i, pivotal_row[i], j, pivotal_col[j]);
 			assert(y[j] == v[j]);
 		}
 	}

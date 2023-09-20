@@ -13,4 +13,7 @@ clean:
 check: build/Makefile
 	$(MAKE) --no-print-directory -C build check
 
-.PHONY: build mrproper clean check
+longtests: build/Makefile
+	$(MAKE) --no-print-directory -C build longtests
+
+.PHONY: build mrproper clean check longtests
