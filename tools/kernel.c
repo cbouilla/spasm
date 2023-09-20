@@ -3,12 +3,14 @@
 #include <assert.h>
 #include <getopt.h>
 #include <err.h>
+#include <string.h>
 
 #include "spasm.h"
 
-int prime = 42013;
+int prime = 251;
 struct echelonize_opts opts;
 bool left = 0;
+char qinv_file[1000] = "";
 
 void parse_command_line_options(int argc, char **argv)
 {
@@ -19,6 +21,7 @@ void parse_command_line_options(int argc, char **argv)
 		{"no-low-rank-mode", no_argument, NULL, 'l'},
 		{"dense-block-size", required_argument, NULL, 'd'},
 		{"low-rank-start-weight", required_argument, NULL, 'w'},
+		{"qinv-file", required_argument, NULL, 'q'},
 		{NULL, 0, NULL, 0}
 	};
 	char ch;
@@ -42,6 +45,9 @@ void parse_command_line_options(int argc, char **argv)
 			break;
 		case 'w':
 			opts.low_rank_start_weight = atoi(optarg);
+			break;
+		case 'q':
+			strcpy(qinv_file, optarg);
 			break;
 		default:
 			errx(1, "Unknown option\n");
@@ -68,6 +74,13 @@ int main(int argc, char **argv)
 	spasm *U = spasm_echelonize(A, qinv, &opts);
 	spasm_csr_free(A);
 
+	if (qinv_file[0]) { /* save qinv */
+	  FILE *qinv_stream = fopen(qinv_file,"w");
+	  for (int i = 0; i < m; i++)
+	    fprintf(qinv_stream,"%d\n",qinv[i]);
+	  fclose(qinv_stream);
+	}
+	  
         spasm *K = spasm_kernel(U, qinv);
 	spasm_save_csr(stdout, K);
 	fprintf(stderr, "Kernel basis matrix is %d x %d with %" PRId64 " nz\n", K->n, K->m, spasm_nnz(K));
