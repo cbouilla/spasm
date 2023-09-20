@@ -1,5 +1,4 @@
-#image: debian
-image: build
+image: gcc
 
 before_script:
   - apt update
