@@ -39,6 +39,7 @@ function(spasm_long_test name test_matrix opts)
 endfunction()
 
 spasm_long_test(lu kneser_10_4_1.sms.gz "")
+spasm_long_test(lu boundary_C_6_9.sms.gz "")
 
 set(ALL_MODULI
     3

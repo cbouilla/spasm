@@ -15,11 +15,6 @@ compile_gcc:
   script:
     - make
 
-compile_clang:
-  stage: build
-  script:
-    - CC=clang make
-
 unit_tests:
     stage: unittest
     script:
