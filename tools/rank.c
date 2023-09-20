@@ -59,8 +59,6 @@ int main(int argc, char **argv)
 	spasm_human_format(spasm_nnz(A), hnnz);
 	fprintf(stderr, "start. A is %d x %d (%s nnz)\n", n, m, hnnz);
 
-	opts.enable_greedy_pivot_search = 0;
-	opts.max_round = 1;
 	if (compute_cert)
 		opts.L = 1;
 
