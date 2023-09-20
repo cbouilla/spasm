@@ -1,8 +1,8 @@
-image: gcc
+image: debian
 
 before_script:
   - apt update
-  - apt -y install make cmake libopenblas-dev fflas-ffpack
+  - apt -y install build-essential clang make cmake libopenblas-dev fflas-ffpack
 
 stages:
   - build
