@@ -42,7 +42,6 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	opts.L = 1;
-	opts.enable_greedy_pivot_search = 0;
 	spasm_lu *fact = spasm_echelonize(A, &opts);
 	int r = fact->U->n;
 	assert(fact->L != NULL);
@@ -79,7 +78,8 @@ int main(int argc, char **argv)
 			y[j] = 0;
 			v[j] = 0;
 		}
-		// printf("###################### i=%d\n", i);
+		printf("\ri=%d / %d\n", i, n);
+		fflush(stdout);
 		x[i] = 1;
 
 		spasm_xApy(x, A, y);     // y <- x*A
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 		for (int j = 0; j < m; j++) {
 			// printf("# x*A[%4d] = %8d VS x*L[%4d] = %8d VS x*LU[%4d] = %8d\n", j, y[j], j, u[j], j, v[j]);
 			if (y[j] != v[j])
-				printf("mismatch on row %d (pivotal=%d), column %d (pivotal=%d)\n", 
+				printf("\nmismatch on row %d (pivotal=%d), column %d (pivotal=%d)\n", 
 					i, pivotal_row[i], j, pivotal_col[j]);
 			assert(y[j] == v[j]);
 		}

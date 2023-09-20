@@ -69,8 +69,6 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact,
 	if (est_density < 0)
 		est_density = spasm_schur_estimate_density(A, p, n, fact->U, qinv, 100);
 	long long size = (est_density * n) * m;
-	if (size > 2147483648)
-		errx(1, "Matrix too large (more than 2^31 entries)");
 	i64 prime = spasm_get_prime(A);
 	spasm *S = spasm_csr_alloc(n, m, size, prime, SPASM_WITH_NUMERICAL_VALUES);
 	i64 *Sp = S->p;
@@ -151,9 +149,9 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact,
 			}
 			
 			/* write the new row in L / S */
-			int i_out = (p_in != NULL) ? p_in[inew] : inew;
+			int i_orig = (p_in != NULL) ? p_in[inew] : inew;
 			if (p_out != NULL)
-				p_out[local_i] = i_out;
+				p_out[local_i] = i_orig;
 
 			for (int px = top; px < m; px++) {
 				int j = xj[px];
@@ -164,7 +162,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact,
 					Sx[local_snz] = x[j];
 					local_snz += 1;
 				} else if (L != NULL) {
-					Li[local_lnz] = i_out;
+					Li[local_lnz] = i_orig;
 					Lj[local_lnz] = qinv[j];
 					Lx[local_lnz] = x[j];
 					// fprintf(stderr, "Adding L[%d, %d] = %d\n", i_out, qinv[j], x[j]);

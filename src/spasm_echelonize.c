@@ -66,7 +66,7 @@ bool spasm_echelonize_test_completion(const spasm *A, const int *p, int n, spasm
 
 
 /* not dry w.r.t. spasm_LU() */
-void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, struct echelonize_opts *opts)
+void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, int *p_in, struct echelonize_opts *opts)
 {
 	(void) opts;
 	assert(p != NULL);
@@ -123,6 +123,7 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 
 		/* Triangular solve: x * U = A[i] */
 		int inew = p[i];
+		int i_orig = (p_in != NULL) ? p_in[inew] : inew;
 		int top = spasm_sparse_triangular_solve(U, A, inew, xj, x, Uqinv);
 
 		/* Find pivot column; current poor strategy= choose leftmost */
@@ -137,7 +138,7 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 					jpiv = j;
 			} else if (L != NULL) {
 				/* everything under pivotal columns goes into L */
-				Li[lnz] = inew;
+				Li[lnz] = i_orig;
 				Lj[lnz] = Uqinv[j];
 				Lx[lnz] = x[j];
 				lnz += 1;
@@ -150,8 +151,8 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 		/* add entry entry in L for the pivot */
 		if (L != NULL) {
 			assert(x[jpiv] != 0);
-			Lqinv[U->n] = inew;
-			Li[lnz] = inew;
+			Lqinv[U->n] = i_orig;
+			Li[lnz] = i_orig;
 			Lj[lnz] = U->n;
 			Lx[lnz] = x[jpiv];
 			lnz += 1;
@@ -477,7 +478,7 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 	else if (opts->enable_dense && density > opts->sparsity_threshold)
 		spasm_echelonize_dense(A, p + npiv, n - npiv, U, Uqinv, opts);
 	else if (opts->enable_GPLU)
-		spasm_echelonize_GPLU(A, p + npiv, n - npiv, fact, opts);
+		spasm_echelonize_GPLU(A, p + npiv, n - npiv, fact, p_in, opts);
 	else
 		fprintf(stderr, "[echelonize] Cannot finish (no valid method enabled). Incomplete echelonization returned\n");
 
