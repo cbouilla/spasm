@@ -27,4 +27,4 @@ unit_tests:
 long_tests:
     stage: test
     script:
-      - make check
+      - make longtests
