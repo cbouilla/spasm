@@ -63,16 +63,16 @@ int main(int argc, char **argv)
 	spasm_lu *fact = spasm_echelonize(A, &opts);
 	spasm_csr_free(A);
 
-        if (rref) {
-        	/* compute the RREF */
-        	int *Rqinv = spasm_malloc(m * sizeof(int));
-        	spasm *R = spasm_rref(fact, Rqinv);
+	if (rref) {
+		/* compute the RREF */
+		int *Rqinv = spasm_malloc(m * sizeof(int));
+		spasm *R = spasm_rref(fact, Rqinv);
 		spasm_save_csr(stdout, R);
-        	spasm_csr_free(R);
-        	free(Rqinv);
-        } else {
-        	spasm_save_csr(stdout, fact->U);
-        }
-        spasm_lu_free(fact);
-        exit(EXIT_SUCCESS);
+		spasm_csr_free(R);
+		free(Rqinv);
+	} else {
+		spasm_save_csr(stdout, fact->U);
+	}
+	spasm_lu_free(fact);
+	exit(EXIT_SUCCESS);
 }
