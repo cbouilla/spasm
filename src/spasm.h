@@ -221,7 +221,9 @@ spasm_dm *spasm_dulmage_mendelsohn(const spasm *A);
 spasm_dm *spasm_strongly_connected_components(const spasm *A);
 
 /* spasm_ffpack.cpp */
-int spasm_ffpack_echelonize(i64 prime, int n, int m, double *A, int ldA, size_t *qinv);
+int spasm_ffpack_rref_double(i64 prime, int n, int m, double *A, int ldA, size_t *qinv);
+int spasm_ffpack_rref_float(i64 prime, int n, int m, float *A, int ldA, size_t *qinv);
+int spasm_ffpack_rref_i64(i64 prime, int n, int m, i64 *A, int ldA, size_t *qinv);
 
 /* spasm_echelonize */
 void spasm_echelonize_init_opts(struct echelonize_opts *opts);

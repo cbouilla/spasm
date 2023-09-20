@@ -57,7 +57,7 @@ bool spasm_echelonize_test_completion(const spasm *A, const int *p, int n, spasm
 	fprintf(stderr, "[echelonize/completion] Testing completion with %d random linear combinations (rank %d)\n", Sn, U->n);
 	fflush(stderr);
 	spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, q, Sn, 0);
-	int rr = spasm_ffpack_echelonize(prime, Sn, Sm, S, Sm, Sp);
+	int rr = spasm_ffpack_rref_double(prime, Sn, Sm, S, Sm, Sp);
 	free(S);
 	free(Sp);
 	free(q);
@@ -269,7 +269,7 @@ static void spasm_echelonize_dense_lowrank(const spasm *A, const int *p, int n, 
 		fprintf(stderr, "[echelonize/dense/low-rank] Round %d. Weight %d. Processing chunk (%d x %d), |U| = %"PRId64"\n", 
 			round, w, Sn, Sm, spasm_nnz(U));
 		spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, q, Sn, w);
-		int rr = spasm_ffpack_echelonize(prime, Sn, Sm, S, Sm, Sp);
+		int rr = spasm_ffpack_rref_double(prime, Sn, Sm, S, Sm, Sp);
 
 		if (rr == 0) {
 			if (spasm_echelonize_test_completion(A, p, n, U, Uqinv))
@@ -325,7 +325,7 @@ static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U
 		
 		fprintf(stderr, "[echelonize/dense] Round %d. processing S[%d:%d] (%d x %d)\n", round, processed, processed + Sn, Sn, Sm);	
 		int r = spasm_schur_dense(A, p, Sn, U, Uqinv, S, q);
-		int rr = spasm_ffpack_echelonize(prime, r, Sm, S, Sm, Sp);
+		int rr = spasm_ffpack_rref_double(prime, r, Sm, S, Sm, Sp);
 		
 		/* update U */
 		dense_update_U(U, rr, Sm, S, Sp, q, Uqinv);

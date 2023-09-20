@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 
         size_t *p = spasm_malloc(m * sizeof(*p));
         size_t *qinv = spasm_malloc(m * sizeof(*qinv));
-        int rank = spasm_ffpack_echelonize(prime, n, m, M, m, qinv);
+        int rank = spasm_ffpack_rref_double(prime, n, m, M, m, qinv);
         printf("# echelonized ; rank = %d\n", rank);
 
         /* dump output */
