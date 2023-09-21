@@ -13,16 +13,16 @@ The core of the library is a multithreaded function that computes the row echelo
 This enables several of useful computations on sparse matrices modulo _p_:
   * Basis of the row space
   * Basis of the kernel
-  * Reduced Row Echelon form
+  * Row Echelon form and Reduced Row Echelon form
   * Rank
 
 In addition, SpaSM is capable of computing a full PLUQ factorization, but this is slower than simple echelonization. This enables:
   * Solution of linear systems
   * Rank certificates
 
-SpaSM works with all prime moduli in the range [3; 189,812,507].  While it would be possible to work with _p = 2_ or with any 32-bit prime _p_, this would require tweaks to the code (and is not tested). 
+SpaSM works with all odd 32-bit prime moduli.  While it would be possible to work with _p = 2_, this would require non-trivial tweaks to the code. 
 
-In addition, SpaSM contains code to compute the Dulmage-Mendelson decomposition (permutation of a matrice to block triangular form) and several other useful functions.
+Finally, SpaSM contains code to compute the Dulmage-Mendelson decomposition (permutation of a matrice to block triangular form) and several other useful functions.
 
 The following algorithms algorithms are used in SpaSM:
   * [Gilbert-Peierls sparse triangular solving with sparse right-hand side](https://doi.org/10.1137/0909058)
@@ -46,7 +46,7 @@ Installation
 In brief:
 ```make```
 
-This requires [cmake](https://cmake.org). The executables can be found in `build/tools`.
+This requires [cmake](https://cmake.org) and [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/). The executables can be found in `build/tools`.
 
 SpaSM relies on two third-party libraries, which are required at compile-time:
   * [Givaro](https://github.com/linbox-team/givaro)

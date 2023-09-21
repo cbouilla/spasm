@@ -101,7 +101,7 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 		}
 		/* TODO: make these hard-coded values options */
 		if (L == NULL && !early_abort_done && rows_since_last_pivot > 10 && (rows_since_last_pivot > (n / 100))) {
-			fprintf(stderr, "\n[echelonize/GPLU] testing for early abort...");
+			fprintf(stderr, "\n[echelonize/GPLU] testing for early abort...\n");
 			if (spasm_echelonize_test_completion(A, p, n, U, Uqinv))
 				break;
 			early_abort_done = 1;

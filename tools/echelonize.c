@@ -20,6 +20,7 @@ void parse_command_line_options(int argc, char **argv)
 		{"no-low-rank-mode", no_argument, NULL, 'l'},
 		{"dense-block-size", required_argument, NULL, 'd'},
 		{"low-rank-start-weight", required_argument, NULL, 'w'},
+		{"sparsity-threshold", required_argument, NULL, 's'},
 		{NULL, 0, NULL, 0}
 	};
 	char ch;
@@ -39,6 +40,9 @@ void parse_command_line_options(int argc, char **argv)
 			break;
 		case 'l':
 			opts.enable_tall_and_skinny = 0;
+			break;
+		case 's':
+			opts.sparsity_threshold = atof(optarg);
 			break;
 		case 'w':
 			opts.low_rank_start_weight = atoi(optarg);
