@@ -38,37 +38,40 @@ int main(int argc, char **argv)
         i64 *Ap = A->p;
         int *Aj = A->j;
         spasm_ZZp *Ax = A->x;
+        spasm_datatype datatype = spasm_datatype_choose(prime);
+        printf("# prime=%" PRId64 ", using datatype %s\n", prime, spasm_datatype_name(datatype));
 
-        double *M = spasm_malloc(m * n * sizeof(*M));
+        void *M = spasm_malloc(m * n * spasm_datatype_size(datatype));
         for (int i = 0; i < n * m; i++)
-                M[i] = 0;
+                spasm_datatype_write(M, i, datatype, 0);
         for (int i = 0; i < n*m; i++)
-                assert(M[i] == 0);
+                assert(spasm_datatype_read(M, i, datatype) == 0);
 
         /* scatter A into M */
         for (int i = 0; i < n; i++)
                 for (i64 k = Ap[i]; k < Ap[i + 1]; k++) {
                         int j = Aj[k];
-                        M[i * m + j] = Ax[k];
+                        spasm_datatype_write(M, i * m + j, datatype, Ax[k]);
+                        // M[i * m + j] = Ax[k];
                 }
 
         for (int i = 0; i < n; i++) {
                 printf("# ");
                 for (int j = 0; j < m; j++)
-                        printf("%6.0f ", M[i * m + j]);
+                        printf("%6d ", spasm_datatype_read(M, i * m + j, datatype));
                 printf("\n");
         }
 
         size_t *p = spasm_malloc(m * sizeof(*p));
         size_t *qinv = spasm_malloc(m * sizeof(*qinv));
-        int rank = spasm_ffpack_rref_double(prime, n, m, M, m, qinv);
+        int rank = spasm_ffpack_rref(prime, n, m, M, m, datatype, qinv);
         printf("# echelonized ; rank = %d\n", rank);
 
         /* dump output */
         for (int i = 0; i < n; i++) {
                 printf("# ");
                 for (int j = 0; j < m; j++)
-                        printf("%6.0f ", M[i * m + j]);
+                        printf("%6d ", spasm_datatype_read(M, i * m + j, datatype));
                 printf("\n");
         }
 
@@ -93,7 +96,8 @@ int main(int argc, char **argv)
                         x[j] = 0;
                         for (int l = rank; l < m; l++) {
                                 int j = qinv[l];
-                                x[j] = spasm_ZZp_axpy(A->field, -alpha, M[k * m + l], x[j]);
+                                spasm_ZZp Mkl = spasm_datatype_read(M, k * m + l, datatype);
+                                x[j] = spasm_ZZp_axpy(A->field, -alpha, Mkl, x[j]);
                         }
                 }
                 printf("# row %2d --> (", i);

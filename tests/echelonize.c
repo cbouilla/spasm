@@ -112,9 +112,7 @@ void deterministic_inclusion_test(const spasm *A, const spasm *U, const int *qin
 void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 {
 	fprintf(stderr, "---> Checking that rowspan(A) is included in rowspan(U) [probabilistic, %d iterations]...\n", n_iterations);
-	
-	i64 prime = spasm_get_prime(A);
-	int n = A->n;
+		int n = A->n;
 	int m = A->m;
 	int r = U->n;
 	const i64 *Up = U->p;
@@ -137,7 +135,7 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 			for (int i = 0; i < r; i++) {
 				int j = Uj[Up[i]];
 				if (x[j] != 0)
-					spasm_scatter(U, i, prime - x[j], x);
+					spasm_scatter(U, i, -x[j], x);
 			}
 			for (int j = 0; j < m; j++)
 				if ((x[j] != 0))

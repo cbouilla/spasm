@@ -15,9 +15,6 @@
  *     echelonize_XXX(spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts);
  *
  * passing NULL as the options leads to default choices. 
- * U must be preallocated with sufficiently many rows (e.g. with A->n rows to be ready for the worst case).
- *
- * presently, this does not provide a way to store L; we will do something about this later on.
  */
 
 
@@ -48,16 +45,17 @@ bool spasm_echelonize_test_completion(const spasm *A, const int *p, int n, spasm
 	if (n == 0 || spasm_nnz(A) == 0)
 		return 1;
 	int m = A->m;
-	int Sm = m - U->n;
+	i64 Sm = m - U->n;
 	i64 prime = spasm_get_prime(A);
-	int Sn = ceil(128 / log2(prime));
-	double *S = spasm_malloc(Sn * Sm * sizeof(*S));
+	spasm_datatype datatype = spasm_datatype_choose(prime);
+	i64 Sn = ceil(128 / log2(prime));
+	void *S = spasm_malloc(Sn * Sm * spasm_datatype_size(datatype));
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
-	fprintf(stderr, "[echelonize/completion] Testing completion with %d random linear combinations (rank %d)\n", Sn, U->n);
+	fprintf(stderr, "[echelonize/completion] Testing completion with %" PRId64" random linear combinations (rank %d)\n", Sn, U->n);
 	fflush(stderr);
-	spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, q, Sn, 0);
-	int rr = spasm_ffpack_rref_double(prime, Sn, Sm, S, Sm, Sp);
+	spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, datatype, q, Sn, 0);
+	int rr = spasm_ffpack_rref(prime, Sn, Sm, S, Sm, datatype, Sp);
 	free(S);
 	free(Sp);
 	free(q);
@@ -201,8 +199,8 @@ void spasm_echelonize_GPLU(const spasm *A, const int *p, int n, spasm_lu *fact, 
 	free(xj);
 }
 
-
-static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size_t *Sqinv, const int *q, int *Uqinv)
+static void dense_update_U(spasm *U, int rr, int Sm, const void *S, spasm_datatype datatype, 
+	const size_t *Sqinv, const int *q, int *Uqinv)
 {
 	i64 extra_nnz = ((i64) (1 + Sm - rr)) * rr;     /* maximum size increase */
         i64 unz = spasm_nnz(U);
@@ -219,10 +217,11 @@ static void dense_update_U(spasm *U, int rr, int Sm, const double *S, const size
         	Uqinv[q[j]] = U->n;
         	for (i64 k = rr; k < Sm; k++) {
         		i64 j = Sqinv[k];
-        		if (S[i * Sm + k] == 0)
+        		spasm_ZZp x = spasm_datatype_read(S, i * Sm + k, datatype);
+        		if (x == 0)
         			continue;   /* don't store zero */
         		Uj[unz] = q[j];
-        		Ux[unz] = S[i * Sm + k];  // reduce?
+        		Ux[unz] = x;  // reduce?
         		unz += 1;
         	}
         	U->n += 1;
@@ -237,16 +236,17 @@ static void spasm_echelonize_dense_lowrank(const spasm *A, const int *p, int n, 
 	int m = A->m;
 	int Sm = m - U->n;
 	i64 prime = spasm_get_prime(A);
+	spasm_datatype datatype = spasm_datatype_choose(prime);
 
-	i64 size_S = (i64) opts->dense_block_size * (i64) Sm * sizeof(double);
-	double *S = spasm_malloc(size_S);
+	i64 size_S = (i64) opts->dense_block_size * (i64) Sm * spasm_datatype_size(datatype);
+	void *S = spasm_malloc(size_S);
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
 	double start = spasm_wtime();
 	int old_un = U->n;
 	int round = 0;
-	fprintf(stderr, "[echelonize/dense/low-rank] processing dense schur complement of dimension %d x %d; block size=%d\n", 
-		n, Sm, opts->dense_block_size);
+	fprintf(stderr, "[echelonize/dense/low-rank] processing dense schur complement of dimension %d x %d; block size=%d, type %s\n", 
+		n, Sm, opts->dense_block_size, spasm_datatype_name(datatype));
 	
 	/* 
 	 * stupid algorithm to decide a starting weight:
@@ -268,8 +268,8 @@ static void spasm_echelonize_dense_lowrank(const spasm *A, const int *p, int n, 
 			break;		
 		fprintf(stderr, "[echelonize/dense/low-rank] Round %d. Weight %d. Processing chunk (%d x %d), |U| = %"PRId64"\n", 
 			round, w, Sn, Sm, spasm_nnz(U));
-		spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, q, Sn, w);
-		int rr = spasm_ffpack_rref_double(prime, Sn, Sm, S, Sm, Sp);
+		spasm_schur_dense_randomized(A, p, n, U, Uqinv, S, datatype, q, Sn, w);
+		int rr = spasm_ffpack_rref(prime, Sn, Sm, S, Sm, datatype, Sp);
 
 		if (rr == 0) {
 			if (spasm_echelonize_test_completion(A, p, n, U, Uqinv))
@@ -282,7 +282,7 @@ static void spasm_echelonize_dense_lowrank(const spasm *A, const int *p, int n, 
 			w *= 2;
 			fprintf(stderr, "[echelonize/dense/low-rank] Not enough pivots, increasing weight to %d\n", w);
 		}
-		dense_update_U(U, rr, Sm, S, Sp, q, Uqinv);
+		dense_update_U(U, rr, Sm, S, datatype, Sp, q, Uqinv);
 		n -= rr;
 		Sm -= rr;
         	round += 1;
@@ -304,16 +304,17 @@ static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U
 	int m = A->m;
 	int Sm = m - U->n;
 	i64 prime = spasm_get_prime(A);
+	spasm_datatype datatype = spasm_datatype_choose(prime);
 
-	double *S = spasm_malloc(opts->dense_block_size * Sm * sizeof(*S));
+	void *S = spasm_malloc(opts->dense_block_size * Sm * spasm_datatype_size(datatype));
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sp = spasm_malloc(Sm * sizeof(*Sp));       /* for FFPACK */
 	int processed = 0;
 	double start = spasm_wtime();
 	int old_un = U->n;
 	int round = 0;
-	fprintf(stderr, "[echelonize/dense] processing dense schur complement of dimension %d x %d; block size=%d\n", 
-		n, Sm, opts->dense_block_size);
+	fprintf(stderr, "[echelonize/dense] processing dense schur complement of dimension %d x %d; block size=%d, type %s\n", 
+		n, Sm, opts->dense_block_size, spasm_datatype_name(datatype));
 	bool lowrank_mode = 0;
 	int rank_ub = spasm_min(A->n - U->n, A->m - U->n);
 
@@ -324,11 +325,11 @@ static void spasm_echelonize_dense(const spasm *A, const int *p, int n, spasm *U
 			break;
 		
 		fprintf(stderr, "[echelonize/dense] Round %d. processing S[%d:%d] (%d x %d)\n", round, processed, processed + Sn, Sn, Sm);	
-		int r = spasm_schur_dense(A, p, Sn, U, Uqinv, S, q);
-		int rr = spasm_ffpack_rref_double(prime, r, Sm, S, Sm, Sp);
+		int r = spasm_schur_dense(A, p, Sn, U, Uqinv, S, datatype, q);
+		int rr = spasm_ffpack_rref(prime, r, Sm, S, Sm, datatype, Sp);
 		
 		/* update U */
-		dense_update_U(U, rr, Sm, S, Sp, q, Uqinv);
+		dense_update_U(U, rr, Sm, S, datatype, Sp, q, Uqinv);
 
         	/* move on to the next chunk */
         	round += 1;

@@ -90,7 +90,7 @@ spasm * spasm_kernel(const spasm_lu *fact)
 
 			/* write the new row in K */
 			Kj[local_nnz] = j;
-			Kx[local_nnz] = prime - 1;
+			Kx[local_nnz] = -1;
 			local_nnz += 1;
 			for (int px = top; px < n; px++) {
 				int jj = xj[px];

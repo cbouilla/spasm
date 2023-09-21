@@ -28,16 +28,12 @@ void parse_command_line_options(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+	parse_command_line_options(argc, argv);
 	spasm_triplet *T = spasm_load_sms(stdin, prime);
 	spasm *A = spasm_compress(T);
 	spasm_triplet_free(T);
 	int n = A->n;
 	int m = A->m;
-
-	spasm_ZZp *x = malloc(n * sizeof(*x));
-	spasm_ZZp *y = malloc(m * sizeof(*y));
-	spasm_ZZp *u = malloc(n * sizeof(*u));
-	spasm_ZZp *v = malloc(m * sizeof(*v));
 
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
@@ -50,6 +46,10 @@ int main(int argc, char **argv)
 	assert(r == fact->L->m);
 	assert(fact->U->m == m);
 	assert(fact->L->n == n);
+
+	// assert(spasm_factorization_verify(A, fact, 42));
+	// assert(spasm_factorization_verify(A, fact, 1337));
+	// assert(spasm_factorization_verify(A, fact, 21011984));
 
 	bool *pivotal_row = spasm_malloc(n * sizeof(*pivotal_row));
 	bool *pivotal_col = spasm_malloc(m * sizeof(*pivotal_row));
@@ -67,8 +67,16 @@ int main(int argc, char **argv)
 			pivotal_col[j] = 1;
 	}
 
+	#pragma omp parallel
+	{
+
+	spasm_ZZp *x = malloc(n * sizeof(*x));
+	spasm_ZZp *y = malloc(m * sizeof(*y));
+	spasm_ZZp *u = malloc(n * sizeof(*u));
+	spasm_ZZp *v = malloc(m * sizeof(*v));
 
 	/* check that A == L*U */
+	#pragma omp for
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
 			x[j] = 0;
@@ -94,12 +102,13 @@ int main(int argc, char **argv)
 			assert(y[j] == v[j]);
 		}
 	}
-	printf("ok - L*U == A\n");
-	spasm_csr_free(A);
-	spasm_lu_free(fact);
 	free(x);
 	free(y);
 	free(u);
 	free(v);
+	}
+	printf("ok - L*U == A\n");
+	spasm_csr_free(A);
+	spasm_lu_free(fact);
 	return 0;
 }

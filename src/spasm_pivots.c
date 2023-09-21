@@ -8,20 +8,25 @@
  */
 
 /* register a pivot in (i, j) ; return 1 iff it is new in both row i or col j */
-static int register_pivot(int i, int j, int *p, int *qinv)
+static int register_pivot(int i, int j, int *pinv, int *qinv)
 {
 	int r = 1;
-	int pi = p[i];
+	int pinvi = pinv[i];
 	int qinvj = qinv[j];
-	if (pi != -1) {
-		qinv[pi] = -1;
+	assert(pinvi < 0 || qinvj < 0);
+	if (pinvi != -1) {
+		assert(qinv[pinvi] == i);
+		assert(pinvi != j);
+		qinv[pinvi] = -1;
 		r = 0;
 	}
 	if (qinvj != -1) {
-		p[qinvj] = -1;
+		assert(pinv[qinvj] == j);
+		assert(qinvj != i);
+		pinv[qinvj] = -1;
 		r = 0;
 	}
-	p[i] = j;
+	pinv[i] = j;
 	qinv[j] = i;
 	return r;
 }
@@ -39,14 +44,17 @@ static int spasm_find_FL_pivots(const spasm *A, int *p, int *qinv)
 	int m = A->m;
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;
+	const spasm_ZZp *Ax = A->x;
 	double start = spasm_wtime();
 	int npiv = 0;
 
 	for (int i = 0; i < n; i++) {
 		int j = m + 1;         /* locate leftmost entry */
-		for (i64 px = Ap[i]; px < Ap[i + 1]; px++)
+		for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
+			assert(Ax[px] != 0);
 			if (Aj[px] < j)
 				j = Aj[px];
+		}
 		if (j == m + 1)            /* Skip empty rows */
 			continue;
 		/* check if it is a sparser pivot */
@@ -69,8 +77,8 @@ static int spasm_find_FL_column_pivots(const spasm *A, int *pinv, int *qinv)
 {
 	int n = A->n;
 	int m = A->m;
-	i64 *Ap = A->p;
-	int *Aj = A->j;
+	const i64 *Ap = A->p;
+	const int *Aj = A->j;
 	int npiv = 0;
 	int *w = spasm_malloc(m * sizeof(int));
 	for (int j = 0; j < m; j++)
@@ -235,10 +243,10 @@ static int spasm_find_cycle_free_pivots(const spasm *A, int *pinv, int *qinv)
 			{
 				if (npiv == npiv_local) {
 					/* success */
-					register_pivot(i, j, pinv, qinv);
+					int result = register_pivot(i, j, pinv, qinv);
 					journal[npiv] = j;
 					#pragma omp atomic update
-					npiv += 1;
+					npiv += result;
 				} else {
 					/* failure */
 					#pragma omp atomic read
@@ -255,7 +263,7 @@ static int spasm_find_cycle_free_pivots(const spasm *A, int *pinv, int *qinv)
 				if (w[j] == 0)	/* the new pivot plays no role here */
 					continue;
 				if (w[j] == 1) {
-					/* a survivors becomes pivotal with this pivot */
+					/* a survivor becomes pivotal with this pivot */
 					BFS_enqueue(w, queue, &surviving, &tail, j);
 				} else {
 					/* the new pivot has been hit */
@@ -303,7 +311,7 @@ static int spasm_pivots_find(const spasm *A, int *pinv, int *qinv, struct echelo
 	for (int i = 0; i < n; i++)
 		pinv[i] = -1;
 	int npiv = spasm_find_FL_pivots(A, pinv, qinv);
-	npiv += spasm_find_FL_column_pivots(A, pinv, qinv);
+	npiv += spasm_find_FL_column_pivots(A, pinv, qinv);	
 	if (opts->enable_greedy_pivot_search)
 		npiv += spasm_find_cycle_free_pivots(A, pinv, qinv);
 	fprintf(stderr, "\r[pivots] %d pivots found\n", npiv);
@@ -314,11 +322,12 @@ static int spasm_pivots_find(const spasm *A, int *pinv, int *qinv, struct echelo
  * build row permutation. Pivotal rows go first in topological order,
  * then non-pivotal rows
  */
-static void spasm_pivots_reorder(const spasm *A, const int *pinv, const int *qinv, int *p)
+static void spasm_pivots_reorder(const spasm *A, const int *pinv, const int *qinv, int npiv, int *p)
 {
 	int n = A->n;
 	int m = A->m;
 	int k = 0;
+
 	/* topological sort */
 	int *xj = spasm_malloc(m * sizeof(*xj));
 	int *marks = spasm_malloc(m * sizeof(*marks));
@@ -328,6 +337,7 @@ static void spasm_pivots_reorder(const spasm *A, const int *pinv, const int *qin
 	for (int j = 0; j < m; j++)
 		if (qinv[j] != -1 && !marks[j])
 			top = spasm_dfs(j, A, top, xj, p, marks, qinv);  /* use p as "pstack" */
+	/* now produce the permutation p that puts pivotal rows first, in order */
 	for (int px = top; px < m; px++) {
 		int j = xj[px];
 		int i = qinv[j];
@@ -337,6 +347,7 @@ static void spasm_pivots_reorder(const spasm *A, const int *pinv, const int *qin
 			k += 1;
 		}
 	}
+	assert(k == npiv);
 	for (int i = 0; i < n; i++)
 		if (pinv[i] == -1) {
 			p[k] = i;
@@ -363,7 +374,7 @@ int spasm_pivots_extract_structural(const spasm *A, const int *p_in, spasm_lu *f
 	int npiv = spasm_pivots_find(A, pinv, qinv, opts);
 
 	/* reorder pivots to make U upper-triangular (up to a column permutation) */
-	spasm_pivots_reorder(A, pinv, qinv, p);
+	spasm_pivots_reorder(A, pinv, qinv, npiv, p);
 
 	/* compute total pivot nnz and reallocate U if necessary */
 	spasm *U = fact->U;
@@ -397,11 +408,12 @@ int spasm_pivots_extract_structural(const spasm *A, const int *p_in, spasm_lu *f
 		/* locate pivot in row */ 
 		spasm_ZZp pivot = 0;
 		for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
-			if (Aj[px] == j) {
+			if ((Aj[px] == j) && (Ax[px] != 0)) {
 				pivot = Ax[px];
 				break;
 			}
 		}
+		assert(pivot != 0);
 		if (L != NULL) {
 			int i_out = (p_in != NULL) ? p_in[i] : i;
 			spasm_add_entry(L, i_out, U->n, pivot);

@@ -15,7 +15,10 @@ This enables several of useful computations on sparse matrices modulo _p_:
   * Basis of the kernel
   * Reduced Row Echelon form
   * Rank
-  * Solution of linear systems (WIP --- performance not as good as the rest)
+
+In addition, SpaSM is capable of computing a full PLUQ factorization, but this is slower than simple echelonization. This enables:
+  * Solution of linear systems
+  * Rank certificates
 
 SpaSM works with all prime moduli in the range [3; 189,812,507].  While it would be possible to work with _p = 2_ or with any 32-bit prime _p_, this would require tweaks to the code (and is not tested). 
 
@@ -24,7 +27,9 @@ In addition, SpaSM contains code to compute the Dulmage-Mendelson decomposition 
 The following algorithms algorithms are used in SpaSM:
   * [Gilbert-Peierls sparse triangular solving with sparse right-hand side](https://doi.org/10.1137/0909058)
   * [Faugère-Lachartre pivot selection](http://www-almasty.lip6.fr/~bouillaguet/pub/CASC16.pdf)
-  * [Improved greedy pivot selection](http://www-almasty.lip6.fr/~bouillaguet/pub/PASCO17.pdf).
+  * [Improved greedy pivot selection](http://www-almasty.lip6.fr/~bouillaguet/pub/PASCO17.pdf)
+  * [Dense linear algebra mod _p_](https://hal.science/hal-00018223/)
+  * [Linear-size rank certificates](https://prism.ucalgary.ca/server/api/core/bitstreams/b00bb76d-12bf-41c2-9fed-88cd774d3b29/content)
 
 Initial versions of SpaSM were heavily influence by
 [Tim Davis](http://faculty.cse.tamu.edu/davis/)'s [CSparse](http://faculty.cse.tamu.edu/davis/publications_files/CSparse.zip). 

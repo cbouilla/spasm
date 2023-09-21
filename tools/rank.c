@@ -25,7 +25,7 @@ void parse_command_line_options(int argc, char **argv)
 			allow_transpose = 0;
 			break;
 		case 'p':
-			prime = atoi(optarg);
+			prime = atoll(optarg);
 			break;
 		case 'c':
 			compute_cert = 1;
@@ -70,7 +70,9 @@ int main(int argc, char **argv)
 
 	spasm_rank_certificate *proof = NULL;
 	if (compute_cert) {
+		assert(spasm_factorization_verify(A, fact, 42));
 		assert(spasm_factorization_verify(A, fact, 1337));
+		assert(spasm_factorization_verify(A, fact, 21011984));
 		u64 seed = 42;
 		fprintf(stderr, "generating certificate\n");
 		proof = spasm_certificate_rank_create(A, fact, seed);

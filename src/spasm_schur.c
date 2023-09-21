@@ -202,6 +202,46 @@ static void prepare_q(int m, const int *qinv, int *q)
 		}
 }
 
+static void gather(int n, const int *xj, const spasm_ZZp *x, void *A, spasm_datatype datatype)
+{
+	double *Ad;
+	float *Af;
+	i64 *Ai;
+	switch (datatype) {	
+	case SPASM_DOUBLE:
+		Ad = A;
+		for (int k = 0; k < n; k++) {
+			int j = xj[k];
+			Ad[k] = x[j];
+		}
+		break;
+	case SPASM_FLOAT:
+		Af = A;
+		for (int k = 0; k < n; k++) {
+			int j = xj[k];
+			Af[k] = x[j];
+		}
+		break;
+	case SPASM_I64:
+		Ai = A;
+		for (int k = 0; k < n; k++) {
+			int j = xj[k];
+			Ai[k] = x[j];
+		}
+		break;
+	}
+}
+
+static void * row_pointer(void *A, int ldA, spasm_datatype datatype, int i)
+{
+	switch (datatype) {	
+	case SPASM_DOUBLE: return (double *) A + i*ldA;
+	case SPASM_FLOAT: return (float *) A + i*ldA;
+	case SPASM_I64: return (i64 *) A + i*ldA;
+	}	
+	assert(false);
+}
+
 /*
  * Computes the dense schur complement of (P*A)[0:n] w.r.t. U. 
  * S must be preallocated of dimension n * (A->m - U->n)
@@ -211,7 +251,8 @@ static void prepare_q(int m, const int *qinv, int *q)
  * q must be preallocated of size at least (m - U->n).
  * on output, q sends columns of S to non-pivotal columns of A
  */
-int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q)
+int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, 
+	void *S, spasm_datatype datatype, int *q)
 {
 	assert(p != NULL);
 	int m = A->m;
@@ -248,8 +289,12 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 			{ t = r; r += 1; }
 
 			/* gather x into S[t] */
-			for (i64 j = 0; j < Sm; j++)
-				S[t * Sm + j] = x[q[j]];
+			// for (int j = 0; j < Sm; j++) {
+			// 	int jj = q[j];
+			// 	spasm_datatype_write(S, t * Sm + j, datatype, x[jj]);
+			// }
+			void *St = row_pointer(S, Sm, datatype, t);
+			gather(Sm, q, x, St, datatype);
 
 			/* verbosity */
 			if (tid == 0 && (i % verbose_step) == 0) {
@@ -275,7 +320,8 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
  * q must be preallocated of size at least (m - U->n).
  * on output, q sends columns of S to non-pivotal columns of A
  */
-void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q, int N, int w)
+void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, 
+	void *S, spasm_datatype datatype, int *q, int N, int w)
 {
 	assert(p != NULL);
 	assert(n > 0);
@@ -287,7 +333,6 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 	fprintf(stderr, "[schur/dense/random] dimension %d x %d, weight %d...\n", N, Sm, w);
 	double start = spasm_wtime();
 	int verbose_step = spasm_max(1, N / 1000);
-	i64 prime = spasm_get_prime(A);
 
 	#pragma omp parallel
 	{
@@ -318,12 +363,16 @@ void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spa
 				int j = Uj[Up[i]];
 				if (x[j] == 0)
 					continue;
-				spasm_scatter(U, i, prime - x[j], x);
+				spasm_scatter(U, i, -x[j], x);
 			}
 			
 			/* gather x into S[k] */
-			for (i64 j = 0; j < Sm; j++)
-				S[k * Sm + j] = x[q[j]];
+			void *Sk = row_pointer(S, Sm, datatype, k);
+			gather(Sm, q, x, Sk, datatype);
+			// for (int j = 0; j < Sm; j++) {
+			// 	int jj = q[j];
+			// 	spasm_datatype_write(S, k * Sm + j, datatype, x[jj]);
+			// }
 
 			/* verbosity */
 			if ((k % verbose_step) == 0) {

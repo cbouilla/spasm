@@ -116,6 +116,8 @@ typedef struct {
 	spasm_ZZp *y;     /* size r */
 } spasm_rank_certificate;
 
+typedef enum {SPASM_DOUBLE, SPASM_FLOAT, SPASM_I64} spasm_datatype;
+
 #define SPASM_IDENTITY_PERMUTATION NULL
 #define SPASM_IGNORE NULL
 #define SPASM_IGNORE_VALUES 0
@@ -156,7 +158,7 @@ int spasm_get_thread_num();
 static inline i64 spasm_get_prime(const spasm *A) { return A->field->p; }
 
 /* spasm_triplet.c */
-void spasm_add_entry(spasm_triplet * T, int i, int j, spasm_ZZp x);
+void spasm_add_entry(spasm_triplet *T, int i, int j, i64 x);
 void spasm_triplet_transpose(spasm_triplet * T);
 spasm *spasm_compress(const spasm_triplet * T);
 
@@ -201,8 +203,10 @@ int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj
 spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact, 
                    double est_density, spasm_triplet *L, const int *p_in, int *p_out);
 double spasm_schur_estimate_density(const spasm * A, const int *p, int n, const spasm *U, const int *qinv, int R);
-int spasm_schur_dense(const spasm *A, const int *p, int k, const spasm *U, const int *qinv, double *S, int *q);
-void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, double *S, int *q, int N, int w);
+int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, 
+	void *S, spasm_datatype datatype, int *q);
+void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, 
+	void *S, spasm_datatype datatype, int *q, int N, int w);
 
 /* spasm_pivots.c */
 int spasm_pivots_extract_structural(const spasm *A, const int *p_in, spasm_lu *fact, int *p, struct echelonize_opts *opts);
@@ -221,9 +225,13 @@ spasm_dm *spasm_dulmage_mendelsohn(const spasm *A);
 spasm_dm *spasm_strongly_connected_components(const spasm *A);
 
 /* spasm_ffpack.cpp */
-int spasm_ffpack_rref_double(i64 prime, int n, int m, double *A, int ldA, size_t *qinv);
-int spasm_ffpack_rref_float(i64 prime, int n, int m, float *A, int ldA, size_t *qinv);
-int spasm_ffpack_rref_i64(i64 prime, int n, int m, i64 *A, int ldA, size_t *qinv);
+int spasm_ffpack_rref(i64 prime, int n, int m, void *A, int ldA, spasm_datatype datatype, size_t *qinv);
+spasm_ZZp spasm_datatype_read(const void *A, size_t i, spasm_datatype datatype);
+void spasm_datatype_write(void *A, size_t i, spasm_datatype datatype, spasm_ZZp value);
+size_t spasm_datatype_size(spasm_datatype datatype);
+spasm_datatype spasm_datatype_choose(i64 prime);
+const char * spasm_datatype_name(spasm_datatype datatype);
+
 
 /* spasm_echelonize */
 void spasm_echelonize_init_opts(struct echelonize_opts *opts);

@@ -43,19 +43,65 @@ static inline int spasm_ffpack_rref(i64 prime, int n, int m, T *A, int ldA, size
 	return rank;
 }
 
-/* force instatiations */
-
-int spasm_ffpack_rref_double(i64 prime, int n, int m, double *A, int ldA, size_t *qinv)
+int spasm_ffpack_rref(i64 prime, int n, int m, void *A, int ldA, spasm_datatype datatype, size_t *qinv)
 {
-	return spasm_ffpack_rref(prime, n, m, A, ldA, qinv);
+	switch (datatype) {
+	case SPASM_DOUBLE: return spasm_ffpack_rref<double>(prime, n, m, (double *) A, ldA, qinv);
+	case SPASM_FLOAT: return spasm_ffpack_rref<float>(prime, n, m, (float *) A, ldA, qinv);
+	case SPASM_I64: return spasm_ffpack_rref<i64>(prime, n, m, (i64 *) A, ldA, qinv);
+	}
+	assert(false);
 }
 
-int spasm_ffpack_rref_float(i64 prime, int n, int m, float *A, int ldA, size_t *qinv)
+/* code to make the "runtime type selection" mechanisme work */
+
+spasm_ZZp spasm_datatype_read(const void *A, size_t i, spasm_datatype datatype)
 {
-	return spasm_ffpack_rref(prime, n, m, A, ldA, qinv);
+	switch (datatype) {	
+	case SPASM_DOUBLE: return ((double *) A)[i];
+	case SPASM_FLOAT: return ((float *) A)[i];
+	case SPASM_I64: return ((i64 *) A)[i];
+	}	
+	assert(false);
 }
 
-int spasm_ffpack_rref_i64(i64 prime, int n, int m, i64 *A, int ldA, size_t *qinv)
+void spasm_datatype_write(void *A, size_t i, spasm_datatype datatype, spasm_ZZp value)
 {
-	return spasm_ffpack_rref(prime, n, m, A, ldA, qinv);
+	switch (datatype) {	
+	case SPASM_DOUBLE: ((double *) A)[i] = value; return;
+	case SPASM_FLOAT: ((float *) A)[i] = value; return;
+	case SPASM_I64: ((i64 *) A)[i] = value; return;
+	}	
+	assert(false);
+}
+
+size_t spasm_datatype_size(spasm_datatype datatype)
+{
+	switch (datatype) {	
+	case SPASM_DOUBLE: return sizeof(double);
+	case SPASM_FLOAT: return sizeof(float);
+	case SPASM_I64: return sizeof(i64);
+	}	
+	assert(false);	
+}
+
+spasm_datatype spasm_datatype_choose(i64 prime)
+{
+	// return SPASM_DOUBLE;
+	if (prime <= 8191)
+		return SPASM_FLOAT;
+	else if (prime <= 189812531)
+		return SPASM_DOUBLE;
+	else
+		return SPASM_I64;
+}
+
+const char * spasm_datatype_name(spasm_datatype datatype)
+{
+	switch (datatype) {	
+	case SPASM_DOUBLE: return "double";
+	case SPASM_FLOAT: return "float";
+	case SPASM_I64: return "i64";
+	}	
+	assert(false);	
 }

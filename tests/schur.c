@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 		}
 
 		assert(x[p_out[k]] == 0);		
-		x[p_out[k]] = prime - 1;
+		x[p_out[k]] = -1;
 		
 		spasm_gaxpy(A, x, y);
 

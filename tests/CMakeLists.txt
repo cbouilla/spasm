@@ -13,6 +13,7 @@ function(spasm_declare_test name)
     add_executable(test_${name} EXCLUDE_FROM_ALL ${name}.c)
     target_link_libraries(test_${name} PUBLIC spasm)
     target_link_libraries(test_${name} PUBLIC spasmtest)
+    target_link_libraries(test_${name} PUBLIC OpenMP::OpenMP_C)
     add_dependencies(check test_${name})
 endfunction()
 
@@ -21,6 +22,7 @@ function(spasm_run_test name modulus test_matrix)
              COMMAND sh -c "./test_${name} --modulus ${modulus} < ${CMAKE_CURRENT_SOURCE_DIR}/Matrix/${test_matrix}")
     set_tests_properties(${name}-${modulus}-${test_matrix} PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP")
     set_tests_properties(${name}-${modulus}-${test_matrix} PROPERTIES FAIL_REGULAR_EXPRESSION "not ok")
+    set_tests_properties(${name}-${modulus}-${test_matrix} PROPERTIES TIMEOUT 1)
 endfunction()
 
 function(spasm_test_expected_output name test_matrix expected_output)
@@ -47,6 +49,7 @@ set(ALL_MODULI
     65537
     67108859
     189812507
+    4294967291
 )
 
 function(spasm_run_tests_mod name test_matrices)

@@ -4,7 +4,7 @@
 #include "spasm.h"
 
 /* add an entry to a triplet matrix; enlarge it if necessary */
-void spasm_add_entry(spasm_triplet *T, int i, int j, spasm_ZZp x)
+void spasm_add_entry(spasm_triplet *T, int i, int j, i64 x)
 {
 	assert((i >= 0) && (j >= 0));
 	i64 px = T->nz;
@@ -33,8 +33,32 @@ void spasm_triplet_transpose(spasm_triplet *T)
 	T->n = bar;
 }
 
+static void remove_explicit_zeroes(spasm *A)
+{
+	int n = A->n;
+	i64 *Ap = A->p;
+	int *Aj = A->j;
+	spasm_ZZp *Ax = A->x;
+	if (Ax == NULL)
+		return;
+	i64 nz = 0;
+	for (int i = 0; i < n; i++) {
+		for (i64 it = Ap[i]; it < Ap[i + 1]; it++) {
+			int j = Aj[it];
+			spasm_ZZp x = Ax[it];
+			if (x == 0)
+				continue;
+			Aj[nz] = j;
+			Ax[nz] = x;
+			nz += 1;
+		}
+		Ap[i + 1] = nz;
+	}
+	spasm_csr_realloc(A, -1);
+}
+
 /* in-place */
-void spasm_deduplicate(spasm *A)
+static void deduplicate(spasm *A)
 {
 	int m = A->m;
 	int n = A->n;
@@ -51,14 +75,14 @@ void spasm_deduplicate(spasm *A)
 		for (i64 it = Ap[i]; it < Ap[i + 1]; it++) {
 			int j = Aj[it];
 			assert(j < m);
-			if (v[j] < p) { /* occurs in previous row */
+			if (v[j] < p) { /* 1st entry on column j in this row */
 				v[j] = nz;
 				Aj[nz] = j;
 				if (Ax)
 					Ax[nz] = Ax[it];
 				nz += 1;
 			} else {
-				if (Ax) {
+				if (Ax) { /* not the first one: sum them */
 					i64 px = v[j];
 					Ax[px] = spasm_ZZp_add(A->field, Ax[px], Ax[it]);
 				}
@@ -89,7 +113,9 @@ spasm *spasm_compress(const spasm_triplet * T)
 	spasm *C = spasm_csr_alloc(n, m, nz, T->field->p, Tx != NULL);
 
 	/* get workspace */
-	i64 *w = spasm_calloc(n, sizeof(*w));
+	i64 *w = spasm_malloc(n * sizeof(*w));
+	for (int i = 0; i < n; i++)
+		w[i] = 0;
 	i64 *Cp = C->p;
 	int *Cj = C->j;
 	spasm_ZZp *Cx = C->x;
@@ -120,7 +146,8 @@ spasm *spasm_compress(const spasm_triplet * T)
 			Cx[px] = Tx[k];
 	}
 	free(w);
-	spasm_deduplicate(C);
+	deduplicate(C);
+	remove_explicit_zeroes(C);
 
 	/* success; free w and return C */
 	char mem[16];

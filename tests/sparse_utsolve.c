@@ -79,10 +79,12 @@ int main(int argc, char **argv)
 	// printf("\n");
 
 	// triangular solve
-	int *xi = malloc(3*r * sizeof(*xi));
+	int *xi = spasm_malloc(3*r * sizeof(*xi));
 	for (int j = 0; j < 3*r; j++)
 		xi[j] = 0;
-	spasm_ZZp *x = malloc(m * sizeof(*x));
+	spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
+	for (int i = 0; i < m; i++)
+		x[i] = 0;
 	int top = spasm_sparse_triangular_solve(Ut, B, 0, xi, x, pinv);
 
 	for (int px = top; px < r; px++)
@@ -92,8 +94,8 @@ int main(int argc, char **argv)
 		printf("# xx[%d] = %d\n", i, x[i]);
 
 	// check
-	spasm_ZZp *xx = malloc(m * sizeof(spasm_ZZp));
-	spasm_ZZp *yy = malloc(r * sizeof(spasm_ZZp));
+	spasm_ZZp *xx = spasm_malloc(m * sizeof(*xx));
+	spasm_ZZp *yy = spasm_malloc(r * sizeof(*yy));
 	for (int j = 0; j < m; j++)
 		xx[j] = 0;
 	for (int j = 0; j < r; j++)
