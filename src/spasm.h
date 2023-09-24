@@ -226,12 +226,12 @@ spasm_dm *spasm_strongly_connected_components(const spasm *A);
 
 /* spasm_ffpack.cpp */
 int spasm_ffpack_rref(i64 prime, int n, int m, void *A, int ldA, spasm_datatype datatype, size_t *qinv);
+int spasm_ffpack_LU(i64 prime, int n, int m, void *A, int ldA, spasm_datatype datatype, size_t *p, size_t *qinv);
 spasm_ZZp spasm_datatype_read(const void *A, size_t i, spasm_datatype datatype);
 void spasm_datatype_write(void *A, size_t i, spasm_datatype datatype, spasm_ZZp value);
 size_t spasm_datatype_size(spasm_datatype datatype);
 spasm_datatype spasm_datatype_choose(i64 prime);
 const char * spasm_datatype_name(spasm_datatype datatype);
-
 
 /* spasm_echelonize */
 void spasm_echelonize_init_opts(struct echelonize_opts *opts);

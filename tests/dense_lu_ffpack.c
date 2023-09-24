@@ -62,10 +62,10 @@ int main(int argc, char **argv)
                 printf("\n");
         }
 
-        size_t *p = spasm_malloc(m * sizeof(*p));
-        size_t *qinv = spasm_malloc(m * sizeof(*qinv));
-        int rank = spasm_ffpack_rref(prime, n, m, M, m, datatype, qinv);
-        printf("# echelonized ; rank = %d\n", rank);
+        size_t *P = spasm_malloc(n * sizeof(*P));
+        size_t *Qinv = spasm_malloc(m * sizeof(*Qinv));
+        int r = spasm_ffpack_LU(prime, n, m, M, m, datatype, P, Qinv);
+        printf("# echelonized ; rank = %d\n", r);
 
         /* dump output */
         for (int i = 0; i < n; i++) {
@@ -75,39 +75,97 @@ int main(int argc, char **argv)
                 printf("\n");
         }
 
-        // for (int j = 0; j < n; j++)
-        //         printf("# P[%d] = %d\n", j, P[j]);
+        for (int j = 0; j < n; j++)
+                printf("# P[%d] = %zd\n", j, P[j]);
         for (int j = 0; j < m; j++)
-                printf("# Qt[%d] = %zd\n", j, qinv[j]);
+                printf("# Qt[%d] = %zd\n", j, Qinv[j]);
 
-        /* check that all rows of the input matrix belong to the row-space of U */  
-        spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
+        /* build our LU factorization */
+        spasm *U = spasm_csr_alloc(r, n, n*m, prime, true);
+        spasm_triplet *L = spasm_triplet_alloc(n, r, n*m, prime, true);
+        i64 *Up = U->p;
+        int *Li = L->i;
+        int *Uj = U->j;
+        int *Lj = L->j;
+        i64 unz = 0;
+        i64 lnz = 0;
+        spasm_ZZp *Ux = U->x;
+        spasm_ZZp *Lx = L->x;
+        
+        /* fill L : TODO, inspect the rows of M in the right order, and build L in csr directly */
         for (int i = 0; i < n; i++) {
-                // scatter A[i] into x
-                for (int j = 0; j < m; j++)
-                        x[j] = 0;
-                for (i64 px = Ap[i]; px < Ap[i + 1]; px++) {
-                        int j = Aj[px];
-                        x[j] = Ax[px];
+                int inew = P[i];
+                for (int j = 0; j < spasm_min(i + 1, r); j++) {
+                        spasm_ZZp Mij = spasm_datatype_read(M, i  * m + j, datatype);
+                        if (Mij == 0)
+                                continue;
+                        assert(j < r || Mij == 0);
+                        Li[lnz] = inew;
+                        Lj[lnz] = j;
+                        Lx[lnz] = Mij;
+                        lnz += 1;
                 }
-                for (int k = 0; k < rank; k++) {
-                        int j = qinv[k];        /* column with the pivot */
-                        int alpha = x[j];
-                        x[j] = 0;
-                        for (int l = rank; l < m; l++) {
-                                int j = qinv[l];
-                                spasm_ZZp Mkl = spasm_datatype_read(M, k * m + l, datatype);
-                                x[j] = spasm_ZZp_axpy(A->field, -alpha, Mkl, x[j]);
-                        }
-                }
-                printf("# row %2d --> (", i);
-                for (int j = 0; j < m; j++)
-                        printf("%8d", x[j]);
-                printf(")\n");
-                for (int j = 0; j < m; j++)
-                         assert(x[j] == 0);
         }
-        printf("ok - rowspan(A) contained in rowspan(U)\n");
+        L->nz = lnz;
+
+        /* fill U */
+        for (int i = 0; i < r; i++) {
+                /* implicit 1 in U */
+                Uj[unz] = Qinv[i];
+                Ux[unz] = 1;
+                unz += 1;
+                for (int j = i+1; j < m; j++) {
+                        int jnew = Qinv[j];
+                        spasm_ZZp x = spasm_datatype_read(M, i * m + j, datatype);
+                        Uj[unz] = jnew;
+                        Ux[unz] = x;
+                        unz += 1;
+                }
+                Up[i + 1] = unz;
+        }
+        spasm_lu fact;
+        fact.U = U;
+        fact.L = spasm_compress(L);
+        fact.Uqinv = spasm_malloc(m * sizeof(int));
+        fact.Lqinv = spasm_malloc(n * sizeof(int));
+
+        for (int j = 0; j < n; j++)
+                fact.Lqinv[j] = P[j];
+        for (int j = 0; j < m; j++)
+                fact.Uqinv[j] = Qinv[j];
+
+        // assert(spasm_factorization_verify(A, &fact, 65537));
+        spasm_ZZp *x = malloc(n * sizeof(*x));
+        spasm_ZZp *y = malloc(m * sizeof(*y));
+        spasm_ZZp *u = malloc(n * sizeof(*u));
+        spasm_ZZp *v = malloc(m * sizeof(*v));
+
+        /* check that A == L*U */
+        for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                        x[j] = 0;
+                        u[j] = 0;
+                }
+                for (int j = 0; j < m; j++) {
+                        y[j] = 0;
+                        v[j] = 0;
+                }
+                x[i] = 1;
+
+                spasm_xApy(x, A, y);     // y <- x*A
+                spasm_xApy(x, fact.L, u); // u <- x*L
+                spasm_xApy(u, fact.U, v); // v <- (x*L)*U
+
+                for (int j = 0; j < m; j++) {
+                        // printf("# x*A[%4d] = %8d VS x*L[%4d] = %8d VS x*LU[%4d] = %8d\n", j, y[j], j, u[j], j, v[j]);
+                        if (y[j] != v[j])
+                                printf("\nmismatch on row %d, column %d \n", i, j);
+                        assert(y[j] == v[j]);
+                }
+        }
+
+
+        printf("ok - L*U == A\n");
         // spasm_csr_free(A);
         free(M);
         // free(x);

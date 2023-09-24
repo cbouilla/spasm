@@ -111,14 +111,19 @@ spasm_declare_test(GFp)
 add_test(NAME GFp COMMAND test_GFp)
 
 
+########### FFPACK
+spasm_declare_test(dense_rref_ffpack)
+spasm_declare_test(dense_lu_ffpack)
+
+spasm_run_tests_mod(dense_lu_ffpack   "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(dense_rref_ffpack   "${ALL_TEST_MATRICES}")
+
 ########### lu / solve / dense LU
 spasm_declare_test(lu)
 spasm_declare_test(solve)
-spasm_declare_test(dense_lu_ffpack)
 
 spasm_run_tests_mod(lu                "${ALL_TEST_MATRICES}")
-spasm_run_tests(solve                 "${ALL_TEST_MATRICES}")
-spasm_run_tests_mod(dense_lu_ffpack   "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(solve             "${ALL_TEST_MATRICES}")
 
 ############ transpose
 spasm_declare_test(transpose)

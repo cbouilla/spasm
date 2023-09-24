@@ -86,8 +86,8 @@ int main(int argc, char **argv)
 			y[j] = 0;
 			v[j] = 0;
 		}
-		printf("\ri=%d / %d\n", i, n);
-		fflush(stdout);
+		// printf("\ri=%d / %d\n", i, n);
+		// fflush(stdout);
 		x[i] = 1;
 
 		spasm_xApy(x, A, y);     // y <- x*A
