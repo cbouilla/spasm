@@ -82,9 +82,9 @@ int main(int argc, char **argv)
 
         /* build our LU factorization */
         spasm *U = spasm_csr_alloc(r, n, n*m, prime, true);
-        spasm_triplet *L = spasm_triplet_alloc(n, r, n*m, prime, true);
+        spasm *L = spasm_csr_alloc(n, r, n*m, prime, true);
         i64 *Up = U->p;
-        int *Li = L->i;
+        i64 *Lp = L->p;
         int *Uj = U->j;
         int *Lj = L->j;
         i64 unz = 0;
@@ -93,20 +93,26 @@ int main(int argc, char **argv)
         spasm_ZZp *Lx = L->x;
         
         /* fill L : TODO, inspect the rows of M in the right order, and build L in csr directly */
+        int *Pt = spasm_malloc(n * sizeof(*Pt));
         for (int i = 0; i < n; i++) {
-                int inew = P[i];
+                int inew = P[i]; 
+                Pt[inew] = i;
+        }
+        for (int pi = 0; pi < n; pi++) {
+                // int pi = P[i];
+                int i = Pt[pi];
+                // assert(Pt[inew] == i);
                 for (int j = 0; j < spasm_min(i + 1, r); j++) {
                         spasm_ZZp Mij = spasm_datatype_read(M, i  * m + j, datatype);
                         if (Mij == 0)
                                 continue;
                         assert(j < r || Mij == 0);
-                        Li[lnz] = inew;
                         Lj[lnz] = j;
                         Lx[lnz] = Mij;
                         lnz += 1;
                 }
+                Lp[pi + 1] = lnz;
         }
-        L->nz = lnz;
 
         /* fill U */
         for (int i = 0; i < r; i++) {
@@ -125,7 +131,7 @@ int main(int argc, char **argv)
         }
         spasm_lu fact;
         fact.U = U;
-        fact.L = spasm_compress(L);
+        fact.L = L;
         fact.Uqinv = spasm_malloc(m * sizeof(int));
         fact.Lqinv = spasm_malloc(n * sizeof(int));
 
