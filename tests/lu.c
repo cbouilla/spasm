@@ -38,8 +38,6 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	opts.L = 1;
-	opts.max_round = 1;
-	opts.sparsity_threshold = 0;
 	spasm_lu *fact = spasm_echelonize(A, &opts);
 	int r = fact->U->n;
 	assert(fact->L != NULL);

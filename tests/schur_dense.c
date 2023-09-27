@@ -61,22 +61,22 @@ int main(int argc, char **argv)
 
 	/* dump pivots */
 	spasm_ZZp *y = spasm_malloc(m * sizeof(*y));
-	for (int j = 0; j < m; j++) {
-		int i = Uqinv[j];
-		if (i >= 0) {
-			fprintf(stderr, "U[%d] eliminates column %d\n", i, j);
-			for (int j = 0; j < m; j++)
-				y[j] = 0;
-			spasm_scatter(U, i, 1, y);
-		
-			fprintf(stderr, "U[%d] == (", i);
-			for (int j = 0; j < m; j++)
-				fprintf(stderr, "%s%d", (j == 0) ? "" : ", ", y[j]);
-			fprintf(stderr, ")\n");
-		}
-	}
-	for (int k = 0; k < npiv; k++)
-		fprintf(stderr, "pivot on row A[%d]\n", p[k]);
+	// for (int j = 0; j < m; j++) {
+	// 	int i = Uqinv[j];
+	// 	if (i >= 0) {
+	// 		fprintf(stderr, "U[%d] eliminates column %d\n", i, j);
+	// 		for (int j = 0; j < m; j++)
+	// 			y[j] = 0;
+	// 		spasm_scatter(U, i, 1, y);
+	// 	
+	// 		fprintf(stderr, "U[%d] == (", i);
+	// 		for (int j = 0; j < m; j++)
+	// 			fprintf(stderr, "%s%d", (j == 0) ? "" : ", ", y[j]);
+	// 		fprintf(stderr, ")\n");
+	// 	}
+	// }
+	// for (int k = 0; k < npiv; k++)
+	// 	fprintf(stderr, "pivot on row A[%d]\n", p[k]);
 
 	/* compute dense schur complement w.r.t said pivots */
 	int Sm = m - npiv;
@@ -89,16 +89,16 @@ int main(int argc, char **argv)
 	size_t *Sqinv = spasm_malloc(Sm * sizeof(*Sqinv));                   /* for FFPACK */
 	size_t *Sp = spasm_malloc(Sn * sizeof(*Sp));                         /* for FFPACK */
 	spasm_schur_dense(A, p + npiv, Sn, NULL, &fact, S, datatype, q, p_out);
-	for (int i = 0; i < fact.Ltmp->nz; i++)
-		printf("Ltmp : (%d, %d, %d)\n", fact.Ltmp->i[i], fact.Ltmp->j[i], fact.Ltmp->x[i]);
+	// for (int i = 0; i < fact.Ltmp->nz; i++)
+	// 	printf("Ltmp : (%d, %d, %d)\n", fact.Ltmp->i[i], fact.Ltmp->j[i], fact.Ltmp->x[i]);
 	spasm *L = spasm_compress(fact.Ltmp);
 	i64 *Lp = L->p;
 	int *Lj = L->j;
 	spasm_ZZp *Lx = L->x;
 	assert(L->n == n);
-	printf("========================== L\n");
-	spasm_save_csr(stdout, L);
-	printf("========================== L\n");
+	// printf("========================== L\n");
+	// spasm_save_csr(stdout, L);
+	// printf("========================== L\n");
 
 	/* verify result */
 	for (int k = 0; k < Sn; k++) {
@@ -106,14 +106,14 @@ int main(int argc, char **argv)
 		assert(p_out[k] == i);
 		
 		/* display A[i] */
-		printf("**************** processing A[%d]\n", i);
-		for (int j = 0; j < m; j++)
-			y[j] = 0;
-		spasm_scatter(A, i, 1, y);
-		fprintf(stderr, "A[%d] == (", i);
-		for (int j = 0; j < m; j++)
-			fprintf(stderr, "%s%d", (j == 0) ? "" : ", ", y[j]);
-		fprintf(stderr, ")\n");
+		// printf("**************** processing A[%d]\n", i);
+		// for (int j = 0; j < m; j++)
+		// 	y[j] = 0;
+		// spasm_scatter(A, i, 1, y);
+		// fprintf(stderr, "A[%d] == (", i);
+		// for (int j = 0; j < m; j++)
+		// 	fprintf(stderr, "%s%d", (j == 0) ? "" : ", ", y[j]);
+		// fprintf(stderr, ")\n");
 			
 		/* start from dense row */
 		for (int j = 0; j < m; j++)
@@ -123,28 +123,28 @@ int main(int argc, char **argv)
 			y[j] = spasm_datatype_read(S, k*Sm + l, datatype);
 		}
 		
-		fprintf(stderr, "A[%d] == (", i);
-		for (int j = 0; j < m; j++)
-			fprintf(stderr, "%s%d", (j == 0) ? "" : ", ", y[j]);
-		fprintf(stderr, ")\n");
+		// fprintf(stderr, "A[%d] == (", i);
+		// for (int j = 0; j < m; j++)
+		// 	fprintf(stderr, "%s%d", (j == 0) ? "" : ", ", y[j]);
+		// fprintf(stderr, ")\n");
 
 		/* add contribution from L */
 		for (int px = Lp[i]; px < Lp[i + 1]; px++) {
-			fprintf(stderr, "Adding %d x U[%d]\n", Lx[px], Lj[px]);
+			// fprintf(stderr, "Adding %d x U[%d]\n", Lx[px], Lj[px]);
 			spasm_scatter(U, Lj[px], Lx[px], y);
 
-			fprintf(stderr, "A[%d] == (", i);
-			for (int j = 0; j < m; j++)
-				fprintf(stderr, "%s%d", (j == 0) ? "" : ", ", y[j]);
-			fprintf(stderr, ")\n");
+			// fprintf(stderr, "A[%d] == (", i);
+			// for (int j = 0; j < m; j++)
+			// 	fprintf(stderr, "%s%d", (j == 0) ? "" : ", ", y[j]);
+			// fprintf(stderr, ")\n");
 		}
 		
 		/* this should be A[i] */
-		fprintf(stderr, "final check\n");
-		fprintf(stderr, "A[%d] == (", i);
-		for (int j = 0; j < m; j++)
-			fprintf(stderr, "%s%d", (j == 0) ? "" : ", ", y[j]);
-		fprintf(stderr, ")\n");
+		// fprintf(stderr, "final check\n");
+		// fprintf(stderr, "A[%d] == (", i);
+		// for (int j = 0; j < m; j++)
+		// 	fprintf(stderr, "%s%d", (j == 0) ? "" : ", ", y[j]);
+		// fprintf(stderr, ")\n");
 
 		spasm_scatter(A, i, -1, y);
 		for (int j = 0; j < m; j++)

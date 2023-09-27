@@ -302,20 +302,17 @@ void spasm_schur_dense(const spasm *A, const int *p, int n, const int *p_in,
 			
 			/* fill eliminations coeffs in L */
 			if (L != NULL)
-				#pragma omp critical
 				for (int k = top; k < m; k++) {
 					int j = xj[k];
 					int i = qinv[j];
 					if (i < 0 || x[j] == 0)
 						continue;
-					// i64 local_nz;
-					// #pragma omp atomic capture
-					// { local_nz = lnz; lnz += 1; } 
-					Li[L->nz] = iorig;
-					Lj[L->nz] = i;
-					Lx[L->nz] = x[j];
-					L->nz += 1;
-					fprintf(stderr, "L[%d, %d] = %d\n", iorig, i, x[j]);
+					i64 local_nz;
+					#pragma omp atomic capture
+					{ local_nz = L->nz; L->nz += 1; } 
+					Li[local_nz] = iorig;
+					Lj[local_nz] = i;
+					Lx[local_nz] = x[j];
 				}
 
 			
@@ -326,7 +323,6 @@ void spasm_schur_dense(const spasm *A, const int *p, int n, const int *p_in,
 				fprintf(stderr, "\r[schur/dense] %d/%d", r, n);
 				fflush(stderr);
 			}
-			// fprintf(stderr, "# k=%d, p[k]=%d, p_out[k]=%d\n", k, i, p_out[k]);
 		}
 		free(x);
 		free(xj);
