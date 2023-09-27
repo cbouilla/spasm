@@ -266,14 +266,13 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 	/* build L */
 	for (int i = 0; i < n; i++) {
 		int pi = Sp[i];
-		int iorig = p_in[pi];
-		fprintf(stderr, "# L: M[%d] == PAQt[%d] == Orig[%d]\n", i, pi, iorig);
+		int iorig = (p_in != NULL) ? p_in[pi] : pi;
 		for (int j = 0; j < spasm_min(i + 1, r); j++) {
 			spasm_ZZp Mij = spasm_datatype_read(S, i  * Sm + j, datatype);
 			if (Mij == 0)
 				continue;
 			Li[lnz] = iorig;
-			Lj[lnz] = U->n + j;   /////// NON: les pivots de U n'ont pas tous été précédemment éliminés
+			Lj[lnz] = U->n + j;
 			Lx[lnz] = Mij;
 			lnz += 1;
 		}
@@ -412,7 +411,7 @@ static void echelonize_dense(const spasm *A, const int *p, int n, const int *p_i
 			assert(fact->Ltmp != NULL);
 			assert(fact->Ltmp->x != NULL);
 			rr = spasm_ffpack_LU(prime, Sn, Sm, S, Sm, datatype, Sp, Sqinv);
-			update_fact_after_LU(n, Sm, rr, S, datatype, Sp, Sqinv, q, p_out, fact);
+			update_fact_after_LU(Sn, Sm, rr, S, datatype, Sp, Sqinv, q, p_out, fact);
 		} else {
 			rr = spasm_ffpack_rref(prime, Sn, Sm, S, Sm, datatype, Sqinv);
 			update_U_after_rref(rr, Sm, S, datatype, Sqinv, q, fact);
@@ -517,9 +516,6 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 		
 		fprintf(stderr, "[echelonize] round %d\n", round);
 		npiv = spasm_pivots_extract_structural(A, p_in, fact, p, opts);
-		for (int i = 0; i < npiv; i++)
-			fprintf(stderr, "# pivot on row %d\n", p[i]);
-
 
 		if (npiv < opts->min_pivot_proportion * spasm_min(n, m - U->n)) {
 			fprintf(stderr, "[echelonize] not enough pivots found; stopping\n");
