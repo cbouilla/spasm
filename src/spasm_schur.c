@@ -232,7 +232,7 @@ static void gather(int n, const int *xj, const spasm_ZZp *x, void *A, spasm_data
 	}
 }
 
-static void * row_pointer(void *A, int ldA, spasm_datatype datatype, int i)
+static void * row_pointer(void *A, i64 ldA, spasm_datatype datatype, i64 i)
 {
 	switch (datatype) {	
 	case SPASM_DOUBLE: return (double *) A + i*ldA;
