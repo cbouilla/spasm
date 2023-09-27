@@ -249,6 +249,7 @@ spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv);
 
 /* spasm_solve.c */
 bool spasm_solve(const spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x);
+spasm * spasm_solve_gesv(const spasm_lu *fact, const spasm *B);
 
 /* spasm_certificate.c */
 spasm_rowspan_certificate * spasm_certificate_rowspan_create(const spasm *A, const spasm_lu *fact, u64 seed);

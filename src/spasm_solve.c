@@ -46,10 +46,43 @@ bool spasm_solve(const spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x)
 	return ok;
 }
 
-
-spasm * spasm_solve_gesv(const spasm_lu *fact, const spasm *b)
+/* solve XA == B (returns garbage if a solution does not exist) */
+spasm * spasm_solve_gesv(const spasm_lu *fact, const spasm *B)
 {
-	(void) fact;
-	(void) b;
-	return NULL;
+	i64 prime = B->field->p;
+	assert(prime == fact->L->field->p);
+	assert(fact->L != NULL);
+	int n = B->n;
+	int m = B->m;
+	int Xm = fact->L->n;
+	spasm_triplet *X = spasm_triplet_alloc(n, Xm, (i64) Xm * n, prime, true);
+	int *Xi = X->i;
+	int *Xj = X->j;
+	spasm_ZZp *Xx = X->x;
+
+	#pragma omp parallel
+	{
+		spasm_ZZp *b = spasm_malloc(m * sizeof(*b));
+		spasm_ZZp *x = spasm_malloc(Xm * sizeof(*x));
+		#pragma omp for schedule(dynamic)
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < m; j++) 
+				b[j] = 0;
+			spasm_scatter(B, i, 1, b);
+			spasm_solve(fact, b, x);
+			for (int j = 0; j < Xm; j++) 
+				if (x[j] != 0) {
+					i64 xnz;
+					#pragma omp atomic capture
+					{ xnz = X->nz; X->nz += 1; }
+					Xi[xnz] = i;
+					Xj[xnz] = j;
+					Xx[xnz] = x[j];
+				}
+		}
+		free(b);
+	}
+	spasm *XX = spasm_compress(X);
+	spasm_triplet_free(X);
+	return XX;
 }

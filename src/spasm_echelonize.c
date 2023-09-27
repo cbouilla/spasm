@@ -417,6 +417,8 @@ static void echelonize_dense(const spasm *A, const int *p, int n, const int *p_i
 			update_U_after_rref(rr, Sm, S, datatype, Sqinv, q, fact);
 		}
 
+		// TODO: test completion and allow early abort
+
 		/* move on to the next chunk */
 		round += 1;
 		processed += Sn;
