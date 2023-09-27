@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	
-	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, true);
 	U->n = 0;
 	for (int j = 0; j < m; j++)
 		qinv[j] = -1;

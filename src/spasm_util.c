@@ -136,14 +136,16 @@ void spasm_csr_realloc(spasm *A, i64 nzmax)
  * change the max # of entries in a sparse matrix. If nzmax < 0, then the
  * matrix is trimmed to its current nnz.
  */
-void spasm_triplet_realloc(spasm_triplet * A, i64 nzmax)
+void spasm_triplet_realloc(spasm_triplet *A, i64 nzmax)
 {
 	if (nzmax < 0)
 		nzmax = A->nz;
+	// fprintf(stderr, "[realloc] nzmax=%ld. before %px %px %px\n", nzmax, A->i, A->j, A->x);
 	A->i = spasm_realloc(A->i, nzmax * sizeof(int));
 	A->j = spasm_realloc(A->j, nzmax * sizeof(int));
 	if (A->x != NULL)
 		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_ZZp));
+	// fprintf(stderr, "[realloc] after %px %px %px\n", A->i, A->j, A->x);
 	A->nzmax = nzmax;
 }
 

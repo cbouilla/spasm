@@ -8,7 +8,7 @@ int main() {
 	/* TODO : this is really ugly */
 	spasm *A = spasm_compress(T);
 	spasm_triplet_free(T);
-	spasm *A_t = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *A_t = spasm_transpose(A, true);
 	spasm_csr_free(A);
 
 	spasm_save_csr(stdout, A_t);

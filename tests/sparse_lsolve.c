@@ -43,7 +43,7 @@ int main(int argc, char **argv)
         assert(spasm_is_lower_triangular(L));
 
         // load RHS
-        T = spasm_triplet_alloc(1, m, 10, prime, SPASM_WITH_NUMERICAL_VALUES);
+        T = spasm_triplet_alloc(1, m, 10, prime, true);
         spasm_add_entry(T, 0, 0, 1);
         spasm_add_entry(T, 0, m / 2, 2);
         spasm_add_entry(T, 0, m - 1, 3);

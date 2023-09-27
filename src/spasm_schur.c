@@ -70,7 +70,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact,
 		est_density = spasm_schur_estimate_density(A, p, n, fact->U, qinv, 100);
 	long long size = (est_density * n) * m;
 	i64 prime = spasm_get_prime(A);
-	spasm *S = spasm_csr_alloc(n, m, size, prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *S = spasm_csr_alloc(n, m, size, prime, true);
 	i64 *Sp = S->p;
 	int *Sj = S->j;
 	spasm_ZZp *Sx = S->x;
@@ -250,18 +250,31 @@ static void * row_pointer(void *A, int ldA, spasm_datatype datatype, int i)
  * S implicitly has dimension k x (m - npiv), row major, lds == m-npiv.
  * q must be preallocated of size at least (m - U->n).
  * on output, q sends columns of S to non-pivotal columns of A
+ * p_out must be of size n, p_int of size A->n
  */
-int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, 
-	void *S, spasm_datatype datatype, int *q)
+void spasm_schur_dense(const spasm *A, const int *p, int n, const int *p_in, 
+	spasm_lu *fact, void *S, spasm_datatype datatype,int *q, int *p_out)
 {
 	assert(p != NULL);
+	const spasm *U = fact->U;
+	const int *qinv = fact->Uqinv;
 	int m = A->m;
 	int Sm = m - U->n;                                   /* #columns of S */
-	prepare_q(m, qinv, q);
+	prepare_q(m, qinv, q);                               /* FIXME: useless if many invokations */
 	fprintf(stderr, "[schur/dense] dimension %d x %d...\n", n, Sm);
 	double start = spasm_wtime();
 	int verbose_step = spasm_max(1, n / 1000);
-	i64 r = 0;
+	int r = 0;
+	spasm_triplet *L = fact->Ltmp;
+	i64 extra_lnz = 1 + (i64) n * fact->U->n;
+	i64 lnz = 0;
+	if (L != NULL) {
+		lnz = L->nz;
+		spasm_triplet_realloc(L, lnz + extra_lnz);
+	}
+	int *Li = (L != NULL) ? L->i : NULL;
+	int *Lj = (L != NULL) ? L->j : NULL;
+	spasm_ZZp *Lx = (L != NULL) ? L->x : NULL;
 
 	#pragma omp parallel
 	{
@@ -275,38 +288,50 @@ int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (int k = 0; k < n; k++) {
 			int i = p[k];          /* corresponding row of A */
-			
+			int iorig = (p_in != NULL) ? p_in[i] : i;
+			p_out[k] = iorig;
+
 			/* eliminate known sparse pivots, put result in x */
-			for (int j = 0; j < Sm; j++)
-				x[q[j]] = 0;
+			for (int j = 0; j < m; j++)
+				x[j] = 0;
 			int top = spasm_sparse_triangular_solve(U, A, i, xj, x, qinv);
-			if (top == m)
-				continue;       /* skip empty row */
+
+			/* gather x into S[k] */
+			void *Sk = row_pointer(S, Sm, datatype, k);
+			gather(Sm, q, x, Sk, datatype);
 			
-			/* acquire the next row of S */
-			i64 t;
-			#pragma omp atomic capture
-			{ t = r; r += 1; }
+			/* fill eliminations coeffs in L */
+			if (L != NULL)
+				#pragma omp critical
+				for (int k = top; k < m; k++) {
+					int j = xj[k];
+					int i = qinv[j];
+					if (i < 0 || x[j] == 0)
+						continue;
+					// i64 local_nz;
+					// #pragma omp atomic capture
+					// { local_nz = lnz; lnz += 1; } 
+					Li[L->nz] = iorig;
+					Lj[L->nz] = i;
+					Lx[L->nz] = x[j];
+					L->nz += 1;
+					fprintf(stderr, "L[%d, %d] = %d\n", iorig, i, x[j]);
+				}
 
-			/* gather x into S[t] */
-			// for (int j = 0; j < Sm; j++) {
-			// 	int jj = q[j];
-			// 	spasm_datatype_write(S, t * Sm + j, datatype, x[jj]);
-			// }
-			void *St = row_pointer(S, Sm, datatype, t);
-			gather(Sm, q, x, St, datatype);
-
+			
 			/* verbosity */
-			if (tid == 0 && (i % verbose_step) == 0) {
-				fprintf(stderr, "\r[schur/dense] %" PRId64 "/%d", r, n);
+			#pragma omp atomic update
+			r += 1;
+			if (tid == 0 && (r % verbose_step) == 0) {
+				fprintf(stderr, "\r[schur/dense] %d/%d", r, n);
 				fflush(stderr);
 			}
+			// fprintf(stderr, "# k=%d, p[k]=%d, p_out[k]=%d\n", k, i, p_out[k]);
 		}
 		free(x);
 		free(xj);
 	}
-	fprintf(stderr, "\n[schur/dense] finished in %.1fs, rank <= %" PRId64 "\n", spasm_wtime() - start, r);
-	return r;
+	fprintf(stderr, "\n[schur/dense] finished in %.1fs, rank <= %d\n", spasm_wtime() - start, r);
 }
 
 

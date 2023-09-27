@@ -38,6 +38,8 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	opts.L = 1;
+	opts.max_round = 1;
+	opts.sparsity_threshold = 0;
 	spasm_lu *fact = spasm_echelonize(A, &opts);
 	int r = fact->U->n;
 	assert(fact->L != NULL);
@@ -47,7 +49,6 @@ int main(int argc, char **argv)
 	assert(fact->U->m == m);
 	assert(fact->L->n == n);
 
-	// assert(spasm_factorization_verify(A, fact, 42));
 	// assert(spasm_factorization_verify(A, fact, 1337));
 	// assert(spasm_factorization_verify(A, fact, 21011984));
 
@@ -97,16 +98,19 @@ int main(int argc, char **argv)
 		for (int j = 0; j < m; j++) {
 			// printf("# x*A[%4d] = %8d VS x*L[%4d] = %8d VS x*LU[%4d] = %8d\n", j, y[j], j, u[j], j, v[j]);
 			if (y[j] != v[j])
-				printf("\nmismatch on row %d (pivotal=%d), column %d (pivotal=%d)\n", 
+				printf("mismatch on row %d (pivotal=%d), column %d (pivotal=%d)\n", 
 					i, pivotal_row[i], j, pivotal_col[j]);
 			assert(y[j] == v[j]);
 		}
+		printf("OK on row %d (pivotal=%d)\n", i, pivotal_row[i]);
+
 	}
 	free(x);
 	free(y);
 	free(u);
 	free(v);
 	}
+	assert(spasm_factorization_verify(A, fact, 42));
 	printf("ok - L*U == A\n");
 	spasm_csr_free(A);
 	spasm_lu_free(fact);

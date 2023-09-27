@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 	/* generate random row & col permutation */
 	/*p = spasm_random_permutation(n);
 	pinv = spasm_pinv(p, n);
-	B = spasm_permute(A, p, pinv, SPASM_WITH_NUMERICAL_VALUES);
+	B = spasm_permute(A, p, pinv, true);
 	free(pinv);
 	spasm_csr_free(A);
 	*/

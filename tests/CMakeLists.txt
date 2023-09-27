@@ -110,26 +110,57 @@ set(ALL_TEST_MATRICES
 spasm_declare_test(GFp)
 add_test(NAME GFp COMMAND test_GFp)
 
+########## Dulmage-Mendelson / matching / SCC / etc.
+
+spasm_declare_test(dm)
+spasm_declare_test(matching)
+spasm_declare_test(scc)
+
+set(DM_TEST_MATRICES
+    scc.sms
+    scc2.sms
+    scc3.sms
+    mat364.sms
+    t1.sms
+    dm.sms
+    dm2.sms
+    BIOMD0000000424.int.mpl.sms 
+    BIOMD0000000525.int.mpl.sms
+)
+spasm_run_tests(matching "${DM_TEST_MATRICES}")
+spasm_run_tests(scc      "${DM_TEST_MATRICES}")
+spasm_run_tests(dm       "${DM_TEST_MATRICES}")
+
+########## permutations
+
+spasm_declare_test(vec_perm)
+spasm_declare_test(mat_perm)
+
+add_test(NAME vec_perm COMMAND test_vec_perm)
+spasm_run_test(mat_perm 65537 small.sms)
+spasm_run_test(mat_perm 65537 upper_trapeze.sms)
+
+########## transpose / submatrix / etc.
+
+spasm_declare_test(transpose)
+spasm_run_tests(transpose "${ALL_TEST_MATRICES}")
+
+spasm_declare_test(spmv)
+spasm_test_expected_output(spmv m1.sms gaxpy.1)
+
+spasm_declare_test(submatrix)
+spasm_test_expected_output(submatrix singular.sms submatrix.1)
 
 ########### FFPACK
+
 spasm_declare_test(dense_rref_ffpack)
 spasm_declare_test(dense_lu_ffpack)
 
 spasm_run_tests_mod(dense_lu_ffpack   "${ALL_TEST_MATRICES}")
 spasm_run_tests_mod(dense_rref_ffpack   "${ALL_TEST_MATRICES}")
 
-########### lu / solve / dense LU
-spasm_declare_test(lu)
-spasm_declare_test(solve)
-
-spasm_run_tests_mod(lu                "${ALL_TEST_MATRICES}")
-spasm_run_tests_mod(solve             "${ALL_TEST_MATRICES}")
-
-############ transpose
-spasm_declare_test(transpose)
-spasm_run_tests(transpose "${ALL_TEST_MATRICES}")
-
 ########## triangular solvers
+
 set(LOWER_TEST_MATRICES
     l1.sms
     lower_trapeze.sms
@@ -153,60 +184,32 @@ spasm_run_tests_mod(sparse_usolve "${UPPER_TEST_MATRICES}")
 spasm_run_tests_mod(sparse_lu_usolve "${ALL_TEST_MATRICES}")
 spasm_run_tests_mod(sparse_utsolve "${ALL_TEST_MATRICES}")
 
-########## Dulmage-Mendelson / matching / SCC / etc.
-
-spasm_declare_test(dm)
-spasm_declare_test(matching)
-spasm_declare_test(scc)
-
-set(DM_TEST_MATRICES
-    scc.sms
-    scc2.sms
-    scc3.sms
-    mat364.sms
-    t1.sms
-    dm.sms
-    dm2.sms
-    BIOMD0000000424.int.mpl.sms 
-    BIOMD0000000525.int.mpl.sms
-)
-spasm_run_tests(matching "${DM_TEST_MATRICES}")
-spasm_run_tests(scc      "${DM_TEST_MATRICES}")
-spasm_run_tests(dm       "${DM_TEST_MATRICES}")
-
 ########## schur complement
 
 spasm_declare_test(schur)
+spasm_declare_test(schur_dense)
 spasm_run_tests_mod(schur       "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(schur_dense "${ALL_TEST_MATRICES}")
 
-######### echelonization
+########## echelonization
 
 spasm_declare_test(echelonize)
 spasm_run_tests_mod(echelonize       "${ALL_TEST_MATRICES}")
 
-######### kernel
+########## kernel
 
 spasm_declare_test(kernel)
 spasm_run_tests_mod(kernel "${ALL_TEST_MATRICES}")
 
-##### permutations
+########## lu / solve / dense LU
 
-spasm_declare_test(vec_perm)
-spasm_declare_test(mat_perm)
+spasm_declare_test(lu)
+spasm_declare_test(solve)
 
-add_test(NAME vec_perm COMMAND test_vec_perm)
-spasm_run_test(mat_perm 65537 small.sms)
-spasm_run_test(mat_perm 65537 upper_trapeze.sms)
+spasm_run_tests_mod(lu                "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(solve             "${ALL_TEST_MATRICES}")
 
-######### misc
-
-spasm_declare_test(spmv)
-spasm_test_expected_output(spmv m1.sms gaxpy.1)
-
-spasm_declare_test(submatrix)
-spasm_test_expected_output(submatrix singular.sms submatrix.1)
-
-######### certficates
+########## certificates
 
 spasm_declare_test(rowspan_cert)
 spasm_declare_test(rank_cert)

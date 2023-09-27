@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     int *cc = DM->cc;
 
     int * qinv = spasm_pinv(DM->q, m);
-    spasm * B = spasm_permute(A, DM->p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+    spasm * B = spasm_permute(A, DM->p, qinv, true);
     free(qinv);
     spasm_csr_free(A);
 

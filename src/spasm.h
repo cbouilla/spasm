@@ -121,7 +121,6 @@ typedef enum {SPASM_DOUBLE, SPASM_FLOAT, SPASM_I64} spasm_datatype;
 #define SPASM_IDENTITY_PERMUTATION NULL
 #define SPASM_IGNORE NULL
 #define SPASM_IGNORE_VALUES 0
-#define SPASM_WITH_NUMERICAL_VALUES 1
 
 /* spasm_ZZp.c */
 void spasm_field_init(i64 p, spasm_field F);
@@ -203,8 +202,8 @@ int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj
 spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact, 
                    double est_density, spasm_triplet *L, const int *p_in, int *p_out);
 double spasm_schur_estimate_density(const spasm * A, const int *p, int n, const spasm *U, const int *qinv, int R);
-int spasm_schur_dense(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, 
-	void *S, spasm_datatype datatype, int *q);
+void spasm_schur_dense(const spasm *A, const int *p, int n, const int *p_in, 
+	spasm_lu *fact, void *S, spasm_datatype datatype,int *q, int *p_out);
 void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, 
 	void *S, spasm_datatype datatype, int *q, int N, int w);
 

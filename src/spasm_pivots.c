@@ -470,6 +470,6 @@ spasm *spasm_permute_pivots(const spasm *A, const int *p, int *qinv, int npiv)
 			qinv[j] = k;
 			k += 1;
 		}
-	return spasm_permute(A, p, qinv, SPASM_WITH_NUMERICAL_VALUES);
+	return spasm_permute(A, p, qinv, true);
 }
 #endif

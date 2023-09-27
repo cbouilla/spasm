@@ -22,7 +22,7 @@ spasm * spasm_rref(const spasm_lu *fact, int *Rqinv)
 	spasm_human_format(spasm_nnz(U), hnnz);
 	fprintf(stderr, "[rref] start. U is %d x %d (%s nnz)\n", n, m, hnnz);
 	double start_time = spasm_wtime();
-	spasm *R = spasm_csr_alloc(n, m, spasm_nnz(U), prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *R = spasm_csr_alloc(n, m, spasm_nnz(U), prime, true);
 	i64 *Rp = R->p;
 	int *Rj = R->j;
 	spasm_ZZp *Rx = R->x;

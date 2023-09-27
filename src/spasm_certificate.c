@@ -309,7 +309,7 @@ bool spasm_factorization_verify(const spasm *A, const spasm_lu *fact, u64 seed)
 	int r = U->n;
 	spasm_ZZp *x = malloc(n * sizeof(*x));
 	spasm_ZZp *y = malloc(r * sizeof(*y));
-	spasm_ZZp *z = malloc(n * sizeof(*z));
+	spasm_ZZp *z = malloc(m * sizeof(*z));
 	spasm_ZZp *t = malloc(m * sizeof(*t));
 
 	spasm_prng_seed(seed, 0);

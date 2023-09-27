@@ -18,7 +18,7 @@ int main() {
   assert(n > 10);
   assert(m > 10);
 
-  S = spasm_submatrix(A, 5, 10, 5, 10, SPASM_WITH_NUMERICAL_VALUES);
+  S = spasm_submatrix(A, 5, 10, 5, 10, true);
 
   spasm_save_csr(stdout, S);
   spasm_csr_free(S);

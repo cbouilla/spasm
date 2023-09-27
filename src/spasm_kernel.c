@@ -19,9 +19,9 @@ spasm * spasm_kernel(const spasm_lu *fact)
 	fprintf(stderr, "[kernel] start. U is %d x %d (%s nnz). Transposing U\n", n, m, hnnz);
 	double start_time = spasm_wtime();
 
-	spasm *Ut = spasm_transpose(U, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *Ut = spasm_transpose(U, true);
 	
-	spasm *K = spasm_csr_alloc(m-n, m, spasm_nnz(U), prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *K = spasm_csr_alloc(m-n, m, spasm_nnz(U), prime, true);
 	i64 *Kp = K->p;
 	int *Kj = K->j;
 	spasm_ZZp *Kx = K->x;
@@ -137,7 +137,7 @@ spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv)
 	int m = R->m;
 	assert(n <= m);
 	i64 prime = spasm_get_prime(R);
-	spasm *Rt = spasm_transpose(R, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *Rt = spasm_transpose(R, true);
 	const i64 *Rtp = Rt->p;
 	const int *Rtj = Rt->j;
 	const spasm_ZZp *Rtx = Rt->x;
@@ -150,7 +150,7 @@ spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv)
 		int j = Rj[px];
 		p[i] = j;
 	}
-	spasm *K = spasm_csr_alloc(m - n, m, spasm_nnz(R) - n + m - n, prime, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *K = spasm_csr_alloc(m - n, m, spasm_nnz(R) - n + m - n, prime, true);
 	K->n = 0;
 	i64 *Kp = K->p;
 	int *Kj = K->j;

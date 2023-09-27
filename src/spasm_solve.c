@@ -45,3 +45,11 @@ bool spasm_solve(const spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x)
 	free(Uq);
 	return ok;
 }
+
+
+spasm * spasm_solve_gesv(const spasm_lu *fact, const spasm *b)
+{
+	(void) fact;
+	(void) b;
+	return NULL;
+}

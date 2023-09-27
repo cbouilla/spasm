@@ -53,7 +53,7 @@ int main(int argc, char **argv)
  	for (int j = 0; j < r; j++)
  		assert(pinv[j] != -1);
 
-	spasm *Ut = spasm_transpose(U, SPASM_WITH_NUMERICAL_VALUES);
+	spasm *Ut = spasm_transpose(U, true);
 	assert(Ut->n == m);
 	assert(Ut->m == r);
   	spasm_csr_free(A);

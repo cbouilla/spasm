@@ -15,8 +15,8 @@ int main(int argc, char **argv)
         int n = A->n;
         int m = A->m;
 
-        spasm *B = spasm_transpose(A, SPASM_WITH_NUMERICAL_VALUES);
-        spasm *C = spasm_transpose(B, SPASM_WITH_NUMERICAL_VALUES);
+        spasm *B = spasm_transpose(A, true);
+        spasm *C = spasm_transpose(B, true);
 
         if (spasm_is_lower_triangular(A)) {
                 printf("# A is lower-triangular.\n");

@@ -1,3 +1,5 @@
+add_compile_options(-Werror)
+
 add_library(spasm SHARED
 	# common stuff, IO, utilities
 	spasm_ZZp.c spasm_util.c spasm_triplet.c spasm_prng.c
