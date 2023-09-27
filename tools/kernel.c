@@ -5,57 +5,73 @@
 #include <err.h>
 
 #include "spasm.h"
+#include "common.h"
 
-i64 prime = 42013;
-struct echelonize_opts opts;
-bool left = 0;
+/* Program documentation. */
+char doc[] = "Compute a kernel basis of a sparse matrix";
 
-void parse_command_line_options(int argc, char **argv)
+struct cmdline_args {
+	/* input problem */
+	struct input_matrix input;
+	
+	/* common options to all programs that call spasm_echelonize() */
+	struct echelonize_opts opts;
+
+	/* options specific to the kernel program */
+	bool left;
+	char *output_filename;
+};
+
+/* The options we understand. */
+struct argp_option options[] = {
+	{0,               0,  0,      0, "Kernel options", 2 },
+	{"left",         'l', 0,      0, "Compute the left-kernel", 2},
+	{"output",       'o', "FILE", 0, "Write the kernel basis in FILE", 2 },
+	{ 0 }
+};
+
+/* Parse a single option --- rank program. */
+error_t parse_ker_opt(int key, char *arg, struct argp_state *state)
 {
-	struct option longopts[] = {
-		{"modulus", required_argument, NULL, 'p'},
-		{"left", no_argument, NULL, 'L'},
-		{"no-greedy-pivot-search", no_argument, NULL, 'g'},
-		{"no-low-rank-mode", no_argument, NULL, 'l'},
-		{"dense-block-size", required_argument, NULL, 'd'},
-		{"low-rank-start-weight", required_argument, NULL, 'w'},
-		{NULL, 0, NULL, 0}
-	};
-	char ch;
-	while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
-		switch (ch) {
-		case 'p':
-			prime = atoll(optarg);
-			break;
-		case 'L':
-			left = 1;
-			break;
-		case 'g':
-			opts.enable_greedy_pivot_search = 0;
-			break;
-		case 'd':
-			opts.dense_block_size = atoi(optarg);
-			fprintf(stderr, "Using dense block size %d\n", opts.dense_block_size);
-			break;
-		case 'l':
-			opts.enable_tall_and_skinny = 0;
-			break;
-		case 'w':
-			opts.low_rank_start_weight = atoi(optarg);
-			break;
-		default:
-			errx(1, "Unknown option\n");
-		}
+	struct cmdline_args *arguments = state->input;
+	switch (key) {
+	case 'l':
+		arguments->left = 1;
+		break;
+	case 'o':
+		arguments->output_filename = arg;
+		break;
+	case ARGP_KEY_INIT:
+		arguments->left = 0;
+		arguments->output_filename = NULL;
+		state->child_inputs[0] = &arguments->input;
+		state->child_inputs[1] = &arguments->opts;
+		break;
+	default:
+		return ARGP_ERR_UNKNOWN;
 	}
+	return 0;
 }
+
+struct argp_child children_parsers[] = {
+	{ &input_argp,      0, 0, 0 },
+	{ &echelonize_argp, 0, 0, 0 },
+	{ 0 }
+};
+
+/* argp parser for the rank program */
+struct argp argp = { options, parse_ker_opt, NULL, doc, children_parsers, NULL, NULL };
+
 
 int main(int argc, char **argv)
 {
-	spasm_echelonize_init_opts(&opts);
-	parse_command_line_options(argc, argv);
+	/* process command-line options */
+	struct cmdline_args args;
+	argp_parse(&argp, argc, argv, 0, 0, &args);
 
-	spasm_triplet *T = spasm_load_sms(stdin, prime);
-	if (left) {
+	/* load input matrix */
+	spasm_triplet *T = load_input_matrix(&args.input);
+	if (args.left) {
 		fprintf(stderr, "Left-kernel, transposing\n");
 		spasm_triplet_transpose(T);
 	}
@@ -63,14 +79,13 @@ int main(int argc, char **argv)
 	spasm_triplet_free(T);
 
 	/* echelonize A */
-	spasm_lu *fact = spasm_echelonize(A, &opts);
+	spasm_lu *fact = spasm_echelonize(A, &args.opts);
 	spasm_csr_free(A);
 
 	/* kernel basis */
 	spasm *K = spasm_kernel(fact);
-	spasm_save_csr(stdout, K);
 	fprintf(stderr, "Kernel basis matrix is %d x %d with %" PRId64 " nz\n", K->n, K->m, spasm_nnz(K));
-	spasm_lu_free(fact);
-	spasm_csr_free(K);
-	exit(EXIT_SUCCESS);
+	
+	FILE *f = open_output(args.output_filename);
+	spasm_save_csr(f, K);
 }

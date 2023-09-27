@@ -1,5 +1,7 @@
 include_directories (../src)
 
+add_library(spasmtools common.c)
+
 ############### tools
 
 add_executable(bitmap bitmap.c)
@@ -24,10 +26,10 @@ add_executable(dm dm.c)
 target_link_libraries(dm PUBLIC spasm)
 
 add_executable(rank rank.c)
-target_link_libraries(rank PUBLIC spasm)
+target_link_libraries(rank PUBLIC spasm spasmtools)
 
 add_executable(echelonize echelonize.c)
-target_link_libraries(echelonize PUBLIC spasm)
+target_link_libraries(echelonize PUBLIC spasm spasmtools)
 
 add_executable(kernel kernel.c)
-target_link_libraries(kernel PUBLIC spasm)
+target_link_libraries(kernel PUBLIC spasm spasmtools)

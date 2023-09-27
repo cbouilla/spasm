@@ -15,6 +15,10 @@ typedef int32_t i32;
 #include <omp.h>
 #endif
 
+#define SPASM_VERSION "1.3"
+#define SPASM_BUG_ADDRESS "<charles.bouillaguet@lip6.fr>"
+
+
 /* --- primary SpaSM routines and data structures --- */
 
 // unfortunately we use "n" for #rows and "m" for #columns whereas the rest of the world (BLAS...)

@@ -10,6 +10,7 @@ Features
 --------
 
 The core of the library is a multithreaded function that computes the row echelon form of a sparse matrix modulo a word-sized prime. 
+
 This enables several of useful computations on sparse matrices modulo _p_:
   * Basis of the row space
   * Basis of the kernel
@@ -18,7 +19,8 @@ This enables several of useful computations on sparse matrices modulo _p_:
 
 In addition, SpaSM is capable of computing a full PLUQ factorization, but this is slower than simple echelonization. This enables:
   * Solution of linear systems
-  * Rank certificates
+  * Extraction of a square submatrix of maximal rank
+  * Production of rank certificates
 
 SpaSM works with all odd 32-bit prime moduli.  While it would be possible to work with _p = 2_, this would require non-trivial tweaks to the code. 
 
