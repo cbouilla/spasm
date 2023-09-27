@@ -383,7 +383,7 @@ static void echelonize_dense(const spasm *A, const int *p, int n, const int *p_i
 	i64 prime = spasm_get_prime(A);
 	spasm_datatype datatype = spasm_datatype_choose(prime);
 
-	void *S = spasm_malloc(opts->dense_block_size * Sm * spasm_datatype_size(datatype));
+	void *S = spasm_malloc((i64) opts->dense_block_size * Sm * spasm_datatype_size(datatype));
 	int *p_out = spasm_malloc(opts->dense_block_size * sizeof(*p_out));
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sqinv = spasm_malloc(Sm * sizeof(*Sqinv));                   /* for FFPACK */
