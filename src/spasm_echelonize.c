@@ -264,10 +264,10 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 	assert(Lx != NULL);
 	
 	/* build L */
-	for (int i = 0; i < n; i++) {
+	for (i64 i = 0; i < n; i++) {
 		int pi = Sp[i];
 		int iorig = (p_in != NULL) ? p_in[pi] : pi;
-		for (int j = 0; j < spasm_min(i + 1, r); j++) {
+		for (i64 j = 0; j < spasm_min(i + 1, r); j++) {
 			spasm_ZZp Mij = spasm_datatype_read(S, i  * Sm + j, datatype);
 			if (Mij == 0)
 				continue;
@@ -282,7 +282,7 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 	L->nz = lnz;
 
 	/* fill U */
-	for (int i = 0; i < r; i++) {
+	for (i64 i = 0; i < r; i++) {
 		/* implicit 1 in U */
 		int j = Sqinv[i];
 		int jorig = q[j];
@@ -291,7 +291,7 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 		unz += 1;
 		/* register pivot */
 		Uqinv[jorig] = U->n;
-		for (int j = i+1; j < Sm; j++) {
+		for (i64 j = i+1; j < Sm; j++) {
 			int jnew = Sqinv[j];
 			int jorig = q[jnew];
 			spasm_ZZp x = spasm_datatype_read(S, i * Sm + j, datatype);
