@@ -3,9 +3,25 @@
 #include <assert.h>
 #include <math.h>
 #include <err.h>
+#include <string.h>
 
 #include "spasm.h"
 #include "mmio.h"
+
+static bool read_line(const char *fn, i64 line, char *buffer, int size, FILE *f)
+{
+	if (fgets(buffer, size, f) == NULL) {
+		if (feof(f))
+			return 1;
+		err(1, "[%s] impossible to read line %" PRId64, fn, line);
+	}
+	int l = strlen(buffer);
+	if (l == 0)
+		errx(1, "[%s] empty line %" PRId64, fn, line);
+ 	if (buffer[l - 1] != '\n' && !feof(f))
+ 		errx(1, "[%s] line %" PRId64 " too long (> %d)", fn, line, size);
+ 	return 0;
+}
 
 /*
  * load a matrix in SMS format from f (an opened file). 
@@ -17,9 +33,15 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime)
 	double start = spasm_wtime();
 	int i, j;
 	char type;
-	if (fscanf(f, "%d %d %c\n", &i, &j, &type) != 3)
-		errx(1, "[spasm_load_sms] bad SMS file (header)\n");
+	char buffer[256];
 
+	/* Process header */
+	i64 line = 0;
+	bool eof = read_line("spasm_load_sms", line, buffer, 256, f);
+	if (eof)
+		errx(1, "[spasm_load_sms] empty file\n");
+	if (sscanf(buffer, "%d %d %c\n", &i, &j, &type) != 3)
+		errx(1, "[spasm_load_sms] bad SMS file (header)\n");
 	if (prime != -1 && type != 'M')
 		errx(1, "[spasm_load_sms] only ``Modular'' type supported\n");
 
@@ -30,10 +52,23 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime)
 	spasm_triplet *T = spasm_triplet_alloc(i, j, 1, prime, prime != -1);
 
 	i64 x;
-	while (fscanf(f, "%d %d %" SCNd64 "\n", &i, &j, &x) == 3) {
-		if (i == 0 && j == 0 && x == 0)
+	bool end = 0;
+	for (;;) { 
+		line += 1;
+		eof = read_line("spasm_load_sms", line, buffer, 256, f);
+		if (end && eof)
 			break;
-		spasm_add_entry(T, i - 1, j - 1, x);
+		if (end && !eof)
+			warn("[spasm_load_sms] garbage detected near end of file");
+		if (!end && eof)
+			errx(1, "[spasm_load_sms] premature end of file");
+
+		if (sscanf(buffer, "%d %d %" SCNd64 "\n", &i, &j, &x) != 3)
+			errx(1, "parse error line %" PRId64, line);
+		if (i == 0 && j == 0 && x == 0)
+			end = 1;
+		if (!end)
+			spasm_add_entry(T, i - 1, j - 1, x);
 	}
 
 	char nnz[16];
