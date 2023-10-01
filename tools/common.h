@@ -14,7 +14,7 @@ extern struct argp input_argp;
 extern const char *argp_program_version;
 extern const char *argp_program_bug_address;
 
-spasm_triplet * load_input_matrix(struct input_matrix *in);
+spasm_triplet * load_input_matrix(struct input_matrix *in, u8 *hash);
 FILE * open_output(const char *filename);
 
 #endif

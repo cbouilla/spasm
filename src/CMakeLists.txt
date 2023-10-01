@@ -1,8 +1,11 @@
 add_compile_options(-Werror)
 
 add_library(spasm SHARED
+	# crypto stuff
+	spasm_prng.c sha256.c
+
 	# common stuff, IO, utilities
-	spasm_ZZp.c spasm_util.c spasm_triplet.c spasm_prng.c
+	spasm_ZZp.c spasm_util.c spasm_triplet.c
 	mmio.c spasm_io.c
 	spasm_scatter.c spasm_spmv.c 
 	spasm_transpose.c spasm_permutation.c

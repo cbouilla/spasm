@@ -9,7 +9,7 @@ int main() {
 	int m, nz;
 	int *Aj;
 
-	A = spasm_load_sms(stdin, 42013);
+	A = spasm_load_sms(stdin, 42013, NULL);
 
 	m = A->m;
 	nz = A->nz;

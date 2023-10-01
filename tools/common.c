@@ -110,14 +110,14 @@ error_t parse_ech_opt(int key, char *arg, struct argp_state *state)
 struct argp echelonize_argp = { echelonize_options, parse_ech_opt, NULL, NULL, NULL, NULL, NULL};
 
 
-spasm_triplet * load_input_matrix(struct input_matrix *in)
+spasm_triplet * load_input_matrix(struct input_matrix *in, u8 *hash)
 {
 	if (in->filename == NULL)
-		return spasm_load_sms(stdin, in->prime);    /* load from stdin */
+		return spasm_load_sms(stdin, in->prime, hash);    /* load from stdin */
 	FILE *f = fopen(in->filename, "r");
 	if (f == NULL)
 		err(1, "Cannot open %s", in->filename);
-	spasm_triplet *T = spasm_load_sms(f, in->prime);
+	spasm_triplet *T = spasm_load_sms(f, in->prime, hash);
 	fclose(f);
 	return T;
 }

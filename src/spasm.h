@@ -6,6 +6,7 @@
 #include <stdio.h>            // FILE
 #include <stdbool.h>
 
+typedef uint8_t u8;
 typedef int64_t i64;
 typedef uint64_t u64;
 typedef uint32_t u32;
@@ -120,6 +121,13 @@ typedef struct {
 	spasm_ZZp *y;     /* size r */
 } spasm_rank_certificate;
 
+typedef struct {
+    u32 h[8];
+    u32 Nl, Nh;
+    u32 data[16];
+    u32 num, md_len;
+} SHA256_CTX;
+
 typedef enum {SPASM_DOUBLE, SPASM_FLOAT, SPASM_I64} spasm_datatype;
 
 #define SPASM_IDENTITY_PERMUTATION NULL
@@ -138,6 +146,12 @@ spasm_ZZp spasm_ZZp_axpy(const spasm_field F, spasm_ZZp a, spasm_ZZp x, spasm_ZZ
 /* spasm_prng.c */
 u64 spasm_prng_next();
 void spasm_prng_seed(u64 seed, u64 seq);
+
+/* sha256.c */
+void spasm_SHA256_init(SHA256_CTX *c);
+void spasm_SHA256_update(SHA256_CTX *c, const void *data, size_t len);
+void spasm_SHA256_final(u8 *md, SHA256_CTX *c);
+
 
 /* spasm_util.c */
 double spasm_wtime();
@@ -166,7 +180,7 @@ void spasm_triplet_transpose(spasm_triplet * T);
 spasm *spasm_compress(const spasm_triplet * T);
 
 /* spasm_io.c */
-spasm_triplet *spasm_load_sms(FILE * f, i64 prime);
+spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash);
 spasm_triplet *spasm_load_mm(FILE * f, i64 prime);
 void spasm_save_triplet(FILE * f, const spasm_triplet * A);
 void spasm_save_csr(FILE * f, const spasm * A);

@@ -110,6 +110,14 @@ set(ALL_TEST_MATRICES
 spasm_declare_test(GFp)
 add_test(NAME GFp COMMAND test_GFp)
 
+########## prng / hash
+
+spasm_declare_test(prng)
+add_test(NAME prng COMMAND sh -c "./test_prng | diff - ${CMAKE_CURRENT_SOURCE_DIR}/Expected/prng")
+
+spasm_declare_test(sha)
+add_test(NAME sha COMMAND sh -c "./test_sha | diff - ${CMAKE_CURRENT_SOURCE_DIR}/Expected/hash")
+
 ########## Dulmage-Mendelson / matching / SCC / etc.
 
 spasm_declare_test(dm)

@@ -11,7 +11,7 @@ int main() {
 	int n, m, nz, u, v;
 	int *p, *q, *Ai, *Aj;
 
-	A = spasm_load_sms(stdin, 42013);
+	A = spasm_load_sms(stdin, 42013, NULL);
 
 	n = A->n;
 	m = A->m;

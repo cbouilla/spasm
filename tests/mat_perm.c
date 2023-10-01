@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
   int *p, *q;
   spasm_ZZp *x, *y, *u, *v, *w;
 
-  T = spasm_load_sms(stdin, 42013);
+  T = spasm_load_sms(stdin, 42013, NULL);
   A = spasm_compress(T);
   spasm_triplet_free(T);
 

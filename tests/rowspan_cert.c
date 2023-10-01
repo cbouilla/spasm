@@ -28,7 +28,8 @@ void parse_command_line_options(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-	spasm_triplet *T = spasm_load_sms(stdin, prime);
+	u8 hash[32];
+	spasm_triplet *T = spasm_load_sms(stdin, prime, hash);
 	spasm *A = spasm_compress(T);
 	spasm_triplet_free(T);
 

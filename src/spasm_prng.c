@@ -11,6 +11,7 @@
  *
  * Trivium has been designed by Christophe De Cannière and Bart Preneel.
  * This code generates the same output as trivium's reference implementation.
+ * (when restricted to 64-bit keys).
  *
  * The generator takes a 64-bit seed and a 64-bit "sequence number" (this allows
  * to generate independent sequences with the same seed).
@@ -18,6 +19,9 @@
 
 u64 s11, s12, s21, s22, s31, s32;  /* global internal state */
 
+/*
+ * NOT THREAD-SAFE (because of the global internal state)
+ */
 u64 spasm_prng_next()
 {
         u64 s66 = (s12 << 62) ^ (s11 >> 2);

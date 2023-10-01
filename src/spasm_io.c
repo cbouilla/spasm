@@ -8,7 +8,7 @@
 #include "spasm.h"
 #include "mmio.h"
 
-static bool read_line(const char *fn, i64 line, char *buffer, int size, FILE *f)
+static bool read_line(const char *fn, i64 line, char *buffer, int size, SHA256_CTX *ctx, FILE *f)
 {
 	if (fgets(buffer, size, f) == NULL) {
 		if (feof(f))
@@ -20,24 +20,30 @@ static bool read_line(const char *fn, i64 line, char *buffer, int size, FILE *f)
 		errx(1, "[%s] empty line %" PRId64, fn, line);
  	if (buffer[l - 1] != '\n' && !feof(f))
  		errx(1, "[%s] line %" PRId64 " too long (> %d)", fn, line, size);
+ 	if (ctx != NULL)
+ 		spasm_SHA256_update(ctx, buffer, l);
  	return 0;
 }
 
 /*
- * load a matrix in SMS format from f (an opened file). 
+ * load a matrix in SMS format from f (an opened file, possibly stdin). 
  * set prime == -1 to avoid loading values.
+ * if hash != NULL, then the SHA256 of the input matrix is written in hash (32 bytes)
  */
-spasm_triplet *spasm_load_sms(FILE * f, i64 prime)
+spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 {
 	assert(f != NULL);
 	double start = spasm_wtime();
 	int i, j;
 	char type;
 	char buffer[256];
+	SHA256_CTX ctx_always;
+	spasm_SHA256_init(&ctx_always);
+	SHA256_CTX *ctx = (hash != NULL) ? &ctx_always : NULL;
 
 	/* Process header */
 	i64 line = 0;
-	bool eof = read_line("spasm_load_sms", line, buffer, 256, f);
+	bool eof = read_line("spasm_load_sms", line, buffer, 256, ctx, f);
 	if (eof)
 		errx(1, "[spasm_load_sms] empty file\n");
 	if (sscanf(buffer, "%d %d %c\n", &i, &j, &type) != 3)
@@ -55,11 +61,13 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime)
 	bool end = 0;
 	for (;;) { 
 		line += 1;
-		eof = read_line("spasm_load_sms", line, buffer, 256, f);
+		eof = read_line("spasm_load_sms", line, buffer, 256, ctx, f);
 		if (end && eof)
 			break;
-		if (end && !eof)
+		if (end && !eof) {
 			warn("[spasm_load_sms] garbage detected near end of file");
+			continue;
+		}
 		if (!end && eof)
 			errx(1, "[spasm_load_sms] premature end of file");
 
@@ -74,6 +82,13 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime)
 	char nnz[16];
 	spasm_human_format(T->nz, nnz);
 	fprintf(stderr, "%s NNZ [%.1fs]\n", nnz, spasm_wtime() - start);
+	if (ctx != NULL) {
+		spasm_SHA256_final(hash, ctx);
+		fprintf(stderr, "[spasm_load_sms] sha256(matrix) = ");
+		for (int i = 0; i < 32; i++)
+			fprintf(stderr, "%02x", hash[i]);
+		fprintf(stderr, " / size = %" PRId64" bytes\n", (((i64) ctx->Nh) << 29) + ctx->Nl / 8);
+	}
 	return T;
 }
 

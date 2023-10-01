@@ -3,7 +3,7 @@
 #include "spasm.h"
 
 int main() {
-	spasm_triplet *T = spasm_load_sms(stdin, 42013);
+	spasm_triplet *T = spasm_load_sms(stdin, 42013, NULL);
 
 	/* TODO : this is really ugly */
 	spasm *A = spasm_compress(T);

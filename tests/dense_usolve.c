@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv)
 {
-  spasm_triplet *T = spasm_load_sms(stdin, 32003);
+  spasm_triplet *T = spasm_load_sms(stdin, 32003, NULL);
   spasm *G = spasm_compress(T);
   spasm_triplet_free(T);
 

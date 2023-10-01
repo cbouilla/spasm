@@ -9,7 +9,7 @@ int main() {
   spasm *A, *S;
   int n, m;
 
-  T = spasm_load_sms(stdin, 46337);
+  T = spasm_load_sms(stdin, 46337, NULL);
   A = spasm_compress(T);
   spasm_triplet_free(T);
 
