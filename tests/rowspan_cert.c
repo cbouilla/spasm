@@ -29,7 +29,7 @@ void parse_command_line_options(int argc, char **argv)
 int main(int argc, char **argv)
 {
 	u8 hash[32];
-	spasm_triplet *T = spasm_triplet_load(stdin, prime, hash);
+	struct spasm_triplet *T = spasm_triplet_load(stdin, prime, hash);
 	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
 

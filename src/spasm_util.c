@@ -102,9 +102,9 @@ struct spasm_csr *spasm_csr_alloc(int n, int m, i64 nzmax, i64 prime, bool with_
 }
 
 /* allocate a sparse matrix (triplet form) */
-spasm_triplet *spasm_triplet_alloc(int n, int m, i64 nzmax, i64 prime, bool with_values)
+struct spasm_triplet *spasm_triplet_alloc(int n, int m, i64 nzmax, i64 prime, bool with_values)
 {
-	spasm_triplet *A = spasm_malloc(sizeof(*A));
+	struct spasm_triplet *A = spasm_malloc(sizeof(*A));
 	A->m = m;
 	A->n = n;
 	A->nzmax = nzmax;
@@ -136,7 +136,7 @@ void spasm_csr_realloc(struct spasm_csr *A, i64 nzmax)
  * change the max # of entries in a sparse matrix. If nzmax < 0, then the
  * matrix is trimmed to its current nnz.
  */
-void spasm_triplet_realloc(spasm_triplet *A, i64 nzmax)
+void spasm_triplet_realloc(struct spasm_triplet *A, i64 nzmax)
 {
 	if (nzmax < 0)
 		nzmax = A->nz;
@@ -160,7 +160,7 @@ void spasm_csr_free(struct spasm_csr *A)
 	free(A);
 }
 
-void spasm_triplet_free(spasm_triplet *A)
+void spasm_triplet_free(struct spasm_triplet *A)
 {
 	free(A->i);
 	free(A->j);

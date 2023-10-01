@@ -3,7 +3,7 @@
 #include "spasm.h"
 
 int main() {
-	spasm_triplet *T = spasm_triplet_load(stdin, 42013, NULL);
+	struct spasm_triplet *T = spasm_triplet_load(stdin, 42013, NULL);
 
 	/* TODO : this is really ugly */
 	struct spasm_csr *A = spasm_compress(T);

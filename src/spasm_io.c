@@ -56,7 +56,7 @@ static void validate_mm_header(const char *buffer)
  * set prime == -1 to avoid loading values.
  * if hash != NULL, then the SHA256 of the input matrix is written in hash (32 bytes)
  */
-spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash)
+struct spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash)
 {
 	assert(f != NULL);
 	double start = spasm_wtime();
@@ -108,7 +108,7 @@ spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash)
 	}
 
 	/* allocate result */
-	spasm_triplet *T = spasm_triplet_alloc(i, j, nnz, prime, prime != -1);
+	struct spasm_triplet *T = spasm_triplet_alloc(i, j, nnz, prime, prime != -1);
 
 	i64 x;
 	bool end = 0;
@@ -179,7 +179,7 @@ void spasm_csr_save(const struct spasm_csr *A, FILE *f)
 /*
  * save a matrix in SMS format. TODO : change name to spasm_triplet_save
  */
-void spasm_triplet_save(const spasm_triplet *A, FILE *f)
+void spasm_triplet_save(const struct spasm_triplet *A, FILE *f)
 {
 	assert(f != NULL);
 	const int *Ai = A->i;

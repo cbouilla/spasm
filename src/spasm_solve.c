@@ -55,7 +55,7 @@ struct spasm_csr * spasm_solve_gesv(const spasm_lu *fact, const struct spasm_csr
 	int n = B->n;
 	int m = B->m;
 	int Xm = fact->L->n;
-	spasm_triplet *X = spasm_triplet_alloc(n, Xm, (i64) Xm * n, prime, true);
+	struct spasm_triplet *X = spasm_triplet_alloc(n, Xm, (i64) Xm * n, prime, true);
 	int *Xi = X->i;
 	int *Xj = X->j;
 	spasm_ZZp *Xx = X->x;

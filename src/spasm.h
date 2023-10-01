@@ -50,7 +50,7 @@ struct spasm_csr {                /* matrix in compressed-sparse row format */
 	 */
 };
 
-typedef struct {                   /* matrix in triplet form */
+struct spasm_triplet {             /* matrix in triplet form */
 	i64 nzmax;                     /* maximum number of entries */
 	i64 nz;                        /* # entries */
 	int n;                         /* number of rows */
@@ -59,14 +59,14 @@ typedef struct {                   /* matrix in triplet form */
 	int *j;                        /* column indices (size nzmax) */
 	spasm_ZZp *x;                  /* numerical values, size nzmax (optional) */
 	spasm_field field;
-} spasm_triplet;
+};
 
 typedef struct {                   /* a PLUQ factorisation */
 	struct spasm_csr *L;
 	struct spasm_csr *U;
 	int *Uqinv;                    /* locate pivots in U (on column j, row Uqinv[j]) */
 	int *Lqinv;                    /* locate pivots in L (on column j, row Lqinv[j]) */
-	spasm_triplet *Ltmp;           /* for internal use during the factorization */
+	struct spasm_triplet *Ltmp;           /* for internal use during the factorization */
 } spasm_lu;
 
 typedef struct {      /**** a Dulmage-Mendelson decomposition */
@@ -161,9 +161,9 @@ struct spasm_csr *spasm_csr_alloc(int n, int m, i64 nzmax, i64 prime, bool with_
 void spasm_csr_realloc(struct spasm_csr * A, i64 nzmax);
 void spasm_csr_resize(struct spasm_csr * A, int n, int m);
 void spasm_csr_free(struct spasm_csr * A);
-spasm_triplet *spasm_triplet_alloc(int m, int n, i64 nzmax, i64 prime, bool with_values);
-void spasm_triplet_realloc(spasm_triplet * A, i64 nzmax);
-void spasm_triplet_free(spasm_triplet * A);
+struct spasm_triplet *spasm_triplet_alloc(int m, int n, i64 nzmax, i64 prime, bool with_values);
+void spasm_triplet_realloc(struct spasm_triplet * A, i64 nzmax);
+void spasm_triplet_free(struct spasm_triplet * A);
 spasm_dm *spasm_dm_alloc(int n, int m);
 void spasm_dm_free(spasm_dm * P);
 void spasm_lu_free(spasm_lu *N);
@@ -173,13 +173,13 @@ int spasm_get_thread_num();
 static inline i64 spasm_get_prime(const struct spasm_csr *A) { return A->field->p; }
 
 /* spasm_triplet.c */
-void spasm_add_entry(spasm_triplet *T, int i, int j, i64 x);
-void spasm_triplet_transpose(spasm_triplet * T);
-struct spasm_csr *spasm_compress(const spasm_triplet * T);
+void spasm_add_entry(struct spasm_triplet *T, int i, int j, i64 x);
+void spasm_triplet_transpose(struct spasm_triplet * T);
+struct spasm_csr *spasm_compress(const struct spasm_triplet * T);
 
 /* spasm_io.c */
-spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash);
-void spasm_triplet_save(const spasm_triplet * A, FILE * f);
+struct spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash);
+void spasm_triplet_save(const struct spasm_triplet * A, FILE * f);
 void spasm_csr_save(const struct spasm_csr * A, FILE * f);
 void spasm_save_pnm(const struct spasm_csr * A, FILE * f, int x, int y, int mode, spasm_dm *DM);
 
@@ -215,7 +215,7 @@ int spasm_sparse_triangular_solve(const struct spasm_csr *U, const struct spasm_
 
 /* spasm_schur.c */
 struct spasm_csr *spasm_schur(const struct spasm_csr *A, const int *p, int n, const spasm_lu *fact, 
-                   double est_density, spasm_triplet *L, const int *p_in, int *p_out);
+                   double est_density, struct spasm_triplet *L, const int *p_in, int *p_out);
 double spasm_schur_estimate_density(const struct spasm_csr * A, const int *p, int n, const struct spasm_csr *U, const int *qinv, int R);
 void spasm_schur_dense(const struct spasm_csr *A, const int *p, int n, const int *p_in, 
 	spasm_lu *fact, void *S, spasm_datatype datatype,int *q, int *p_out);

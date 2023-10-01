@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv) {
   int n, m, i, j;
-  spasm_triplet *T;
+  struct spasm_triplet *T;
   struct spasm_csr *A, *B;
   int *p, *q;
   spasm_ZZp *x, *y, *u, *v, *w;

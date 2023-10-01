@@ -29,7 +29,7 @@ void parse_command_line_options(int argc, char **argv)
 int main(int argc, char **argv)
 {
         parse_command_line_options(argc, argv);
-        spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+        struct spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
         struct spasm_csr *A = spasm_compress(T);
         spasm_triplet_free(T);
   
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 
         /* build our LU factorization */
         struct spasm_csr *U = spasm_csr_alloc(r, n, n*m, prime, true);
-        spasm_triplet *L = spasm_triplet_alloc(n, r, n*m, prime, true);
+        struct spasm_triplet *L = spasm_triplet_alloc(n, r, n*m, prime, true);
         i64 *Up = U->p;
         int *Li = L->i;
         int *Uj = U->j;

@@ -5,7 +5,7 @@
 #include "spasm.h"
 
 int main() {
-  spasm_triplet *T;
+  struct spasm_triplet *T;
   struct spasm_csr *A, *S;
   int n, m;
 

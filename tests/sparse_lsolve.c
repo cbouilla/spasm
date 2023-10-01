@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 {
         parse_command_line_options(argc, argv);
         // load lower-triangular matrix matrix
-        spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+        struct spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
         struct spasm_csr *L = spasm_compress(T);
         spasm_triplet_free(T);
         int n = L->n;

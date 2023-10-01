@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 
 	/* load input matrix */
 	u8 hash[32];
-	spasm_triplet *T = load_input_matrix(&args.input, hash);
+	struct spasm_triplet *T = load_input_matrix(&args.input, hash);
 	if (args.allow_transpose && (T->n < T->m)) {
 		fprintf(stderr, "[rank] transposing matrix : ");
 		fflush(stderr);

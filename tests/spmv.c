@@ -6,7 +6,7 @@
 
 int main()
 {
-	spasm_triplet *T = spasm_triplet_load(stdin, 257, NULL);
+	struct spasm_triplet *T = spasm_triplet_load(stdin, 257, NULL);
 	struct spasm_csr *C = spasm_compress(T);
 	spasm_triplet_free(T);
 

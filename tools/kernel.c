@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 	argp_parse(&argp, argc, argv, 0, 0, &args);
 
 	/* load input matrix */
-	spasm_triplet *T = load_input_matrix(&args.input, NULL);
+	struct spasm_triplet *T = load_input_matrix(&args.input, NULL);
 	if (args.left) {
 		fprintf(stderr, "Left-kernel, transposing\n");
 		spasm_triplet_transpose(T);

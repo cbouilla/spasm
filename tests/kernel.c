@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 {
         parse_command_line_options(argc, argv);
 
-        spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+        struct spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
         struct spasm_csr *A = spasm_compress(T);
         spasm_triplet_free(T);
 

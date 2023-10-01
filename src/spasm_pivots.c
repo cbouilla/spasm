@@ -378,7 +378,7 @@ int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, 
 
 	/* compute total pivot nnz and reallocate U if necessary */
 	struct spasm_csr *U = fact->U;
-	spasm_triplet *L = fact->Ltmp;
+	struct spasm_triplet *L = fact->Ltmp;
 	int *Uqinv = fact->Uqinv;
 	int *Lqinv = fact->Lqinv;
 	i64 pivot_nnz = 0;

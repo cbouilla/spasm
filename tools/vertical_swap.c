@@ -7,7 +7,7 @@
 
 int main()
 {
-	spasm_triplet *A = spasm_triplet_load(stdin, 42013, NULL);
+	struct spasm_triplet *A = spasm_triplet_load(stdin, 42013, NULL);
 
 	int m = A->m;
 	i64 nz = A->nz;

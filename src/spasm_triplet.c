@@ -4,7 +4,7 @@
 #include "spasm.h"
 
 /* add an entry to a triplet matrix; enlarge it if necessary */
-void spasm_add_entry(spasm_triplet *T, int i, int j, i64 x)
+void spasm_add_entry(struct spasm_triplet *T, int i, int j, i64 x)
 {
 	assert((i >= 0) && (j >= 0));
 	i64 px = T->nz;
@@ -23,7 +23,7 @@ void spasm_add_entry(spasm_triplet *T, int i, int j, i64 x)
 	T->m = spasm_max(T->m, j + 1);
 }
 
-void spasm_triplet_transpose(spasm_triplet *T)
+void spasm_triplet_transpose(struct spasm_triplet *T)
 {
 	int *foo = T->i;
 	T->i = T->j;
@@ -96,7 +96,7 @@ static void deduplicate(struct spasm_csr *A)
 }
 
 /* C = compressed-row form of a triplet matrix T */
-struct spasm_csr *spasm_compress(const spasm_triplet * T)
+struct spasm_csr *spasm_compress(const struct spasm_triplet * T)
 {
 	int m = T->m;
 	int n = T->n;

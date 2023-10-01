@@ -74,7 +74,7 @@ static void echelonize_GPLU(const struct spasm_csr *A, const int *p, int n, cons
 	fprintf(stderr, "[echelonize/GPLU] processing matrix of dimension %d x %d\n", n, m);
 	
 	struct spasm_csr *U = fact->U;
-	spasm_triplet *L = fact->Ltmp;
+	struct spasm_triplet *L = fact->Ltmp;
 	int *Uqinv = fact->Uqinv;
 	i64 *Up = U->p;
 	i64 unz = spasm_nnz(U);
@@ -242,7 +242,7 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 	const size_t *Sp, const size_t *Sqinv, const int *q, const int *p_in, spasm_lu *fact)
 {
 	struct spasm_csr *U = fact->U;
-	spasm_triplet *L = fact->Ltmp;
+	struct spasm_triplet *L = fact->Ltmp;
 	assert(L != NULL);
 	int *Uqinv = fact->Uqinv;
 	int *Lqinv = fact->Lqinv;
@@ -483,7 +483,7 @@ spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_opts *o
 	for (int j = 0; j < m; j++)
 		Uqinv[j] = -1;
 	
-	spasm_triplet *L = NULL;
+	struct spasm_triplet *L = NULL;
 	int *Lqinv = NULL;
 	if (opts->L) {
 		L = spasm_triplet_alloc(n, n, spasm_nnz(A), prime, true);
