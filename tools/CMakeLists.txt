@@ -16,10 +16,6 @@ target_link_libraries(stack PUBLIC spasm)
 add_executable(transpose transpose.c)
 target_link_libraries(transpose PUBLIC spasm)
 
-add_executable(mtx_reader mtx_reader.c)
-target_link_libraries(mtx_reader PUBLIC spasm)
-
-
 ############# core algorithms
 
 add_executable(dm dm.c)

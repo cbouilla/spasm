@@ -36,8 +36,10 @@ The following algorithms algorithms are used in SpaSM:
 Initial versions of SpaSM were heavily influence by
 [Tim Davis](http://faculty.cse.tamu.edu/davis/)'s [CSparse](http://faculty.cse.tamu.edu/davis/publications_files/CSparse.zip). 
 
-Spasm does I/O of matrices in [SMS format](http://hpac.imag.fr/), which makes it 
-somewhat compatible with [LinBox](http://linalg.org/).  It is also capable of reading the [MatrixMarket format](https://math.nist.gov/MatrixMarket/), which is arguably better.
+Spasm does I/O of matrices in either the :
+  * [SMS format](http://hpac.imag.fr/) --- which makes it somewhat compatible with [LinBox](http://linalg.org/).  
+  * [MatrixMarket format](https://math.nist.gov/MatrixMarket/), with kind `matrix coordinate integer general`.
+(The actual input format is autodetected).
 
 A set of demonstration programs is provided (see the `tools/` folder). They can be used to compute the rank, the RREF, a kernel basis, or a Dumlage-Mendelson decomposition of a sparse matrix.
 

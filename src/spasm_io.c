@@ -4,9 +4,9 @@
 #include <math.h>
 #include <err.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "spasm.h"
-#include "mmio.h"
 
 static bool read_line(const char *fn, i64 line, char *buffer, int size, SHA256_CTX *ctx, FILE *f)
 {
@@ -25,6 +25,32 @@ static bool read_line(const char *fn, i64 line, char *buffer, int size, SHA256_C
  	return 0;
 }
 
+static void validate_mm_header(const char *buffer)
+{
+	char mtx[1024], crd[1024], data_type[1024], storage_scheme[1024];
+	
+	if (sscanf(buffer, "%%%%MatrixMarket %s %s %s %s", mtx, crd, data_type, storage_scheme) != 4)
+        errx(1, "incomplete MatrixMarket header");
+
+    for (char *p = mtx; *p != '\0'; *p = tolower(*p),p++);  /* convert to lower case */
+    for (char *p = crd; *p != '\0'; *p = tolower(*p),p++);  
+    for (char *p = data_type; *p != '\0'; *p = tolower(*p),p++);
+    for (char *p = storage_scheme; *p != '\0'; *p = tolower(*p),p++);
+
+    /* first field should be "mtx" */
+    if (strcmp(mtx, "matrix") != 0)
+        errx(1, "unsupported MatrixMarket object type %s (I only know about ``matrix'')", mtx);
+    
+    if (strcmp(crd, "coordinate") != 0)
+    	errx(1, "unsupported MatrixMarket format %s (I only know about ``coordinate'')", crd);
+
+    if (strcmp(data_type, "integer") != 0)
+        errx(1, "unsupported MatrixMarket data type %s (I only know about ``integer'')", data_type);
+    
+    if (strcmp(storage_scheme, "general") != 0)
+        errx(1, "unsupported MatrixMarket storage scheme %s (I only know about ``general'')", storage_scheme);
+}
+
 /*
  * load a matrix in SMS format from f (an opened file, possibly stdin). 
  * set prime == -1 to avoid loading values.
@@ -35,37 +61,64 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 	assert(f != NULL);
 	double start = spasm_wtime();
 	int i, j;
-	char type;
-	char buffer[256];
+	i64 nnz = 1;
+	char buffer[1024];
+	char hnnz[16];
+
 	SHA256_CTX ctx_always;
 	spasm_SHA256_init(&ctx_always);
 	SHA256_CTX *ctx = (hash != NULL) ? &ctx_always : NULL;
 
 	/* Process header */
 	i64 line = 0;
-	bool eof = read_line("spasm_load_sms", line, buffer, 256, ctx, f);
+	bool eof = read_line("spasm_load_sms", line, buffer, 1024, ctx, f);
 	if (eof)
 		errx(1, "[spasm_load_sms] empty file\n");
-	if (sscanf(buffer, "%d %d %c\n", &i, &j, &type) != 3)
-		errx(1, "[spasm_load_sms] bad SMS file (header)\n");
-	if (prime != -1 && type != 'M')
-		errx(1, "[spasm_load_sms] only ``Modular'' type supported\n");
 
-	fprintf(stderr, "[IO] loading %d x %d SMS matrix modulo %" PRId64 "... ", i, j, prime);
-	fflush(stderr);
+	/* MatrixMarket ? */
+	bool mm = 0;
+	if (strncmp(buffer, "%%MatrixMarket", 14) == 0) {
+		/* MatrixMarket Header */ 
+		mm = 1;
+		validate_mm_header(buffer);
+		/* skip comments, read dimensions */
+		for (;;) {
+			line += 1;
+			eof = read_line("spasm_load_sms", line, buffer, 1024, ctx, f);
+			if (eof)
+				errx(1, "premature EOF on line %" PRId64 " (expected matrix dimensions)", line);
+			if (buffer[0] != '%')
+				break;
+		}
+		if (sscanf(buffer, "%d %d %" SCNd64 "\n", &i, &j, &nnz) != 3)
+			errx(1, "[spasm_load_sms] bad MatrixMarking dimensions (line %" PRId64 ")\n", line);
+		spasm_human_format(nnz, hnnz);
+		fprintf(stderr, "[IO] loading %d x %d MatrixMarket matrix modulo %" PRId64 " with %s non-zero... ", 
+			i, j, prime, hnnz);
+		fflush(stderr);
+	} else {
+		/* SMS header */
+		char type;
+		if (sscanf(buffer, "%d %d %c\n", &i, &j, &type) != 3)
+			errx(1, "[spasm_load_sms] bad SMS file (header)\n");
+		if (prime != -1 && type != 'M')
+			errx(1, "[spasm_load_sms] only ``Modular'' type supported\n");
+		fprintf(stderr, "[IO] loading %d x %d SMS matrix modulo %" PRId64 "... ", i, j, prime);
+		fflush(stderr);
+	}
 
 	/* allocate result */
-	spasm_triplet *T = spasm_triplet_alloc(i, j, 1, prime, prime != -1);
+	spasm_triplet *T = spasm_triplet_alloc(i, j, nnz, prime, prime != -1);
 
 	i64 x;
 	bool end = 0;
 	for (;;) { 
 		line += 1;
-		eof = read_line("spasm_load_sms", line, buffer, 256, ctx, f);
+		eof = read_line("spasm_load_sms", line, buffer, 1024, ctx, f);
 		if (end && eof)
 			break;
 		if (end && !eof) {
-			warn("[spasm_load_sms] garbage detected near end of file");
+			warn("[spasm_load/SMS] garbage detected near end of file");
 			continue;
 		}
 		if (!end && eof)
@@ -73,15 +126,25 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 
 		if (sscanf(buffer, "%d %d %" SCNd64 "\n", &i, &j, &x) != 3)
 			errx(1, "parse error line %" PRId64, line);
-		if (i == 0 && j == 0 && x == 0)
+		if (i == 0 && j == 0 && x == 0) {
+			if (mm)
+				errx(1, "SMS end marker in MatrixMarket file");
 			end = 1;
+		}
 		if (!end)
 			spasm_add_entry(T, i - 1, j - 1, x);
+		if (mm && T->nz == nnz)
+			end = 1;
 	}
 
-	char nnz[16];
-	spasm_human_format(T->nz, nnz);
-	fprintf(stderr, "%s NNZ [%.1fs]\n", nnz, spasm_wtime() - start);
+	if (!mm) {
+		spasm_triplet_realloc(T, -1);
+		spasm_human_format(T->nz, hnnz);
+		fprintf(stderr, "%s non-zero [%.1fs]\n", hnnz, spasm_wtime() - start);
+	} else {
+		fprintf(stderr, "[%.1fs]\n", spasm_wtime() - start);
+	}
+
 	if (ctx != NULL) {
 		spasm_SHA256_final(hash, ctx);
 		fprintf(stderr, "[spasm_load_sms] sha256(matrix) = ");
@@ -89,71 +152,6 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 			fprintf(stderr, "%02x", hash[i]);
 		fprintf(stderr, " / size = %" PRId64" bytes\n", (((i64) ctx->Nh) << 29) + ctx->Nl / 8);
 	}
-	return T;
-}
-
-/*
- * Load a matrix in MatrixMarket sparse format.
- * Heavily inspired by the example program:
- *     http://math.nist.gov/MatrixMarket/mmio/c/example_read.c
- */
-spasm_triplet *spasm_load_mm(FILE *f, i64 prime)
-{
-	MM_typecode matcode;
-	int n, m, nnz;
-
-	double start = spasm_wtime();
-	if (mm_read_banner(f, &matcode) != 0) 
-		errx(1, "Could not process Matrix Market banner.\n");
-
-	if (!mm_is_matrix(matcode) || !mm_is_sparse(matcode))
-		errx(1, "Matrix Market type: [%s] not supported", mm_typecode_to_str(matcode));
-	
-	int symmetric = mm_is_symmetric(matcode);
-	int skew = mm_is_skew(matcode);
-	if (!mm_is_general(matcode) && !symmetric && !skew)
-		errx(1, "Matrix market type [%s] not supported",  mm_typecode_to_str(matcode));
-	if (mm_read_mtx_crd_size(f, &n, &m, &nnz) != 0)
-		errx(1, "Cannot read matrix size");
-	fprintf(stderr, "[IO] loading %d x %d MTX [%s] modulo %" PRId64 ", %d nnz...", n, m, mm_typecode_to_str(matcode), prime, nnz);
-	fflush(stderr);
-	
-	if (mm_is_pattern(matcode))
-		prime = -1;
-
-	spasm_triplet *T = spasm_triplet_alloc(n, m, nnz, prime, prime != -1);
-
-	for (int i = 0; i < nnz; i++) {
-		int u, v;
-		i64 w;
-
-		if (mm_is_pattern(matcode)) {
-			if (2 != fscanf(f, "%d %d\n", &u, &v))
-				errx(1, "parse error entry %d\n", i);
-			spasm_add_entry(T, u - 1, v - 1, 1);
-		} else if (mm_is_integer(matcode)) {
-			if (3 != fscanf(f, "%d %d %" SCNd64 "\n", &u, &v, &w))
-				errx(1, "parse error entry %d\n", i);
-			spasm_add_entry(T, u - 1, v - 1, w);
-		} else {
-			errx(1, "Don't know how to read matrix");
-		}
-	}
-
-	if (symmetric || skew)
-		nnz *= 2;
-
-	if (symmetric) {
-		int mult = skew ? -1 : 1;
-		int nz = T->nz;
-		for (int px = 0; px < nz; px++)
-			if (T->j[px] != T->i[px])
-				spasm_add_entry(T, T->j[px], T->i[px], (T->x != NULL) ? (mult * T->x[px]) : 1);
-	}
-
-	char s_nnz[16];
-	spasm_human_format(T->nz, s_nnz);
-	fprintf(stderr, "%s NNZ [%.1fs]\n", s_nnz, spasm_wtime() - start);
 	return T;
 }
 
