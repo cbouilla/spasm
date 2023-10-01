@@ -31,13 +31,13 @@ void parse_command_line_options(int argc, char **argv)
 int main(int argc, char **argv)
 {
 	parse_command_line_options(argc, argv);
- 	spasm_triplet *T = spasm_load_sms(stdin, prime, NULL);
- 	spasm *A = spasm_compress(T);
+ 	spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+ 	struct spasm_csr *A = spasm_compress(T);
  	spasm_triplet_free(T);
  	int m = A->m;
 
  	spasm_lu *fact = spasm_echelonize(A, NULL);
-	spasm *U = fact->U;
+	struct spasm_csr *U = fact->U;
 	int *qinv = fact->Uqinv;
 	int r = U->n;
 	if (r == 0) {
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
  	for (int j = 0; j < r; j++)
  		assert(pinv[j] != -1);
 
-	spasm *Ut = spasm_transpose(U, true);
+	struct spasm_csr *Ut = spasm_transpose(U, true);
 	assert(Ut->n == m);
 	assert(Ut->m == r);
   	spasm_csr_free(A);
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 	spasm_add_entry(T, 0, 0, 1);
 	// spasm_add_entry(T, 0, r / 2, 2);
 	// spasm_add_entry(T, 0, r - 1, 3);
-	spasm *B = spasm_compress(T);
+	struct spasm_csr *B = spasm_compress(T);
 	spasm_triplet_free(T);
 
 	for (int i = 0; i < r; i++)

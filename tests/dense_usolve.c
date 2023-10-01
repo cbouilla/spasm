@@ -6,8 +6,8 @@
 
 int main(int argc, char **argv)
 {
-  spasm_triplet *T = spasm_load_sms(stdin, 32003, NULL);
-  spasm *G = spasm_compress(T);
+  spasm_triplet *T = spasm_triplet_load(stdin, 32003, NULL);
+  struct spasm_csr *G = spasm_compress(T);
   spasm_triplet_free(T);
 
   int n = G->n;

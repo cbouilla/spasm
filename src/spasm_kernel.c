@@ -6,9 +6,9 @@
 /* 
  * return a basis of the right kernel of the matrix described by the LU factorization
  */
-spasm * spasm_kernel(const spasm_lu *fact)
+struct spasm_csr * spasm_kernel(const spasm_lu *fact)
 {
-	const spasm *U = fact->U;
+	const struct spasm_csr *U = fact->U;
 	const int *qinv = fact->Uqinv; 
 	int m = U->m;
 	int n = U->n;
@@ -19,9 +19,9 @@ spasm * spasm_kernel(const spasm_lu *fact)
 	fprintf(stderr, "[kernel] start. U is %d x %d (%s nnz). Transposing U\n", n, m, hnnz);
 	double start_time = spasm_wtime();
 
-	spasm *Ut = spasm_transpose(U, true);
+	struct spasm_csr *Ut = spasm_transpose(U, true);
 	
-	spasm *K = spasm_csr_alloc(m-n, m, spasm_nnz(U), prime, true);
+	struct spasm_csr *K = spasm_csr_alloc(m-n, m, spasm_nnz(U), prime, true);
 	i64 *Kp = K->p;
 	int *Kj = K->j;
 	spasm_ZZp *Kx = K->x;
@@ -130,14 +130,14 @@ spasm * spasm_kernel(const spasm_lu *fact)
  * given an echelonized matrix (in RREF), return a basis of its right kernel.
  * This is less computationnaly expensive than from a non-RREF matrix
  */
-spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv)
+struct spasm_csr * spasm_kernel_from_rref(const struct spasm_csr *R, const int *qinv)
 {
 	assert(qinv != NULL);
 	int n = R->n;
 	int m = R->m;
 	assert(n <= m);
 	i64 prime = spasm_get_prime(R);
-	spasm *Rt = spasm_transpose(R, true);
+	struct spasm_csr *Rt = spasm_transpose(R, true);
 	const i64 *Rtp = Rt->p;
 	const int *Rtj = Rt->j;
 	const spasm_ZZp *Rtx = Rt->x;
@@ -150,7 +150,7 @@ spasm * spasm_kernel_from_rref(const spasm *R, const int *qinv)
 		int j = Rj[px];
 		p[i] = j;
 	}
-	spasm *K = spasm_csr_alloc(m - n, m, spasm_nnz(R) - n + m - n, prime, true);
+	struct spasm_csr *K = spasm_csr_alloc(m - n, m, spasm_nnz(R) - n + m - n, prime, true);
 	K->n = 0;
 	i64 *Kp = K->p;
 	int *Kj = K->j;

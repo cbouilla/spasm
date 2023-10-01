@@ -1,7 +1,7 @@
 #include "spasm.h"
 #include "test_tools.h"
 
-int spasm_is_upper_triangular(const spasm *A)
+int spasm_is_upper_triangular(const struct spasm_csr *A)
 {
         int n = A->n;
         int m = A->m;
@@ -27,7 +27,7 @@ int spasm_is_upper_triangular(const spasm *A)
 }
 
 
-int spasm_is_lower_triangular(const spasm *A)
+int spasm_is_lower_triangular(const struct spasm_csr *A)
 {  
         int n = A->n;
         int m = A->m;

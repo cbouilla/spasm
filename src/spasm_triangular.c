@@ -18,7 +18,7 @@
  * p[j] == i indicates if the "diagonal" entry on column j is on row i
  * 
  */
-void spasm_dense_back_solve(const spasm *L, spasm_ZZp *b, spasm_ZZp *x, const int *p)
+void spasm_dense_back_solve(const struct spasm_csr *L, spasm_ZZp *b, spasm_ZZp *x, const int *p)
 {
 	int n = L->n;
 	int r = L->m;
@@ -62,7 +62,7 @@ void spasm_dense_back_solve(const spasm *L, spasm_ZZp *b, spasm_ZZp *x, const in
  *
  * returns True if a solution was found;
  */
-bool spasm_dense_forward_solve(const spasm *U, spasm_ZZp *b, spasm_ZZp *x, const int *q)
+bool spasm_dense_forward_solve(const struct spasm_csr *U, spasm_ZZp *b, spasm_ZZp *x, const int *q)
 {
 	int n = U->n;
 	int m = U->m;
@@ -106,7 +106,7 @@ bool spasm_dense_forward_solve(const spasm *U, spasm_ZZp *b, spasm_ZZp *x, const
  * This does not require the pivots to be the first entry of the row.
  * This requires that the pivots in U are all equal to 1. 
  */
-int spasm_sparse_triangular_solve(const spasm *U, const spasm *B, int k, int *xj, spasm_ZZp * x, const int *qinv)
+int spasm_sparse_triangular_solve(const struct spasm_csr *U, const struct spasm_csr *B, int k, int *xj, spasm_ZZp * x, const int *qinv)
 {
 	int m = U->m;
 	assert(qinv != NULL);

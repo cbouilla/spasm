@@ -29,8 +29,8 @@ void parse_command_line_options(int argc, char **argv)
 int main(int argc, char **argv) 
 {
 	parse_command_line_options(argc, argv);
-	spasm_triplet *T = spasm_load_sms(stdin, prime, NULL);
-	spasm *A = spasm_compress(T);
+	spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
 
 	int n = A->n;
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	
-	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, true);
+	struct spasm_csr *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, true);
 	U->n = 0;
 	for (int j = 0; j < m; j++)
 		qinv[j] = -1;
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 	fact.L = NULL;
 
 	int npiv = spasm_pivots_extract_structural(A, NULL, &fact, p, &opts);
-	spasm *S = spasm_schur(A, p + npiv, n - npiv, &fact, -1, NULL, NULL, NULL);
+	struct spasm_csr *S = spasm_schur(A, p + npiv, n - npiv, &fact, -1, NULL, NULL, NULL);
 	int Sn = S->n;
 	i64 *Sp = S->p;
 	int *Sj = S->j;

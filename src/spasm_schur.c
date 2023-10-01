@@ -8,7 +8,7 @@
  * Samples R rows at random in the schur complement of (P*A)[0:n] w.r.t. U, and return the average density.
  * qinv locates the pivots in U.
  */
-double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, int R)
+double spasm_schur_estimate_density(const struct spasm_csr *A, const int *p, int n, const struct spasm_csr *U, const int *qinv, int R)
 {
 	if (n == 0)
 		return 0;
@@ -58,7 +58,7 @@ double spasm_schur_estimate_density(const spasm *A, const int *p, int n, const s
  *
  * If the estimated density is unknown, set it to -1: it will be evaluated
  */
-spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact, 
+struct spasm_csr *spasm_schur(const struct spasm_csr *A, const int *p, int n, const spasm_lu *fact, 
 	double est_density, spasm_triplet *L, const int *p_in, int *p_out)
 {
 	assert(p != NULL);
@@ -70,7 +70,7 @@ spasm *spasm_schur(const spasm *A, const int *p, int n, const spasm_lu *fact,
 		est_density = spasm_schur_estimate_density(A, p, n, fact->U, qinv, 100);
 	long long size = (est_density * n) * m;
 	i64 prime = spasm_get_prime(A);
-	spasm *S = spasm_csr_alloc(n, m, size, prime, true);
+	struct spasm_csr *S = spasm_csr_alloc(n, m, size, prime, true);
 	i64 *Sp = S->p;
 	int *Sj = S->j;
 	spasm_ZZp *Sx = S->x;
@@ -252,11 +252,11 @@ static void * row_pointer(void *A, i64 ldA, spasm_datatype datatype, i64 i)
  * on output, q sends columns of S to non-pivotal columns of A
  * p_out must be of size n, p_int of size A->n
  */
-void spasm_schur_dense(const spasm *A, const int *p, int n, const int *p_in, 
+void spasm_schur_dense(const struct spasm_csr *A, const int *p, int n, const int *p_in, 
 	spasm_lu *fact, void *S, spasm_datatype datatype,int *q, int *p_out)
 {
 	assert(p != NULL);
-	const spasm *U = fact->U;
+	const struct spasm_csr *U = fact->U;
 	const int *qinv = fact->Uqinv;
 	int m = A->m;
 	int Sm = m - U->n;                                   /* #columns of S */
@@ -341,7 +341,7 @@ void spasm_schur_dense(const spasm *A, const int *p, int n, const int *p_in,
  * q must be preallocated of size at least (m - U->n).
  * on output, q sends columns of S to non-pivotal columns of A
  */
-void spasm_schur_dense_randomized(const spasm *A, const int *p, int n, const spasm *U, const int *qinv, 
+void spasm_schur_dense_randomized(const struct spasm_csr *A, const int *p, int n, const struct spasm_csr *U, const int *qinv, 
 	void *S, spasm_datatype datatype, int *q, int N, int w)
 {
 	assert(p != NULL);

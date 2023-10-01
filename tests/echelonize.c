@@ -27,7 +27,7 @@ void parse_command_line_options(int argc, char **argv)
 }
 
 /* so far, this program checks that the U matrix is in REF, and that rowspan(A) is included in rowspan(U) */
-void echelon_form_check(const spasm *U, int *qinv)
+void echelon_form_check(const struct spasm_csr *U, int *qinv)
 {
 	int m = U->m;
 	const i64 *Up = U->p;
@@ -50,7 +50,7 @@ void echelon_form_check(const spasm *U, int *qinv)
 }
 
 
-void rref_check(const spasm *U, int *qinv)
+void rref_check(const struct spasm_csr *U, int *qinv)
 {
 	const i64 *Up = U->p;
 	const int *Uj = U->j;
@@ -69,7 +69,7 @@ void rref_check(const spasm *U, int *qinv)
 	}
 }
 
-void deterministic_inclusion_test(const spasm *A, const spasm *U, const int *qinv)
+void deterministic_inclusion_test(const struct spasm_csr *A, const struct spasm_csr *U, const int *qinv)
 {
 	printf("# Checking that rowspan(A) is included in rowspan(U) [deterministic]...\n");
 	int done = 0;
@@ -109,7 +109,7 @@ void deterministic_inclusion_test(const spasm *A, const spasm *U, const int *qin
 }
 
 
-void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
+void probabilistic_inclusion_test(struct spasm_csr *A, struct spasm_csr *U, int n_iterations)
 {
 	fprintf(stderr, "---> Checking that rowspan(A) is included in rowspan(U) [probabilistic, %d iterations]...\n", n_iterations);
 		int n = A->n;
@@ -157,8 +157,8 @@ void probabilistic_inclusion_test(spasm *A, spasm *U, int n_iterations)
 int main(int argc, char **argv)
 {
 	parse_command_line_options(argc, argv);
-	spasm_triplet *T = spasm_load_sms(stdin, prime, NULL);
-	spasm *A = spasm_compress(T);
+	spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
 
 	int m = A->m;
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	spasm_lu *fact = spasm_echelonize(A, &opts);   /* NULL = default options */
-	spasm *U = fact->U;
+	struct spasm_csr *U = fact->U;
 	int *Uqinv = fact->Uqinv;
 
 	assert(A->m == U->m);
@@ -177,12 +177,12 @@ int main(int argc, char **argv)
 	// spasm_save_csr(stdout, U);
 	deterministic_inclusion_test(A, U, Uqinv);
 
-	spasm *R = spasm_rref(fact, Rqinv);
+	struct spasm_csr *R = spasm_rref(fact, Rqinv);
 	rref_check(R, Rqinv);
 	deterministic_inclusion_test(A, R, Rqinv);	
 
-	// spasm *M = spasm_trsm(U, Uqinv, A);
-	// spasm *K = spasm_kernel_from_rref(R, Rqinv);
+	// struct spasm_csr *M = spasm_trsm(U, Uqinv, A);
+	// struct spasm_csr *K = spasm_kernel_from_rref(R, Rqinv);
 
 	spasm_csr_free(A);
 	spasm_csr_free(U);

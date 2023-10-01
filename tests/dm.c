@@ -6,8 +6,8 @@
 
 int main(int argc, char **argv)
 {
-	spasm_triplet *T = spasm_load_sms(stdin, 42013, NULL);
-	spasm *A = spasm_compress(T);
+	spasm_triplet *T = spasm_triplet_load(stdin, 42013, NULL);
+	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
 
 	int n = A->n;
@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 	/* generate random row & col permutation */
 	int *p = spasm_random_permutation(n);
 	int *q = spasm_random_permutation(m);
-	spasm *B = spasm_permute(A, p, q, SPASM_IGNORE_VALUES);
+	struct spasm_csr *B = spasm_permute(A, p, q, SPASM_IGNORE_VALUES);
 	free(p);
 	free(q);
 	spasm_csr_free(A);
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 
 	/* check that coarse decomposition is really block-upper-triangular */
 	int *qinv = spasm_pinv(q, m);
-	spasm *C = spasm_permute(B, p, qinv, SPASM_IGNORE_VALUES);
+	struct spasm_csr *C = spasm_permute(B, p, qinv, SPASM_IGNORE_VALUES);
 	free(qinv);
 	spasm_csr_free(B);
 

@@ -7,7 +7,7 @@
  * (dense) vector * (sparse) Matrix
  * y <--- x*A + y
  */
-void spasm_xApy(const spasm_ZZp *x, const spasm *A, spasm_ZZp *y)
+void spasm_xApy(const spasm_ZZp *x, const struct spasm_csr *A, spasm_ZZp *y)
 {
 	int n = A->n;
 	const i64 *Ap = A->p;
@@ -24,7 +24,7 @@ void spasm_xApy(const spasm_ZZp *x, const spasm *A, spasm_ZZp *y)
  * (sparse) Matrix * (dense) vector
  * y <--- A*x + y
  */
-void spasm_Axpy(const spasm *A, const spasm_ZZp *x, spasm_ZZp *y)
+void spasm_Axpy(const struct spasm_csr *A, const spasm_ZZp *x, spasm_ZZp *y)
 {
 	int n = A->n;
 	const i64 *Ap = A->p;

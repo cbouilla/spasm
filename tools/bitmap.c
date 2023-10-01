@@ -40,8 +40,8 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	spasm_triplet *T = spasm_load_sms(stdin, -1, NULL);
-	spasm *A = spasm_compress(T);
+	spasm_triplet *T = spasm_triplet_load(stdin, -1, NULL);
+	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
 	int n = A->n;
 	int m = A->m;

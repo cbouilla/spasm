@@ -18,7 +18,7 @@
  * breadth-first search for coarse decomposition. This determines R0,R3,C3
  * (or C0,C1,R1 when given the transpose of A).
  */
-static void bfs(const spasm * A, int *wi, int *wj, int *queue, const int *imatch, const int *jmatch, int mark)
+static void bfs(const struct spasm_csr * A, int *wi, int *wj, int *queue, const int *imatch, const int *jmatch, int mark)
 {
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;
@@ -87,7 +87,7 @@ static void collect_matched(int n, const int *wj, const int *imatch, int *p, int
 }
 
 
-spasm_dm *spasm_dulmage_mendelsohn(const spasm *A)
+spasm_dm *spasm_dulmage_mendelsohn(const struct spasm_csr *A)
 {
 	int n = A->n;
 	int m = A->m;
@@ -95,7 +95,7 @@ spasm_dm *spasm_dulmage_mendelsohn(const spasm *A)
 	/* --- Maximum matching ----------------------------------------- */
 	int *jmatch = spasm_malloc(n * sizeof(int));
 	int *imatch = spasm_malloc(m * sizeof(int));
-	spasm * A_t = spasm_transpose(A, SPASM_IGNORE_VALUES);
+	struct spasm_csr * A_t = spasm_transpose(A, SPASM_IGNORE_VALUES);
 
 	if (n < m) {
 		spasm_maximum_matching(A, jmatch, imatch);
@@ -145,8 +145,8 @@ spasm_dm *spasm_dulmage_mendelsohn(const spasm *A)
 
 	/* extract S */
 	int *qinv = spasm_pinv(q, m);
-	spasm *B = spasm_permute(A, p, qinv, SPASM_IGNORE_VALUES);
-	spasm *C = spasm_submatrix(B, rr[1], rr[2], cc[2], cc[3], SPASM_IGNORE_VALUES);
+	struct spasm_csr *B = spasm_permute(A, p, qinv, SPASM_IGNORE_VALUES);
+	struct spasm_csr *C = spasm_submatrix(B, rr[1], rr[2], cc[2], cc[3], SPASM_IGNORE_VALUES);
 	spasm_csr_free(B);
 
 	spasm_dm *SCC = spasm_strongly_connected_components(C);

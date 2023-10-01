@@ -29,8 +29,8 @@ void parse_command_line_options(int argc, char **argv)
 int main(int argc, char **argv)
 {
         parse_command_line_options(argc, argv);
-        spasm_triplet *T = spasm_load_sms(stdin, prime, NULL);
-        spasm *A = spasm_compress(T);
+        spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+        struct spasm_csr *A = spasm_compress(T);
         spasm_triplet_free(T);
   
         int n = A->n;
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
                 printf("# Qt[%d] = %zd\n", j, Qinv[j]);
 
         /* build our LU factorization */
-        spasm *U = spasm_csr_alloc(r, n, n*m, prime, true);
+        struct spasm_csr *U = spasm_csr_alloc(r, n, n*m, prime, true);
         spasm_triplet *L = spasm_triplet_alloc(n, r, n*m, prime, true);
         i64 *Up = U->p;
         int *Li = L->i;

@@ -15,7 +15,7 @@ void spasm_augment_matching(int head, const int *istack, const int *jstack, int 
 
 /* lookahead: search for unmatched column in row i. If found, it completes the
  * alternating path in istack/jstack, so we augment the matching. */
-int spasm_lookahead(const spasm *A, int i, int head, int *plookahead, int *istack, int *jstack, int *p, int *qinv)
+int spasm_lookahead(const struct spasm_csr *A, int i, int head, int *plookahead, int *istack, int *jstack, int *p, int *qinv)
 {
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;	
@@ -45,7 +45,7 @@ int spasm_lookahead(const spasm *A, int i, int head, int *plookahead, int *istac
  * Because the matching increases monotonically (when row/column is matched, it
  * stays matched), is it useless to re-examine matched columns.
  */
-int spasm_augmenting_path(const spasm *A, int istart, int *istack, int *jstack, int *pstack, int *marks, int *plookahead, int *p, int *qinv)
+int spasm_augmenting_path(const struct spasm_csr *A, int istart, int *istack, int *jstack, int *pstack, int *marks, int *plookahead, int *p, int *qinv)
 {
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;
@@ -100,7 +100,7 @@ int spasm_augmenting_path(const spasm *A, int istart, int *istack, int *jstack, 
  * 
  * @return size of the matching
  */
-int spasm_maximum_matching(const spasm *A, int *p, int *qinv)
+int spasm_maximum_matching(const struct spasm_csr *A, int *p, int *qinv)
 {
 	int n = A->n;
 	int m = A->m;

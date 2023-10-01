@@ -58,8 +58,8 @@ int main(int argc, char **argv)
 	spasm_echelonize_init_opts(&opts);
 	parse_command_line_options(argc, argv);
 
-	spasm_triplet *T = spasm_load_sms(stdin, prime, NULL);
-	spasm *A = spasm_compress(T);
+	spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
 	int m = A->m;
 
@@ -70,12 +70,12 @@ int main(int argc, char **argv)
 	if (rref) {
 		/* compute the RREF */
 		int *Rqinv = spasm_malloc(m * sizeof(int));
-		spasm *R = spasm_rref(fact, Rqinv);
-		spasm_save_csr(stdout, R);
+		struct spasm_csr *R = spasm_rref(fact, Rqinv);
+		spasm_csr_save(R, stdout);
 		spasm_csr_free(R);
 		free(Rqinv);
 	} else {
-		spasm_save_csr(stdout, fact->U);
+		spasm_csr_save(fact->U, stdout);
 	}
 	spasm_lu_free(fact);
 	exit(EXIT_SUCCESS);

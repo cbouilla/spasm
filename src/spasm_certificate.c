@@ -18,11 +18,11 @@
  *
  * To make a "real" certificate, seed should be obtained by hashing the input matrix
  */
-spasm_rowspan_certificate * spasm_certificate_rowspan_create(const spasm *A, const spasm_lu *fact, u64 seed)
+spasm_rowspan_certificate * spasm_certificate_rowspan_create(const struct spasm_csr *A, const spasm_lu *fact, u64 seed)
 {
 	assert(fact->L != NULL);
-	const spasm *U = fact->U;
-	const spasm *L = fact->L;
+	const struct spasm_csr *U = fact->U;
+	const struct spasm_csr *L = fact->L;
 	int n = L->n;
 	int m = U->m;
 	int r = U->n;
@@ -80,7 +80,7 @@ spasm_rowspan_certificate * spasm_certificate_rowspan_create(const spasm *A, con
 }
 
 /* check that U is actually permuted upper-triangular */
-static bool check_echelon_form(const spasm *U)
+static bool check_echelon_form(const struct spasm_csr *U)
 {
 	int m = U->m;
 	int r = U->n;
@@ -119,7 +119,7 @@ static bool check_echelon_form(const spasm *U)
 }
 
 /* check that xA == zB */
-static bool check_vector_equality(const spasm_ZZp *x, const spasm *A, const spasm_ZZp *z, const spasm *B)
+static bool check_vector_equality(const spasm_ZZp *x, const struct spasm_csr *A, const spasm_ZZp *z, const struct spasm_csr *B)
 {
 	int m = A->m;
 	assert(m == B->m);
@@ -138,7 +138,7 @@ static bool check_vector_equality(const spasm_ZZp *x, const spasm *A, const spas
 	return correct;
 }
 
-bool spasm_certificate_rowspan_verify(const spasm *A, const spasm *U, const spasm_rowspan_certificate *proof)
+bool spasm_certificate_rowspan_verify(const struct spasm_csr *A, const struct spasm_csr *U, const spasm_rowspan_certificate *proof)
 {
 	if (!check_echelon_form(U))
 		return 0;
@@ -175,11 +175,11 @@ bool spasm_certificate_rowspan_verify(const spasm *A, const spasm *U, const spas
  * To make a "real" certificate, seed should be obtained by hashing the input matrix
  * and the "commitment" i / j.
  */
-spasm_rank_certificate * spasm_certificate_rank_create(const spasm *A, const spasm_lu *fact, u64 seed)
+spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm_csr *A, const spasm_lu *fact, u64 seed)
 {
 	assert(fact->L != NULL);
-	const spasm *U = fact->U;
-	const spasm *L = fact->L;
+	const struct spasm_csr *U = fact->U;
+	const struct spasm_csr *L = fact->L;
 	int n = L->n;
 	int m = U->m;
 	int r = U->n;
@@ -248,7 +248,7 @@ spasm_rank_certificate * spasm_certificate_rank_create(const spasm *A, const spa
 	return proof;
 }
 
-bool spasm_certificate_rank_verify(const spasm *A, const spasm_rank_certificate *proof)
+bool spasm_certificate_rank_verify(const struct spasm_csr *A, const spasm_rank_certificate *proof)
 {
 	int n = A->n;
 	int m = A->m;
@@ -299,11 +299,11 @@ bool spasm_certificate_rank_verify(const spasm *A, const spasm_rank_certificate 
 	return correct;
 }
 
-bool spasm_factorization_verify(const spasm *A, const spasm_lu *fact, u64 seed)
+bool spasm_factorization_verify(const struct spasm_csr *A, const spasm_lu *fact, u64 seed)
 {
 	assert(fact->L != NULL);
-	const spasm *U = fact->U;
-	const spasm *L = fact->L;
+	const struct spasm_csr *U = fact->U;
+	const struct spasm_csr *L = fact->L;
 	int n = A->n;
 	int m = A->m;
 	int r = U->n;

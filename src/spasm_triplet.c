@@ -33,7 +33,7 @@ void spasm_triplet_transpose(spasm_triplet *T)
 	T->n = bar;
 }
 
-static void remove_explicit_zeroes(spasm *A)
+static void remove_explicit_zeroes(struct spasm_csr *A)
 {
 	int n = A->n;
 	i64 *Ap = A->p;
@@ -58,7 +58,7 @@ static void remove_explicit_zeroes(spasm *A)
 }
 
 /* in-place */
-static void deduplicate(spasm *A)
+static void deduplicate(struct spasm_csr *A)
 {
 	int m = A->m;
 	int n = A->n;
@@ -96,7 +96,7 @@ static void deduplicate(spasm *A)
 }
 
 /* C = compressed-row form of a triplet matrix T */
-spasm *spasm_compress(const spasm_triplet * T)
+struct spasm_csr *spasm_compress(const spasm_triplet * T)
 {
 	int m = T->m;
 	int n = T->n;
@@ -110,7 +110,7 @@ spasm *spasm_compress(const spasm_triplet * T)
 	fflush(stderr);
 
 	/* allocate result */
-	spasm *C = spasm_csr_alloc(n, m, nz, T->field->p, Tx != NULL);
+	struct spasm_csr *C = spasm_csr_alloc(n, m, nz, T->field->p, Tx != NULL);
 
 	/* get workspace */
 	i64 *w = spasm_malloc(n * sizeof(*w));

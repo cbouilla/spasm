@@ -4,7 +4,7 @@
  * 
  * This is where all the heavy lifting should take place.
  */
-void spasm_scatter(const spasm *A, int i, spasm_ZZp beta, spasm_ZZp * x)
+void spasm_scatter(const struct spasm_csr *A, int i, spasm_ZZp beta, spasm_ZZp * x)
 {
 	const i64 *Ap = A->p;
 	const int *Aj = A->j;

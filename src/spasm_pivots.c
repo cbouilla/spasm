@@ -38,7 +38,7 @@ static int register_pivot(int i, int j, int *pinv, int *qinv)
  *
  * update p/qinv and returns the number of pivots found. 
  */
-static int spasm_find_FL_pivots(const spasm *A, int *p, int *qinv)
+static int spasm_find_FL_pivots(const struct spasm_csr *A, int *p, int *qinv)
 {
 	int n = A->n;
 	int m = A->m;
@@ -73,7 +73,7 @@ static int spasm_find_FL_pivots(const spasm *A, int *p, int *qinv)
  * w[j] = 1 <===> column j does not appear in a pivotal row
  * 
  */
-static int spasm_find_FL_column_pivots(const spasm *A, int *pinv, int *qinv)
+static int spasm_find_FL_column_pivots(const struct spasm_csr *A, int *pinv, int *qinv)
 {
 	int n = A->n;
 	int m = A->m;
@@ -143,7 +143,7 @@ static inline void BFS_enqueue_row(char *w, int *queue, int *surviving, int *tai
 	}
 }
 
-static int spasm_find_cycle_free_pivots(const spasm *A, int *pinv, int *qinv)
+static int spasm_find_cycle_free_pivots(const struct spasm_csr *A, int *pinv, int *qinv)
 {
 	int n = A->n;
 	int m = A->m;
@@ -302,7 +302,7 @@ static int spasm_find_cycle_free_pivots(const spasm *A, int *pinv, int *qinv)
  * p : row permutations. Pivotal rows are first, in topological order 
  * Both p, pinv and qinv must be preallocated
  */
-static int spasm_pivots_find(const spasm *A, int *pinv, int *qinv, struct echelonize_opts *opts)
+static int spasm_pivots_find(const struct spasm_csr *A, int *pinv, int *qinv, struct echelonize_opts *opts)
 {
 	int n = A->n;
 	int m = A->m;
@@ -322,7 +322,7 @@ static int spasm_pivots_find(const spasm *A, int *pinv, int *qinv, struct echelo
  * build row permutation. Pivotal rows go first in topological order,
  * then non-pivotal rows
  */
-static void spasm_pivots_reorder(const spasm *A, const int *pinv, const int *qinv, int npiv, int *p)
+static void spasm_pivots_reorder(const struct spasm_csr *A, const int *pinv, const int *qinv, int npiv, int *p)
 {
 	int n = A->n;
 	int m = A->m;
@@ -363,7 +363,7 @@ static void spasm_pivots_reorder(const spasm *A, const int *pinv, const int *qin
  * write p (pivotal rows of A first)
  * return the number of pivots found
  */
-int spasm_pivots_extract_structural(const spasm *A, const int *p_in, spasm_lu *fact, int *p, struct echelonize_opts *opts)
+int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, spasm_lu *fact, int *p, struct echelonize_opts *opts)
 {
 	int n = A->n;
 	int m = A->m;
@@ -377,7 +377,7 @@ int spasm_pivots_extract_structural(const spasm *A, const int *p_in, spasm_lu *f
 	spasm_pivots_reorder(A, pinv, qinv, npiv, p);
 
 	/* compute total pivot nnz and reallocate U if necessary */
-	spasm *U = fact->U;
+	struct spasm_csr *U = fact->U;
 	spasm_triplet *L = fact->Ltmp;
 	int *Uqinv = fact->Uqinv;
 	int *Lqinv = fact->Lqinv;
@@ -448,7 +448,7 @@ int spasm_pivots_extract_structural(const spasm *A, const int *p_in, spasm_lu *f
  * returns a permuted version of A where pivots are pushed to the top-left
  * and form an upper-triangular principal submatrix. qinv is modified.
  */
-spasm *spasm_permute_pivots(const spasm *A, const int *p, int *qinv, int npiv)
+struct spasm_csr *spasm_permute_pivots(const struct spasm_csr *A, const int *p, int *qinv, int npiv)
 {
 	int m = A->m;
 	const i64 *Ap = A->p;

@@ -11,7 +11,7 @@ int main() {
 	int n, m, nz, u, v;
 	int *p, *q, *Ai, *Aj;
 
-	A = spasm_load_sms(stdin, 42013, NULL);
+	A = spasm_triplet_load(stdin, 42013, NULL);
 
 	n = A->n;
 	m = A->m;
@@ -59,7 +59,7 @@ int main() {
 		Aj[k] = q[Aj[k]];
 	}
 
-	spasm_save_triplet(stdout, A);
+	spasm_triplet_save(A, stdout);
 	spasm_triplet_free(A);
 	free(p);
 	free(q);

@@ -8,11 +8,11 @@
 int main(int argc, char **argv) {
   int n, m, i, j;
   spasm_triplet *T;
-  spasm *A, *B;
+  struct spasm_csr *A, *B;
   int *p, *q;
   spasm_ZZp *x, *y, *u, *v, *w;
 
-  T = spasm_load_sms(stdin, 42013, NULL);
+  T = spasm_triplet_load(stdin, 42013, NULL);
   A = spasm_compress(T);
   spasm_triplet_free(T);
 

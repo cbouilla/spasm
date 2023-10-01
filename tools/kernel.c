@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Left-kernel, transposing\n");
 		spasm_triplet_transpose(T);
 	}
-	spasm *A = spasm_compress(T);
+	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
 
 	/* echelonize A */
@@ -83,9 +83,9 @@ int main(int argc, char **argv)
 	spasm_csr_free(A);
 
 	/* kernel basis */
-	spasm *K = spasm_kernel(fact);
+	struct spasm_csr *K = spasm_kernel(fact);
 	fprintf(stderr, "Kernel basis matrix is %d x %d with %" PRId64 " nz\n", K->n, K->m, spasm_nnz(K));
 	
 	FILE *f = open_output(args.output_filename);
-	spasm_save_csr(f, K);
+	spasm_csr_save(K, f);
 }

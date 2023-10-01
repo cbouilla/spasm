@@ -32,13 +32,13 @@ void parse_command_line_options(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
- 	spasm_triplet *T = spasm_load_sms(stdin, prime, NULL);
- 	spasm *A = spasm_compress(T);
+ 	spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+ 	struct spasm_csr *A = spasm_compress(T);
  	spasm_triplet_free(T);
  	int m = A->m;
 
  	spasm_lu *fact = spasm_echelonize(A, NULL);
- 	spasm *U = fact->U;
+ 	struct spasm_csr *U = fact->U;
  	int *qinv = fact->Uqinv;
 	int r = U->n;
  	
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 		spasm_add_entry(T, 0, m / 2, 2);
 		spasm_add_entry(T, 0, m - 1, 3);
 	}
-	spasm *B = spasm_compress(T);
+	struct spasm_csr *B = spasm_compress(T);
 	spasm_triplet_free(T);
 
 	// triangular solve

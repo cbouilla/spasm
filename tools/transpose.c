@@ -3,15 +3,15 @@
 #include "spasm.h"
 
 int main() {
-	spasm_triplet *T = spasm_load_sms(stdin, 42013, NULL);
+	spasm_triplet *T = spasm_triplet_load(stdin, 42013, NULL);
 
 	/* TODO : this is really ugly */
-	spasm *A = spasm_compress(T);
+	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
-	spasm *A_t = spasm_transpose(A, true);
+	struct spasm_csr *A_t = spasm_transpose(A, true);
 	spasm_csr_free(A);
 
-	spasm_save_csr(stdout, A_t);
+	spasm_csr_save(A_t, stdout);
 
 	spasm_csr_free(A_t);
 	return 0;

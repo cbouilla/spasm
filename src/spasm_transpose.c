@@ -2,7 +2,7 @@
 
 #include "spasm.h"
 
-spasm *spasm_transpose(const spasm *C, int keep_values)
+struct spasm_csr *spasm_transpose(const struct spasm_csr *C, int keep_values)
 {
 	int m = C->m;
 	int n = C->n;
@@ -12,7 +12,7 @@ spasm *spasm_transpose(const spasm *C, int keep_values)
 	i64 prime = spasm_get_prime(C);
 
 	/* allocate result */
-	spasm *T = spasm_csr_alloc(m, n, spasm_nnz(C), prime, keep_values && (Cx != NULL));
+	struct spasm_csr *T = spasm_csr_alloc(m, n, spasm_nnz(C), prime, keep_values && (Cx != NULL));
 	i64 *Tp = T->p;
 	int *Tj = T->j;
 	spasm_ZZp *Tx = T->x;

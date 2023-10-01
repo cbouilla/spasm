@@ -39,8 +39,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    spasm_triplet *T = spasm_load_sms(stdin, 42013, NULL);
-    spasm * A = spasm_compress(T);
+    spasm_triplet *T = spasm_triplet_load(stdin, 42013, NULL);
+    struct spasm_csr * A = spasm_compress(T);
     spasm_triplet_free(T);
 
     int n = A->n;
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     int *cc = DM->cc;
 
     int * qinv = spasm_pinv(DM->q, m);
-    spasm * B = spasm_permute(A, DM->p, qinv, true);
+    struct spasm_csr * B = spasm_permute(A, DM->p, qinv, true);
     free(qinv);
     spasm_csr_free(A);
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
         break;
         
     case 'p':
-        spasm_save_csr(stdout, B);
+        spasm_csr_save(B, stdout);
         break;
 
     case 'i':
@@ -104,6 +104,5 @@ int main(int argc, char **argv) {
         break;
     }    
 
-    spasm_csr_free(B);
     return 0;
 }

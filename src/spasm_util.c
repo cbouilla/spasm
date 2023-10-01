@@ -32,7 +32,7 @@ double spasm_wtime()
 }
 
 
-i64 spasm_nnz(const spasm * A)
+i64 spasm_nnz(const struct spasm_csr * A)
 {
 	return A->p[A->n];
 }
@@ -87,9 +87,9 @@ void *spasm_realloc(void *ptr, i64 size)
 }
 
 /* allocate a sparse matrix (compressed-row form) */
-spasm *spasm_csr_alloc(int n, int m, i64 nzmax, i64 prime, bool with_values)
+struct spasm_csr *spasm_csr_alloc(int n, int m, i64 nzmax, i64 prime, bool with_values)
 {
-	spasm *A = spasm_malloc(sizeof(spasm));
+	struct spasm_csr *A = spasm_malloc(sizeof(*A));
 	spasm_field_init(prime, A->field);
 	A->m = m;
 	A->n = n;
@@ -104,7 +104,7 @@ spasm *spasm_csr_alloc(int n, int m, i64 nzmax, i64 prime, bool with_values)
 /* allocate a sparse matrix (triplet form) */
 spasm_triplet *spasm_triplet_alloc(int n, int m, i64 nzmax, i64 prime, bool with_values)
 {
-	spasm_triplet *A = spasm_malloc(sizeof(spasm_triplet));
+	spasm_triplet *A = spasm_malloc(sizeof(*A));
 	A->m = m;
 	A->n = n;
 	A->nzmax = nzmax;
@@ -120,7 +120,7 @@ spasm_triplet *spasm_triplet_alloc(int n, int m, i64 nzmax, i64 prime, bool with
  * change the max # of entries in a sparse matrix. If nzmax < 0, then the
  * matrix is trimmed to its current nnz.
  */
-void spasm_csr_realloc(spasm *A, i64 nzmax)
+void spasm_csr_realloc(struct spasm_csr *A, i64 nzmax)
 {
 	if (nzmax < 0)
 		nzmax = spasm_nnz(A);
@@ -150,7 +150,7 @@ void spasm_triplet_realloc(spasm_triplet *A, i64 nzmax)
 }
 
 /* free a sparse matrix */
-void spasm_csr_free(spasm *A)
+void spasm_csr_free(struct spasm_csr *A)
 {
 	if (A == NULL)
 		return;
@@ -168,7 +168,7 @@ void spasm_triplet_free(spasm_triplet *A)
 	free(A);
 }
 
-void spasm_csr_resize(spasm *A, int n, int m)
+void spasm_csr_resize(struct spasm_csr *A, int n, int m)
 {
 	A->m = m;
 	/* TODO: in case of a shrink, check that no entries are left outside */

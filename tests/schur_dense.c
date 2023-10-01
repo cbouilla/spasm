@@ -29,8 +29,8 @@ void parse_command_line_options(int argc, char **argv)
 int main(int argc, char **argv) 
 {
 	parse_command_line_options(argc, argv);
-	spasm_triplet *T = spasm_load_sms(stdin, prime, NULL);
-	spasm *A = spasm_compress(T);
+	spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
 
 	int n = A->n;
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	int *p = spasm_malloc(n * sizeof(*p));
 	int *Uqinv = spasm_malloc(m * sizeof(*Uqinv));
 	int *Lqinv = spasm_malloc(n * sizeof(*Lqinv));
-	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, true);
+	struct spasm_csr *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, true);
 	U->n = 0;
 	for (int j = 0; j < m; j++)
 		Uqinv[j] = -1;
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	spasm_schur_dense(A, p + npiv, Sn, NULL, &fact, S, datatype, q, p_out);
 	// for (int i = 0; i < fact.Ltmp->nz; i++)
 	// 	printf("Ltmp : (%d, %d, %d)\n", fact.Ltmp->i[i], fact.Ltmp->j[i], fact.Ltmp->x[i]);
-	spasm *L = spasm_compress(fact.Ltmp);
+	struct spasm_csr *L = spasm_compress(fact.Ltmp);
 	i64 *Lp = L->p;
 	int *Lj = L->j;
 	spasm_ZZp *Lx = L->x;

@@ -10,9 +10,9 @@
  * On output, Rqinv locates the pivots in R (on column j, pivot is on row Rqinv[i] of R,
  * or Rqinv[j] == -1 if there is no pivot on column j).
  */
-spasm * spasm_rref(const spasm_lu *fact, int *Rqinv)
+struct spasm_csr * spasm_rref(const spasm_lu *fact, int *Rqinv)
 {
-	const spasm *U = fact->U;
+	const struct spasm_csr *U = fact->U;
 	const int *Uqinv = fact->Uqinv;
 
 	int n = U->n;
@@ -22,7 +22,7 @@ spasm * spasm_rref(const spasm_lu *fact, int *Rqinv)
 	spasm_human_format(spasm_nnz(U), hnnz);
 	fprintf(stderr, "[rref] start. U is %d x %d (%s nnz)\n", n, m, hnnz);
 	double start_time = spasm_wtime();
-	spasm *R = spasm_csr_alloc(n, m, spasm_nnz(U), prime, true);
+	struct spasm_csr *R = spasm_csr_alloc(n, m, spasm_nnz(U), prime, true);
 	i64 *Rp = R->p;
 	int *Rj = R->j;
 	spasm_ZZp *Rx = R->x;

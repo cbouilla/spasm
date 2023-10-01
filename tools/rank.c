@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 		fflush(stderr);
 		spasm_triplet_transpose(T);
 	}
-	spasm *A = spasm_compress(T);
+	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
 	int n = A->n;
 	int m = A->m;

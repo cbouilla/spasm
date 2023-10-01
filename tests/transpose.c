@@ -8,15 +8,15 @@
 
 int main(int argc, char **argv)
 {
-        spasm_triplet *T = spasm_load_sms(stdin, 42013, NULL);
-        spasm *A = spasm_compress(T);
+        spasm_triplet *T = spasm_triplet_load(stdin, 42013, NULL);
+        struct spasm_csr *A = spasm_compress(T);
         spasm_triplet_free(T);
 
         int n = A->n;
         int m = A->m;
 
-        spasm *B = spasm_transpose(A, true);
-        spasm *C = spasm_transpose(B, true);
+        struct spasm_csr *B = spasm_transpose(A, true);
+        struct spasm_csr *C = spasm_transpose(B, true);
 
         if (spasm_is_lower_triangular(A)) {
                 printf("# A is lower-triangular.\n");

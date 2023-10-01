@@ -6,8 +6,8 @@
 
 int main(int argc, char **argv)
 {
-	spasm_triplet *T = spasm_load_sms(stdin, 42013, NULL);
-	spasm *A = spasm_compress(T);
+	spasm_triplet *T = spasm_triplet_load(stdin, 42013, NULL);
+	struct spasm_csr *A = spasm_compress(T);
 	spasm_triplet_free(T);
 
 	int n = A->n;
@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 	free(pinv);
 	spasm_csr_free(A);
 	*/
-	spasm *B = A;
+	struct spasm_csr *B = A;
 	spasm_dm *P = spasm_strongly_connected_components(B);
 	int *p = P->p;
 	int *q = P->q;
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
 	/* --- check that decomposition is really block-upper-triangular ---------------- */
 	int *pinv = spasm_pinv(p, n);
-	spasm *C = spasm_permute(B, p, pinv, SPASM_IGNORE_VALUES);
+	struct spasm_csr *C = spasm_permute(B, p, pinv, SPASM_IGNORE_VALUES);
 	i64 *Cp = C->p;
 	int *Cj = C->j;
 	free(pinv);

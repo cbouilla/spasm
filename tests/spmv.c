@@ -6,8 +6,8 @@
 
 int main()
 {
-	spasm_triplet *T = spasm_load_sms(stdin, 257, NULL);
-	spasm *C = spasm_compress(T);
+	spasm_triplet *T = spasm_triplet_load(stdin, 257, NULL);
+	struct spasm_csr *C = spasm_compress(T);
 	spasm_triplet_free(T);
 
 	int n = C->n;

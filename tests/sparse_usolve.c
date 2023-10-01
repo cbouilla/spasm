@@ -33,8 +33,8 @@ int main(int argc, char **argv)
 {
         parse_command_line_options(argc, argv);
         // load upper-triangular matrix matrix
-        spasm_triplet *T = spasm_load_sms(stdin, prime, NULL);
-        spasm *U = spasm_compress(T);
+        spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+        struct spasm_csr *U = spasm_compress(T);
         spasm_triplet_free(T);
         int n = U->n;
         int m = U->m;
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
         spasm_add_entry(T, 0, 0, 1);
         spasm_add_entry(T, 0, m / 2, 2);
         spasm_add_entry(T, 0, m - 1, 3);
-        spasm *B = spasm_compress(T);
+        struct spasm_csr *B = spasm_compress(T);
         spasm_triplet_free(T);
 
         int *xi = spasm_malloc(3*m * sizeof(*xi));

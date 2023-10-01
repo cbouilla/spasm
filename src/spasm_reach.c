@@ -18,7 +18,7 @@
  * pstack : size-m workspace (used to count the neighbors already traversed)
  * marks  : size-m workspace (indicates which columns have been seen already)
  */
-int spasm_dfs(int jstart, const spasm *A, int top, int *xj, int *pstack, int *marks, const int *qinv)
+int spasm_dfs(int jstart, const struct spasm_csr *A, int top, int *xj, int *pstack, int *marks, const int *qinv)
 {
 	/* check inputs */
 	assert(A != NULL);
@@ -95,7 +95,7 @@ int spasm_dfs(int jstart, const spasm *A, int top, int *xj, int *pstack, int *ma
  *
  * This function does not require the pivots to be the first entries of the rows.
  */
-int spasm_reach(const spasm *A, const spasm *B, int k, int l, int *xj, const int *qinv)
+int spasm_reach(const struct spasm_csr *A, const struct spasm_csr *B, int k, int l, int *xj, const int *qinv)
 {
 	/* check inputs */
 	assert(A != NULL);

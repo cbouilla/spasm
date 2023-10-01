@@ -65,7 +65,7 @@ int *spasm_pinv(int const *p, int n)
  * C = P.A.Q^-1 where P and Q^-1 are permutations of 0..n-1 and 0..m-1
  * respectively.
  */
-spasm *spasm_permute(const spasm *A, const int *p, const int *qinv, int values)
+struct spasm_csr *spasm_permute(const struct spasm_csr *A, const int *p, const int *qinv, int values)
 {
 	/* check inputs */
 	assert(A != NULL);
@@ -77,7 +77,7 @@ spasm *spasm_permute(const spasm *A, const int *p, const int *qinv, int values)
 	i64 prime = spasm_get_prime(A);
 
 	/* alloc result */
-	spasm *C = spasm_csr_alloc(n, m, A->nzmax, prime, values && (Ax != NULL));
+	struct spasm_csr *C = spasm_csr_alloc(n, m, A->nzmax, prime, values && (Ax != NULL));
 	i64 *Cp = C->p;
 	int *Cj = C->j;
 	spasm_ZZp *Cx = C->x;

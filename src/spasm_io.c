@@ -56,7 +56,7 @@ static void validate_mm_header(const char *buffer)
  * set prime == -1 to avoid loading values.
  * if hash != NULL, then the SHA256 of the input matrix is written in hash (32 bytes)
  */
-spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
+spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash)
 {
 	assert(f != NULL);
 	double start = spasm_wtime();
@@ -71,9 +71,9 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 
 	/* Process header */
 	i64 line = 0;
-	bool eof = read_line("spasm_load_sms", line, buffer, 1024, ctx, f);
+	bool eof = read_line("spasm_triplet_load", line, buffer, 1024, ctx, f);
 	if (eof)
-		errx(1, "[spasm_load_sms] empty file\n");
+		errx(1, "[spasm_triplet_load] empty file\n");
 
 	/* MatrixMarket ? */
 	bool mm = 0;
@@ -84,14 +84,14 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 		/* skip comments, read dimensions */
 		for (;;) {
 			line += 1;
-			eof = read_line("spasm_load_sms", line, buffer, 1024, ctx, f);
+			eof = read_line("spasm_triplet_load", line, buffer, 1024, ctx, f);
 			if (eof)
 				errx(1, "premature EOF on line %" PRId64 " (expected matrix dimensions)", line);
 			if (buffer[0] != '%')
 				break;
 		}
 		if (sscanf(buffer, "%d %d %" SCNd64 "\n", &i, &j, &nnz) != 3)
-			errx(1, "[spasm_load_sms] bad MatrixMarking dimensions (line %" PRId64 ")\n", line);
+			errx(1, "[spasm_triplet_load] bad MatrixMarking dimensions (line %" PRId64 ")\n", line);
 		spasm_human_format(nnz, hnnz);
 		fprintf(stderr, "[IO] loading %d x %d MatrixMarket matrix modulo %" PRId64 " with %s non-zero... ", 
 			i, j, prime, hnnz);
@@ -100,9 +100,9 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 		/* SMS header */
 		char type;
 		if (sscanf(buffer, "%d %d %c\n", &i, &j, &type) != 3)
-			errx(1, "[spasm_load_sms] bad SMS file (header)\n");
+			errx(1, "[spasm_triplet_load] bad SMS file (header)\n");
 		if (prime != -1 && type != 'M')
-			errx(1, "[spasm_load_sms] only ``Modular'' type supported\n");
+			errx(1, "[spasm_triplet_load] only ``Modular'' type supported\n");
 		fprintf(stderr, "[IO] loading %d x %d SMS matrix modulo %" PRId64 "... ", i, j, prime);
 		fflush(stderr);
 	}
@@ -114,7 +114,7 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 	bool end = 0;
 	for (;;) { 
 		line += 1;
-		eof = read_line("spasm_load_sms", line, buffer, 1024, ctx, f);
+		eof = read_line("spasm_triplet_load", line, buffer, 1024, ctx, f);
 		if (end && eof)
 			break;
 		if (end && !eof) {
@@ -122,7 +122,7 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 			continue;
 		}
 		if (!end && eof)
-			errx(1, "[spasm_load_sms] premature end of file");
+			errx(1, "[spasm_triplet_load] premature end of file");
 
 		if (sscanf(buffer, "%d %d %" SCNd64 "\n", &i, &j, &x) != 3)
 			errx(1, "parse error line %" PRId64, line);
@@ -147,7 +147,7 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 
 	if (ctx != NULL) {
 		spasm_SHA256_final(hash, ctx);
-		fprintf(stderr, "[spasm_load_sms] sha256(matrix) = ");
+		fprintf(stderr, "[spasm_triplet_load] sha256(matrix) = ");
 		for (int i = 0; i < 32; i++)
 			fprintf(stderr, "%02x", hash[i]);
 		fprintf(stderr, " / size = %" PRId64" bytes\n", (((i64) ctx->Nh) << 29) + ctx->Nl / 8);
@@ -158,7 +158,7 @@ spasm_triplet *spasm_load_sms(FILE * f, i64 prime, u8 *hash)
 /*
  * save a matrix in SMS format. TODO : change name to spasm_csr_save
  */
-void spasm_save_csr(FILE *f, const spasm *A)
+void spasm_csr_save(const struct spasm_csr *A, FILE *f)
 {
 	assert(f != NULL);
 	const int *Aj = A->j;
@@ -179,7 +179,7 @@ void spasm_save_csr(FILE *f, const spasm *A)
 /*
  * save a matrix in SMS format. TODO : change name to spasm_triplet_save
  */
-void spasm_save_triplet(FILE *f, const spasm_triplet *A)
+void spasm_triplet_save(const spasm_triplet *A, FILE *f)
 {
 	assert(f != NULL);
 	const int *Ai = A->i;
@@ -197,7 +197,7 @@ void spasm_save_triplet(FILE *f, const spasm_triplet *A)
  *       2 --> create a PGM file (gray levels) 
  *       3 --> create a PNM file (colors)
  */
-void spasm_save_pnm(const spasm *A, FILE *f, int x, int y, int mode, spasm_dm *DM)
+void spasm_save_pnm(const struct spasm_csr *A, FILE *f, int x, int y, int mode, spasm_dm *DM)
 {
 	const int *Aj = A->j;
 	const i64 *Ap = A->p;

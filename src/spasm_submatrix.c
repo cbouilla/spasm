@@ -4,7 +4,7 @@
 /**
  * returns A[r_0:r_1, c_0:c_1]
  */
-spasm *spasm_submatrix(const spasm * A, int r_0, int r_1, int c_0, int c_1, int with_values)
+struct spasm_csr *spasm_submatrix(const struct spasm_csr * A, int r_0, int r_1, int c_0, int c_1, int with_values)
 {
 	assert(A != NULL);
 	const i64 *Ap = A->p;
@@ -15,7 +15,7 @@ spasm *spasm_submatrix(const spasm * A, int r_0, int r_1, int c_0, int c_1, int 
 	int Bn = spasm_max(0, r_1 - r_0);
 	int Bm = spasm_max(0, c_1 - c_0);
 	i64 Bnz = spasm_max(0, Ap[r_1] - Ap[r_0]);
-	spasm *B = spasm_csr_alloc(Bn, Bm, Bnz, prime, (A->x != NULL) && with_values);
+	struct spasm_csr *B = spasm_csr_alloc(Bn, Bm, Bnz, prime, (A->x != NULL) && with_values);
 	i64 *Bp = B->p;
 	int *Bj = B->j;
 	spasm_ZZp *Bx = B->x;

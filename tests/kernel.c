@@ -30,21 +30,21 @@ int main(int argc, char **argv)
 {
         parse_command_line_options(argc, argv);
 
-        spasm_triplet *T = spasm_load_sms(stdin, prime, NULL);
-        spasm *A = spasm_compress(T);
+        spasm_triplet *T = spasm_triplet_load(stdin, prime, NULL);
+        struct spasm_csr *A = spasm_compress(T);
         spasm_triplet_free(T);
 
         int n = A->n;
         int m = A->m;
   
         /* build left kernel basis of A */
-        spasm *At = spasm_transpose(A, true);
+        struct spasm_csr *At = spasm_transpose(A, true);
         struct echelonize_opts opts;
         spasm_echelonize_init_opts(&opts);
         spasm_lu *fact = spasm_echelonize(At, &opts);
-        spasm *U = fact->U;
-        spasm *Ut = spasm_transpose(U, true);
-        spasm *K = spasm_kernel(fact);
+        struct spasm_csr *U = fact->U;
+        struct spasm_csr *Ut = spasm_transpose(U, true);
+        struct spasm_csr *K = spasm_kernel(fact);
 
         /* rows of K form a basis of the right-kernel of At, hence the left kernel of A */
         

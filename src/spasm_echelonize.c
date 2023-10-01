@@ -12,7 +12,7 @@
  *   3. low-rank dense (including "tall and skinny") --- pick random linear combinations
  *
  * all echelonization function should have prototype: 
- *     echelonize_XXX(spasm *A, const int *p, int n, spasm *U, int *Uqinv, struct echelonize_opts *opts);
+ *     echelonize_XXX(struct spasm_csr *A, const int *p, int n, struct spasm_csr *U, int *Uqinv, struct echelonize_opts *opts);
  *
  * passing NULL as the options leads to default choices. 
  */
@@ -39,7 +39,7 @@ void spasm_echelonize_init_opts(struct echelonize_opts *opts)
 	opts->low_rank_start_weight = -1;
 }
 
-bool spasm_echelonize_test_completion(const spasm *A, const int *p, int n, spasm *U, int *Uqinv)
+bool spasm_echelonize_test_completion(const struct spasm_csr *A, const int *p, int n, struct spasm_csr *U, int *Uqinv)
 {
 	/* deal with the easy cases first */
 	if (n == 0 || spasm_nnz(A) == 0)
@@ -64,7 +64,7 @@ bool spasm_echelonize_test_completion(const spasm *A, const int *p, int n, spasm
 
 
 /* not dry w.r.t. spasm_LU() */
-static void echelonize_GPLU(const spasm *A, const int *p, int n, const int *p_in, spasm_lu *fact, struct echelonize_opts *opts)
+static void echelonize_GPLU(const struct spasm_csr *A, const int *p, int n, const int *p_in, spasm_lu *fact, struct echelonize_opts *opts)
 {
 	(void) opts;
 	assert(p != NULL);
@@ -73,7 +73,7 @@ static void echelonize_GPLU(const spasm *A, const int *p, int n, const int *p_in
 	int verbose_step = spasm_max(1, n / 1000);
 	fprintf(stderr, "[echelonize/GPLU] processing matrix of dimension %d x %d\n", n, m);
 	
-	spasm *U = fact->U;
+	struct spasm_csr *U = fact->U;
 	spasm_triplet *L = fact->Ltmp;
 	int *Uqinv = fact->Uqinv;
 	i64 *Up = U->p;
@@ -205,7 +205,7 @@ static void echelonize_GPLU(const spasm *A, const int *p, int n, const int *p_in
 static void update_U_after_rref(int rr, int Sm, const void *S, spasm_datatype datatype, 
 	const size_t *Sqinv, const int *q, spasm_lu *fact)
 {
-	spasm *U = fact->U;
+	struct spasm_csr *U = fact->U;
 	int *Uqinv = fact->Uqinv;
 	i64 extra_nnz = ((i64) (1 + Sm - rr)) * rr;     /* maximum size increase */
 	i64 unz = spasm_nnz(U);
@@ -241,7 +241,7 @@ static void update_U_after_rref(int rr, int Sm, const void *S, spasm_datatype da
 static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_datatype datatype, 
 	const size_t *Sp, const size_t *Sqinv, const int *q, const int *p_in, spasm_lu *fact)
 {
-	spasm *U = fact->U;
+	struct spasm_csr *U = fact->U;
 	spasm_triplet *L = fact->Ltmp;
 	assert(L != NULL);
 	int *Uqinv = fact->Uqinv;
@@ -304,10 +304,10 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 	}
 }
 
-static void echelonize_dense_lowrank(const spasm *A, const int *p, int n, spasm_lu *fact, struct echelonize_opts *opts)
+static void echelonize_dense_lowrank(const struct spasm_csr *A, const int *p, int n, spasm_lu *fact, struct echelonize_opts *opts)
 {
 	assert(opts->dense_block_size > 0);
-	spasm *U = fact->U;
+	struct spasm_csr *U = fact->U;
 	int *Uqinv = fact->Uqinv;
 	int m = A->m;
 	int Sm = m - U->n;
@@ -374,10 +374,10 @@ static void echelonize_dense_lowrank(const spasm *A, const int *p, int n, spasm_
  * the schur complement (on non-pivotal rows of A) w.r.t. U is dense.
  * process (P*A)[0:n]
  */
-static void echelonize_dense(const spasm *A, const int *p, int n, const int *p_in, spasm_lu *fact, struct echelonize_opts *opts)
+static void echelonize_dense(const struct spasm_csr *A, const int *p, int n, const int *p_in, spasm_lu *fact, struct echelonize_opts *opts)
 {
 	assert(opts->dense_block_size > 0);
-	spasm *U = fact->U;
+	struct spasm_csr *U = fact->U;
 	int m = A->m;
 	int Sm = m - U->n;
 	i64 prime = spasm_get_prime(A);
@@ -456,7 +456,7 @@ static void echelonize_dense(const spasm *A, const int *p, int n, const int *p_i
  * Modifies A (permutes entries in rows)
  * FIXME potential memleak (>= 1 rounds then status == 1...)
  */
-spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
+spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_opts *opts)
 {
 	struct echelonize_opts default_opts;
 	if (opts == NULL) {
@@ -477,7 +477,7 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 	}
 
 	/* allocate result */
-	spasm *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, true);
+	struct spasm_csr *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, true);
 	int *Uqinv = spasm_malloc(m * sizeof(*Uqinv));
 	U->n = 0;
 	for (int j = 0; j < m; j++)
@@ -541,9 +541,9 @@ spasm_lu * spasm_echelonize(const spasm *A, struct echelonize_opts *opts)
 		spasm_human_format(sizeof(int) * (n - npiv + nnz) + sizeof(spasm_ZZp) * nnz, tmp);
 		fprintf(stderr, "Schur complement is %d x %d, estimated density : %.2f (%s byte)\n", n - npiv, m - U->n, density, tmp);
 		int *p_out = spasm_malloc((n - npiv) * sizeof(*p_out));
-		spasm *S = spasm_schur(A, p + npiv, n - npiv, fact, density, L, p_in, p_out);
+		struct spasm_csr *S = spasm_schur(A, p + npiv, n - npiv, fact, density, L, p_in, p_out);
 		if (round > 0)
-			spasm_csr_free((spasm *) A);       /* discard const, only if it is not the input argument */
+			spasm_csr_free((struct spasm_csr *) A);       /* discard const, only if it is not the input argument */
 		A = S;
 		n = n - npiv;  // problem if we exit the loop normally
 		free(p_in);
