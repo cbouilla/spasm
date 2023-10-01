@@ -95,12 +95,12 @@ int main(int argc, char **argv)
 		args.opts.L = 1;
 
 	double start_time = spasm_wtime();
-	spasm_lu *fact = spasm_echelonize(A, &args.opts);   /* NULL = default options */
+	struct spasm_lu *fact = spasm_echelonize(A, &args.opts);   /* NULL = default options */
 	double end_time = spasm_wtime();
 	fprintf(stderr, "done in %.3f s rank = %d\n", end_time - start_time, fact->U->n);
 	
 
-	spasm_rank_certificate *proof = NULL;
+	struct spasm_rank_certificate *proof = NULL;
 	if (args.certificate) {
 		assert(spasm_factorization_verify(A, fact, 42));
 		assert(spasm_factorization_verify(A, fact, 1337));

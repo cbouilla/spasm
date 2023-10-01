@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	opts.L = 1;
-	spasm_lu *fact = spasm_echelonize(A, &opts);
+	struct spasm_lu *fact = spasm_echelonize(A, &opts);
 	int r = fact->U->n;
 	assert(fact->L != NULL);
 	assert(r == 0 || fact->Lqinv != NULL);

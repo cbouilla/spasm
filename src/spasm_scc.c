@@ -11,7 +11,7 @@
 
 /* strategie : quand un noeud est retiré dans une SCC, mettre son index ou son lowlink à n+1 */
 
-spasm_dm *spasm_strongly_connected_components(const struct spasm_csr *A)
+struct spasm_dm *spasm_strongly_connected_components(const struct spasm_csr *A)
 {
 	int n = A->n;
 	int m = A->m;
@@ -19,7 +19,7 @@ spasm_dm *spasm_strongly_connected_components(const struct spasm_csr *A)
 	int *Aj = A->j;
 	assert(n == m);
 
-	spasm_dm *P = spasm_dm_alloc(n, n);
+	struct spasm_dm *P = spasm_dm_alloc(n, n);
 	int p_top = 0;
 	int *p = P->p;
 	int *rr = P->r;

@@ -197,7 +197,7 @@ void spasm_triplet_save(const struct spasm_triplet *A, FILE *f)
  *       2 --> create a PGM file (gray levels) 
  *       3 --> create a PNM file (colors)
  */
-void spasm_save_pnm(const struct spasm_csr *A, FILE *f, int x, int y, int mode, spasm_dm *DM)
+void spasm_save_pnm(const struct spasm_csr *A, FILE *f, int x, int y, int mode, struct spasm_dm *DM)
 {
 	const int *Aj = A->j;
 	const i64 *Ap = A->p;

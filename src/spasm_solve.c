@@ -10,7 +10,7 @@
  * 
  * returns true if a solution exists
  */
-bool spasm_solve(const spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x)
+bool spasm_solve(const struct spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x)
 {
 	const struct spasm_csr *L = fact->L;
 	const struct spasm_csr *U = fact->U;
@@ -47,7 +47,7 @@ bool spasm_solve(const spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x)
 }
 
 /* solve XA == B (returns garbage if a solution does not exist) */
-struct spasm_csr * spasm_solve_gesv(const spasm_lu *fact, const struct spasm_csr *B)
+struct spasm_csr * spasm_solve_gesv(const struct spasm_lu *fact, const struct spasm_csr *B)
 {
 	i64 prime = B->field->p;
 	assert(prime == fact->L->field->p);

@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 	int *Rqinv = spasm_malloc(m * sizeof(int));
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
-	spasm_lu *fact = spasm_echelonize(A, &opts);   /* NULL = default options */
+	struct spasm_lu *fact = spasm_echelonize(A, &opts);   /* NULL = default options */
 	struct spasm_csr *U = fact->U;
 	int *Uqinv = fact->Uqinv;
 

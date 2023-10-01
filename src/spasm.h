@@ -61,15 +61,15 @@ struct spasm_triplet {             /* matrix in triplet form */
 	spasm_field field;
 };
 
-typedef struct {                   /* a PLUQ factorisation */
+struct spasm_lu {                  /* a PLUQ factorisation */
 	struct spasm_csr *L;
 	struct spasm_csr *U;
 	int *Uqinv;                    /* locate pivots in U (on column j, row Uqinv[j]) */
 	int *Lqinv;                    /* locate pivots in L (on column j, row Lqinv[j]) */
 	struct spasm_triplet *Ltmp;           /* for internal use during the factorization */
-} spasm_lu;
+};
 
-typedef struct {      /**** a Dulmage-Mendelson decomposition */
+struct spasm_dm {      /**** a Dulmage-Mendelson decomposition */
 				int *p;       /* size n, row permutation */
 				int *q;       /* size m, column permutation */
 				int *r;       /* size nb+1, block k is rows r[k] to r[k+1]-1 in A(p,q) */
@@ -77,7 +77,7 @@ typedef struct {      /**** a Dulmage-Mendelson decomposition */
 				int nb;       /* # of blocks in fine decomposition */
 				int rr[5];    /* coarse row decomposition */
 				int cc[5];    /* coarse column decomposition */
-} spasm_dm;
+};
 
 struct echelonize_opts {
 	/* pivot search sub-algorithms */
@@ -104,20 +104,14 @@ struct echelonize_opts {
 
 };
 
-typedef struct {
-	u64 seed;
-	spasm_ZZp *z;         /* proves rowspan(U) <= rowspan(A) */
-	spasm_ZZp *h;         /* proves rowspan(A) <= rowspan(U) */
-} spasm_rowspan_certificate;
-
-typedef struct {
+struct spasm_rank_certificate {
 	int r;
 	u64 seed;
 	int *i;           /* size r */
 	int *j;           /* size r */
 	spasm_ZZp *x;     /* size r */
 	spasm_ZZp *y;     /* size r */
-} spasm_rank_certificate;
+};
 
 typedef struct {
     u32 h[8];
@@ -164,9 +158,9 @@ void spasm_csr_free(struct spasm_csr * A);
 struct spasm_triplet *spasm_triplet_alloc(int m, int n, i64 nzmax, i64 prime, bool with_values);
 void spasm_triplet_realloc(struct spasm_triplet * A, i64 nzmax);
 void spasm_triplet_free(struct spasm_triplet * A);
-spasm_dm *spasm_dm_alloc(int n, int m);
-void spasm_dm_free(spasm_dm * P);
-void spasm_lu_free(spasm_lu *N);
+struct spasm_dm *spasm_dm_alloc(int n, int m);
+void spasm_dm_free(struct spasm_dm * P);
+void spasm_lu_free(struct spasm_lu *N);
 void spasm_human_format(int64_t n, char *target);
 int spasm_get_num_threads();
 int spasm_get_thread_num();
@@ -181,7 +175,7 @@ struct spasm_csr *spasm_compress(const struct spasm_triplet * T);
 struct spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash);
 void spasm_triplet_save(const struct spasm_triplet * A, FILE * f);
 void spasm_csr_save(const struct spasm_csr * A, FILE * f);
-void spasm_save_pnm(const struct spasm_csr * A, FILE * f, int x, int y, int mode, spasm_dm *DM);
+void spasm_save_pnm(const struct spasm_csr * A, FILE * f, int x, int y, int mode, struct spasm_dm *DM);
 
 /* spasm_transpose.c */
 struct spasm_csr *spasm_transpose(const struct spasm_csr * C, int keep_values);
@@ -214,16 +208,16 @@ bool spasm_dense_forward_solve(const struct spasm_csr * U, spasm_ZZp * b, spasm_
 int spasm_sparse_triangular_solve(const struct spasm_csr *U, const struct spasm_csr *B, int k, int *xj, spasm_ZZp * x, const int *qinv);
 
 /* spasm_schur.c */
-struct spasm_csr *spasm_schur(const struct spasm_csr *A, const int *p, int n, const spasm_lu *fact, 
+struct spasm_csr *spasm_schur(const struct spasm_csr *A, const int *p, int n, const struct spasm_lu *fact, 
                    double est_density, struct spasm_triplet *L, const int *p_in, int *p_out);
 double spasm_schur_estimate_density(const struct spasm_csr * A, const int *p, int n, const struct spasm_csr *U, const int *qinv, int R);
 void spasm_schur_dense(const struct spasm_csr *A, const int *p, int n, const int *p_in, 
-	spasm_lu *fact, void *S, spasm_datatype datatype,int *q, int *p_out);
+	struct spasm_lu *fact, void *S, spasm_datatype datatype,int *q, int *p_out);
 void spasm_schur_dense_randomized(const struct spasm_csr *A, const int *p, int n, const struct spasm_csr *U, const int *qinv, 
 	void *S, spasm_datatype datatype, int *q, int N, int w);
 
 /* spasm_pivots.c */
-int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, spasm_lu *fact, int *p, struct echelonize_opts *opts);
+int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, struct spasm_lu *fact, int *p, struct echelonize_opts *opts);
 
 /* spasm_matching.c */
 int spasm_maximum_matching(const struct spasm_csr *A, int *jmatch, int *imatch);
@@ -233,10 +227,10 @@ int *spasm_submatching(const int *match, int a, int b, int c, int d);
 int spasm_structural_rank(const struct spasm_csr *A);
 
 /* spasm_dm.c */
-spasm_dm *spasm_dulmage_mendelsohn(const struct spasm_csr *A);
+struct spasm_dm *spasm_dulmage_mendelsohn(const struct spasm_csr *A);
 
 /* spasm_scc.c */
-spasm_dm *spasm_strongly_connected_components(const struct spasm_csr *A);
+struct spasm_dm *spasm_strongly_connected_components(const struct spasm_csr *A);
 
 /* spasm_ffpack.cpp */
 int spasm_ffpack_rref(i64 prime, int n, int m, void *A, int ldA, spasm_datatype datatype, size_t *qinv);
@@ -249,25 +243,23 @@ const char * spasm_datatype_name(spasm_datatype datatype);
 
 /* spasm_echelonize */
 void spasm_echelonize_init_opts(struct echelonize_opts *opts);
-spasm_lu* spasm_echelonize(const struct spasm_csr *A, struct echelonize_opts *opts);
+struct spasm_lu* spasm_echelonize(const struct spasm_csr *A, struct echelonize_opts *opts);
 
 /* spasm_rref.c */
-struct spasm_csr * spasm_rref(const spasm_lu *fact, int *Rqinv);
+struct spasm_csr * spasm_rref(const struct spasm_lu *fact, int *Rqinv);
 
 /* spasm_kernel.c */
-struct spasm_csr * spasm_kernel(const spasm_lu *fact);
+struct spasm_csr * spasm_kernel(const struct spasm_lu *fact);
 struct spasm_csr * spasm_kernel_from_rref(const struct spasm_csr *R, const int *qinv);
 
 /* spasm_solve.c */
-bool spasm_solve(const spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x);
-struct spasm_csr * spasm_solve_gesv(const spasm_lu *fact, const struct spasm_csr *B);
+bool spasm_solve(const struct spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x);
+struct spasm_csr * spasm_solve_gesv(const struct spasm_lu *fact, const struct spasm_csr *B);
 
 /* spasm_certificate.c */
-spasm_rowspan_certificate * spasm_certificate_rowspan_create(const struct spasm_csr *A, const spasm_lu *fact, u64 seed);
-bool spasm_certificate_rowspan_verify(const struct spasm_csr *A, const struct spasm_csr *U, const spasm_rowspan_certificate *proof);
-spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm_csr *A, const spasm_lu *fact, u64 seed);
-bool spasm_certificate_rank_verify(const struct spasm_csr *A, const spasm_rank_certificate *proof);
-bool spasm_factorization_verify(const struct spasm_csr *A, const spasm_lu *fact, u64 seed);
+struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm_csr *A, const struct spasm_lu *fact, u64 seed);
+bool spasm_certificate_rank_verify(const struct spasm_csr *A, const struct spasm_rank_certificate *proof);
+bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu *fact, u64 seed);
 
 
 /* utilities */

@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 	for (int j = 0; j < m; j++)
 		qinv[j] = -1;
 
-	spasm_lu fact;
+	struct spasm_lu fact;
 	fact.U = U;
 	fact.Uqinv = qinv;
 	fact.L = NULL;

@@ -10,7 +10,7 @@
  * On output, Rqinv locates the pivots in R (on column j, pivot is on row Rqinv[i] of R,
  * or Rqinv[j] == -1 if there is no pivot on column j).
  */
-struct spasm_csr * spasm_rref(const spasm_lu *fact, int *Rqinv)
+struct spasm_csr * spasm_rref(const struct spasm_lu *fact, int *Rqinv)
 {
 	const struct spasm_csr *U = fact->U;
 	const int *Uqinv = fact->Uqinv;

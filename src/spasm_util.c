@@ -181,9 +181,9 @@ void spasm_csr_resize(struct spasm_csr *A, int n, int m)
 	A->n = n;
 }
 
-spasm_dm * spasm_dm_alloc(int n, int m)
+struct spasm_dm * spasm_dm_alloc(int n, int m)
 {
-	spasm_dm *P = spasm_malloc(sizeof(spasm_dm));
+	struct spasm_dm *P = spasm_malloc(sizeof(*P));
 	P->p = spasm_malloc(n * sizeof(int));
 	P->q = spasm_malloc(m * sizeof(int));
 	P->r = spasm_malloc((n + 6) * sizeof(int));
@@ -196,7 +196,7 @@ spasm_dm * spasm_dm_alloc(int n, int m)
 	return P;
 }
 
-void spasm_dm_free(spasm_dm *P)
+void spasm_dm_free(struct spasm_dm *P)
 {
 	free(P->p);
 	free(P->q);
@@ -205,7 +205,7 @@ void spasm_dm_free(spasm_dm *P)
 	free(P);
 }
 
-void spasm_lu_free(spasm_lu *N)
+void spasm_lu_free(struct spasm_lu *N)
 {
 	free(N->Uqinv);
 	free(N->Lqinv);

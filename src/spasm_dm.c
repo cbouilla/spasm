@@ -87,7 +87,7 @@ static void collect_matched(int n, const int *wj, const int *imatch, int *p, int
 }
 
 
-spasm_dm *spasm_dulmage_mendelsohn(const struct spasm_csr *A)
+struct spasm_dm *spasm_dulmage_mendelsohn(const struct spasm_csr *A)
 {
 	int n = A->n;
 	int m = A->m;
@@ -104,7 +104,7 @@ spasm_dm *spasm_dulmage_mendelsohn(const struct spasm_csr *A)
 	}
 	
 	/* --- coarse DM decomposition ---------------------------------- */
-	spasm_dm *DM = spasm_dm_alloc(n, m);
+	struct spasm_dm *DM = spasm_dm_alloc(n, m);
 	int *p = DM->p;
 	int *q = DM->q;
 	int *r = DM->r;
@@ -149,7 +149,7 @@ spasm_dm *spasm_dulmage_mendelsohn(const struct spasm_csr *A)
 	struct spasm_csr *C = spasm_submatrix(B, rr[1], rr[2], cc[2], cc[3], SPASM_IGNORE_VALUES);
 	spasm_csr_free(B);
 
-	spasm_dm *SCC = spasm_strongly_connected_components(C);
+	struct spasm_dm *SCC = spasm_strongly_connected_components(C);
 	int n_scc = SCC->nb;
 	int *scc_r = SCC->r;
 	int *scc_c = SCC->c;

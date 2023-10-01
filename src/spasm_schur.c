@@ -58,7 +58,7 @@ double spasm_schur_estimate_density(const struct spasm_csr *A, const int *p, int
  *
  * If the estimated density is unknown, set it to -1: it will be evaluated
  */
-struct spasm_csr *spasm_schur(const struct spasm_csr *A, const int *p, int n, const spasm_lu *fact, 
+struct spasm_csr *spasm_schur(const struct spasm_csr *A, const int *p, int n, const struct spasm_lu *fact, 
 	double est_density, struct spasm_triplet *L, const int *p_in, int *p_out)
 {
 	assert(p != NULL);
@@ -253,7 +253,7 @@ static void * row_pointer(void *A, i64 ldA, spasm_datatype datatype, i64 i)
  * p_out must be of size n, p_int of size A->n
  */
 void spasm_schur_dense(const struct spasm_csr *A, const int *p, int n, const int *p_in, 
-	spasm_lu *fact, void *S, spasm_datatype datatype,int *q, int *p_out)
+	struct spasm_lu *fact, void *S, spasm_datatype datatype,int *q, int *p_out)
 {
 	assert(p != NULL);
 	const struct spasm_csr *U = fact->U;

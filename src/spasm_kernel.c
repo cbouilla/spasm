@@ -6,7 +6,7 @@
 /* 
  * return a basis of the right kernel of the matrix described by the LU factorization
  */
-struct spasm_csr * spasm_kernel(const spasm_lu *fact)
+struct spasm_csr * spasm_kernel(const struct spasm_lu *fact)
 {
 	const struct spasm_csr *U = fact->U;
 	const int *qinv = fact->Uqinv; 

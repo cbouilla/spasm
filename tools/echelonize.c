@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 	int m = A->m;
 
 	/* echelonize A */
-	spasm_lu *fact = spasm_echelonize(A, &opts);
+	struct spasm_lu *fact = spasm_echelonize(A, &opts);
 	spasm_csr_free(A);
 
 	if (rref) {

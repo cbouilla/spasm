@@ -41,7 +41,7 @@ int main(int argc, char **argv)
         struct spasm_csr *At = spasm_transpose(A, true);
         struct echelonize_opts opts;
         spasm_echelonize_init_opts(&opts);
-        spasm_lu *fact = spasm_echelonize(At, &opts);
+        struct spasm_lu *fact = spasm_echelonize(At, &opts);
         struct spasm_csr *U = fact->U;
         struct spasm_csr *Ut = spasm_transpose(U, true);
         struct spasm_csr *K = spasm_kernel(fact);

@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 	spasm_triplet_free(T);
 
 	/* echelonize A */
-	spasm_lu *fact = spasm_echelonize(A, &args.opts);
+	struct spasm_lu *fact = spasm_echelonize(A, &args.opts);
 	spasm_csr_free(A);
 
 	/* kernel basis */

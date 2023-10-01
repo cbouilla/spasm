@@ -36,10 +36,10 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	opts.L = 1;
-	spasm_lu *fact = spasm_echelonize(A, &opts);
+	struct spasm_lu *fact = spasm_echelonize(A, &opts);
 	assert(fact->L != NULL);
 
-	spasm_rank_certificate *proof = spasm_certificate_rank_create(A, fact, 1337);
+	struct spasm_rank_certificate *proof = spasm_certificate_rank_create(A, fact, 1337);
 	bool correct = spasm_certificate_rank_verify(A, proof);
 	assert(correct);
 }

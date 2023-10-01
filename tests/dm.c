@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 	spasm_csr_free(A);
 
 	/* compute DM decomposition of permuted M. */
-	spasm_dm * DM = spasm_dulmage_mendelsohn(B);
+	struct spasm_dm * DM = spasm_dulmage_mendelsohn(B);
 	int *rr = DM->rr;
 	int *cc = DM->cc;
 	p = DM->p;

@@ -37,7 +37,7 @@ int main(int argc, char **argv)
  	spasm_triplet_free(T);
  	int m = A->m;
 
- 	spasm_lu *fact = spasm_echelonize(A, NULL);
+ 	struct spasm_lu *fact = spasm_echelonize(A, NULL);
  	struct spasm_csr *U = fact->U;
  	int *qinv = fact->Uqinv;
 	int r = U->n;

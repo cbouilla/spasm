@@ -64,7 +64,7 @@ bool spasm_echelonize_test_completion(const struct spasm_csr *A, const int *p, i
 
 
 /* not dry w.r.t. spasm_LU() */
-static void echelonize_GPLU(const struct spasm_csr *A, const int *p, int n, const int *p_in, spasm_lu *fact, struct echelonize_opts *opts)
+static void echelonize_GPLU(const struct spasm_csr *A, const int *p, int n, const int *p_in, struct spasm_lu *fact, struct echelonize_opts *opts)
 {
 	(void) opts;
 	assert(p != NULL);
@@ -203,7 +203,7 @@ static void echelonize_GPLU(const struct spasm_csr *A, const int *p, int n, cons
  * Transfer echelonized rows from (dense) S to (sparse) U
  */
 static void update_U_after_rref(int rr, int Sm, const void *S, spasm_datatype datatype, 
-	const size_t *Sqinv, const int *q, spasm_lu *fact)
+	const size_t *Sqinv, const int *q, struct spasm_lu *fact)
 {
 	struct spasm_csr *U = fact->U;
 	int *Uqinv = fact->Uqinv;
@@ -239,7 +239,7 @@ static void update_U_after_rref(int rr, int Sm, const void *S, spasm_datatype da
  * Transfer dense LU factorization to fact
  */
 static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_datatype datatype, 
-	const size_t *Sp, const size_t *Sqinv, const int *q, const int *p_in, spasm_lu *fact)
+	const size_t *Sp, const size_t *Sqinv, const int *q, const int *p_in, struct spasm_lu *fact)
 {
 	struct spasm_csr *U = fact->U;
 	struct spasm_triplet *L = fact->Ltmp;
@@ -304,7 +304,7 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 	}
 }
 
-static void echelonize_dense_lowrank(const struct spasm_csr *A, const int *p, int n, spasm_lu *fact, struct echelonize_opts *opts)
+static void echelonize_dense_lowrank(const struct spasm_csr *A, const int *p, int n, struct spasm_lu *fact, struct echelonize_opts *opts)
 {
 	assert(opts->dense_block_size > 0);
 	struct spasm_csr *U = fact->U;
@@ -374,7 +374,7 @@ static void echelonize_dense_lowrank(const struct spasm_csr *A, const int *p, in
  * the schur complement (on non-pivotal rows of A) w.r.t. U is dense.
  * process (P*A)[0:n]
  */
-static void echelonize_dense(const struct spasm_csr *A, const int *p, int n, const int *p_in, spasm_lu *fact, struct echelonize_opts *opts)
+static void echelonize_dense(const struct spasm_csr *A, const int *p, int n, const int *p_in, struct spasm_lu *fact, struct echelonize_opts *opts)
 {
 	assert(opts->dense_block_size > 0);
 	struct spasm_csr *U = fact->U;
@@ -456,7 +456,7 @@ static void echelonize_dense(const struct spasm_csr *A, const int *p, int n, con
  * Modifies A (permutes entries in rows)
  * FIXME potential memleak (>= 1 rounds then status == 1...)
  */
-spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_opts *opts)
+struct spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_opts *opts)
 {
 	struct echelonize_opts default_opts;
 	if (opts == NULL) {
@@ -493,7 +493,7 @@ spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_opts *o
 		assert(L->x != NULL);
 	}
 	
-	spasm_lu *fact = spasm_malloc(sizeof(*fact));
+	struct spasm_lu *fact = spasm_malloc(sizeof(*fact));
 	fact->L = NULL;
 	fact->Lqinv = Lqinv;
 	fact->U = U;

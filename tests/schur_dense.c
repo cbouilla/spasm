@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 	for (int i = 0; i < n; i++)
 		Lqinv[i] = -1;
 
-	spasm_lu fact;
+	struct spasm_lu fact;
 	fact.U = U;
 	fact.Uqinv = Uqinv;
 	fact.L = NULL;

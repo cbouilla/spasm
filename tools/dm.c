@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     int n = A->n;
     int m = A->m;
 
-    spasm_dm *DM = spasm_dulmage_mendelsohn(A);
+    struct spasm_dm *DM = spasm_dulmage_mendelsohn(A);
     int *rr = DM->rr;
     int *cc = DM->cc;
 

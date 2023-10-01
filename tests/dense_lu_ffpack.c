@@ -124,7 +124,7 @@ int main(int argc, char **argv)
                 }
                 Up[i + 1] = unz;
         }
-        spasm_lu fact;
+        struct spasm_lu fact;
         fact.U = U;
         fact.L = spasm_compress(L);
         fact.Uqinv = spasm_malloc(m * sizeof(int));

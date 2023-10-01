@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 	spasm_csr_free(A);
 	*/
 	struct spasm_csr *B = A;
-	spasm_dm *P = spasm_strongly_connected_components(B);
+	struct spasm_dm *P = spasm_strongly_connected_components(B);
 	int *p = P->p;
 	int *q = P->q;
 	int *rr = P->r;

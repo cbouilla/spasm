@@ -363,7 +363,7 @@ static void spasm_pivots_reorder(const struct spasm_csr *A, const int *pinv, con
  * write p (pivotal rows of A first)
  * return the number of pivots found
  */
-int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, spasm_lu *fact, int *p, struct echelonize_opts *opts)
+int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, struct spasm_lu *fact, int *p, struct echelonize_opts *opts)
 {
 	int n = A->n;
 	int m = A->m;

@@ -219,8 +219,5 @@ spasm_run_tests_mod(solve             "${ALL_TEST_MATRICES}")
 
 ########## certificates
 
-spasm_declare_test(rowspan_cert)
 spasm_declare_test(rank_cert)
-
-spasm_run_tests_mod(rowspan_cert "${ALL_TEST_MATRICES}")
 spasm_run_tests_mod(rank_cert    "${ALL_TEST_MATRICES}")
