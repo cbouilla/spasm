@@ -37,13 +37,14 @@ int main(int argc, char **argv)
 
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
-	opts.L = 1;
+	opts.complete = 1;
 	struct spasm_lu *fact = spasm_echelonize(A, &opts);
-	int r = fact->U->n;
+	int r = fact->r;
 	assert(fact->L != NULL);
 	assert(r == 0 || fact->Lqinv != NULL);
 	assert(fact->Ltmp == NULL);
 	assert(r == fact->L->m);
+	assert(r == fact->U->n);
 	assert(fact->U->m == m);
 	assert(fact->L->n == n);
 

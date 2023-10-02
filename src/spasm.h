@@ -62,6 +62,8 @@ struct spasm_triplet {             /* matrix in triplet form */
 };
 
 struct spasm_lu {                  /* a PLUQ factorisation */
+	int r;                         /* rank of the input matrix */
+	bool complete;                 /* if L != NULL, indicates whether A == L*U */
 	struct spasm_csr *L;
 	struct spasm_csr *U;
 	int *Uqinv;                    /* locate pivots in U (on column j, row Uqinv[j]) */
@@ -89,7 +91,8 @@ struct echelonize_opts {
 	bool enable_GPLU;
 
 	/* Parameters of the "root" echelonization procedure itself */
-	bool L;                         /* should we compute L / Lqinv in addition to U / Uqinv ? */
+	bool L;                         /* should we compute L / Lp in addition to U / Uqinv ? */
+	bool complete;                  /* A == LU / otherwise L is just OK for the pivotal rows */
 	double min_pivot_proportion;    /* minimum number of pivots found to keep going; < 0 = keep going */
 	int max_round;                  /* maximum number of rounds; < 0 = keep going */
  

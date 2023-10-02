@@ -142,11 +142,15 @@ bool spasm_certificate_rank_verify(const struct spasm_csr *A, const struct spasm
 	return correct;
 }
 
+/* TODO: move this out of here */
 bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu *fact, u64 seed)
 {
 	assert(fact->L != NULL);
 	const struct spasm_csr *U = fact->U;
 	const struct spasm_csr *L = fact->L;
+	const int *Uqinv = fact->Uqinv;
+	const int *Lqinv = fact->Lqinv;
+
 	int n = A->n;
 	int m = A->m;
 	int r = U->n;
@@ -154,23 +158,38 @@ bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu
 	spasm_ZZp *y = malloc(r * sizeof(*y));
 	spasm_ZZp *z = malloc(m * sizeof(*z));
 	spasm_ZZp *t = malloc(m * sizeof(*t));
+	bool correct = 1;
+	bool complete = 0;
+	
+	bool *pivotal_row = spasm_malloc(n * sizeof(*pivotal_row));
+	for (int i = 0; i < n; i++)
+		pivotal_row[i] = 0;
+	for (int j = 0; j < r; j++) {
+		int i = Lqinv[j];
+		assert(i >= 0);
+		pivotal_row[i] = 1;
+	}
 
 	spasm_prng_seed(seed, 0);
-	for (int i = 0; i < n; i++)
-		x[i] = spasm_ZZp_init(A->field, spasm_prng_next());
 	for (int j = 0; j < m; j++) {
 		z[j] = 0;
 		t[j] = 0;
 	}
 	for (int k = 0; k < r; k++)
 		y[k] = 0;
+	for (int i = 0; i < n; i++) {
+		spasm_ZZp foo = spasm_ZZp_init(A->field, spasm_prng_next());
+		if (complete || pivotal_row[i])
+			x[i] = foo;
+	}
 	spasm_xApy(x, A, t);
 	spasm_xApy(x, L, y);
 	spasm_xApy(y, U, z);
-	bool correct = 1;
 	for (int j = 0; j < m; j++)
-		if (z[j] != t[j])
+		if ((complete || Uqinv[j] >= 0) && (z[j] != t[j]))
 			correct = 0;
+
+	free(pivotal_row);
 	free(x);
 	free(y);
 	free(z);

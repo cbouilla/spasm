@@ -50,6 +50,8 @@ int main(int argc, char **argv)
 	fact.U = U;
 	fact.Uqinv = qinv;
 	fact.L = NULL;
+	fact.Ltmp = NULL;
+	fact.Lqinv = NULL;
 
 	int npiv = spasm_pivots_extract_structural(A, NULL, &fact, p, &opts);
 	struct spasm_csr *S = spasm_schur(A, p + npiv, n - npiv, &fact, -1, NULL, NULL, NULL);

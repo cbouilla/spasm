@@ -5,19 +5,6 @@
 
 #include "spasm.h"
 
-/*
- * There are 3 possible finalization strategies
- *   1. GPLU (without computing the sparse schur complement --- GPLU will do it on the fly)
- *   2. dense schur generation + dense factorization
- *   3. low-rank dense (including "tall and skinny") --- pick random linear combinations
- *
- * all echelonization function should have prototype: 
- *     echelonize_XXX(struct spasm_csr *A, const int *p, int n, struct spasm_csr *U, int *Uqinv, struct echelonize_opts *opts);
- *
- * passing NULL as the options leads to default choices. 
- */
-
-
 /* provide sensible defaults */
 void spasm_echelonize_init_opts(struct echelonize_opts *opts)
 {
@@ -29,6 +16,7 @@ void spasm_echelonize_init_opts(struct echelonize_opts *opts)
 
 	// options of the main procedure
 	opts->L = 0;
+	opts->complete = 0;
 	opts->min_pivot_proportion = 0.1;
 	opts->max_round = 3;
 	opts->sparsity_threshold = 0.05;
@@ -239,19 +227,17 @@ static void update_U_after_rref(int rr, int Sm, const void *S, spasm_datatype da
  * Transfer dense LU factorization to fact
  */
 static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_datatype datatype, 
-	const size_t *Sp, const size_t *Sqinv, const int *q, const int *p_in, struct spasm_lu *fact)
+	const size_t *Sp, const size_t *Sqinv, const int *q, const int *p_in, i64 lnz_before, 
+	bool complete, bool *pivotal, struct spasm_lu *fact)
 {
 	struct spasm_csr *U = fact->U;
 	struct spasm_triplet *L = fact->Ltmp;
-	assert(L != NULL);
 	int *Uqinv = fact->Uqinv;
 	int *Lqinv = fact->Lqinv;
 	i64 extra_unz = ((i64) (1 + 2*Sm - r)) * r;     /* maximum size increase */
 	i64 extra_lnz = ((i64) (2*n - r + 1)) * r / 2;
 	i64 unz = spasm_nnz(U);
 	i64 lnz = L->nz;
-	// fprintf(stderr, "[dense update] enlarging U from %" PRId64 " to %" PRId64 " entries\n", unz, unz + extra_nnz);
-	assert(L->x != NULL);
 	spasm_csr_realloc(U, unz + extra_unz);
 	spasm_triplet_realloc(L, lnz + extra_lnz);
 	i64 *Up = U->p;
@@ -260,11 +246,32 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 	int *Li = L->i;
 	int *Lj = L->j;
 	spasm_ZZp *Lx = L->x;
-	assert(Li != NULL);
-	assert(Lx != NULL);
 	
 	/* build L */
-	for (i64 i = 0; i < n; i++) {
+	if (!complete) {
+		for (i64 i = 0; i < r; i++) {   /* mark pivotal rows */
+			int pi = Sp[i];
+			int iorig = (p_in != NULL) ? p_in[pi] : pi;
+			pivotal[iorig] = 1;
+		}
+
+		/* stack L (ignore non-pivotal rows) */
+		lnz = lnz_before;
+		for (i64 px = lnz_before; px < L->nz; px++) {
+			int i = Li[px];
+			if (!pivotal[i])
+				continue;
+			int j = Lj[px];
+			spasm_ZZp x = Lx[px];
+			Li[lnz] = i;
+			Lj[lnz] = j;
+			Lx[lnz] = x;
+			lnz += 1;
+		}
+	}
+
+	/* add new entries from S */
+	for (i64 i = 0; i < (complete ? n : r); i++) {
 		int pi = Sp[i];
 		int iorig = (p_in != NULL) ? p_in[pi] : pi;
 		for (i64 j = 0; j < spasm_min(i + 1, r); j++) {
@@ -388,6 +395,10 @@ static void echelonize_dense(const struct spasm_csr *A, const int *p, int n, con
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sqinv = spasm_malloc(Sm * sizeof(*Sqinv));                   /* for FFPACK */
 	size_t *Sp = spasm_malloc(opts->dense_block_size * sizeof(*Sp));     /* for FFPACK / LU only */
+	bool *pivotal = spasm_malloc(n * sizeof(*pivotal));
+	for (int i = 0; i < n; i++)
+		pivotal[i] = 0;
+
 	int processed = 0;
 	double start = spasm_wtime();
 	int old_un = U->n;
@@ -404,14 +415,14 @@ static void echelonize_dense(const struct spasm_csr *A, const int *p, int n, con
 			break;
 		
 		fprintf(stderr, "[echelonize/dense] Round %d. processing S[%d:%d] (%d x %d)\n", round, processed, processed + Sn, Sn, Sm);	
+
+		i64 lnz_before = (opts->L) ? fact->Ltmp->nz : -1;
 		spasm_schur_dense(A, p, Sn, p_in, fact, S, datatype, q, p_out);
 
 		int rr;
 		if (opts->L) {
-			assert(fact->Ltmp != NULL);
-			assert(fact->Ltmp->x != NULL);
 			rr = spasm_ffpack_LU(prime, Sn, Sm, S, Sm, datatype, Sp, Sqinv);
-			update_fact_after_LU(Sn, Sm, rr, S, datatype, Sp, Sqinv, q, p_out, fact);
+			update_fact_after_LU(Sn, Sm, rr, S, datatype, Sp, Sqinv, q, p_out, lnz_before, opts->complete, pivotal, fact);
 		} else {
 			rr = spasm_ffpack_rref(prime, Sn, Sm, S, Sm, datatype, Sqinv);
 			update_U_after_rref(rr, Sm, S, datatype, Sqinv, q, fact);
@@ -440,6 +451,7 @@ static void echelonize_dense(const struct spasm_csr *A, const int *p, int n, con
 	free(q);
 	free(Sqinv);
 	free(p_out);
+	free(pivotal);
 	if (rank_ub > 0 && n - processed > 0 && lowrank_mode) {
 		fprintf(stderr, "[echelonize/dense] Too few pivots; switching to low-rank mode\n");
 		echelonize_dense_lowrank(A, p, n - processed, fact, opts);
@@ -470,11 +482,10 @@ struct spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_
 	fprintf(stderr, "[echelonize] Start on %d x %d matrix with %" PRId64 " nnz\n", n, m, spasm_nnz(A));
 	
 	/* options sanity check */
-	if (opts->L) {
-		opts->enable_tall_and_skinny = 0;
-		// opts->enable_dense = 0;
-		// opts->enable_GPLU = 1;
-	}
+	if (opts->complete)
+		opts->L = 1;
+	if (opts->L)
+		opts->enable_tall_and_skinny = 0;   // for now
 
 	/* allocate result */
 	struct spasm_csr *U = spasm_csr_alloc(n, m, spasm_nnz(A), prime, true);
@@ -593,6 +604,8 @@ cleanup:
 		fact->L = spasm_compress(L);
 		spasm_triplet_free(L);
 		fact->Ltmp = NULL;
+		fact->complete = opts->complete;
 	}
+	fact->r = U->n;
 	return fact;
 }
