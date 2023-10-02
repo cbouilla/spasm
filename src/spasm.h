@@ -257,7 +257,7 @@ struct spasm_csr * spasm_kernel_from_rref(const struct spasm_csr *R, const int *
 
 /* spasm_solve.c */
 bool spasm_solve(const struct spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x);
-struct spasm_csr * spasm_solve_gesv(const struct spasm_lu *fact, const struct spasm_csr *B);
+struct spasm_csr * spasm_gesv(const struct spasm_lu *fact, const struct spasm_csr *B, bool *ok);
 
 /* spasm_certificate.c */
 struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm_csr *A, const struct spasm_lu *fact, u64 seed);

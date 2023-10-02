@@ -46,8 +46,10 @@ bool spasm_solve(const struct spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x)
 	return ok;
 }
 
-/* solve XA == B (returns garbage if a solution does not exist) */
-struct spasm_csr * spasm_solve_gesv(const struct spasm_lu *fact, const struct spasm_csr *B)
+/* Solve XA == B (returns garbage if a solution does not exist).
+ * If ok != NULL, then sets ok[i] == 1 iff xA == B[i] has a solution
+ */
+struct spasm_csr * spasm_gesv(const struct spasm_lu *fact, const struct spasm_csr *B, bool *ok)
 {
 	i64 prime = B->field->p;
 	assert(prime == fact->L->field->p);
@@ -69,7 +71,9 @@ struct spasm_csr * spasm_solve_gesv(const struct spasm_lu *fact, const struct sp
 			for (int j = 0; j < m; j++) 
 				b[j] = 0;
 			spasm_scatter(B, i, 1, b);
-			spasm_solve(fact, b, x);
+			bool res = spasm_solve(fact, b, x);
+			if (ok)
+				ok[i] = res;
 			for (int j = 0; j < Xm; j++) 
 				if (x[j] != 0) {
 					i64 xnz;
@@ -81,6 +85,7 @@ struct spasm_csr * spasm_solve_gesv(const struct spasm_lu *fact, const struct sp
 				}
 		}
 		free(b);
+		free(x);
 	}
 	struct spasm_csr *XX = spasm_compress(X);
 	spasm_triplet_free(X);

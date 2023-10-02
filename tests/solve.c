@@ -43,7 +43,6 @@ int main(int argc, char **argv)
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
 	opts.L = 1;
-	opts.max_round = 0;
 	struct spasm_lu *fact = spasm_echelonize(A, &opts);
 	assert(spasm_factorization_verify(A, fact, 42));
 

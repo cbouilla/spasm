@@ -36,7 +36,7 @@ int main(int argc, char **argv)
  	struct spasm_csr *A = spasm_compress(T);
  	spasm_triplet_free(T);
  	int m = A->m;
-        if (m == 0) {
+        if (m <= 0) {
                 printf("SKIP --- empty matrix / useless\n");
                 exit(EXIT_SUCCESS);
         }

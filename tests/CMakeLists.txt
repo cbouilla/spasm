@@ -213,9 +213,11 @@ spasm_run_tests_mod(kernel "${ALL_TEST_MATRICES}")
 
 spasm_declare_test(lu)
 spasm_declare_test(solve)
+spasm_declare_test(gesv)
 
 spasm_run_tests_mod(lu                "${ALL_TEST_MATRICES}")
 spasm_run_tests_mod(solve             "${ALL_TEST_MATRICES}")
+spasm_run_tests_mod(gesv              "${ALL_TEST_MATRICES}")
 
 ########## certificates
 

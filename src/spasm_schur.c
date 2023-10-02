@@ -251,6 +251,8 @@ static void * row_pointer(void *A, i64 ldA, spasm_datatype datatype, i64 i)
  * q must be preallocated of size at least (m - U->n).
  * on output, q sends columns of S to non-pivotal columns of A
  * p_out must be of size n, p_int of size A->n
+ *
+ * TODO: detect empty rows ; push them to the end.
  */
 void spasm_schur_dense(const struct spasm_csr *A, const int *p, int n, const int *p_in, 
 	struct spasm_lu *fact, void *S, spasm_datatype datatype,int *q, int *p_out)
