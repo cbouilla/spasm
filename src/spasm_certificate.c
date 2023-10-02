@@ -41,7 +41,7 @@ struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm
 
 	/* write i / j indices (positions of pivots) */
 	for (int k = 0; k < r; k++)
-		ii[k] = fact->Lqinv[k];
+		ii[k] = fact->p[k];
 	int k = 0;
 	for (int j = 0; j < m; j++)
 		if (fact->Uqinv[j] >= 0) {
@@ -149,7 +149,7 @@ bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu
 	const struct spasm_csr *U = fact->U;
 	const struct spasm_csr *L = fact->L;
 	const int *Uqinv = fact->Uqinv;
-	const int *Lqinv = fact->Lqinv;
+	const int *Lp = fact->p;
 
 	int n = A->n;
 	int m = A->m;
@@ -165,7 +165,7 @@ bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu
 	for (int i = 0; i < n; i++)
 		pivotal_row[i] = 0;
 	for (int j = 0; j < r; j++) {
-		int i = Lqinv[j];
+		int i = Lp[j];
 		assert(i >= 0);
 		pivotal_row[i] = 1;
 	}

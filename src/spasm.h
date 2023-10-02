@@ -67,7 +67,7 @@ struct spasm_lu {                  /* a PLUQ factorisation */
 	struct spasm_csr *L;
 	struct spasm_csr *U;
 	int *Uqinv;                    /* locate pivots in U (on column j, row Uqinv[j]) */
-	int *Lqinv;                    /* locate pivots in L (on column j, row Lqinv[j]) */
+	int *p;                        /* locate pivots in L (on column j, row p[j]) */
 	struct spasm_triplet *Ltmp;           /* for internal use during the factorization */
 };
 

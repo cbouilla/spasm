@@ -380,7 +380,7 @@ int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, 
 	struct spasm_csr *U = fact->U;
 	struct spasm_triplet *L = fact->Ltmp;
 	int *Uqinv = fact->Uqinv;
-	int *Lqinv = fact->Lqinv;
+	int *Lp = fact->p;
 	i64 pivot_nnz = 0;
 	for (int k = 0; k < npiv; k++) {
 		int i = p[k];
@@ -418,7 +418,7 @@ int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, 
 			int i_out = (p_in != NULL) ? p_in[i] : i;
 			spasm_add_entry(L, i_out, U->n, pivot);
 			// fprintf(stderr, "Adding L[%d, %d] = %d\n", i_out, U->n, pivot);
-			Lqinv[U->n] = i_out;
+			Lp[U->n] = i_out;
 		}
 
 		/* make pivot unitary and add it first */

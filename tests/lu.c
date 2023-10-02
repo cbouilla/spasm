@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 	struct spasm_lu *fact = spasm_echelonize(A, &opts);
 	int r = fact->r;
 	assert(fact->L != NULL);
-	assert(r == 0 || fact->Lqinv != NULL);
+	assert(r == 0 || fact->p != NULL);
 	assert(fact->Ltmp == NULL);
 	assert(r == fact->L->m);
 	assert(r == fact->U->n);
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 	for (int j = 0; j < m; j++)
 		pivotal_col[j] = 0;
 	for (int k = 0; k < r; k++) {
-		int i = fact->Lqinv[k];
+		int i = fact->p[k];
 		pivotal_row[i] = 1;
 	}
 	for (int j = 0; j < m; j++) {

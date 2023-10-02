@@ -38,7 +38,7 @@ bool spasm_solve(const struct spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x)
 	bool ok = spasm_dense_forward_solve(U, y, z, Uq);
 
 	/* y.LU = b */
-	spasm_dense_back_solve(L, z, x, fact->Lqinv);
+	spasm_dense_back_solve(L, z, x, fact->p);
 	
 	free(y);
 	free(z);

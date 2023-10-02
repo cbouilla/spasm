@@ -128,10 +128,10 @@ int main(int argc, char **argv)
         fact.U = U;
         fact.L = spasm_compress(L);
         fact.Uqinv = spasm_malloc(m * sizeof(int));
-        fact.Lqinv = spasm_malloc(n * sizeof(int));
+        fact.p = spasm_malloc(n * sizeof(int));
 
         for (int j = 0; j < n; j++)
-                fact.Lqinv[j] = P[j];
+                fact.p[j] = P[j];
         for (int j = 0; j < m; j++)
                 fact.Uqinv[j] = Qinv[j];
 

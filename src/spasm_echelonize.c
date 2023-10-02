@@ -67,7 +67,7 @@ static void echelonize_GPLU(const struct spasm_csr *A, const int *p, int n, cons
 	i64 *Up = U->p;
 	i64 unz = spasm_nnz(U);
 	i64 lnz = (L != NULL) ? L->nz : 0;
-	int *Lqinv = fact->Lqinv;
+	int *Lp = fact->p;
 
 	/* initialize early abort */
 	int rows_since_last_pivot = 0;
@@ -137,7 +137,7 @@ static void echelonize_GPLU(const struct spasm_csr *A, const int *p, int n, cons
 		/* add entry entry in L for the pivot */
 		if (L != NULL) {
 			assert(x[jpiv] != 0);
-			Lqinv[U->n] = i_orig;
+			Lp[U->n] = i_orig;
 			Li[lnz] = i_orig;
 			Lj[lnz] = U->n;
 			Lx[lnz] = x[jpiv];
@@ -233,7 +233,7 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 	struct spasm_csr *U = fact->U;
 	struct spasm_triplet *L = fact->Ltmp;
 	int *Uqinv = fact->Uqinv;
-	int *Lqinv = fact->Lqinv;
+	int *Lp = fact->p;
 	i64 extra_unz = ((i64) (1 + 2*Sm - r)) * r;     /* maximum size increase */
 	i64 extra_lnz = ((i64) (2*n - r + 1)) * r / 2;
 	i64 unz = spasm_nnz(U);
@@ -284,7 +284,7 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 			lnz += 1;
 		}
 		if (i < r)   /* register pivot */
-			Lqinv[U->n + i] = iorig;
+			Lp[U->n + i] = iorig;
 	}
 	L->nz = lnz;
 
@@ -495,18 +495,18 @@ struct spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_
 		Uqinv[j] = -1;
 	
 	struct spasm_triplet *L = NULL;
-	int *Lqinv = NULL;
+	int *Lp = NULL;
 	if (opts->L) {
 		L = spasm_triplet_alloc(n, n, spasm_nnz(A), prime, true);
-		Lqinv = spasm_malloc(n * sizeof(*Lqinv));
+		Lp = spasm_malloc(n * sizeof(*Lp));
 		for (int j = 0; j < n; j++)
-			Lqinv[j] = -1;
+			Lp[j] = -1;
 		assert(L->x != NULL);
 	}
 	
 	struct spasm_lu *fact = spasm_malloc(sizeof(*fact));
 	fact->L = NULL;
-	fact->Lqinv = Lqinv;
+	fact->p = Lp;
 	fact->U = U;
 	fact->Uqinv = Uqinv;
 	fact->Ltmp = L;
@@ -600,7 +600,7 @@ cleanup:
 	spasm_csr_realloc(U, -1);
 	if (opts->L) {
 		L->m = U->n; 
-		fact->Lqinv = spasm_realloc(Lqinv, U->n * sizeof(*Lqinv));
+		fact->p = spasm_realloc(Lp, U->n * sizeof(*Lp));
 		fact->L = spasm_compress(L);
 		spasm_triplet_free(L);
 		fact->Ltmp = NULL;
