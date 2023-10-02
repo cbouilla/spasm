@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
         switch (ch) {
         case 'i':
             mpix = atof(optarg);
+            mode = ch;
             break;
         case 'p':
         case 'v':

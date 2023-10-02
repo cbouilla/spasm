@@ -29,3 +29,6 @@ target_link_libraries(echelonize PUBLIC spasm spasmtools)
 
 add_executable(kernel kernel.c)
 target_link_libraries(kernel PUBLIC spasm spasmtools)
+
+add_executable(solve solve.c)
+target_link_libraries(solve PUBLIC spasm spasmtools)

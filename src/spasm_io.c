@@ -112,17 +112,18 @@ struct spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash)
 
 	i64 x;
 	bool end = 0;
+	i64 entries = 0;
 	for (;;) { 
 		line += 1;
 		eof = read_line("spasm_triplet_load", line, buffer, 1024, ctx, f);
 		if (end && eof)
 			break;
 		if (end && !eof) {
-			warn("[spasm_load/SMS] garbage detected near end of file");
+			warn("[spasm_load] garbage detected near end of file");
 			continue;
 		}
 		if (!end && eof)
-			errx(1, "[spasm_triplet_load] premature end of file");
+			errx(1, "[spasm_triplet_load] premature end of file (line %" PRId64 ", read %" PRId64" nz)", line, entries);
 
 		if (sscanf(buffer, "%d %d %" SCNd64 "\n", &i, &j, &x) != 3)
 			errx(1, "parse error line %" PRId64, line);
@@ -131,9 +132,11 @@ struct spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash)
 				errx(1, "SMS end marker in MatrixMarket file");
 			end = 1;
 		}
-		if (!end)
+		if (!end) {
 			spasm_add_entry(T, i - 1, j - 1, x);
-		if (mm && T->nz == nnz)
+			entries += 1;
+		}
+		if (mm && entries == nnz)
 			end = 1;
 	}
 
