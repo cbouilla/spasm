@@ -53,7 +53,7 @@ int main(int argc, char **argv)
         int *xi = spasm_malloc(3*m * sizeof(*xi));
         for (int j = 0; j < 3*m; j++)
                 xi[j] = 0;
-        spasm_ZZp *x = malloc(m * sizeof(*x));
+        spasm_ZZp *x = malloc(n * sizeof(*x));
         spasm_ZZp *y = malloc(m * sizeof(*y));
         for (int j = 0; j < m; j++) {
                 x[j] = 0;
