@@ -64,7 +64,7 @@ struct spasm_csr *spasm_schur(const struct spasm_csr *A, const int *p, int n, co
 	assert(p != NULL);
 
 	int m = A->m;
-	const int *qinv = fact->Uqinv;
+	const int *qinv = fact->qinv;
 	int verbose_step = spasm_max(1, n / 1000);
 	if (est_density < 0)
 		est_density = spasm_schur_estimate_density(A, p, n, fact->U, qinv, 100);
@@ -257,7 +257,7 @@ void spasm_schur_dense(const struct spasm_csr *A, const int *p, int n, const int
 {
 	assert(p != NULL);
 	const struct spasm_csr *U = fact->U;
-	const int *qinv = fact->Uqinv;
+	const int *qinv = fact->qinv;
 	int m = A->m;
 	int Sm = m - U->n;                                   /* #columns of S */
 	prepare_q(m, qinv, q);                               /* FIXME: useless if many invokations */

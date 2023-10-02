@@ -51,7 +51,6 @@ bool spasm_echelonize_test_completion(const struct spasm_csr *A, const int *p, i
 }
 
 
-/* not dry w.r.t. spasm_LU() */
 static void echelonize_GPLU(const struct spasm_csr *A, const int *p, int n, const int *p_in, struct spasm_lu *fact, struct echelonize_opts *opts)
 {
 	(void) opts;
@@ -63,7 +62,7 @@ static void echelonize_GPLU(const struct spasm_csr *A, const int *p, int n, cons
 	
 	struct spasm_csr *U = fact->U;
 	struct spasm_triplet *L = fact->Ltmp;
-	int *Uqinv = fact->Uqinv;
+	int *Uqinv = fact->qinv;
 	i64 *Up = U->p;
 	i64 unz = spasm_nnz(U);
 	i64 lnz = (L != NULL) ? L->nz : 0;
@@ -194,7 +193,7 @@ static void update_U_after_rref(int rr, int Sm, const void *S, spasm_datatype da
 	const size_t *Sqinv, const int *q, struct spasm_lu *fact)
 {
 	struct spasm_csr *U = fact->U;
-	int *Uqinv = fact->Uqinv;
+	int *Uqinv = fact->qinv;
 	i64 extra_nnz = ((i64) (1 + Sm - rr)) * rr;     /* maximum size increase */
 	i64 unz = spasm_nnz(U);
 	fprintf(stderr, "[dense update] enlarging U from %" PRId64 " to %" PRId64 " entries\n", unz, unz + extra_nnz);
@@ -232,7 +231,7 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 {
 	struct spasm_csr *U = fact->U;
 	struct spasm_triplet *L = fact->Ltmp;
-	int *Uqinv = fact->Uqinv;
+	int *Uqinv = fact->qinv;
 	int *Lp = fact->p;
 	i64 extra_unz = ((i64) (1 + 2*Sm - r)) * r;     /* maximum size increase */
 	i64 extra_lnz = ((i64) (2*n - r + 1)) * r / 2;
@@ -315,7 +314,7 @@ static void echelonize_dense_lowrank(const struct spasm_csr *A, const int *p, in
 {
 	assert(opts->dense_block_size > 0);
 	struct spasm_csr *U = fact->U;
-	int *Uqinv = fact->Uqinv;
+	int *Uqinv = fact->qinv;
 	int m = A->m;
 	int Sm = m - U->n;
 	i64 prime = spasm_get_prime(A);
@@ -508,7 +507,7 @@ struct spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_
 	fact->L = NULL;
 	fact->p = Lp;
 	fact->U = U;
-	fact->Uqinv = Uqinv;
+	fact->qinv = Uqinv;
 	fact->Ltmp = L;
 
 	/* local stuff */

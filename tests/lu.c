@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 		pivotal_row[i] = 1;
 	}
 	for (int j = 0; j < m; j++) {
-		int i = fact->Uqinv[j];
+		int i = fact->qinv[j];
 		if (i >= 0)
 			pivotal_col[j] = 1;
 	}

@@ -44,7 +44,7 @@ struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm
 		ii[k] = fact->p[k];
 	int k = 0;
 	for (int j = 0; j < m; j++)
-		if (fact->Uqinv[j] >= 0) {
+		if (fact->qinv[j] >= 0) {
 			jj[k] = j;
 			k += 1;
 		}
@@ -148,7 +148,7 @@ bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu
 	assert(fact->L != NULL);
 	const struct spasm_csr *U = fact->U;
 	const struct spasm_csr *L = fact->L;
-	const int *Uqinv = fact->Uqinv;
+	const int *Uqinv = fact->qinv;
 	const int *Lp = fact->p;
 
 	int n = A->n;

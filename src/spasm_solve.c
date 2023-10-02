@@ -25,9 +25,9 @@ bool spasm_solve(const struct spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x)
 	
 	/* inverse permutation for U */
 	int *Uq = spasm_malloc(r * sizeof(*Uq));
-	const int *Uqinv = fact->Uqinv;
+	const int *qinv = fact->qinv;
 	for (int j = 0; j < m; j++) {
-		int i = Uqinv[j];
+		int i = qinv[j];
 		if (i != -1)
 			Uq[i] = j;
 	}

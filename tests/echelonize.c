@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 	spasm_echelonize_init_opts(&opts);
 	struct spasm_lu *fact = spasm_echelonize(A, &opts);   /* NULL = default options */
 	struct spasm_csr *U = fact->U;
-	int *Uqinv = fact->Uqinv;
+	int *Uqinv = fact->qinv;
 
 	assert(A->m == U->m);
 	assert(U->n <= A->n);

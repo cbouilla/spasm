@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 
  	struct spasm_lu *fact = spasm_echelonize(A, NULL);
  	struct spasm_csr *U = fact->U;
- 	int *qinv = fact->Uqinv;
+ 	int *qinv = fact->qinv;
 	int r = U->n;
  	
 	// make RHS

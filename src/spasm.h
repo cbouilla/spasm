@@ -66,7 +66,7 @@ struct spasm_lu {                  /* a PLUQ factorisation */
 	bool complete;                 /* if L != NULL, indicates whether A == L*U */
 	struct spasm_csr *L;
 	struct spasm_csr *U;
-	int *Uqinv;                    /* locate pivots in U (on column j, row Uqinv[j]) */
+	int *qinv;                     /* locate pivots in U (on column j, row qinv[j]) */
 	int *p;                        /* locate pivots in L (on column j, row p[j]) */
 	struct spasm_triplet *Ltmp;           /* for internal use during the factorization */
 };

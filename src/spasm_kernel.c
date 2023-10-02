@@ -9,7 +9,7 @@
 struct spasm_csr * spasm_kernel(const struct spasm_lu *fact)
 {
 	const struct spasm_csr *U = fact->U;
-	const int *qinv = fact->Uqinv; 
+	const int *qinv = fact->qinv; 
 	int m = U->m;
 	int n = U->n;
 	i64 prime = spasm_get_prime(U);

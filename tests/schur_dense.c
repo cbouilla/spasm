@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 		fact.p[i] = -1;
 
 	fact.U = U;
-	fact.Uqinv = Uqinv;
+	fact.qinv = Uqinv;
 	fact.L = NULL;
 	fact.Ltmp = spasm_triplet_alloc(n, n, spasm_nnz(A), prime, true);
 

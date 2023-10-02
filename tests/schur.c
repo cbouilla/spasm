@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 
 	struct spasm_lu fact;
 	fact.U = U;
-	fact.Uqinv = qinv;
+	fact.qinv = qinv;
 	fact.L = NULL;
 	fact.Ltmp = NULL;
 	fact.p = NULL;

@@ -127,13 +127,13 @@ int main(int argc, char **argv)
         struct spasm_lu fact;
         fact.U = U;
         fact.L = spasm_compress(L);
-        fact.Uqinv = spasm_malloc(m * sizeof(int));
-        fact.p = spasm_malloc(n * sizeof(int));
+        fact.qinv = spasm_malloc(m * sizeof(*fact.qinv));
+        fact.p = spasm_malloc(n * sizeof(*fact.p));
 
         for (int j = 0; j < n; j++)
                 fact.p[j] = P[j];
         for (int j = 0; j < m; j++)
-                fact.Uqinv[j] = Qinv[j];
+                fact.qinv[j] = Qinv[j];
 
         // assert(spasm_factorization_verify(A, &fact, 65537));
         spasm_ZZp *x = malloc(n * sizeof(*x));

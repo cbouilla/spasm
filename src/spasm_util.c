@@ -207,7 +207,7 @@ void spasm_dm_free(struct spasm_dm *P)
 
 void spasm_lu_free(struct spasm_lu *N)
 {
-	free(N->Uqinv);
+	free(N->qinv);
 	free(N->p);
 	spasm_csr_free(N->U);
 	spasm_csr_free(N->L);
