@@ -148,7 +148,7 @@ bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu
 	assert(fact->L != NULL);
 	const struct spasm_csr *U = fact->U;
 	const struct spasm_csr *L = fact->L;
-	const int *Uqinv = fact->qinv;
+	// const int *Uqinv = fact->qinv;
 	const int *Lp = fact->p;
 
 	int n = A->n;
@@ -181,12 +181,14 @@ bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu
 		spasm_ZZp foo = spasm_ZZp_init(A->field, spasm_prng_next());
 		if (complete || pivotal_row[i])
 			x[i] = foo;
+		else
+			x[i] = 0;
 	}
 	spasm_xApy(x, A, t);
 	spasm_xApy(x, L, y);
 	spasm_xApy(y, U, z);
 	for (int j = 0; j < m; j++)
-		if ((complete || Uqinv[j] >= 0) && (z[j] != t[j]))
+		if (z[j] != t[j])
 			correct = 0;
 
 	free(pivotal_row);

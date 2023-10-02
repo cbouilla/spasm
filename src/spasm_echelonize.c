@@ -394,8 +394,8 @@ static void echelonize_dense(const struct spasm_csr *A, const int *p, int n, con
 	int *q = spasm_malloc(Sm * sizeof(*q));
 	size_t *Sqinv = spasm_malloc(Sm * sizeof(*Sqinv));                   /* for FFPACK */
 	size_t *Sp = spasm_malloc(opts->dense_block_size * sizeof(*Sp));     /* for FFPACK / LU only */
-	bool *pivotal = spasm_malloc(n * sizeof(*pivotal));
-	for (int i = 0; i < n; i++)
+	bool *pivotal = spasm_malloc(A->n * sizeof(*pivotal));
+	for (int i = 0; i < A->n; i++)
 		pivotal[i] = 0;
 
 	int processed = 0;

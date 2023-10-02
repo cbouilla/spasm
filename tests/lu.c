@@ -37,6 +37,7 @@ int main(int argc, char **argv)
 
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
+
 	opts.complete = 1;
 	struct spasm_lu *fact = spasm_echelonize(A, &opts);
 	int r = fact->r;
@@ -47,9 +48,8 @@ int main(int argc, char **argv)
 	assert(r == fact->U->n);
 	assert(fact->U->m == m);
 	assert(fact->L->n == n);
-
-	// assert(spasm_factorization_verify(A, fact, 1337));
-	// assert(spasm_factorization_verify(A, fact, 21011984));
+	assert(spasm_factorization_verify(A, fact, 1337));
+	assert(spasm_factorization_verify(A, fact, 21011984));
 
 	bool *pivotal_row = spasm_malloc(n * sizeof(*pivotal_row));
 	bool *pivotal_col = spasm_malloc(m * sizeof(*pivotal_row));
