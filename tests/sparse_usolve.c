@@ -43,7 +43,6 @@ int main(int argc, char **argv)
                 exit(EXIT_SUCCESS);
         }
 
-
         assert(n<= m); // upper-trapezoidal
         assert(spasm_is_upper_triangular(U));
 
