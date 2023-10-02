@@ -38,6 +38,11 @@ int main(int argc, char **argv)
         spasm_triplet_free(T);
         int n = U->n;
         int m = U->m;
+        if (m == 0) {
+                printf("SKIP --- empty matrix / useless\n");
+                exit(EXIT_SUCCESS);
+        }
+
 
         assert(n<= m); // upper-trapezoidal
         assert(spasm_is_upper_triangular(U));
