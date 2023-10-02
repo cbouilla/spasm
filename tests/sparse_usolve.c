@@ -43,7 +43,7 @@ int main(int argc, char **argv)
                 exit(EXIT_SUCCESS);
         }
 
-        assert(n<= m); // upper-trapezoidal
+        assert(n <= m); // upper-trapezoidal
         assert(spasm_is_upper_triangular(U));
 
         // load RHS
@@ -59,10 +59,11 @@ int main(int argc, char **argv)
                 xi[j] = 0;
         spasm_ZZp *x = malloc(n * sizeof(*x));
         spasm_ZZp *y = malloc(m * sizeof(*y));
-        for (int j = 0; j < m; j++) {
+        for (int j = 0; j < n; j++)
                 x[j] = 0;
+        for (int j = 0; j < m; j++)
                 y[j] = 0;
-        }
+
         int *qinv = malloc(m * sizeof(int));
         for (int j = 0; j < n; j++)
                 qinv[j] = j;
