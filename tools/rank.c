@@ -105,11 +105,10 @@ int main(int argc, char **argv)
 		assert(spasm_factorization_verify(A, fact, 42));
 		assert(spasm_factorization_verify(A, fact, 1337));
 		assert(spasm_factorization_verify(A, fact, 21011984));
-		u64 seed = 42;
 		fprintf(stderr, "generating certificate\n");
-		proof = spasm_certificate_rank_create(A, fact, seed);
+		proof = spasm_certificate_rank_create(A, hash, fact);
 		fprintf(stderr, "checking certificate\n");
-		bool correct = spasm_certificate_rank_verify(A, proof);
+		bool correct = spasm_certificate_rank_verify(A, hash, proof);
 		if (correct)
 			fprintf(stderr, "CORRECT certificate\n");
 		else

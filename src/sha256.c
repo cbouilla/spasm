@@ -37,7 +37,7 @@ static void OPENSSL_cleanse(void *ptr, size_t len)
     memset(ptr, 0, len);
 }
 
-void spasm_SHA256_init(SHA256_CTX *c)
+void spasm_SHA256_init(spasm_sha256_ctx *c)
 {
     memset(c, 0, sizeof(*c));
     c->h[0] = 0x6a09e667UL;
@@ -53,7 +53,7 @@ void spasm_SHA256_init(SHA256_CTX *c)
 
 #define DATA_ORDER_IS_BIG_ENDIAN
 #define HASH_LONG               SHA_LONG
-#define HASH_CTX                SHA256_CTX
+#define HASH_CTX                spasm_sha256_ctx
 #define HASH_CBLOCK             SHA_CBLOCK
 
 /*
@@ -76,7 +76,7 @@ void spasm_SHA256_init(SHA256_CTX *c)
 // #define HASH_FINAL              SHA256_Final
 // #define HASH_BLOCK_DATA_ORDER   sha256_block_data_order
 
-static void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
+static void sha256_block_data_order(spasm_sha256_ctx *ctx, const void *in, size_t num);
 
 #define ROTATE(a,n)     (((a)<<(n))|(((a)&0xffffffff)>>(32-(n))))
 #define HOST_c2l(c,l)   (l =(((u64)(*((c)++)))<<24),          \
@@ -91,7 +91,7 @@ static void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
 
 
 
-void spasm_SHA256_update(SHA256_CTX *c, const void *data_, size_t len)
+void spasm_SHA256_update(spasm_sha256_ctx *c, const void *data_, size_t len)
 {
     const u8 *data = data_;
     u8 *p;
@@ -219,7 +219,7 @@ static const SHA_LONG K256[64] = {
         T1 = X[(i)&0x0f] += s0 + s1 + X[(i+9)&0x0f];    \
         ROUND_00_15(i,a,b,c,d,e,f,g,h);         } while (0)
 
-static void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
+static void sha256_block_data_order(spasm_sha256_ctx *ctx, const void *in, size_t num)
 {
     unsigned MD32_REG_T a, b, c, d, e, f, g, h, s0, s1, T1;
     SHA_LONG X[16];

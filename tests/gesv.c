@@ -55,9 +55,10 @@ int main(int argc, char **argv)
 	spasm_ZZp *z = spasm_malloc(m * sizeof(*y));
 	spasm_ZZp *b = spasm_malloc(m * sizeof(*b));
 
-	spasm_prng_seed(prime, 0);
+	spasm_prng_ctx ctx;
+	spasm_prng_seed_simple(prime, 0, 0, &ctx);
 	for (int i = 0; i < n; i++) {
-		x[i] = spasm_ZZp_init(A->field, spasm_prng_next());
+		x[i] = spasm_prng_ZZp(&ctx);
 		y[i] = 0;
 	}
 	for (int j = 0; j < m; j++) {

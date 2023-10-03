@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 	struct spasm_lu *fact = spasm_echelonize(A, &opts);
 	assert(fact->L != NULL);
 
-	struct spasm_rank_certificate *proof = spasm_certificate_rank_create(A, fact, 1337);
-	bool correct = spasm_certificate_rank_verify(A, proof);
+	struct spasm_rank_certificate *proof = spasm_certificate_rank_create(A, hash, fact);
+	bool correct = spasm_certificate_rank_verify(A, hash, proof);
 	assert(correct);
 }

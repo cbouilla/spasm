@@ -8,7 +8,7 @@
 
 #include "spasm.h"
 
-static bool read_line(const char *fn, i64 line, char *buffer, int size, SHA256_CTX *ctx, FILE *f)
+static bool read_line(const char *fn, i64 line, char *buffer, int size, spasm_sha256_ctx *ctx, FILE *f)
 {
 	if (fgets(buffer, size, f) == NULL) {
 		if (feof(f))
@@ -65,9 +65,9 @@ struct spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash)
 	char buffer[1024];
 	char hnnz[16];
 
-	SHA256_CTX ctx_always;
+	spasm_sha256_ctx ctx_always;
 	spasm_SHA256_init(&ctx_always);
-	SHA256_CTX *ctx = (hash != NULL) ? &ctx_always : NULL;
+	spasm_sha256_ctx *ctx = (hash != NULL) ? &ctx_always : NULL;
 
 	/* Process header */
 	i64 line = 0;

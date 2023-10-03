@@ -5,7 +5,7 @@
 
 void check(const char *msg)
 {
-	SHA256_CTX ctx;
+	spasm_sha256_ctx ctx;
 	u8 hash[32];
 	spasm_SHA256_init(&ctx);
 	spasm_SHA256_update(&ctx, msg, strlen(msg));

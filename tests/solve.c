@@ -50,9 +50,10 @@ int main(int argc, char **argv)
 	printf("# testing correct solution\n");
 	
 	/* forge valid solution */
-	spasm_prng_seed(prime, 0);
+	spasm_prng_ctx ctx;
+	spasm_prng_seed_simple(prime, 0, 0, &ctx);
 	for (int i = 0; i < n; i++)
-		x[i] = spasm_ZZp_init(A->field, spasm_prng_next());
+		x[i] = spasm_prng_ZZp(&ctx);
 	for (int j = 0; j < m; j++)
 		b[j] = 0;
 	spasm_xApy(x, A, b);
@@ -79,7 +80,7 @@ int main(int argc, char **argv)
 	if (n < m) {
 		printf("# testing bogus solution\n");
 		for (int j = 0; j < m; j++)       /* create random vector */
-			b[j] = spasm_ZZp_init(A->field, spasm_prng_next());
+			b[j] = spasm_prng_ZZp(&ctx);
 	
 		bool result = spasm_solve(fact, b, x);
 		if (result) {

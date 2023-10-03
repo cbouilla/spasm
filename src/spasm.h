@@ -109,7 +109,8 @@ struct echelonize_opts {
 
 struct spasm_rank_certificate {
 	int r;
-	u64 seed;
+	i64 prime;
+	u8 hash[32];
 	int *i;           /* size r */
 	int *j;           /* size r */
 	spasm_ZZp *x;     /* size r */
@@ -121,7 +122,17 @@ typedef struct {
     u32 Nl, Nh;
     u32 data[16];
     u32 num, md_len;
-} SHA256_CTX;
+} spasm_sha256_ctx;
+
+typedef struct {
+        u32 block[11];   /* block[0:8] == H(matrix); block[8] = prime; block[9] = ctx, block[10] = seq */
+        u32 hash[8];
+        u32 prime;
+        u32 mask;        /* 2^i - 1 where i is the smallest s.t. 2^i > prime */
+        int counter;
+        int i;
+        spasm_field field;
+} spasm_prng_ctx;
 
 typedef enum {SPASM_DOUBLE, SPASM_FLOAT, SPASM_I64} spasm_datatype;
 
@@ -138,15 +149,16 @@ spasm_ZZp spasm_ZZp_mul(const spasm_field F, spasm_ZZp a, spasm_ZZp b);
 spasm_ZZp spasm_ZZp_inverse(const spasm_field F, spasm_ZZp a);
 spasm_ZZp spasm_ZZp_axpy(const spasm_field F, spasm_ZZp a, spasm_ZZp x, spasm_ZZp y);
 
-/* spasm_prng.c */
-u64 spasm_prng_next();
-void spasm_prng_seed(u64 seed, u64 seq);
-
 /* sha256.c */
-void spasm_SHA256_init(SHA256_CTX *c);
-void spasm_SHA256_update(SHA256_CTX *c, const void *data, size_t len);
-void spasm_SHA256_final(u8 *md, SHA256_CTX *c);
+void spasm_SHA256_init(spasm_sha256_ctx *c);
+void spasm_SHA256_update(spasm_sha256_ctx *c, const void *data, size_t len);
+void spasm_SHA256_final(u8 *md, spasm_sha256_ctx *c);
 
+/* spasm_prng.c */
+void spasm_prng_seed(const u8 *seed, i64 prime, u32 seq, spasm_prng_ctx *ctx);
+void spasm_prng_seed_simple(i64 prime, u64 seed, u32 seq, spasm_prng_ctx *ctx);
+u32 spasm_prng_u32(spasm_prng_ctx *ctx);
+spasm_ZZp spasm_prng_ZZp(spasm_prng_ctx *ctx);
 
 /* spasm_util.c */
 double spasm_wtime();
@@ -260,8 +272,8 @@ bool spasm_solve(const struct spasm_lu *fact, const spasm_ZZp *b, spasm_ZZp *x);
 struct spasm_csr * spasm_gesv(const struct spasm_lu *fact, const struct spasm_csr *B, bool *ok);
 
 /* spasm_certificate.c */
-struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm_csr *A, const struct spasm_lu *fact, u64 seed);
-bool spasm_certificate_rank_verify(const struct spasm_csr *A, const struct spasm_rank_certificate *proof);
+struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm_csr *A, const u8 *hash, const struct spasm_lu *fact);
+bool spasm_certificate_rank_verify(const struct spasm_csr *A, const u8 *hash, const struct spasm_rank_certificate *proof);
 bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu *fact, u64 seed);
 
 

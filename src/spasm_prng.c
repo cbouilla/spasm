@@ -1,68 +1,69 @@
+#include <arpa/inet.h>           // htonl
+
 #include "spasm.h"
 
-/* 
- * PRNG-style implementation of trivium (64-bit version).
- *
- * This version operates on 64-bit words and returns 64 pseudo-random bits.
- *
- * Trivium is a stream cipher (cryptographic-strength RNG) selected by eSTREAM 
- * (part of the the EU ECRYPT project) to be part of a portfolio of secure 
- * algorithms (https://www.ecrypt.eu.org/stream/).
- *
- * Trivium has been designed by Christophe De Cannière and Bart Preneel.
- * This code generates the same output as trivium's reference implementation.
- * (when restricted to 64-bit keys).
- *
- * The generator takes a 64-bit seed and a 64-bit "sequence number" (this allows
- * to generate independent sequences with the same seed).
- */
+/* This PRNG is SHA256 in counter mode... */
 
-u64 s11, s12, s21, s22, s31, s32;  /* global internal state */
-
-/*
- * NOT THREAD-SAFE (because of the global internal state)
- */
-u64 spasm_prng_next()
+static void rehash(spasm_prng_ctx *ctx)
 {
-        u64 s66 = (s12 << 62) ^ (s11 >> 2);
-        u64 s93 = (s12 << 35) ^ (s11 >> 29);
-        u64 s162 = (s22 << 59) ^ (s21 >> 5);
-        u64 s177 = (s22 << 44) ^ (s21 >> 20);
-        u64 s243 = (s32 << 62) ^ (s31 >> 2);
-        u64 s288 = (s32 << 17) ^ (s31 >> 47);
-        u64 s91 = (s12 << 37) ^ (s11 >> 27);
-        u64 s92 = (s12 << 36) ^ (s11 >> 28);
-        u64 s171 = (s22 << 50) ^ (s21 >> 14);
-        u64 s175 = (s22 << 46) ^ (s21 >> 18);
-        u64 s176 = (s22 << 45) ^ (s21 >> 19);
-        u64 s264 = (s32 << 41) ^ (s31 >> 23);
-        u64 s286 = (s32 << 19) ^ (s31 >> 45);
-        u64 s287 = (s32 << 18) ^ (s31 >> 46);
-        u64 s69 = (s12 << 59) ^ (s11 >> 5);
-        u64 t1 = s66 ^ s93;        /* update */
-        u64 t2 = s162 ^ s177;
-        u64 t3 = s243 ^ s288;
-        u64 z = t1 ^ t2 ^ t3;
-        t1 ^= (s91 & s92) ^ s171;
-        t2 ^= (s175 & s176) ^ s264;
-        t3 ^= (s286 & s287) ^ s69;
-        s12 = s11;              /* rotate */
-        s11 = t3;
-        s22 = s21;
-        s21 = t1;
-        s32 = s31;
-        s31 = t2;
-        return z;
+        spasm_sha256_ctx hctx;
+        spasm_SHA256_init(&hctx);
+        spasm_SHA256_update(&hctx, ctx->block, 44);
+        spasm_SHA256_final((u8 *) ctx->hash, &hctx);
+        ctx->counter += 1;
+        ctx->block[9] = htonl(ctx->counter);
+        ctx->i = 0;
 }
 
-void spasm_prng_seed(u64 seed, u64 seq)
+u32 spasm_prng_u32(spasm_prng_ctx *ctx)
 {
-        s11 = seed;
-        s12 = 0;
-        s21 = seq;
-        s22 = 0;
-        s31 = 0;
-        s32 = 0x700000000000;
-        for (int i = 0; i < 18; i++)    /* blank rounds */
-                spasm_prng_next();
+        if (ctx->i == 8)
+                rehash(ctx);
+        u32 res = ctx->hash[ctx->i];
+        ctx->i += 1;
+        return htonl(res);
+}
+
+spasm_ZZp spasm_prng_ZZp(spasm_prng_ctx *ctx)
+{
+        for (;;) {
+                u32 x = spasm_prng_u32(ctx) & ctx->mask;
+                if (x < ctx->prime)
+                        return spasm_ZZp_init(ctx->field, x);
+        }
+}
+
+/*
+ * Seed must be 32 bytes.
+ */
+void spasm_prng_seed(const u8 *seed, i64 prime, u32 seq, spasm_prng_ctx *ctx)
+{
+        u8 *block8 = (u8 *) ctx->block;
+        for (int i = 0; i < 32; i++)
+                block8[i] = seed[i];
+        ctx->prime = prime;
+        i64 mask = 1;
+        while (mask < prime)
+                mask <<= 1;
+        ctx->mask = mask - 1;
+        ctx->block[8] = htonl(prime);
+        ctx->block[9] = 0;
+        ctx->block[10] = htonl(seq);
+        ctx->counter = 0;
+        spasm_field_init(prime, ctx->field);
+        rehash(ctx);
+}
+
+
+/*
+ * Seed must be 32 bytes.
+ */
+void spasm_prng_seed_simple(i64 prime, u64 seed, u32 seq, spasm_prng_ctx *ctx)
+{
+        u32 block[8];
+        block[0] = htonl(seed & 0xffffffff);
+        block[1] = htonl(seed >> 32);
+        for (int i = 2; i < 8; i++)
+                block[i] = 0;
+        spasm_prng_seed((u8 *) block, prime, seq, ctx);
 }

@@ -18,7 +18,7 @@
  * To make a "real" certificate, seed should be obtained by hashing the input matrix
  * and the "commitment" i / j.
  */
-struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm_csr *A, const struct spasm_lu *fact, u64 seed)
+struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm_csr *A, const u8 *hash, const struct spasm_lu *fact)
 {
 	assert(fact->L != NULL);
 	const struct spasm_csr *U = fact->U;
@@ -29,7 +29,9 @@ struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm
 
 	struct spasm_rank_certificate *proof = spasm_malloc(sizeof(*proof));
 	proof->r = r;
-	proof->seed = seed;
+	for (int i = 0; i < 32; i++)
+		proof->hash[i] = hash[i];
+	proof->prime = spasm_get_prime(A);
 	spasm_ZZp *xx = spasm_malloc(r * sizeof(*xx));
 	spasm_ZZp *yy = spasm_malloc(r * sizeof(*yy));
 	int *ii = spasm_malloc(r * sizeof(*ii));
@@ -50,7 +52,8 @@ struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm
 		}
 
 	/* Generate challenge */
-	spasm_prng_seed(seed, 0);
+	spasm_prng_ctx ctx;
+	spasm_prng_seed(hash, proof->prime, 0, &ctx);
 	
 	/* compute x */
 	spasm_ZZp *x = spasm_malloc(n * sizeof(*x));
@@ -59,7 +62,7 @@ struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm
 		y[j] = 0;
 	for (int k = 0; k < r; k++) {
 		int j = jj[k];
-		y[j] = spasm_ZZp_init(A->field, spasm_prng_next());
+		y[j] = spasm_prng_ZZp(&ctx);
 	}
 	spasm_solve(fact, y, x);
 	for (int k = 0; k < r; k++) {
@@ -77,7 +80,7 @@ struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm
 	}
 	for (int i = 0; i < n; i++)
 		if (x[i] == BOT)
-			x[i] = -spasm_ZZp_init(A->field, spasm_prng_next());
+			x[i] = -spasm_prng_ZZp(&ctx);
 	for (int j = 0; j < m; j++)
 		y[j] = 0;
 	spasm_xApy(x, A, y);
@@ -91,13 +94,21 @@ struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm
 	return proof;
 }
 
-bool spasm_certificate_rank_verify(const struct spasm_csr *A, const struct spasm_rank_certificate *proof)
+bool spasm_certificate_rank_verify(const struct spasm_csr *A, const u8 *hash, const struct spasm_rank_certificate *proof)
 {
 	int n = A->n;
 	int m = A->m;
 	int r = proof->r;
 
-	spasm_prng_seed(proof->seed, 0);
+	for (int i = 0; i < 32; i++)
+		if (hash[i] != proof->hash[i])
+			return 0;
+
+	if (spasm_get_prime(A) != proof->prime)
+		return 0;
+
+	spasm_prng_ctx ctx;
+	spasm_prng_seed(proof->hash, proof->prime, 0, &ctx);
 	spasm_ZZp *x = spasm_malloc(n * sizeof(*x));
 	spasm_ZZp *y = spasm_malloc(m * sizeof(*y));
 	
@@ -114,7 +125,7 @@ bool spasm_certificate_rank_verify(const struct spasm_csr *A, const struct spasm
 	bool correct = 1;
 	for (int k = 0; k < r; k++) {
 		int j = proof->j[k];
-		if (y[j] != spasm_ZZp_init(A->field, spasm_prng_next()))
+		if (y[j] != spasm_prng_ZZp(&ctx))
 			correct = 0;
 	}
 
@@ -129,7 +140,7 @@ bool spasm_certificate_rank_verify(const struct spasm_csr *A, const struct spasm
 	//int k = 0;
 	for (int i = 0; i < n; i++)
 		if (x[i] == BOT)
-			x[i] = spasm_ZZp_init(A->field, spasm_prng_next()); 
+			x[i] = spasm_prng_ZZp(&ctx);
 	for (int j = 0; j < m; j++)
 		y[j] = 0;
 	spasm_xApy(x, A, y);
@@ -170,7 +181,8 @@ bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu
 		pivotal_row[i] = 1;
 	}
 
-	spasm_prng_seed(seed, 0);
+	spasm_prng_ctx ctx;
+	spasm_prng_seed_simple(spasm_get_prime(A), seed, 0, &ctx);
 	for (int j = 0; j < m; j++) {
 		z[j] = 0;
 		t[j] = 0;
@@ -178,7 +190,7 @@ bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu
 	for (int k = 0; k < r; k++)
 		y[k] = 0;
 	for (int i = 0; i < n; i++) {
-		spasm_ZZp foo = spasm_ZZp_init(A->field, spasm_prng_next());
+		spasm_ZZp foo = spasm_prng_ZZp(&ctx);
 		if (complete || pivotal_row[i])
 			x[i] = foo;
 		else
