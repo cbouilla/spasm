@@ -107,6 +107,13 @@ bool spasm_certificate_rank_verify(const struct spasm_csr *A, const u8 *hash, co
 	if (spasm_get_prime(A) != proof->prime)
 		return 0;
 
+	for (int k = 0; k < r; k++) {
+		if (proof->i[k] < 0 || proof->i[k] >= n)
+			return 0;
+		if (proof->j[k] < 0 || proof->j[k] >= m)
+			return 0;
+	}
+
 	spasm_prng_ctx ctx;
 	spasm_prng_seed(proof->hash, proof->prime, 0, &ctx);
 	spasm_ZZp *x = spasm_malloc(n * sizeof(*x));
@@ -209,4 +216,56 @@ bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu
 	free(z);
 	free(t);
 	return correct;
+}
+
+void spasm_rank_certificate_save(const struct spasm_rank_certificate *proof, FILE *f)
+{
+	int r = proof->r;
+	fprintf(f, "%d\n", r);
+	fprintf(f, "%" PRId64 "\n", proof->prime);
+	for (int i = 0; i < 32; i++)
+		fprintf(f, "%02x", proof->hash[i]);
+	fprintf(f, "\n");
+	for (int k = 0; k < r; k++)
+		fprintf(f, "%d ", proof->i[k]);
+	fprintf(f, "\n");
+	for (int k = 0; k < r; k++)
+		fprintf(f, "%d ", proof->j[k]);
+	fprintf(f, "\n");
+	for (int k = 0; k < r; k++)
+		fprintf(f, "%d ", proof->x[k]);
+	fprintf(f, "\n");
+	for (int k = 0; k < r; k++)
+		fprintf(f, "%d ", proof->y[k]);
+	fprintf(f, "\n");
+}
+
+bool spasm_rank_certificate_load(FILE *f, struct spasm_rank_certificate *proof)
+{
+	int r;
+	if (1 != fscanf(f, "%d", &r))
+		return 0;
+	proof->r = r;
+	proof->i = malloc(r * sizeof(*proof->i));
+	proof->j = malloc(r * sizeof(*proof->i));
+	proof->x = malloc(r * sizeof(*proof->i));
+	proof->y = malloc(r * sizeof(*proof->i));
+	if (1 != fscanf(f, "%" SCNd64 "\n", &proof->prime))
+		return 0;
+	char hash[65];
+	if (NULL == fgets(hash, 65, f))
+		return 0;
+	for (int i = 0; i < 32; i++) {
+		char byte[3] = {hash[2*i], hash[2*i+1], 0};
+		proof->hash[i] = strtoul(byte, NULL, 16);
+	}
+	for (int k = 0; k < r; k++)
+		fscanf(f, "%d", &proof->i[k]);
+	for (int k = 0; k < r; k++)
+		fscanf(f, "%d", &proof->i[k]);
+	for (int k = 0; k < r; k++)
+		fscanf(f, "%d", &proof->x[k]);
+	for (int k = 0; k < r; k++)
+		fscanf(f, "%d", &proof->y[k]);
+	return 1;
 }

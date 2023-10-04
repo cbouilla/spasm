@@ -123,6 +123,17 @@ struct spasm_triplet * load_input_matrix(struct input_matrix *in, u8 *hash)
 }
 
 
+FILE * open_input(const char *filename)
+{
+	if (filename == NULL)
+		return stdin;
+	FILE *f = fopen(filename, "r");
+	if (f == NULL)
+		err(1, "Cannot open %s", filename);
+	return f;
+}
+
+
 FILE * open_output(const char *filename)
 {
 	if (filename == NULL)

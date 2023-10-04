@@ -274,6 +274,8 @@ struct spasm_csr * spasm_gesv(const struct spasm_lu *fact, const struct spasm_cs
 /* spasm_certificate.c */
 struct spasm_rank_certificate * spasm_certificate_rank_create(const struct spasm_csr *A, const u8 *hash, const struct spasm_lu *fact);
 bool spasm_certificate_rank_verify(const struct spasm_csr *A, const u8 *hash, const struct spasm_rank_certificate *proof);
+void spasm_rank_certificate_save(const struct spasm_rank_certificate *proof, FILE *f);
+bool spasm_rank_certificate_load(FILE *f, struct spasm_rank_certificate *proof);
 bool spasm_factorization_verify(const struct spasm_csr *A, const struct spasm_lu *fact, u64 seed);
 
 

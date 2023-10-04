@@ -32,3 +32,6 @@ target_link_libraries(kernel PUBLIC spasm spasmtools)
 
 add_executable(solve solve.c)
 target_link_libraries(solve PUBLIC spasm spasmtools)
+
+add_executable(check_cert check_cert.c)
+target_link_libraries(check_cert PUBLIC spasm spasmtools)

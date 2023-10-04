@@ -100,19 +100,23 @@ int main(int argc, char **argv)
 	fprintf(stderr, "done in %.3f s rank = %d\n", end_time - start_time, fact->U->n);
 	
 
-	struct spasm_rank_certificate *proof = NULL;
 	if (args.certificate) {
 		assert(spasm_factorization_verify(A, fact, 42));
 		assert(spasm_factorization_verify(A, fact, 1337));
 		assert(spasm_factorization_verify(A, fact, 21011984));
 		fprintf(stderr, "generating certificate\n");
-		proof = spasm_certificate_rank_create(A, hash, fact);
+		struct spasm_rank_certificate *proof = spasm_certificate_rank_create(A, hash, fact);
 		fprintf(stderr, "checking certificate\n");
 		bool correct = spasm_certificate_rank_verify(A, hash, proof);
 		if (correct)
 			fprintf(stderr, "CORRECT certificate\n");
 		else
 			fprintf(stderr, "INCORRECT certificate\n");
+		if (args.cert_file) {
+			fprintf(stderr, "Saving certificate to %s\n", args.cert_file);
+			FILE *out = open_output(args.cert_file);
+			spasm_rank_certificate_save(proof, out);
+		}
 	}
 	spasm_lu_free(fact);
 	spasm_csr_free(A);
