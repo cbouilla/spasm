@@ -362,12 +362,11 @@ void spasm_schur_dense_randomized(const struct spasm_csr *A, const int *p, int n
 	{
 		/* per-thread scratch space */
 		spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
-		int tid = spasm_get_thread_num();
 
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (i64 k = 0; k < N; k++) {
 			spasm_prng_ctx ctx;
-			spasm_prng_seed_simple(prime, k, tid, &ctx);
+			spasm_prng_seed_simple(prime, k, 0, &ctx);
 
 			for (int j = 0; j < m; j++)
 				x[j] = 0;
