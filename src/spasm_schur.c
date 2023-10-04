@@ -350,6 +350,7 @@ void spasm_schur_dense_randomized(const struct spasm_csr *A, const int *p, int n
 	assert(n > 0);
 	int m = A->m;
 	int Sm = m - U->n;
+	i64 prime = spasm_get_prime(A);
 	const i64 *Up = U->p;
 	const int *Uj = U->j;
 	prepare_q(m, qinv, q);
@@ -361,22 +362,26 @@ void spasm_schur_dense_randomized(const struct spasm_csr *A, const int *p, int n
 	{
 		/* per-thread scratch space */
 		spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
+		int tid = spasm_get_thread_num();
 
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (i64 k = 0; k < N; k++) {
+			spasm_prng_ctx ctx;
+			spasm_prng_seed_simple(prime, k, tid, &ctx);
+
 			for (int j = 0; j < m; j++)
 				x[j] = 0;
 			if (w <= 0) {
 				/* x <--- random linear combinations of all rows */
 				for (int i = 0; i < n; i++) {
 					int inew = p[i];
-					int coeff = spasm_ZZp_init(A->field, rand());
+					int coeff = spasm_prng_ZZp(&ctx);
 					spasm_scatter(A, inew, coeff, x);
 				}
 			} else {
 				for (int i = 0; i < w; i++) {
 					int inew = p[rand() % n];
-					int coeff = (i == 0) ? 1 : spasm_ZZp_init(A->field, rand());
+					int coeff = (i == 0) ? 1 : spasm_prng_ZZp(&ctx);
 					spasm_scatter(A, inew, coeff, x);
 				}
 			}
