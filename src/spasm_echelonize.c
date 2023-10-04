@@ -267,6 +267,7 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 			Lx[lnz] = x;
 			lnz += 1;
 		}
+		fprintf(stderr, "L : %" PRId64 " --> %" PRId64 " --> %" PRId64 " ---> ", lnz_before, L->nz, lnz);
 	}
 
 	/* add new entries from S */
@@ -286,6 +287,7 @@ static void update_fact_after_LU(int n, int Sm, int r, const void *S, spasm_data
 			Lp[U->n + i] = iorig;
 	}
 	L->nz = lnz;
+	fprintf(stderr, "%" PRId64 "\n", lnz);
 
 	/* fill U */
 	for (i64 i = 0; i < r; i++) {
@@ -449,6 +451,7 @@ static void echelonize_dense(const struct spasm_csr *A, const int *p, int n, con
 	free(S);
 	free(q);
 	free(Sqinv);
+	free(Sp);
 	free(p_out);
 	free(pivotal);
 	if (rank_ub > 0 && n - processed > 0 && lowrank_mode) {
@@ -518,7 +521,8 @@ struct spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_
 	int status = 0;  /* 0 == max_round reached; 1 == full rank reached; 2 == early abort */
 	int *p_in = NULL;
 
-	for (int round = 0; round < opts->max_round; round++) {
+	int round;
+	for (round = 0; round < opts->max_round; round++) {
 		/* decide whether to move on to the next iteration */
 		if (spasm_nnz(A) == 0) {
 			fprintf(stderr, "[echelonize] empty matrix\n");
@@ -555,7 +559,7 @@ struct spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_
 		if (round > 0)
 			spasm_csr_free((struct spasm_csr *) A);       /* discard const, only if it is not the input argument */
 		A = S;
-		n = n - npiv;  // problem if we exit the loop normally
+		n = n - npiv;
 		free(p_in);
 		p_in = p_out;
 	}
@@ -594,9 +598,12 @@ struct spasm_lu * spasm_echelonize(const struct spasm_csr *A, struct echelonize_
 
 cleanup:
 	free(p);
+	free(p_in);
 	fprintf(stderr, "[echelonize] Done in %.1fs. Rank %d, %" PRId64 " nz in basis\n", spasm_wtime() - start, U->n, spasm_nnz(U));
 	spasm_csr_resize(U, U->n, m);
 	spasm_csr_realloc(U, -1);
+	if (round > 0)
+		spasm_csr_free((struct spasm_csr *) A);
 	if (opts->L) {
 		L->m = U->n; 
 		fact->p = spasm_realloc(Lp, U->n * sizeof(*Lp));
