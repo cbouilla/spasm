@@ -260,12 +260,12 @@ bool spasm_rank_certificate_load(FILE *f, struct spasm_rank_certificate *proof)
 		proof->hash[i] = strtoul(byte, NULL, 16);
 	}
 	for (int k = 0; k < r; k++)
-		if (NULL == fscanf(f, "%d", &proof->i[k])) return 0;
+		if (1 != fscanf(f, "%d", &proof->i[k])) return 0;
 	for (int k = 0; k < r; k++)
-		if (NULL == fscanf(f, "%d", &proof->i[k])) return 0;
+		if (1 != fscanf(f, "%d", &proof->i[k])) return 0;
 	for (int k = 0; k < r; k++)
-		if (NULL == fscanf(f, "%d", &proof->x[k])) return 0;
+		if (1 != fscanf(f, "%d", &proof->x[k])) return 0;
 	for (int k = 0; k < r; k++)
-		if (NULL == fscanf(f, "%d", &proof->y[k])) return 0;
+		if (1 != fscanf(f, "%d", &proof->y[k])) return 0;
 	return 1;
 }
