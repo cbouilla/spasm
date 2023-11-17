@@ -361,7 +361,7 @@ void spasm_schur_dense_randomized(const struct spasm_csr *A, const int *p, int n
 	#pragma omp parallel
 	{
 		/* per-thread scratch space */
-		spasm_ZZp *x = spasm_malloc(m * sizeof(*x));
+		spasm_ZZp *y = spasm_malloc(m * sizeof(*y));
 
 		#pragma omp for schedule(dynamic, verbose_step)
 		for (i64 k = 0; k < N; k++) {
@@ -369,33 +369,33 @@ void spasm_schur_dense_randomized(const struct spasm_csr *A, const int *p, int n
 			spasm_prng_seed_simple(prime, k, 0, &ctx);
 
 			for (int j = 0; j < m; j++)
-				x[j] = 0;
+				y[j] = 0;
 			if (w <= 0) {
 				/* x <--- random linear combinations of all rows */
 				for (int i = 0; i < n; i++) {
 					int inew = p[i];
 					int coeff = spasm_prng_ZZp(&ctx);
-					spasm_scatter(A, inew, coeff, x);
+					spasm_scatter(A, inew, coeff, y);
 				}
 			} else {
 				for (int i = 0; i < w; i++) {
 					int inew = p[rand() % n];
 					int coeff = (i == 0) ? 1 : spasm_prng_ZZp(&ctx);
-					spasm_scatter(A, inew, coeff, x);
+					spasm_scatter(A, inew, coeff, y);
 				}
 			}
 
 			/* eliminate known sparse pivots */
 			for (int i = 0; i < U->n; i++) {
-				int j = Uj[Up[i]];
-				if (x[j] == 0)
+				int j = Uj[Up[i]];               // warning: this assumes pivots are first entries on the row
+				if (y[j] == 0)
 					continue;
-				spasm_scatter(U, i, -x[j], x);
+				spasm_scatter(U, i, -y[j], y);
 			}
 			
 			/* gather x into S[k] */
 			void *Sk = row_pointer(S, Sm, datatype, k);
-			gather(Sm, q, x, Sk, datatype);
+			gather(Sm, q, y, Sk, datatype);
 			// for (int j = 0; j < Sm; j++) {
 			// 	int jj = q[j];
 			// 	spasm_datatype_write(S, k * Sm + j, datatype, x[jj]);
@@ -407,7 +407,7 @@ void spasm_schur_dense_randomized(const struct spasm_csr *A, const int *p, int n
 				fflush(stderr);
 			}
 		}
-		free(x);
+		free(y);
 	}
 	fprintf(stderr, "\n[schur/dense/random] finished in %.1fs\n", spasm_wtime() - start);
 }

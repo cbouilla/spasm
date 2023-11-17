@@ -2,7 +2,7 @@
 
 #include "spasm.h"
 
-/* This PRNG is SHA256 in counter mode... */
+/* This PRNG is SHA256 in counter mode */
 
 static void rehash(spasm_prng_ctx *ctx)
 {
@@ -15,6 +15,9 @@ static void rehash(spasm_prng_ctx *ctx)
         ctx->i = 0;
 }
 
+/*
+ * Return a uniformly random 32-bit integer
+ */
 u32 spasm_prng_u32(spasm_prng_ctx *ctx)
 {
         if (ctx->i == 8)
@@ -24,6 +27,9 @@ u32 spasm_prng_u32(spasm_prng_ctx *ctx)
         return htonl(res);
 }
 
+/*
+ * Return a uniformly integer modulo prime (rejection sampling)
+ */
 spasm_ZZp spasm_prng_ZZp(spasm_prng_ctx *ctx)
 {
         for (;;) {
@@ -54,9 +60,8 @@ void spasm_prng_seed(const u8 *seed, i64 prime, u32 seq, spasm_prng_ctx *ctx)
         rehash(ctx);
 }
 
-
 /*
- * Seed must be 32 bytes.
+ * In case where a 32-byte seed (i.e. a SHA256 digest) is not available
  */
 void spasm_prng_seed_simple(i64 prime, u64 seed, u32 seq, spasm_prng_ctx *ctx)
 {
