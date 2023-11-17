@@ -3,12 +3,15 @@
 #include <assert.h>
 #include <getopt.h>
 #include <err.h>
+#include <string.h>
 
 #include "spasm.h"
 #include "common.h"
 
 /* Program documentation. */
 char doc[] = "Compute a kernel basis of a sparse matrix";
+
+char qinv_filename[1000]; /* we should put this in cmdline_args. Here we use that it's 0-initialized so we both know if it was set and where to write */
 
 struct cmdline_args {
 	/* input problem */
@@ -27,6 +30,7 @@ struct argp_option options[] = {
 	{0,               0,  0,      0, "Kernel options", 2 },
 	{"left",         'l', 0,      0, "Compute the left-kernel", 2},
 	{"output",       'o', "FILE", 0, "Write the kernel basis in FILE", 2 },
+	{"qinv-file",    'q', "FILE", 0, "Save qinv", 2 },
 	{ 0 }
 };
 
@@ -40,6 +44,9 @@ error_t parse_ker_opt(int key, char *arg, struct argp_state *state)
 		break;
 	case 'o':
 		arguments->output_filename = arg;
+		break;
+	case 'q':
+		strcpy(qinv_filename, arg);
 		break;
 	case ARGP_KEY_INIT:
 		arguments->left = 0;
@@ -81,6 +88,13 @@ int main(int argc, char **argv)
 	/* echelonize A */
 	struct spasm_lu *fact = spasm_echelonize(A, &args.opts);
 	spasm_csr_free(A);
+
+	if (qinv_filename[0]) { /* save qinv */
+		FILE *qinv_stream = fopen(qinv_filename,"w");
+		for (int i = 0; i < fact->U->m; i++)
+			fprintf(qinv_stream,"%d\n",fact->qinv[i]);
+		fclose(qinv_stream);
+	}
 
 	/* kernel basis */
 	struct spasm_csr *K = spasm_kernel(fact);
