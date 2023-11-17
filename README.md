@@ -14,10 +14,10 @@ The core of the library is a multithreaded function that computes the row echelo
 This enables several of useful computations on sparse matrices modulo _p_:
   * Basis of the row space
   * Basis of the kernel
-  * Row Echelon form and Reduced Row Echelon form
   * Rank
+  * (Reduced) Row Echelon Form of `A*Q`, for some permutation matrix Q
 
-In addition, SpaSM is capable of computing a full PLUQ factorization, but this is slower than simple echelonization. This enables:
+In addition, SpaSM is capable of computing a full PLUQ factorization, but this is slower and requires more memory than simple echelonization. This enables:
   * Solution of linear systems
   * Extraction of a square submatrix of maximal rank
   * Production of rank certificates
@@ -85,9 +85,9 @@ curl https://hpac.imag.fr/Matrices/Relat/relat9.sms.gz | gunzip - | ./stack | ./
 
 Finding good pivots is crucial for the performance of any kind of sparse elimination procedure. The pivot-finding code is still a bit naïve. Sometimes it will find much more pivots, much faster, if the matrices are flipped around a vertical axis with the `vertical_swap` utility:
 ```
-curl https://hpac.imag.fr/Matrices/GL7d/GL7d14.sms.gz | gunzip - | ./vertical_swap | ./rank --sparse-threshold 0.01
+curl https://hpac.imag.fr/Matrices/GL7d/GL7d14.sms.gz | gunzip - | ./vertical_swap | ./rank --dense-threshold 0.01
 ...
-curl https://hpac.imag.fr/Matrices/GL7d/GL7d22.sms.gz | gunzip - | ./vertical_swap | ./rank --sparse-threshold 0.01
+curl https://hpac.imag.fr/Matrices/GL7d/GL7d22.sms.gz | gunzip - | ./vertical_swap | ./rank --dense-threshold 0.01
 ```
 
 Dealing with large matrices

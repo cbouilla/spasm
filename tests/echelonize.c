@@ -58,14 +58,18 @@ void rref_check(const struct spasm_csr *U, int *qinv)
 	
 	printf("# Checking that R is really in RREF...\n");
 	for (int i = 0; i < U->n; i++) {
-		assert(Up[i] < Up[i + 1]);
+		assert(Up[i] < Up[i + 1]);           /* non-empty row */
 		int j = Uj[Up[i]];
-		assert(qinv[j] == i);
-		assert(Ux[Up[i]] == 1);
+		assert(qinv[j] == i);                /* pivot is first row entry */
+		assert(Ux[Up[i]] == 1);              /* pivot == 1 */
+		
+		/* row does not contain entries on pivotal columns */
 		for (int px = Up[i] + 1; px < Up[i + 1]; px++) {
 			int j = Uj[px];
 			assert(qinv[j] < 0);
 		}
+
+		/* TODO : check triangular shape */
 	}
 }
 
@@ -165,6 +169,7 @@ int main(int argc, char **argv)
 	int *Rqinv = spasm_malloc(m * sizeof(int));
 	struct echelonize_opts opts;
 	spasm_echelonize_init_opts(&opts);
+	opts.enable_tall_and_skinny = 1;
 	struct spasm_lu *fact = spasm_echelonize(A, &opts);   /* NULL = default options */
 	struct spasm_csr *U = fact->U;
 	int *Uqinv = fact->qinv;
