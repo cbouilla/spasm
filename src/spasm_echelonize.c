@@ -346,7 +346,6 @@ static void echelonize_dense_lowrank(const struct spasm_csr *A, const int *p, in
 
 	for (;;) {
 		/* compute a chunk of the schur complement, then echelonize with FFPACK */
-		rank_ub = spasm_min(A->n - U->n, A->m - U->n);
 		int Sn = spasm_min(rank_ub, opts->dense_block_size);
 		if (Sn <= 0)
 			break;		
@@ -369,6 +368,7 @@ static void echelonize_dense_lowrank(const struct spasm_csr *A, const int *p, in
 		update_U_after_rref(rr, Sm, S, datatype, Sp, q, fact);
 		n -= rr;
 		Sm -= rr;
+		rank_ub -= rr;
 		round += 1;
 		fprintf(stderr, "[echelonize/dense/low-rank] found %d new pivots (%d new since beginning)\n", rr,  U->n - old_un);
 	}
