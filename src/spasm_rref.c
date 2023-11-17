@@ -5,7 +5,16 @@
 #include "spasm.h"
 
 /* 
- * build the RREF from an echelonized matrix. 
+ * build the RREF from an echelonized matrix.
+ *
+ * !!! WARNING, BEWARE, ATTENTION !!!
+ * This does ****NOT**** compute the RREF of the input matrix A,
+ * but instead computes the RREF of A*Q.
+ * !!! WARNING, BEWARE, ATTENTION !!!
+ *
+ * SpaSM is NOT capable of computing the RREF of the input matrix without
+ * column permutation.
+ *
  * This code is similar to src/spasm_schur.c ---> in bad need of factorization
  * On output, Rqinv locates the pivots in R (on column j, pivot is on row Rqinv[i] of R,
  * or Rqinv[j] == -1 if there is no pivot on column j).
