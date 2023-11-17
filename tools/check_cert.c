@@ -32,6 +32,9 @@ error_t parse_check_opt(int key, char *arg, struct argp_state *state)
 	case 'c':
 		arguments->cert_file = arg;
 		break;
+	case ARGP_KEY_ARG:
+		fprintf(stderr, "ERROR: invalid argument ``%s''\n", arg);
+		exit(1);
 	case ARGP_KEY_INIT:
 		arguments->cert_file = NULL;
 		state->child_inputs[0] = &arguments->input;

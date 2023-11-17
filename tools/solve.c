@@ -40,6 +40,9 @@ error_t parse_solve_opt(int key, char *arg, struct argp_state *state)
 	case 'o':
 		arguments->output_filename = arg;
 		break;
+	case ARGP_KEY_ARG:
+		fprintf(stderr, "ERROR: invalid argument ``%s''\n", arg);
+		exit(1);
 	case ARGP_KEY_INIT:
 		arguments->rhs_filename = NULL;
 		arguments->output_filename = NULL;

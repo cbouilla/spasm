@@ -45,6 +45,9 @@ error_t parse_rank_opt(int key, char *arg, struct argp_state *state)
 	case 'o':
 		arguments->cert_file = arg;
 		break;
+	case ARGP_KEY_ARG:
+		fprintf(stderr, "ERROR: invalid argument ``%s''\n", arg);
+		exit(1);
 	case ARGP_KEY_INIT:
 		arguments->allow_transpose = 1;
 		arguments->certificate = 0;
