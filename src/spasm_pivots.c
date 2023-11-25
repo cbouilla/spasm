@@ -319,10 +319,11 @@ static int spasm_pivots_find(const struct spasm_csr *A, int *pinv, int *qinv, st
 }
 
 /*
- * build row permutation. Pivotal rows go first in topological order,
+ * build row permutation p. Pivotal rows go first in topological order,
  * then non-pivotal rows
  */
-static void spasm_pivots_reorder(const struct spasm_csr *A, const int *pinv, const int *qinv, int npiv, int *p)
+static void spasm_pivots_reorder(const struct spasm_csr *A, const int *pinv, 
+	                             const int *qinv, int npiv, int *p)
 {
 	int n = A->n;
 	int m = A->m;
@@ -331,12 +332,13 @@ static void spasm_pivots_reorder(const struct spasm_csr *A, const int *pinv, con
 	/* topological sort */
 	int *xj = spasm_malloc(m * sizeof(*xj));
 	int *marks = spasm_malloc(m * sizeof(*marks));
+	int *pstack = spasm_malloc(m * sizeof(*pstack));
 	for (int j = 0; j < m; j++)
 		marks[j] = 0;
 	int top = m;
 	for (int j = 0; j < m; j++)
 		if (qinv[j] != -1 && !marks[j])
-			top = spasm_dfs(j, A, top, xj, p, marks, qinv);  /* use p as "pstack" */
+			top = spasm_dfs(j, A, top, xj, pstack, marks, qinv);
 	/* now produce the permutation p that puts pivotal rows first, in order */
 	for (int px = top; px < m; px++) {
 		int j = xj[px];
@@ -356,6 +358,7 @@ static void spasm_pivots_reorder(const struct spasm_csr *A, const int *pinv, con
 	assert(k == n);
 	free(xj);
 	free(marks);
+	free(pstack);
 }
 
 /*
@@ -363,7 +366,8 @@ static void spasm_pivots_reorder(const struct spasm_csr *A, const int *pinv, con
  * write p (pivotal rows of A first)
  * return the number of pivots found
  */
-int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, struct spasm_lu *fact, int *p, struct echelonize_opts *opts)
+int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, struct spasm_lu *fact, 
+								    int *p, struct echelonize_opts *opts)
 {
 	int n = A->n;
 	int m = A->m;
