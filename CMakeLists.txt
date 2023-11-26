@@ -40,12 +40,14 @@ if (build_type STREQUAL cov)
     add_compile_options(-Wall -O0 --coverage -Wno-pragmas -fopenmp)
     add_link_options(--coverage)
     message(WARNING "special coverage options")
+elseif (build_type STREQUAL asan)
+    add_compile_options(-Wall -Wextra -O0 -g -fno-omit-frame-pointer -fsanitize=address)
+    add_link_options(-fsanitize=address)
+    message(WARNING "special address sanitizer (asan) options")
 else()
     # normal
-    add_compile_options(-Wall -Wextra -O3 -g)
+   add_compile_options(-Wall -Wextra -O3 -g)
 endif()
-
-#add_link_options(-z noexecstack)
 
 ########################################################################
 
