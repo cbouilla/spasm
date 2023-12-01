@@ -16,7 +16,7 @@ struct spasm_csr * spasm_kernel(const struct spasm_lu *fact)
 	assert(n <= m);
 	char hnnz[8];
 	spasm_human_format(spasm_nnz(U), hnnz);
-	fprintf(stderr, "[kernel] start. U is %d x %d (%s nnz). Transposing U\n", n, m, hnnz);
+	logprintf("[kernel] start. U is %d x %d (%s nnz). Transposing U\n", n, m, hnnz);
 	double start_time = spasm_wtime();
 
 	struct spasm_csr *Ut = spasm_transpose(U, true);
@@ -73,7 +73,7 @@ struct spasm_csr * spasm_kernel(const struct spasm_lu *fact)
 					while (writing > 0) {
 						#pragma omp flush(writing)
 					}
-					fprintf(stderr, "increasing K; %" PRId64 " ---> %" PRId64 "\n", K->nzmax, 2 * K->nzmax + row_nz);
+					logprintf("increasing K; %" PRId64 " ---> %" PRId64 "\n", K->nzmax, 2 * K->nzmax + row_nz);
 					spasm_csr_realloc(K, 2 * K->nzmax + row_nz);
 					Kj = K->j;
 					Kx = K->x;
@@ -110,7 +110,7 @@ struct spasm_csr * spasm_kernel(const struct spasm_lu *fact)
 			if (tid == 0) {
 				char hnnz[8];
 				spasm_human_format(nnz, hnnz);
-	  			fprintf(stderr, "\rkernel: %d/%d, |K| = %s    ", Kn, m-n, hnnz);
+	  			logprintf("\rkernel: %d/%d, |K| = %s    ", Kn, m-n, hnnz);
 	  			fflush(stderr);
 	  		}
 		}
@@ -118,11 +118,11 @@ struct spasm_csr * spasm_kernel(const struct spasm_lu *fact)
 		free(xj);
 	}
 
-	fprintf(stderr, "\n");
+	logprintf("\n");
 	free(Utqinv);
 	spasm_csr_free(Ut);
 	spasm_human_format(spasm_nnz(K), hnnz);
-	fprintf(stderr, "[kernel] done in %.1fs. NNZ(K) = %s\n", spasm_wtime() - start_time, hnnz);
+	logprintf("[kernel] done in %.1fs. NNZ(K) = %s\n", spasm_wtime() - start_time, hnnz);
 	return K;
 }
 

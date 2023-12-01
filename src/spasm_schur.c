@@ -165,7 +165,7 @@ struct spasm_csr *spasm_schur(const struct spasm_csr *A, const int *p, int n, co
 					Li[local_lnz] = i_orig;
 					Lj[local_lnz] = qinv[j];
 					Lx[local_lnz] = x[j];
-					// fprintf(stderr, "Adding L[%d, %d] = %d\n", i_out, qinv[j], x[j]);
+					// logprintf("Adding L[%d, %d] = %d\n", i_out, qinv[j], x[j]);
 					local_lnz += 1;
 				}
 			}
@@ -176,7 +176,7 @@ struct spasm_csr *spasm_schur(const struct spasm_csr *A, const int *p, int n, co
 
 			if (tid == 0 && (i % verbose_step) == 0) {
 				double density =  1.0 * snz / (1.0 * m * Sn);
-				fprintf(stderr, "\rSchur complement: %d/%d [%" PRId64 " nz / density= %.3f]", Sn, n, snz, density);
+				logprintf("\rSchur complement: %d/%d [%" PRId64 " nz / density= %.3f]", Sn, n, snz, density);
 				fflush(stderr);
 			}
 		}
@@ -188,7 +188,7 @@ struct spasm_csr *spasm_schur(const struct spasm_csr *A, const int *p, int n, co
 		L->nz = lnz;
 	spasm_csr_realloc(S, -1);
 	double density = 1.0 * snz / (1.0 * m * n);
-	fprintf(stderr, "\rSchur complement: %d * %d [%" PRId64 " nz / density= %.3f], %.1fs\n", n, m, snz, density, spasm_wtime() - start);
+	logprintf("\rSchur complement: %d * %d [%" PRId64 " nz / density= %.3f], %.1fs\n", n, m, snz, density, spasm_wtime() - start);
 	return S;
 }
 
@@ -263,7 +263,7 @@ void spasm_schur_dense(const struct spasm_csr *A, const int *p, int n, const int
 	int m = A->m;
 	int Sm = m - U->n;                                   /* #columns of S */
 	prepare_q(m, qinv, q);                               /* FIXME: useless if many invokations */
-	fprintf(stderr, "[schur/dense] dimension %d x %d...\n", n, Sm);
+	logprintf("[schur/dense] dimension %d x %d...\n", n, Sm);
 	double start = spasm_wtime();
 	int verbose_step = spasm_max(1, n / 1000);
 	int r = 0;
@@ -322,14 +322,14 @@ void spasm_schur_dense(const struct spasm_csr *A, const int *p, int n, const int
 			#pragma omp atomic update
 			r += 1;
 			if (tid == 0 && (r % verbose_step) == 0) {
-				fprintf(stderr, "\r[schur/dense] %d/%d", r, n);
+				logprintf("\r[schur/dense] %d/%d", r, n);
 				fflush(stderr);
 			}
 		}
 		free(x);
 		free(xj);
 	}
-	fprintf(stderr, "\n[schur/dense] finished in %.1fs, rank <= %d\n", spasm_wtime() - start, r);
+	logprintf("\n[schur/dense] finished in %.1fs, rank <= %d\n", spasm_wtime() - start, r);
 }
 
 
@@ -354,7 +354,7 @@ void spasm_schur_dense_randomized(const struct spasm_csr *A, const int *p, int n
 	const i64 *Up = U->p;
 	const int *Uj = U->j;
 	prepare_q(m, qinv, q);
-	fprintf(stderr, "[schur/dense/random] dimension %d x %d, weight %d...\n", N, Sm, w);
+	logprintf("[schur/dense/random] dimension %d x %d, weight %d...\n", N, Sm, w);
 	double start = spasm_wtime();
 	int verbose_step = spasm_max(1, N / 1000);
 
@@ -403,11 +403,11 @@ void spasm_schur_dense_randomized(const struct spasm_csr *A, const int *p, int n
 
 			/* verbosity */
 			if ((k % verbose_step) == 0) {
-				fprintf(stderr, "\r[schur/dense/random] %" PRId64 "/%d", k, N);
+				logprintf("\r[schur/dense/random] %" PRId64 "/%d", k, N);
 				fflush(stderr);
 			}
 		}
 		free(y);
 	}
-	fprintf(stderr, "\n[schur/dense/random] finished in %.1fs\n", spasm_wtime() - start);
+	logprintf("\n[schur/dense/random] finished in %.1fs\n", spasm_wtime() - start);
 }

@@ -61,7 +61,7 @@ static int spasm_find_FL_pivots(const struct spasm_csr *A, int *p, int *qinv)
 		if (qinv[j] == -1 || spasm_row_weight(A, i) < spasm_row_weight(A, qinv[j]))
 			npiv += register_pivot(i, j, p, qinv);
 	}
-	fprintf(stderr, "[pivots] Faugère-Lachartre: %d pivots found [%.1fs]\n", npiv, spasm_wtime() - start);
+	logprintf("[pivots] Faugère-Lachartre: %d pivots found [%.1fs]\n", npiv, spasm_wtime() - start);
 	return npiv;
 }
 
@@ -116,7 +116,7 @@ static int spasm_find_FL_column_pivots(const struct spasm_csr *A, int *pinv, int
 		}
 	}
 	free(w);
-	fprintf(stderr, "[pivots] ``Faugère-Lachartre on columns'': %d pivots found [%.1fs]\n", 
+	logprintf("[pivots] ``Faugère-Lachartre on columns'': %d pivots found [%.1fs]\n", 
 		npiv, spasm_wtime() - start);
 	return npiv;
 }
@@ -186,7 +186,7 @@ static int spasm_find_cycle_free_pivots(const struct spasm_csr *A, int *pinv, in
 			 *   w[j] ==  0  column j was absent and is unreachable
 			 */
 			if ((tid == 0) && (i % v) == 0) {
-				fprintf(stderr, "\r[pivots] %d / %d --- found %d new", processed, n, npiv);
+				logprintf("\r[pivots] %d / %d --- found %d new", processed, n, npiv);
 				fflush(stderr);
 			}
 			if (pinv[i] >= 0)
@@ -288,7 +288,7 @@ static int spasm_find_cycle_free_pivots(const struct spasm_csr *A, int *pinv, in
 		free(queue);
 	}
 	free(journal);
-	fprintf(stderr, "\r[pivots] greedy alternating cycle-free search: %d pivots found [%.1fs]\n", 
+	logprintf("\r[pivots] greedy alternating cycle-free search: %d pivots found [%.1fs]\n", 
 		npiv, spasm_wtime() - start);
 	return npiv;
 }
@@ -314,7 +314,7 @@ static int spasm_pivots_find(const struct spasm_csr *A, int *pinv, int *qinv, st
 	npiv += spasm_find_FL_column_pivots(A, pinv, qinv);	
 	if (opts->enable_greedy_pivot_search)
 		npiv += spasm_find_cycle_free_pivots(A, pinv, qinv);
-	fprintf(stderr, "\r[pivots] %d pivots found\n", npiv);
+	logprintf("\r[pivots] %d pivots found\n", npiv);
 	return npiv;
 }
 
@@ -421,7 +421,7 @@ int spasm_pivots_extract_structural(const struct spasm_csr *A, const int *p_in, 
 		if (L != NULL) {
 			int i_out = (p_in != NULL) ? p_in[i] : i;
 			spasm_add_entry(L, i_out, U->n, pivot);
-			// fprintf(stderr, "Adding L[%d, %d] = %d\n", i_out, U->n, pivot);
+			// logprintf("Adding L[%d, %d] = %d\n", i_out, U->n, pivot);
 			Lp[U->n] = i_out;
 		}
 

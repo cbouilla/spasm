@@ -4,8 +4,23 @@
 #include <sys/time.h>
 #include <err.h>
 #include <inttypes.h>
+#include <stdarg.h>
 
 #include "spasm.h"
+
+int (*logcallback)(char *) = NULL;
+
+int logprintf(char *format, ...) {
+  va_list args;
+  va_start(args, format);
+
+  if (logcallback) {
+    char s[1000];
+    vsnprintf(s, 1000, format, args);
+    return (*logcallback)(s);
+  } else
+    return vfprintf(stderr, format, args);
+}
 
 int spasm_get_num_threads() {
 #ifdef _OPENMP
@@ -140,12 +155,12 @@ void spasm_triplet_realloc(struct spasm_triplet *A, i64 nzmax)
 {
 	if (nzmax < 0)
 		nzmax = A->nz;
-	// fprintf(stderr, "[realloc] nzmax=%ld. before %px %px %px\n", nzmax, A->i, A->j, A->x);
+	// logprintf("[realloc] nzmax=%ld. before %px %px %px\n", nzmax, A->i, A->j, A->x);
 	A->i = spasm_realloc(A->i, nzmax * sizeof(int));
 	A->j = spasm_realloc(A->j, nzmax * sizeof(int));
 	if (A->x != NULL)
 		A->x = spasm_realloc(A->x, nzmax * sizeof(spasm_ZZp));
-	// fprintf(stderr, "[realloc] after %px %px %px\n", A->i, A->j, A->x);
+	// logprintf("[realloc] after %px %px %px\n", A->i, A->j, A->x);
 	A->nzmax = nzmax;
 }
 

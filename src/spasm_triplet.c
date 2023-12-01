@@ -106,7 +106,7 @@ struct spasm_csr *spasm_compress(const struct spasm_triplet * T)
 	spasm_ZZp *Tx = T->x;
 	
 	double start = spasm_wtime();
-	fprintf(stderr, "[CSR] Compressing... ");
+	logprintf("[CSR] Compressing... ");
 	fflush(stderr);
 
 	/* allocate result */
@@ -153,6 +153,6 @@ struct spasm_csr *spasm_compress(const struct spasm_triplet * T)
 	char mem[16];
 	int size = sizeof(int) * (n + nz) + sizeof(spasm_ZZp) * ((Cx != NULL) ? nz : 0);
 	spasm_human_format(size, mem);
-	fprintf(stderr, "%" PRId64 " actual NZ, Mem usage = %sbyte [%.2fs]\n", spasm_nnz(C), mem, spasm_wtime() - start);
+	logprintf("%" PRId64 " actual NZ, Mem usage = %sbyte [%.2fs]\n", spasm_nnz(C), mem, spasm_wtime() - start);
 	return C;
 }
