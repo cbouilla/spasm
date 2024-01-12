@@ -29,7 +29,7 @@ struct spasm_csr * spasm_rref(const struct spasm_lu *fact, int *Rqinv)
 	i64 prime = spasm_get_prime(U);
 	char hnnz[8];
 	spasm_human_format(spasm_nnz(U), hnnz);
-	fprintf(stderr, "[rref] start. U is %d x %d (%s nnz)\n", n, m, hnnz);
+	logprintf("[rref] start. U is %d x %d (%s nnz)\n", n, m, hnnz);
 	double start_time = spasm_wtime();
 	struct spasm_csr *R = spasm_csr_alloc(n, m, spasm_nnz(U), prime, true);
 	i64 *Rp = R->p;
@@ -120,7 +120,7 @@ struct spasm_csr * spasm_rref(const struct spasm_lu *fact, int *Rqinv)
 			if (tid == 0) {
 				char hnnz[8];
 				spasm_human_format(nnz, hnnz);
-	  			fprintf(stderr, "\rRREF: %d/%d, |R| = %s    ", Rn, n, hnnz);
+	  			logprintf("\rRREF: %d/%d, |R| = %s    ", Rn, n, hnnz);
 	  			fflush(stderr);
 	  		}
 		}
@@ -139,9 +139,9 @@ struct spasm_csr * spasm_rref(const struct spasm_lu *fact, int *Rqinv)
 			Rqinv[j] = i;
 		}
 	}
-	fprintf(stderr, "\n");
+	logprintf("\n");
 
 	spasm_human_format(spasm_nnz(R), hnnz);
-	fprintf(stderr, "[rref] done in %.1fs. NNZ(R) = %s\n", spasm_wtime() - start_time, hnnz);
+	logprintf("[rref] done in %.1fs. NNZ(R) = %s\n", spasm_wtime() - start_time, hnnz);
 	return R;
 }
