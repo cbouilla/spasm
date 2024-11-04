@@ -33,8 +33,8 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GIVARO REQUIRED IMPORTED_TARGET givaro)
 pkg_check_modules(FFLAS_FFPACK REQUIRED IMPORTED_TARGET fflas-ffpack)
 
-# set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/config;${CMAKE_MODULE_PATH}")
-# find_package(PAPI)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/config;${CMAKE_MODULE_PATH}")
+find_package(argp)
 
 if (build_type STREQUAL cov)
     add_compile_options(-Wall -O0 --coverage -Wno-pragmas -fopenmp)
