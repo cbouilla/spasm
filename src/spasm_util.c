@@ -41,23 +41,23 @@ i64 spasm_nnz(const struct spasm_csr * A)
 void spasm_human_format(i64 n, char *target)
 {
 	if (n < 1000) {
-		sprintf(target, "%" PRId64, n);
+		snprintf(target, 8, "%" PRId64, n);
 		return;
 	}
 	if (n < 1000000) {
-		sprintf(target, "%.1fk", n / 1e3);
+		snprintf(target, 8, "%.1fk", n / 1e3);
 		return;
 	}
 	if (n < 1000000000) {
-		sprintf(target, "%.1fm", n / 1e6);
+		snprintf(target, 8, "%.1fm", n / 1e6);
 		return;
 	}
 	if (n < 1000000000000ll) {
-		sprintf(target, "%.1fg", n / 1e9);
+		snprintf(target, 8, "%.1fg", n / 1e9);
 		return;
 	}
 	if (n < 1000000000000000ll) {
-		sprintf(target, "%.1ft", n / 1e12);
+		snprintf(target, 8, "%.1ft", n / 1e12);
 		return;
 	}
 }
