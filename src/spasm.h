@@ -161,6 +161,8 @@ u32 spasm_prng_u32(spasm_prng_ctx *ctx);
 spasm_ZZp spasm_prng_ZZp(spasm_prng_ctx *ctx);
 
 /* spasm_util.c */
+extern int (*logcallback)(char *);
+int logprintf(char *format, ...);
 double spasm_wtime();
 i64 spasm_nnz(const struct spasm_csr * A);
 void *spasm_malloc(i64 size);

@@ -93,7 +93,7 @@ struct spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash)
 		if (sscanf(buffer, "%d %d %" SCNd64 "\n", &i, &j, &nnz) != 3)
 			errx(1, "[spasm_triplet_load] bad MatrixMarking dimensions (line %" PRId64 ")\n", line);
 		spasm_human_format(nnz, hnnz);
-		fprintf(stderr, "[IO] loading %d x %d MatrixMarket matrix modulo %" PRId64 " with %s non-zero... ", 
+		logprintf("[IO] loading %d x %d MatrixMarket matrix modulo %" PRId64 " with %s non-zero... ", 
 			i, j, prime, hnnz);
 		fflush(stderr);
 	} else {
@@ -103,7 +103,7 @@ struct spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash)
 			errx(1, "[spasm_triplet_load] bad SMS file (header)\n");
 		if (prime != -1 && type != 'M')
 			errx(1, "[spasm_triplet_load] only ``Modular'' type supported\n");
-		fprintf(stderr, "[IO] loading %d x %d SMS matrix modulo %" PRId64 "... ", i, j, prime);
+		logprintf("[IO] loading %d x %d SMS matrix modulo %" PRId64 "... ", i, j, prime);
 		fflush(stderr);
 	}
 
@@ -143,17 +143,17 @@ struct spasm_triplet *spasm_triplet_load(FILE * f, i64 prime, u8 *hash)
 	if (!mm) {
 		spasm_triplet_realloc(T, -1);
 		spasm_human_format(T->nz, hnnz);
-		fprintf(stderr, "%s non-zero [%.1fs]\n", hnnz, spasm_wtime() - start);
+		logprintf("%s non-zero [%.1fs]\n", hnnz, spasm_wtime() - start);
 	} else {
-		fprintf(stderr, "[%.1fs]\n", spasm_wtime() - start);
+		logprintf("[%.1fs]\n", spasm_wtime() - start);
 	}
 
 	if (ctx != NULL) {
 		spasm_SHA256_final(hash, ctx);
-		fprintf(stderr, "[spasm_triplet_load] sha256(matrix) = ");
+		logprintf("[spasm_triplet_load] sha256(matrix) = ");
 		for (int i = 0; i < 32; i++)
-			fprintf(stderr, "%02x", hash[i]);
-		fprintf(stderr, " / size = %" PRId64" bytes\n", (((i64) ctx->Nh) << 29) + ctx->Nl / 8);
+			logprintf("%02x", hash[i]);
+		logprintf(" / size = %" PRId64" bytes\n", (((i64) ctx->Nh) << 29) + ctx->Nl / 8);
 	}
 	return T;
 }
@@ -250,7 +250,7 @@ void spasm_save_pnm(const struct spasm_csr *A, FILE *f, int x, int y, int mode, 
 		limits_h[1] = ((long long int) cc[3]) * ((long long int) x) / ((long long int) m);
 		limits_v[0] = ((long long int) rr[1]) * ((long long int) y) / ((long long int) n);
 		limits_v[1] = ((long long int) rr[2]) * ((long long int) y) / ((long long int) n);
-		fprintf(stderr, "limits_v = %d, %d\n", limits_v[0], limits_v[1]);
+		logprintf("limits_v = %d, %d\n", limits_v[0], limits_v[1]);
 		r = DM->r;
 		c = DM->c;
 	}
